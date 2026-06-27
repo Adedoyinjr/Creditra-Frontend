@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { StatusBadge } from '../components/StatusBadge';
+import { RepaymentPlanChart } from '../components/RepaymentPlanChart';
 import { MOCK_CREDIT_LINES } from '../data/mockData';
 import type { CreditLineStatus, SortField, SortDirection } from '../types/creditLine';
 import {
@@ -76,6 +77,10 @@ function CreditLineCard({ line }: { line: typeof MOCK_CREDIT_LINES[0] }) {
         {line.utilized > 0 && (
           <button className="cl-action-btn repay">↙ Repay</button>
         )}
+      </div>
+
+      <div className="cl-card-detail">
+        <RepaymentPlanChart line={line} />
       </div>
     </div>
   );
