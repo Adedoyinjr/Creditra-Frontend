@@ -233,7 +233,23 @@ alternative — UI development being blocked on contract work — is worse.
 
 ---
 
-## 9. The 4-step draw wizard
+## 9. APR history stays inline on each credit-line card
+
+**Problem.** Users comparing credit facilities need quick context on whether the current APR is stable, improving, or worsening. A single APR number hides that movement and makes pricing feel more arbitrary than it is.
+
+**Alternatives considered.**
+
+- **APR number only.** Rejected — good for spot comparison, bad for trend comprehension.
+- **A separate detail page chart only.** Rejected — adds navigation friction for a comparison task users often do across multiple lines.
+- **A full analytics chart with axes and legend.** Rejected — too heavy for a card-level surface and harder to scan on mobile.
+
+**Chosen approach.** Each credit-line card on `src/pages/CreditLines.tsx` now includes an `AprHistoryChart` sparkline. The chart supports **30D / 90D / 365D** windows, uses semantic success/error tokens for trend color, and includes a screen-reader data table so the compact visual does not hide the underlying numbers.
+
+**Trade-off.** The cards are taller than before. We accept the extra height because the chart materially improves pricing explainability without forcing users into another screen.
+
+---
+
+## 10. The 4-step draw wizard
 
 **Problem.** A draw is a multi-decision action — *which line, how much, am I sure*. A
 single dense form makes those decisions feel coupled; a separate page per step feels

@@ -280,6 +280,12 @@
     gap: 0.5rem;
 }
 
+.cl-apr-history {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+}
+
 .cl-detail {
     text-align: center;
 }
@@ -365,26 +371,46 @@
 
 /* 3px left-edge error stripe (non-color emphasis) */
 .cl-row--defaulted {
-  border-left: 3px solid rgba(248, 81, 73, 0.8);
-  padding-left: calc(var(--space-md, 1rem) - 3px); /* compensate for border width */
+    border-left: 3px solid rgba(248, 81, 73, 0.8);
+    padding-left: calc(
+        var(--space-md, 1rem) - 3px
+    ); /* compensate for border width */
 }
 
 /* Bold the line name in defaulted rows */
 .cl-row--defaulted .cl-name,
 .cl-row--defaulted .cl-col-name {
-  font-weight: 600;
+    font-weight: 600;
 }
 
 /* Forced-colors mode: use system ButtonText so stripe stays visible */
 @media (forced-colors: active) {
-  .cl-row--defaulted {
-    border-left-color: ButtonText;
-  }
+    .cl-row--defaulted {
+        border-left-color: ButtonText;
+    }
 }
 
 /* ─── Responsive ─────────────────────────────────────────────────────────────── */
 
-@media (max-width: 768px) {
+@media (max-width: 480px) {
+    .cl-card-header,
+    .cl-card-footer,
+    .cl-page-header,
+    .cl-filters {
+        flex-direction: column;
+    }
+
+    .cl-card-footer {
+        align-items: stretch;
+    }
+    .cl-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .cl-metrics,
+    .cl-details {
+        grid-template-columns: 1fr;
+    }
     .credit-lines-page {
         padding: 0 1rem 1.5rem;
     }
