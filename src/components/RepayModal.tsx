@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { useWallet } from '../context/WalletContext';
+import { getExplorerBaseUrl } from '../utils/wallet';
 
 // --- We assume CreditLine type is available or we define a simplified version here ---
 // Actually, let's just define the interface here to avoid circular dependencies if CreditLines.tsx doesn't export it
@@ -62,6 +64,20 @@ const fmt = (n: number) =>
 export function RepayModal({ creditLine, walletBalance, onClose, onSuccess }: RepayModalProps) {
   const [step, setStep] = useState<ModalStep>('input');
   const [amountStr, setAmountStr] = useState('');
+  const [txHash, setTxHash] = useState('');
+  const [txTimestamp, setTxTimestamp] = useState('');
+  const [copyMessage, setCopyMessage] = useState('');
+  const copyButtonRef = useRef<HTMLButtonElement | null>(null);
+
+  const { wallet } = useWallet();
+  const explorerBaseUrl = getExplorerBaseUrl(wallet?.network ?? 'PUBLIC');
+  const explorerTxUrl = txHash ? `${explorerBaseUrl}/${txHash}` : undefined;
+
+  useEffect(() => {
+    if (!copyMessage) return;
+    const timer = window.setTimeout(() => setCopyMessage(''), 2000);
+    return () => window.clearTimeout(timer);
+  }, [copyMessage]);
 
   // Calculate derived values
   const totalDue = creditLine.utilized;
@@ -92,11 +108,36 @@ export function RepayModal({ creditLine, walletBalance, onClose, onSuccess }: Re
   };
 
   const handleConfirm = () => {
+    const completedHash = `0x${Math.random().toString(16).slice(2, 18).padEnd(16, '0')}`;
+    const completedTimestamp = new Date().toISOString();
+    setTxHash(completedHash);
+    setTxTimestamp(completedTimestamp);
     setStep('pending');
+
     // Simulate transaction delay
     setTimeout(() => {
       setStep('success');
     }, 2500);
+  };
+
+  const handleCopySummary = async () => {
+    if (!txHash) return;
+
+    const summaryText = [
+      `Amount: ${fmt(amount)}`,
+      `Line: ${creditLine.name}`,
+      `Transaction Hash: ${txHash}`,
+      `Timestamp: ${new Date(txTimestamp).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' })}`,
+    ].join('\n');
+
+    try {
+      await navigator.clipboard.writeText(summaryText);
+      setCopyMessage('Transaction summary copied to clipboard.');
+    } catch {
+      setCopyMessage('Unable to copy summary. Please try again.');
+    } finally {
+      copyButtonRef.current?.focus();
+    }
   };
 
   const handleCloseComplete = () => {
@@ -252,15 +293,59 @@ export function RepayModal({ creditLine, walletBalance, onClose, onSuccess }: Re
             <h3 style={{ margin: '0 0 0.25rem', fontSize: '1.5rem', color: COLOR.text }}>You repaid {fmt(amount)}!</h3>
             <p style={{ margin: '0 0 1.5rem', fontSize: '0.9rem', color: COLOR.muted }}>Your transaction was successful.</p>
 
-            <div style={{ background: COLOR.bg, border: `1px solid ${COLOR.border}`, borderRadius: 8, padding: '1rem', marginBottom: '2rem', textAlign: 'left' }}>
+            <div style={{ background: COLOR.bg, border: `1px solid ${COLOR.border}`, borderRadius: 8, padding: '1rem', marginBottom: '1.5rem', textAlign: 'left' }}>
               <p style={{ margin: '0 0 0.4rem', fontSize: '0.9rem', color: COLOR.text, display: 'flex', justifyContent: 'space-between' }}>
                 <span style={{ color: COLOR.muted }}>Remaining Debt:</span>
                 <span style={{ fontWeight: 600 }}>{fmt(remainingDebt)}</span>
+              </p>
+              <p style={{ margin: '0 0 0.4rem', fontSize: '0.9rem', color: COLOR.text, display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ color: COLOR.muted }}>Transaction Hash:</span>
+                <span style={{ fontWeight: 600, fontFamily: 'monospace', wordBreak: 'break-all' }}>{txHash || 'Pending...'}</span>
               </p>
               <p style={{ margin: 0, fontSize: '0.8rem', color: COLOR.muted, display: 'flex', justifyContent: 'space-between' }}>
                 <span>Credit Line Utilization:</span>
                 <span style={{ color: remainingDebt === 0 ? COLOR.success : COLOR.text }}>Reduced to {newPct}%</span>
               </p>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1rem' }}>
+              <button
+                ref={copyButtonRef}
+                type="button"
+                onClick={handleCopySummary}
+                disabled={!txHash}
+                style={{
+                  ...btn.outline,
+                  width: '100%',
+                  justifyContent: 'center',
+                  background: txHash ? COLOR.surface : '#11161b',
+                  color: txHash ? COLOR.text : COLOR.muted,
+                  borderColor: txHash ? COLOR.border : 'rgba(139,148,158,0.35)',
+                }}
+              >
+                Copy summary
+              </button>
+              <a
+                href={txHash ? explorerTxUrl : undefined}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  ...btn.outline,
+                  width: '100%',
+                  justifyContent: 'center',
+                  textDecoration: 'none',
+                  color: txHash ? COLOR.accent : COLOR.muted,
+                  borderColor: txHash ? COLOR.accent : 'rgba(139,148,158,0.35)',
+                  pointerEvents: txHash ? undefined : 'none',
+                }}
+                aria-disabled={!txHash}
+                tabIndex={txHash ? 0 : -1}
+              >
+                View on explorer
+              </a>
+              <div aria-live="polite" style={{ minHeight: '1.25rem', color: COLOR.success, fontSize: '0.85rem' }}>
+                {copyMessage}
+              </div>
             </div>
 
             <button onClick={handleCloseComplete} style={{ ...btn.primary, width: '100%' }}>Back to Dashboard</button>

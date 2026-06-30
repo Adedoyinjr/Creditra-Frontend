@@ -98,3 +98,11 @@ export const getStoredWallet = (): WalletInfo | null => {
   const stored = localStorage.getItem('wallet_info');
   return stored ? JSON.parse(stored) : null;
 };
+
+export const getExplorerBaseUrl = (network: string): string => {
+  const normalized = network?.toUpperCase?.() ?? 'PUBLIC';
+  if (normalized === 'TESTNET') {
+    return 'https://stellar.expert/explorer/testnet/tx';
+  }
+  return 'https://stellar.expert/explorer/public/tx';
+};
