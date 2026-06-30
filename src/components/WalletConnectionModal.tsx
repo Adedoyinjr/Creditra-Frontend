@@ -3,36 +3,60 @@ import { useWallet } from '../context/WalletContext';
 import { WalletType } from '../types/wallet';
 import './WalletConnectionModal.css';
 
+interface WalletProviderInfo {
+  type: WalletType;
+  name: string;
+  description: string;
+  iconUrl: string;
+  browserSupport: string;
+  mobileSupport: boolean;
+  installUrl: string;
+  useInBrowserUrl?: string;
+}
+
 interface Props {
   isOpen: boolean;
   onClose: () => void;
   onSuccess?: () => void;
 }
 
-const wallets = [
+const wallets: WalletProviderInfo[] = [
   {
-    type: 'freighter' as WalletType,
+    type: 'freighter',
     name: 'Freighter',
     description: 'Browser extension wallet for Stellar',
-    iconUrl: 'https://stellar.creit.tech/wallet-icons/freighter.svg'
+    iconUrl: 'https://stellar.creit.tech/wallet-icons/freighter.svg',
+    browserSupport: 'Chrome, Firefox, Brave, Edge',
+    mobileSupport: false,
+    installUrl: 'https://www.freighter.app/'
   },
   {
-    type: 'albedo' as WalletType,
+    type: 'albedo',
     name: 'Albedo',
     description: 'Web-based Stellar wallet',
-    iconUrl: 'https://stellar.creit.tech/wallet-icons/albedo.svg'
+    iconUrl: 'https://stellar.creit.tech/wallet-icons/albedo.svg',
+    browserSupport: 'All modern browsers',
+    mobileSupport: true,
+    installUrl: 'https://albedo.link/',
+    useInBrowserUrl: 'https://albedo.link/'
   },
   {
-    type: 'xbull' as WalletType,
+    type: 'xbull',
     name: 'xBull',
     description: 'Mobile and browser wallet',
-    iconUrl: 'https://stellar.creit.tech/wallet-icons/xbull.svg'
+    iconUrl: 'https://stellar.creit.tech/wallet-icons/xbull.svg',
+    browserSupport: 'Chrome, Firefox, Brave, Edge',
+    mobileSupport: true,
+    installUrl: 'https://xbull.app/'
   },
   {
-    type: 'rabet' as WalletType,
+    type: 'rabet',
     name: 'Rabet',
     description: 'Browser extension wallet',
-    iconUrl: 'https://stellar.creit.tech/wallet-icons/rabet.svg'
+    iconUrl: 'https://stellar.creit.tech/wallet-icons/rabet.svg',
+    browserSupport: 'Chrome, Firefox, Brave, Edge',
+    mobileSupport: false,
+    installUrl: 'https://rabet.io/'
   }
 ];
 
@@ -56,6 +80,8 @@ export const WalletConnectionModal = ({ isOpen, onClose, onSuccess }: Props) => 
     setSelectedWallet(null);
     onClose();
   };
+
+  const selectedProvider = wallets.find(w => w.type === selectedWallet);
 
   return (
     <div className="modal-overlay" onClick={handleClose}>
@@ -99,7 +125,51 @@ export const WalletConnectionModal = ({ isOpen, onClose, onSuccess }: Props) => 
               ))}
             </div>
 
-            {error && (
+            {error && error.type === 'not_found' && selectedProvider ? (
+              <div className="install-prompt">
+                <div className="install-header">
+                  <span className="install-icon">📦</span>
+                  <div>
+                    <strong>Install {selectedProvider.name}</strong>
+                    <p>You need to install this wallet to continue</p>
+                  </div>
+                </div>
+
+                <div className="install-details">
+                  <div className="detail-row">
+                    <span className="detail-label">Browser Support</span>
+                    <span className="detail-value">{selectedProvider.browserSupport}</span>
+                  </div>
+                  <div className="detail-row">
+                    <span className="detail-label">Mobile Support</span>
+                    <span className="detail-value">
+                      {selectedProvider.mobileSupport ? '✓ Available' : '✗ Not available'}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="install-links">
+                  <a
+                    href={selectedProvider.installUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="install-link primary"
+                  >
+                    Install {selectedProvider.name}
+                  </a>
+                  {selectedProvider.useInBrowserUrl && (
+                    <a
+                      href={selectedProvider.useInBrowserUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="install-link secondary"
+                    >
+                      Use in browser
+                    </a>
+                  )}
+                </div>
+              </div>
+            ) : error ? (
               <div className="error-state">
                 <span className="error-icon">⚠</span>
                 <div>
@@ -107,7 +177,7 @@ export const WalletConnectionModal = ({ isOpen, onClose, onSuccess }: Props) => 
                   <p>{error.message}</p>
                 </div>
               </div>
-            )}
+            ) : null}
 
             <div className="security-note">
               <span>🔒</span>
