@@ -293,7 +293,33 @@ motion-reduced animation behavior.
 
 ---
 
-## 11. Microcopy glossary
+## 11. Per-step micro-progress in the draw wizard
+
+**Problem.** The draw wizard header shows which step is active but not whether
+each step's requirements are satisfied (line chosen, amount in bounds, preview
+computed, terms acknowledged). Users had to infer readiness from the form body.
+
+**Alternatives considered.**
+
+- **Colour-only step borders.** Rejected — completion colour on the card does
+  not spell out *what* is missing ("amount out of bounds" vs. "not started").
+- **Toast on each validity change.** Rejected — too noisy for sighted users and
+  redundant with polite `aria-live` for AT.
+- **Separate progress bar.** Rejected — duplicates the existing four-step header.
+
+**Chosen approach.** Compact chips beneath each step label in
+`DrawCreditPage` (`DrawWizardMicroIndicator`) driven by
+`computeDrawWizardMicroProgress`. Tones use existing `--success`, `--warning`,
+and `--muted` tokens. A single debounced `aria-live="polite"` region announces
+changes. Confirmation checkbox state is lifted to the page so the confirm chip
+stays in sync.
+
+**Trade-off.** Slightly denser header on mobile. Chips use ellipsis truncation
+so all four remain visible at compact density.
+
+---
+
+## 12. Microcopy glossary
 
 **Problem.** Risk-priced credit terminology (utilization, reserve, draw, APR
 vs. APY, attestation) appeared inconsistently across AmountInput, PreviewSection,
