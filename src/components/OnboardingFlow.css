@@ -16,10 +16,13 @@
   border-radius: 16px;
   width: 90%;
   max-width: 500px;
+  min-height: 520px;
   padding: 2.5rem;
   text-align: center;
   position: relative;
   animation: slideUp 0.4s ease;
+  display: flex;
+  flex-direction: column;
 }
 
 .skip-btn {
@@ -41,8 +44,33 @@
   background: var(--border);
 }
 
+.skip-btn:focus-visible,
+.primary-btn:focus-visible,
+.secondary-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.progress-label {
+  color: var(--muted);
+  font-size: 0.9rem;
+  margin-bottom: 1.5rem;
+  font-weight: 500;
+}
+
+.step-container {
+  flex: 1;
+  min-height: 260px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .onboarding-step {
-  margin-bottom: 2.5rem;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
 }
 
 .step-icon {
@@ -70,24 +98,62 @@
   display: flex;
   gap: 0.5rem;
   justify-content: center;
-  margin-bottom: 2rem;
+  margin: 2rem 0;
 }
 
 .indicator {
   width: 32px;
-  height: 4px;
-  background: var(--border);
-  border-radius: 2px;
+  height: 32px;
+  background: transparent;
+  border: 2px solid var(--border);
+  border-radius: 50%;
   transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  font-weight: 600;
+  font-size: 0.9rem;
 }
 
 .indicator.active {
   background: var(--accent);
-  width: 48px;
+  border-color: var(--accent);
+  color: white;
 }
 
 .indicator.completed {
   background: var(--success);
+  border-color: var(--success);
+  color: white;
+}
+
+.button-group {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.secondary-btn {
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--border);
+  padding: 0.75rem 2rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  min-width: 100px;
+}
+
+.secondary-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.secondary-btn:hover:not(:disabled) {
+  background: var(--border);
 }
 
 .primary-btn {
@@ -100,8 +166,7 @@
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
-  width: 100%;
-  max-width: 200px;
+  min-width: 120px;
 }
 
 .primary-btn:hover {
@@ -123,3 +188,51 @@
     opacity: 1;
   }
 }
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .onboarding-overlay,
+  .onboarding-content,
+  .onboarding-step,
+  .step-icon,
+  .indicator,
+  .primary-btn,
+  .secondary-btn {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+  }
+}
+
+/* Reduced Motion Override */
+[data-motion="reduced"] .onboarding-overlay,
+[data-motion="reduced"] .onboarding-content,
+[data-motion="reduced"] .onboarding-step,
+[data-motion="reduced"] .step-icon,
+[data-motion="reduced"] .indicator,
+[data-motion="reduced"] .primary-btn,
+[data-motion="reduced"] .secondary-btn {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+  }
+

@@ -1,5 +1,56 @@
 # Visual UI States Summary
 
+## Card Component Examples
+
+### Standard Card
+```
+┌─────────────────────────────────────────────────────────────┐
+│                                                             │
+│  📊 Credit Summary                                          │
+│                                                             │
+│  Total Limit: $150,000.00                                   │
+│  Utilized: $37,500.00                                       │
+│  Available: $112,500.00                                     │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Card with Hover Effect
+```
+┌─────────────────────────────────────────────────────────────┐
+│  (border glows blue on hover, slight upward movement)       │
+│                                                             │
+│  🛡️ Risk Score                                              │
+│                                                             │
+│  Current Score: 78/100                                      │
+│  Trend: Improving ▲                                         │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Large Card (Draw Credit Page)
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                                                                 │
+│  💰 Draw Credit                                                 │
+│                                                                 │
+│  Select a credit line to draw from:                             │
+│                                                                 │
+│  ┌─────────────────────────────────────────────────────────────┐ │
+│  │  💳 Credit Line A                                        │ │
+│  │  Limit: $100,000.00  Available: $75,000.00              │ │
+│  └─────────────────────────────────────────────────────────────┘ │
+│                                                                 │
+│  ┌─────────────────────────────────────────────────────────────┐ │
+│  │  💳 Credit Line B                                        │ │
+│  │  Limit: $50,000.00   Available: $25,000.00               │ │
+│  └─────────────────────────────────────────────────────────────┘ │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+---
+
 ## All Component States Visualized
 
 ### 1. Header - Disconnected State
@@ -383,7 +434,33 @@ Focused:  [  Button  ]  ← Blue outline (2px)
 - Modal opens: "Dialog opened: Connect Wallet"
 - Loading: "Connecting to wallet, please wait"
 - Success: "Wallet connected successfully"
-- Error: "Error: [error message]"
+- Field error: "Amount to repay. Repayment amount exceeds available wallet balance."
+- Alert error: "Evaluation failed. A network error occurred while analyzing your wallet. Please try again."
+
+### Form Error Standard
+```
+Field layout:
+[Label]                            [Optional hint]
+[Input / Select / Upload]
+[Reserved error slot: 48-52px min-height]
+
+Inline error:
+[! icon] Error copy in muted body text
+- Background: rgba(248,81,73,0.10)
+- Border: rgba(248,81,73,0.30)
+- Title/icon color: #f85149
+- Radius: 12px
+- Padding: 12px 14px
+- Gap above field: 4px
+
+Top-level alert:
+[! icon] Evaluation failed
+          A network error occurred while analyzing your wallet.
+- Same colors as inline error
+- Padding: 14px 16px
+- Margin below alert: 12px
+- Use role="alert" and connect fields with aria-describedby
+```
 
 ---
 
