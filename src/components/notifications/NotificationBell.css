@@ -1,0 +1,33 @@
+/* ==========================================================================
+   NotificationBell — pulse animation  (Issue #219)
+   One-shot 600 ms ring, high-priority arrivals only.
+   Reduced-motion: suppresses pulse, keeps a 150 ms border flash instead.
+   ========================================================================== */
+
+/* ── Keyframes ──────────────────────────────────────────────────────────── */
+
+@keyframes bell-pulse {
+  0%   { box-shadow: 0 0 0 0   rgba(var(--color-warning-rgb, 234 179 8) / 0.7); }
+  50%  { box-shadow: 0 0 0 10px rgba(var(--color-warning-rgb, 234 179 8) / 0); }
+  100% { box-shadow: 0 0 0 0   rgba(var(--color-warning-rgb, 234 179 8) / 0); }
+}
+
+@keyframes bell-border-flash {
+  0%,100% { outline: 2px solid transparent; }
+  50%      { outline: 2px solid rgb(var(--color-warning-rgb, 234 179 8)); }
+}
+
+/* ── Pulse class (applied once per high-priority arrival) ───────────────── */
+
+.bell-pulse {
+  animation: bell-pulse 600ms ease-out 1 forwards;
+  border-radius: 9999px; /* keeps the ring circular on the button */
+}
+
+/* ── Reduced-motion override ────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  .bell-pulse {
+    animation: bell-border-flash 150ms ease-out 1 forwards;
+  }
+}
