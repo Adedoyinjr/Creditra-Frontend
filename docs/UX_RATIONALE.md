@@ -293,7 +293,35 @@ motion-reduced animation behavior.
 
 ---
 
-## 11. Microcopy glossary
+## 11. Mobile sticky draw summary bar
+
+**Problem.** On mobile, the draw wizard's amount step scrolls the inline preview
+off-screen. Users lose sight of line, amount, and APR while entering a figure —
+the three numbers they need to sanity-check before continuing.
+
+**Alternatives considered.**
+
+- **Always-visible inline preview above the fold.** Rejected — the amount form
+  and drawing-limit indicator need vertical space; pinning preview at the top
+  pushes the primary input below the fold.
+- **Sticky summary on every breakpoint.** Rejected — desktop already has a
+  sidebar `PreviewSection` (`lg:sticky`); a second bar would duplicate content.
+- **Summary on the `confirm` step too.** Rejected — `ConfirmationStep` ships its
+  own sticky action bar; stacking two bottom strips would obscure Cancel / Draw.
+
+**Chosen approach.** `DrawSummaryBar` fixed to the viewport bottom, shown only
+below `md` on the `amount` step. It surfaces **Line**, **Amount**, and **APR**,
+respects `env(safe-area-inset-bottom)`, collapses to a one-line peek on
+scroll-down, and expands on scroll-up. `tabIndex={0}` makes the region
+keyboard-reachable; transitions are instant under reduced motion.
+
+**Trade-off.** Scroll-direction collapse adds a small scroll listener on mobile
+only. We accept it because the peek state recovers vertical space without
+hiding the summary entirely.
+
+---
+
+## 12. Microcopy glossary
 
 **Problem.** Risk-priced credit terminology (utilization, reserve, draw, APR
 vs. APY, attestation) appeared inconsistently across AmountInput, PreviewSection,
