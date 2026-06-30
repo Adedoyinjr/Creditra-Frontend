@@ -314,6 +314,7 @@ export function RepayModal({ creditLine, walletBalance, onClose, onSuccess }: Re
                 type="button"
                 onClick={handleCopySummary}
                 disabled={!txHash}
+                aria-label="Copy transaction summary"
                 style={{
                   ...btn.outline,
                   width: '100%',
