@@ -1,6 +1,7 @@
-import { useState, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useWallet } from '../context/WalletContext';
+import { getDashboardDensity, setDashboardDensity, DashboardDensity } from '../utils/storage';
 import { MOCK_CREDIT_LINES } from '../data/mockData';
 import type { CreditLineStatus, Transaction } from '../types/creditLine';
 import {
@@ -196,6 +197,25 @@ export function Dashboard() {
   const hasLines = creditLines.length > 0;
   const hasUtilized = totalUtilized > 0;
   const isConnected = status === 'connected' && wallet;
+  const [density, setDensity] = useState<DashboardDensity>('comfortable');
+
+  useEffect(() => {
+    if (wallet?.publicKey) {
+      setDensity(getDashboardDensity(wallet.publicKey));
+    } else {
+      setDensity('comfortable');
+    }
+  }, [wallet?.publicKey]);
+
+  const handleDensityToggle = () => {
+    const nextDensity: DashboardDensity = density === 'comfortable' ? 'compact' : 'comfortable';
+    if (wallet?.publicKey) {
+      setDashboardDensity(wallet.publicKey, nextDensity);
+    }
+    setDensity(nextDensity);
+  };
+
+  const densityToggleLabel = density === 'comfortable' ? 'Comfortable' : 'Compact';
 
   // Copy wallet address to clipboard
   const copyAddress = () => {
@@ -214,7 +234,7 @@ export function Dashboard() {
 
   if (!hasLines) {
     return (
-      <>
+      <div className="dashboard-page" data-density={density}>
         {/* Header */}
         <div className="dashboard-header">
           <div>
@@ -223,6 +243,15 @@ export function Dashboard() {
           </div>
           {isConnected && (
             <div className="wallet-info">
+              <button
+                className="density-toggle"
+                type="button"
+                onClick={handleDensityToggle}
+                aria-pressed={density === 'compact'}
+                aria-label={`Dashboard density is ${densityToggleLabel}. Press to toggle.`}
+              >
+                {densityToggleLabel}
+              </button>
               <button className="wallet-address-chip" onClick={copyAddress}>
                 {truncAddr}
                 {copied && <span className="copy-feedback">✓ Copied</span>}
@@ -243,14 +272,14 @@ export function Dashboard() {
             🚀 Request Credit Evaluation
           </button>
         </div>
-      </>
+      </div>
     );
   }
 
   // ─── Main Dashboard ──────────────────────────────────────────────────────
 
   return (
-    <>
+    <div className="dashboard-page" data-density={density}>
       {/* Header */}
       <div className="dashboard-header">
         <div>
@@ -259,6 +288,15 @@ export function Dashboard() {
         </div>
         {isConnected && (
           <div className="wallet-info">
+            <button
+              className="density-toggle"
+              type="button"
+              onClick={handleDensityToggle}
+              aria-pressed={density === 'compact'}
+              aria-label={`Dashboard density is ${densityToggleLabel}. Press to toggle.`}
+            >
+              {densityToggleLabel}
+            </button>
             <button className="wallet-address-chip" onClick={copyAddress}>
               {truncAddr}
               {copied && <span className="copy-feedback">✓ Copied</span>}
@@ -494,6 +532,6 @@ export function Dashboard() {
           )}
         </div>
       </div>
-    </>
+    </div>
   );
 }
