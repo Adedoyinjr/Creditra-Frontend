@@ -2,12 +2,18 @@ import React, { useEffect, useRef, useState } from 'react';
 import { AlertCircle, AlertTriangle, CheckCircle, Info } from 'lucide-react';
 import { useFocusTrap } from '../hooks/useFocusTrap';
 import { formatMoney, getRepayAmountValidation, requiresRepayConfirmation } from '../utils/amountValidation';
+import {
+  computeFullPayoffAmount,
+  computeMonthlyAccruedInterest,
+  formatAmountInputValue,
+} from '../utils/currency';
 import { InlineHelpOverlay } from './InlineHelpOverlay';
 import { PendingButton } from './PendingButton';
 import {
   TypedAmountConfirmField,
   isTypedAmountMatch,
 } from './TypedAmountConfirm';
+import './RepayModal.css';
 
 interface RepaymentCreditLine {
   id: string;
@@ -103,6 +109,9 @@ export function RepayModal({
   });
   const [amountStr, setAmountStr] = useState('');
   const [confirmAmountStr, setConfirmAmountStr] = useState('');
+  const [isRepayAllLocked, setIsRepayAllLocked] = useState(false);
+  const [repayAllLockAnnouncement, setRepayAllLockAnnouncement] = useState('');
+  const amountInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (step === 'review') {
@@ -110,9 +119,13 @@ export function RepayModal({
     }
   }, [step]);
 
-  const totalDue = creditLine.utilized;
-  const accruedInterestEstimate = (creditLine.utilized * (creditLine.apr / 100)) / 12;
-  const validation = getRepayAmountValidation(amountStr, totalDue, walletBalance);
+  const principalBalance = creditLine.utilized;
+  const accruedInterest = computeMonthlyAccruedInterest(
+    principalBalance,
+    creditLine.apr,
+  );
+  const fullPayoff = computeFullPayoffAmount(principalBalance, creditLine.apr);
+  const validation = getRepayAmountValidation(amountStr, fullPayoff, walletBalance);
   const amount = validation.amount;
   const isInvalid = !validation.isValid;
   const repayAmountHintId = 'repay-amount-hint';
@@ -137,9 +150,36 @@ export function RepayModal({
   const isConfirmDisabled = needsConfirm && !isConfirmMatch;
 
   const handlePercent = (pct: number) => {
+    setIsRepayAllLocked(false);
+    setRepayAllLockAnnouncement('');
     let target = (validation.maxRepayAmount * pct) / 100;
     if (target > walletBalance) target = walletBalance;
     setAmountStr(target.toFixed(2));
+  };
+
+  const handleRepayAll = () => {
+    const payoffValue = formatAmountInputValue(fullPayoff);
+    setAmountStr(payoffValue);
+    setIsRepayAllLocked(true);
+    setRepayAllLockAnnouncement(
+      `Repay all selected. Amount locked at ${fmt(fullPayoff)} including accrued interest. Press Edit to change.`,
+    );
+  };
+
+  const handleUnlockRepayAll = () => {
+    setIsRepayAllLocked(false);
+    setRepayAllLockAnnouncement(
+      'Amount unlocked. You can edit the repayment amount.',
+    );
+    requestAnimationFrame(() => {
+      amountInputRef.current?.focus();
+    });
+  };
+
+  const handleAmountChange = (value: string) => {
+    setIsRepayAllLocked(false);
+    setRepayAllLockAnnouncement('');
+    setAmountStr(value);
   };
 
   const handleReview = () => {
@@ -211,11 +251,11 @@ export function RepayModal({
               </p>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
                 <p style={{ margin: 0, fontSize: '2rem', fontWeight: 700, color: COLOR.danger, lineHeight: 1 }}>
-                  {fmt(totalDue)}
+                  {fmt(principalBalance)}
                 </p>
                 <div style={{ textAlign: 'right' }}>
                   <p style={{ margin: 0, fontSize: '0.75rem', color: COLOR.muted }}>
-                    Includes {fmt(accruedInterestEstimate)}
+                    Includes {fmt(accruedInterest)}
                   </p>
                   <p style={{ margin: 0, fontSize: '0.75rem', color: COLOR.muted }}>
                     accrued interest est.
@@ -243,31 +283,69 @@ export function RepayModal({
                 ))}
               </div>
 
-              <div style={{ position: 'relative' }}>
-                <span style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', fontSize: '1.25rem', color: COLOR.muted }} aria-hidden="true">$</span>
-                <input
-                  id="repay-amount-input"
-                  type="number"
-                  value={amountStr}
-                  onChange={(e) => setAmountStr(e.target.value)}
-                  placeholder="0.00"
-                  aria-invalid={validation.feedback.severity === 'danger'}
-                  aria-describedby={describedBy}
-                  className="repay-modal-input"
-                  style={{
-                    width: '100%',
-                    background: COLOR.bg,
-                    border: `1px solid ${validation.feedback.severity === 'danger' ? COLOR.danger : validation.feedback.severity === 'warning' ? COLOR.warning : amount > 0 ? COLOR.accent : COLOR.border}`,
-                    borderRadius: 8,
-                    padding: '0.75rem 1rem 0.75rem 2rem',
-                    color: COLOR.text,
-                    fontSize: '1.25rem',
-                    fontWeight: 500,
-                    boxShadow: amount > 0 && validation.feedback.severity !== 'danger' ? '0 0 0 2px rgba(88,166,255,0.1)' : 'none',
-                    transition: 'all 0.2s',
-                  }}
-                />
+              <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'stretch' }}>
+                <div style={{ position: 'relative', flex: 1 }}>
+                  <span style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', fontSize: '1.25rem', color: COLOR.muted }} aria-hidden="true">$</span>
+                  <input
+                    ref={amountInputRef}
+                    id="repay-amount-input"
+                    data-testid="repay-amount-input"
+                    type="number"
+                    value={amountStr}
+                    onChange={(e) => handleAmountChange(e.target.value)}
+                    readOnly={isRepayAllLocked}
+                    aria-readonly={isRepayAllLocked}
+                    placeholder="0.00"
+                    aria-invalid={validation.feedback.severity === 'danger'}
+                    aria-describedby={`${describedBy}${isRepayAllLocked ? ' repay-all-lock-status' : ''}`}
+                    className={`repay-modal-input${isRepayAllLocked ? ' repay-modal-input--locked' : ''}`}
+                    style={{
+                      width: '100%',
+                      background: COLOR.bg,
+                      border: `1px solid ${isRepayAllLocked ? COLOR.accent : validation.feedback.severity === 'danger' ? COLOR.danger : validation.feedback.severity === 'warning' ? COLOR.warning : amount > 0 ? COLOR.accent : COLOR.border}`,
+                      borderRadius: 8,
+                      padding: '0.75rem 1rem 0.75rem 2rem',
+                      color: COLOR.text,
+                      fontSize: '1.25rem',
+                      fontWeight: 500,
+                      boxShadow: amount > 0 && validation.feedback.severity !== 'danger' && !isRepayAllLocked ? '0 0 0 2px rgba(88,166,255,0.1)' : 'none',
+                      transition: 'all 0.2s',
+                    }}
+                  />
+                </div>
+                {isRepayAllLocked ? (
+                  <button
+                    type="button"
+                    className="repay-modal-edit-btn"
+                    onClick={handleUnlockRepayAll}
+                    aria-label="Unlock and edit amount"
+                    data-testid="repay-all-edit"
+                  >
+                    Edit
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    className="repay-modal-repay-all-btn"
+                    onClick={handleRepayAll}
+                    disabled={fullPayoff <= 0}
+                    aria-label={`Repay all ${fmt(fullPayoff)} including accrued interest`}
+                    data-testid="repay-all-shortcut"
+                  >
+                    Repay all
+                  </button>
+                )}
               </div>
+              <span
+                id="repay-all-lock-status"
+                className="sr-only"
+                role="status"
+                aria-live="polite"
+                aria-atomic="true"
+                data-testid="repay-all-lock-announcement"
+              >
+                {repayAllLockAnnouncement}
+              </span>
               <div id={repayAmountConstraintsId} style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: '0.5rem', marginBottom: '0.75rem' }}>
                 <div style={{ background: COLOR.bg, border: `1px solid ${COLOR.border}`, borderRadius: 8, padding: '0.65rem 0.75rem' }}>
                   <p style={{ margin: '0 0 0.2rem', fontSize: '0.68rem', color: COLOR.muted, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Minimum repayment</p>
