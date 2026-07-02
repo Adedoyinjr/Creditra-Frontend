@@ -1,22 +1,29 @@
-import { useEffect, useState } from 'react';
+/**
+ * NotificationCenter - 6-second undo toast support for mark-all-read and clear-all
+ */
+import { useCallback, useRef, useState } from 'react';
 import { useNotifications } from '../../context/NotificationContext';
+import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
-import type { NotificationCategory } from '../../types/notification';
+import { useInertBackdrop } from '../../hooks/useInertBackdrop';
+import type { Notification, NotificationCategory } from '../../types/notification';
 import { CATEGORY_ICON, TYPE_COLOR, TYPE_ICON } from './notificationIcons';
 import './NotificationCenter.css';
 
+const PANEL_ID = 'notification-center';
+
 const CATEGORIES: { value: NotificationCategory | 'all'; label: string }[] = [
-  { value: 'all', label: 'All' },
+  { value: 'all',         label: 'All' },
   { value: 'transaction', label: 'Transactions' },
   { value: 'credit_line', label: 'Credit Lines' },
-  { value: 'risk_score', label: 'Risk Score' },
+  { value: 'risk_score',  label: 'Risk Score' },
   { value: 'rate_change', label: 'Rates' },
-  { value: 'system', label: 'System' },
+  { value: 'system',      label: 'System' },
 ];
 
-const relativeTime = (iso: string) => {
+const relativeTime = (iso: string): string => {
   const diff = Date.now() - new Date(iso).getTime();
-  const mins = Math.floor(diff / 60000);
+  const mins = Math.floor(diff / 60_000);
   if (mins < 1) return 'just now';
   if (mins < 60) return `${mins}m ago`;
   const hrs = Math.floor(mins / 60);
@@ -24,7 +31,11 @@ const relativeTime = (iso: string) => {
   return `${Math.floor(hrs / 24)}d ago`;
 };
 
-export function NotificationCenter() {
+interface NotificationCenterProps {
+  triggerRef?: React.RefObject<HTMLElement | null>;
+}
+
+export function NotificationCenter({ triggerRef }: NotificationCenterProps = {}) {
   const {
     isPanelOpen,
     closePanel,
@@ -32,129 +43,202 @@ export function NotificationCenter() {
     unreadCount,
     markAsRead,
     markAllAsRead,
+    undoRead,
     clearAll,
+    restoreNotifications,
     filterByCategory,
     preferences,
     updatePreferences,
+    addToast,
+    dismissToast,
   } = useNotifications();
 
   const [activeFilter, setActiveFilter] = useState<NotificationCategory | 'all'>('all');
   const [showPrefs, setShowPrefs] = useState(false);
-  const panelRef = useFocusTrap({ isActive: isPanelOpen });
+
+  const panelRef = useFocusTrap({
+    isActive: isPanelOpen,
+    triggerRef,
+    onEscape: closePanel,
+  });
+
+  useBodyScrollLock({ isLocked: isPanelOpen });
+  useInertBackdrop({ isInert: isPanelOpen, modalId: PANEL_ID });
 
   const filtered = filterByCategory(activeFilter);
+  const dragStartY = useRef<number | null>(null);
+  const panelElRef = useRef<HTMLDivElement | null>(null);
 
-  useEffect(() => {
-    if (!isPanelOpen) return;
+  const handleDragStart = (e: React.PointerEvent) => {
+    dragStartY.current = e.clientY;
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+  };
 
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        closePanel();
-      }
-    };
+  const handleDragMove = (e: React.PointerEvent) => {
+    if (dragStartY.current === null) return;
+    const delta = e.clientY - dragStartY.current;
+    if (delta < 0) return;
+    if (panelElRef.current) {
+      panelElRef.current.style.transform = `translateY(${delta}px)`;
+    }
+  };
 
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [closePanel, isPanelOpen]);
+  const handleDragEnd = (e: React.PointerEvent) => {
+    if (dragStartY.current === null) return;
+    const delta = e.clientY - dragStartY.current;
+    dragStartY.current = null;
+    if (panelElRef.current) {
+      panelElRef.current.style.transform = '';
+    }
+    if (delta > 80) {
+      closePanel();
+    }
+  };
 
-  useEffect(() => {
-    if (!isPanelOpen) return;
+  const setRefs = (el: HTMLDivElement | null) => {
+    panelElRef.current = el;
+    (panelRef as React.MutableRefObject<HTMLDivElement | null>).current = el;
+  };
 
-    const mediaQuery = window.matchMedia('(max-width: 640px)');
-    const previousOverflow = document.body.style.overflow;
+  const handleMarkAllAsRead = useCallback(() => {
+    const prior = [...notifications];
+    const toastId = addToast({
+      type: 'success',
+      title: 'Marked all as read',
+      message: `${unreadCount} notification${unreadCount !== 1 ? 's' : ''}`,
+      action: {
+        label: 'Undo',
+        onClick: () => {
+          undoRead(prior.map(n => n.id));
+          dismissToast(toastId);
+        },
+      },
+      duration: 6000,
+      saveToHistory: false,
+    });
+    markAllAsRead();
+  }, [notifications, unreadCount, addToast, dismissToast, undoRead, markAllAsRead]);
 
-    const syncBodyLock = () => {
-      document.body.style.overflow = mediaQuery.matches ? 'hidden' : previousOverflow;
-    };
-
-    // The mobile sheet occupies the viewport, so prevent background scroll bleed.
-    syncBodyLock();
-    mediaQuery.addEventListener('change', syncBodyLock);
-
-    return () => {
-      mediaQuery.removeEventListener('change', syncBodyLock);
-      document.body.style.overflow = previousOverflow;
-    };
-  }, [isPanelOpen]);
+  const handleClearAll = useCallback(() => {
+    const prior = [...notifications];
+    const toastId = addToast({
+      type: 'success',
+      title: 'Cleared all notifications',
+      message: `${notifications.length} notification${notifications.length !== 1 ? 's' : ''}`,
+      action: {
+        label: 'Undo',
+        onClick: () => {
+          restoreNotifications(prior);
+          dismissToast(toastId);
+        },
+      },
+      duration: 6000,
+      saveToHistory: false,
+    });
+    clearAll();
+  }, [notifications, addToast, dismissToast, restoreNotifications, clearAll]);
 
   return (
     <>
-      {/* Backdrop */}
       {isPanelOpen && (
-        <div className="nc-backdrop" onClick={closePanel} aria-hidden="true" />
+        <div
+          className="nc-backdrop"
+          onClick={closePanel}
+          aria-hidden="true"
+        />
       )}
 
-      {/* Slide-in panel */}
       <div
-        ref={panelRef}
-        id="notification-center"
+        ref={setRefs}
+        id={PANEL_ID}
         className={`nc-panel ${isPanelOpen ? 'nc-panel-open' : ''}`}
         role="dialog"
         aria-modal={isPanelOpen}
         aria-label="Notification center"
         aria-hidden={!isPanelOpen}
+        onKeyDown={e => { if (e.key === 'Escape') closePanel(); }}
       >
-        {/* Header */}
+        <div
+          className="nc-drag-handle-area"
+          onPointerDown={handleDragStart}
+          onPointerMove={handleDragMove}
+          onPointerUp={handleDragEnd}
+          onPointerCancel={handleDragEnd}
+          aria-hidden="true"
+        >
+          <div className="nc-drag-handle" />
+        </div>
+
         <div className="nc-header">
           <div className="nc-header-left">
             <span className="nc-title">Notifications</span>
             {unreadCount > 0 && (
-              <span className="nc-badge">{unreadCount}</span>
+              <span className="nc-badge" aria-label={`${unreadCount} unread`}>
+                {unreadCount}
+              </span>
             )}
           </div>
           <div className="nc-header-actions">
             <button
               className="nc-icon-btn"
               onClick={() => setShowPrefs(p => !p)}
-              title="Preferences"
               aria-label="Notification preferences"
               aria-expanded={showPrefs}
+              aria-controls="nc-prefs-panel"
             >
               ⚙
             </button>
             <button
               className="nc-text-btn"
-              onClick={markAllAsRead}
+              onClick={handleMarkAllAsRead}
               disabled={unreadCount === 0}
               aria-label={`Mark all notifications as read${unreadCount > 0 ? `, ${unreadCount} unread` : ''}`}
             >
               Mark all read
             </button>
             {notifications.length > 0 && (
-              <button className="nc-text-btn nc-text-btn-danger" onClick={clearAll}>
+              <button
+                className="nc-text-btn nc-text-btn-danger"
+                onClick={handleClearAll}
+                aria-label="Clear all notifications"
+              >
                 Clear all
               </button>
             )}
-            <button className="nc-close-btn" onClick={closePanel} aria-label="Close">
+            <button
+              className="nc-close-btn"
+              onClick={closePanel}
+              aria-label="Close notification center"
+            >
               ×
             </button>
           </div>
         </div>
 
-        {/* Preferences panel */}
-        {showPrefs && (
-          <div className="nc-prefs">
-            <p className="nc-prefs-title">Notification Preferences</p>
-            {CATEGORIES.filter(c => c.value !== 'all').map(cat => (
-              <label key={cat.value} className="nc-pref-row">
-                <span className="nc-pref-label">
-                  {CATEGORY_ICON[cat.value as NotificationCategory]} {cat.label}
-                </span>
-                <input
-                  type="checkbox"
-                  className="nc-pref-toggle"
-                  checked={preferences[cat.value as NotificationCategory]}
-                  onChange={e =>
-                    updatePreferences({ [cat.value]: e.target.checked })
-                  }
-                />
-              </label>
-            ))}
-          </div>
-        )}
+        <div
+          id="nc-prefs-panel"
+          className={`nc-prefs ${showPrefs ? 'nc-prefs-open' : ''}`}
+          aria-hidden={!showPrefs}
+        >
+          <p className="nc-prefs-title">Notification Preferences</p>
+          {CATEGORIES.filter(c => c.value !== 'all').map(cat => (
+            <label key={cat.value} className="nc-pref-row">
+              <span className="nc-pref-label">
+                {CATEGORY_ICON[cat.value as NotificationCategory]} {cat.label}
+              </span>
+              <input
+                type="checkbox"
+                className="nc-pref-toggle"
+                checked={preferences[cat.value as NotificationCategory]}
+                onChange={e =>
+                  updatePreferences({ [cat.value]: e.target.checked })
+                }
+              />
+            </label>
+          ))}
+        </div>
 
-        {/* Filter tabs */}
-        <div className="nc-filters" role="tablist">
+        <div className="nc-filters" role="tablist" aria-label="Filter notifications by category">
           {CATEGORIES.map(cat => (
             <button
               key={cat.value}
@@ -168,32 +252,44 @@ export function NotificationCenter() {
           ))}
         </div>
 
-        {/* Notification list */}
-        <div className="nc-list">
+        <div
+          className="nc-list"
+          role="feed"
+          aria-label={`${filtered.length} notification${filtered.length !== 1 ? 's' : ''}`}
+          aria-busy="false"
+        >
           {filtered.length === 0 ? (
-            <div className="nc-empty">
-              <span className="nc-empty-icon">🔔</span>
+            <div className="nc-empty" role="status">
+              <span className="nc-empty-icon" aria-hidden="true">🔔</span>
               <p>No notifications</p>
             </div>
           ) : (
             filtered.map(n => {
               const colors = TYPE_COLOR[n.type];
               return (
-                <div
+                <article
                   key={n.id}
                   className={`nc-item ${!n.read ? 'nc-item-unread' : ''}`}
+                  aria-label={`${n.title}${!n.read ? ', unread' : ''}`}
                   onClick={() => markAsRead(n.id)}
                 >
                   <span
                     className="nc-item-icon"
                     style={{ background: colors.bg, color: colors.icon }}
+                    aria-hidden="true"
                   >
                     {TYPE_ICON[n.type]}
                   </span>
                   <div className="nc-item-body">
                     <div className="nc-item-header">
                       <span className="nc-item-title">{n.title}</span>
-                      <span className="nc-item-time">{relativeTime(n.timestamp)}</span>
+                      <time
+                        className="nc-item-time"
+                        dateTime={n.timestamp}
+                        aria-label={`Received ${relativeTime(n.timestamp)}`}
+                      >
+                        {relativeTime(n.timestamp)}
+                      </time>
                     </div>
                     <p className="nc-item-message">{n.message}</p>
                     {n.action && (
@@ -201,13 +297,16 @@ export function NotificationCenter() {
                         className="nc-item-action"
                         style={{ color: colors.text }}
                         onClick={e => { e.stopPropagation(); n.action!.onClick(); }}
+                        aria-label={`${n.action.label} for notification: ${n.title}`}
                       >
                         {n.action.label} →
                       </button>
                     )}
                   </div>
-                  {!n.read && <span className="nc-unread-dot" />}
-                </div>
+                  {!n.read && (
+                    <span className="nc-unread-dot" aria-hidden="true" />
+                  )}
+                </article>
               );
             })
           )}

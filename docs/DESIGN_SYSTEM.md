@@ -97,6 +97,20 @@ Line-height rhythm tokens drive vertical density:
 Font stack: `system-ui, -apple-system, sans-serif` — declared on `body`. No web font is
 loaded; this keeps CLS at zero and removes a third-party request.
 
+#### Utility: tabular numerals
+
+```css
+.num-tabular { font-variant-numeric: tabular-nums; }
+```
+
+Apply to any cell that displays money, percentages, or APR so digit widths are fixed and
+columns stay visually stable as values change. Currently used on:
+
+- `TransactionHistory` — `tx-amount` column cells, `th-stat-value` summary cards, and the
+  Amount row in the expanded detail panel.
+- `CreditLines` — `cl-metric-value` (Limit / Utilized / Available), utilization percentage,
+  APR, and Risk Score cells.
+
 ### Motion
 
 Animations live in component CSS files; durations target 150–300 ms easing
@@ -161,6 +175,7 @@ Every component below lives in `src/components/`.
 | --- | --- |
 | `CreditLineSelector` | First step of the draw wizard |
 | `CreditLineSummaryBlock` | Card summarising a single credit line |
+| `CreditLineDetailDrawer` | Slide-out sheet summarizing credit line details, trend, and transactions |
 | `PreviewSection` | Pre-confirmation preview of a draw |
 | `ConfirmationStep` | Final confirm step with APR + total cost |
 
@@ -176,7 +191,7 @@ Every component below lives in `src/components/`.
 | Component | Purpose |
 | --- | --- |
 | `NotificationBell` | Header trigger with unread badge; 44×44 px target |
-| `NotificationCenter` | Side panel with category filters, mark-read, clear-all |
+| `NotificationCenter` | Side panel (≥768px) or bottom sheet with 50%/90% snap points (&lt;768px); category filters, mark-read, clear-all |
 | `ToastContainer` | Stack of transient toasts |
 | `BannerAlert` | Page-level alert with action + dismiss |
 | `notificationIcons.tsx` | Per-type icon set |

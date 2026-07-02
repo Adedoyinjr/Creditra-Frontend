@@ -3,6 +3,9 @@ import { Link, useNavigate } from 'react-router-dom';
 import { AccessibleTooltip } from '@/components/AccessibleTooltip';
 import { FormMessage } from '@/components/FormMessage';
 import { PendingButton } from '@/components/PendingButton';
+import { Skeleton } from '@/components/Skeleton';
+import { useReducedMotion } from '@/context/ReducedMotionContext';
+import { FileUploadZone } from '@/components/FileUploadZone';
 
 type Step = 1 | 2 | 3 | 4 | 5;
 type EvalState = 'idle' | 'running' | 'success' | 'rejected' | 'error';
@@ -76,12 +79,13 @@ interface EvalResult {
 }
 
 export function RequestEvaluation() {
+  const { isReducedMotionActive } = useReducedMotion();
   const [step, setStep] = useState<Step>(1);
   const [evalState, setEvalState] = useState<EvalState>('idle');
   const [progress, setProgress] = useState(0);
   const [eta, setEta] = useState(45); // seconds
   const [result, setResult] = useState<EvalResult | null>(null);
-  const [revenueFile, setRevenueFile] = useState<File | null>(null);
+  const [revenueFiles, setRevenueFiles] = useState<File[]>([]);
   const [hasIdentityBond, setHasIdentityBond] = useState(false);
   const [agreeTermsPreviewed, setAgreeTermsPreviewed] = useState(false);
   const timerRef = useRef<number | null>(null);
@@ -223,13 +227,9 @@ export function RequestEvaluation() {
                     Revenue attestation (PDF/CSV)
                     <AccessibleTooltip label="Upload recent revenue statements or attestations to potentially improve your limit and APR." />
                   </span>
-                  <input
-                    type="file"
-                    onChange={e => setRevenueFile(e.target.files?.[0] || null)}
-                    style={{ ...inputStyle, padding: '0.35rem 0.5rem' }}
-                    accept=".pdf,.csv"
+                  <FileUploadZone 
+                    onFilesUploaded={(files) => setRevenueFiles(files)} 
                   />
-                  {revenueFile && <span style={{ fontSize: '0.8rem', color: COLOR.muted }}>Attached: {revenueFile.name}</span>}
                 </label>
                 <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <input
@@ -244,9 +244,10 @@ export function RequestEvaluation() {
                 </label>
               </div>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <button style={btn.ghost} onClick={() => { setRevenueFile(null); setHasIdentityBond(false); }}>Clear</button>
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
+             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+               <button style={btn.ghost} onClick={() => { setRevenueFiles([]); setHasIdentityBond(false); }}>Clear</button>
+               <div style={{ display: 'flex', gap: '0.5rem' }}>
+
                 <button style={btn.secondary} onClick={() => setStep(1)}>Back</button>
                 <PendingButton
                   pending={evalState === 'running'}
@@ -262,31 +263,32 @@ export function RequestEvaluation() {
         )}
 
         {step === 3 && (
-          <div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <div style={{ width: 20, height: 20, border: `2px solid ${COLOR.border}`, borderTopColor: COLOR.accent, borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
-                <span style={{ color: COLOR.text, fontWeight: 600 }}>Evaluating wallet activity…</span>
-              </div>
-              <div style={{ height: 8, background: COLOR.border, borderRadius: 6, overflow: 'hidden' }}>
-                <div style={{ height: '100%', width: `${progress}%`, background: COLOR.accent, transition: 'width 250ms' }} />
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', color: COLOR.muted, fontSize: '0.85rem' }}>
-                <span>{progress}% complete</span>
-                <span>≈ {eta}s remaining</span>
-              </div>
-              <ul style={{ margin: 0, paddingLeft: '1.2rem', color: COLOR.muted }}>
-                <li>Scanning wallet age and transaction history</li>
-                <li>Analyzing risk signals and repayment behavior</li>
-                <li>Comparing to peer cohorts and market conditions</li>
-              </ul>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', marginTop: '1rem' }}>
-              <button style={btn.danger} onClick={cancelEvaluation}>Cancel Evaluation</button>
-            </div>
-            <style>{`@keyframes spin { from { transform: rotate(0); } to { transform: rotate(360deg); } }`}</style>
-          </div>
-        )}
+  <div>
+    {/* Content-aware skeletons mimicking the result card */}
+    <div
+      style={{
+        display: 'grid',
+        gap: '0.75rem',
+        opacity: evalState === 'running' ? 1 : 0,
+        transition: isReducedMotionActive ? 'none' : 'opacity 300ms ease',
+      }}
+    >
+      {/* Title placeholder */}
+      <Skeleton width="30%" height="1.5rem" />
+      {/* Grid of metric placeholders */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '0.75rem' }}>
+        <Skeleton height="3rem" />
+        <Skeleton height="3rem" />
+        <Skeleton height="3rem" />
+      </div>
+      {/* Footer placeholder */}
+      <Skeleton width="80%" height="2rem" />
+    </div>
+    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', marginTop: '1rem' }}>
+      <button style={btn.danger} onClick={cancelEvaluation}>Cancel Evaluation</button>
+    </div>
+  </div>
+)}
 
         {step === 4 && (
           <div>

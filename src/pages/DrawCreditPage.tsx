@@ -10,6 +10,8 @@ import { TransactionStatus } from "@/components/TransactionStatus";
 import { InlineHelpOverlay } from "@/components/InlineHelpOverlay";
 import { CreditLine, DrawStep, Transaction } from "@/types/draw-credit.types";
 import { mockCreditLines } from "@/lib/draw-credit-mock-data";
+import { WhyApr } from "@/components/WhyApr";
+import { DrawSummaryBar } from "@/components/DrawSummaryBar";
 
 const drawSteps = [
   { id: "select", label: "Select line" },
@@ -33,6 +35,8 @@ export default function DrawCreditPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isHelpOpen, setIsHelpOpen] = useState(false);
   const helpTriggerRef = useRef<HTMLButtonElement>(null);
+  const [isWhyAprOpen, setIsWhyAprOpen] = useState(false);
+  const whyAprTriggerRef = useRef<HTMLButtonElement>(null);
   const [transaction, setTransaction] = useState<Transaction | null>(
     routeTransaction ?? null,
   );
@@ -104,7 +108,7 @@ export default function DrawCreditPage() {
   );
 
   return (
-    <main className="min-h-screen bg-background px-4 py-6 sm:py-8">
+    <main className="min-h-screen bg-background px-4 pb-24 pt-6 sm:pb-28 sm:pt-8">
       <div className="mx-auto w-full max-w-4xl space-y-5">
         {step !== "status" && (
           <header className="card" aria-label="Draw credit progress">
@@ -160,13 +164,22 @@ export default function DrawCreditPage() {
         {step === "amount" && selectedCreditLine && (
           <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(280px,360px)] lg:items-start">
             <section className="card" style={{ margin: 0 }}>
-              <AmountInput
-                creditLine={selectedCreditLine}
-                onAmountChange={setAmount}
-                onNext={handleAmountNext}
-                onBack={handleBack}
-              />
-            </section>
+  <AmountInput
+    creditLine={selectedCreditLine}
+    onAmountChange={setAmount}
+    onNext={handleAmountNext}
+    onBack={handleBack}
+  />
+  {/* Drawing limit indicator */}
+  {selectedCreditLine && (
+    <div className="mt-6 border-t border-border pt-6">
+      <DrawingLimit
+        drawnAmount={selectedCreditLine.drawnAmount}
+        totalLimit={selectedCreditLine.limit}
+      />
+    </div>
+  )}
+</section>
             <aside className="card lg:sticky lg:top-6" style={{ margin: 0 }}>
               <PreviewSection creditLine={selectedCreditLine} amount={amount} />
             </aside>
@@ -219,14 +232,26 @@ export default function DrawCreditPage() {
 
         {step !== "status" && (
           <div className="flex flex-col gap-2 text-center text-sm text-muted sm:flex-row sm:items-center sm:justify-between sm:text-left">
-            <button
-              ref={helpTriggerRef}
-              type="button"
-              onClick={() => setIsHelpOpen(true)}
-              className="inline-flex min-h-11 items-center justify-center rounded-md px-3 font-semibold text-blue-300 underline-offset-4 transition-colors hover:text-blue-200 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-400 sm:justify-start"
-            >
-              I need help
-            </button>
+            <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4">
+              <button
+                ref={helpTriggerRef}
+                type="button"
+                onClick={() => setIsHelpOpen(true)}
+                className="inline-flex min-h-11 items-center justify-center rounded-md px-3 font-semibold text-blue-300 underline-offset-4 transition-colors hover:text-blue-200 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-400 sm:justify-start"
+              >
+                I need help
+              </button>
+              {(step === "amount" || step === "confirm") && (
+                <button
+                  ref={whyAprTriggerRef}
+                  type="button"
+                  onClick={() => setIsWhyAprOpen(true)}
+                  className="inline-flex min-h-11 items-center justify-center rounded-md px-3 font-semibold text-blue-300 underline-offset-4 transition-colors hover:text-blue-200 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-400 sm:justify-start"
+                >
+                  Why this APR?
+                </button>
+              )}
+            </div>
             <button
               type="button"
               onClick={handleCancel}
@@ -241,6 +266,24 @@ export default function DrawCreditPage() {
         isOpen={isHelpOpen}
         onClose={() => setIsHelpOpen(false)}
         triggerRef={helpTriggerRef}
+      />
+      <WhyApr
+        isOpen={isWhyAprOpen}
+        onClose={() => setIsWhyAprOpen(false)}
+        triggerRef={whyAprTriggerRef}
+      />
+      {/*
+        Sticky bottom summary bar — rendered at the page root so it
+        always anchors to the viewport bottom regardless of which step
+        card is currently mounted. The bar self-hides on the `select`
+        and `status` steps; see DrawSummaryBar.tsx for details. The
+        pb-32 / sm:pb-36 padding on <main> ensures content is never
+        occluded by the fixed-position bar.
+      */}
+      <DrawSummaryBar
+        creditLine={selectedCreditLine}
+        amount={amount}
+        step={step}
       />
     </main>
   );

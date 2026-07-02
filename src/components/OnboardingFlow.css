@@ -212,6 +212,7 @@
 @media (prefers-reduced-motion: reduce) {
   .onboarding-overlay,
   .onboarding-content,
+  .onboarding-step,
   .step-icon,
   .indicator,
   .primary-btn,
@@ -221,3 +222,17 @@
     transform: none !important;
   }
 }
+
+/* Reduced Motion Override */
+[data-motion="reduced"] .onboarding-overlay,
+[data-motion="reduced"] .onboarding-content,
+[data-motion="reduced"] .onboarding-step,
+[data-motion="reduced"] .step-icon,
+[data-motion="reduced"] .indicator,
+[data-motion="reduced"] .primary-btn,
+[data-motion="reduced"] .secondary-btn {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+  }
+
