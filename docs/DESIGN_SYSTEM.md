@@ -175,7 +175,7 @@ Every component below lives in `src/components/`.
 | --- | --- |
 | `CreditLineSelector` | First step of the draw wizard |
 | `CreditLineSummaryBlock` | Card summarising a single credit line |
-| `AprHistoryChart` | Compact 30D / 90D / 365D SVG APR trend chart for a single credit line; color uses semantic success/error tokens so dark mode and high-contrast themes stay consistent |
+| `CreditLineDetailDrawer` | Slide-out sheet summarizing credit line details, trend, and transactions |
 | `PreviewSection` | Pre-confirmation preview of a draw |
 | `ConfirmationStep` | Final confirm step with APR + total cost |
 

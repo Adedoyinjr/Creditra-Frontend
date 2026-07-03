@@ -2,8 +2,14 @@ import { useState, useMemo, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { AlertCircle, AlertTriangle, CheckCircle, Info, ArrowLeft } from 'lucide-react';
 import { PayoffProjection } from '@/components/PayoffProjection';
+import { RepaymentVisualizer } from '@/components/RepaymentVisualizer';
 import { InlineHelpOverlay } from '@/components/InlineHelpOverlay';
-import { formatMoney, getRepayAmountValidation } from '@/utils/amountValidation';
+import { formatMoney, getRepayAmountValidation, requiresRepayConfirmation } from '@/utils/amountValidation';
+import { suggestRepayAmount } from '@/utils/suggestRepay';
+import {
+  TypedAmountConfirmField,
+  isTypedAmountMatch,
+} from '@/components/TypedAmountConfirm';
 import type { CreditLine } from '@/types/creditLine';
 import { MOCK_CREDIT_LINES } from '@/data/mockData';
 
@@ -44,6 +50,7 @@ export default function RepayPage() {
   const [step, setStep] = useState<RepayStep>('input');
   const [selectedId, setSelectedId] = useState<string>(preselectedId ?? '');
   const [amountStr, setAmountStr] = useState('');
+  const [confirmAmountStr, setConfirmAmountStr] = useState('');
   const [isHelpOpen, setIsHelpOpen] = useState(false);
   const helpTriggerRef = useRef<HTMLButtonElement>(null);
 
@@ -67,9 +74,24 @@ export default function RepayPage() {
     [amountStr, selectedLine, walletBalance],
   );
 
+  const suggestedAmount = useMemo(
+    () =>
+      selectedLine
+        ? suggestRepayAmount(
+            selectedLine.utilized,
+            selectedLine.limit,
+            walletBalance,
+            selectedLine.apr,
+            selectedLine.nextPaymentAmount,
+          )
+        : 0,
+    [selectedLine, walletBalance],
+  );
+
   const amount = validation?.amount ?? 0;
   const isInvalid = !validation?.isValid;
-  const needsConfirm = amount >= 5000;
+  const needsConfirm = requiresRepayConfirmation(amount);
+  const isConfirmDisabled = needsConfirm && !isTypedAmountMatch(confirmAmountStr, amount);
 
   const activeTone = validation
     ? SEVERITY_CONFIG[validation.feedback.severity]
@@ -82,8 +104,16 @@ export default function RepayPage() {
     setAmountStr(target.toFixed(2));
   };
 
+  const handleSmartPay = () => {
+    if (!selectedLine) return;
+    setAmountStr(suggestedAmount.toFixed(2));
+  };
+
   const handleReview = () => {
-    if (!isInvalid && amount > 0) setStep('review');
+    if (!isInvalid && amount > 0) {
+      setConfirmAmountStr('');
+      setStep('review');
+    }
   };
 
   const handleConfirm = () => {
@@ -259,6 +289,14 @@ export default function RepayPage() {
                         {pct === 100 ? 'MAX' : `${pct}%`}
                       </button>
                     ))}
+                    <button
+                      type="button"
+                      onClick={handleSmartPay}
+                      className="flex-1 rounded-md border border-success/30 px-2 py-1.5 text-xs font-medium text-success transition-colors hover:bg-success/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-success"
+                      aria-label={`Smart Pay suggested repayment of ${formatMoney(suggestedAmount)}`}
+                    >
+                      Smart Pay
+                    </button>
                   </div>
 
                   <div className="relative mt-3">
@@ -379,6 +417,18 @@ export default function RepayPage() {
               </aside>
             </div>
 
+            <RepaymentVisualizer
+              principal={selectedLine.utilized}
+              apr={selectedLine.apr}
+              monthlyPayment={
+                selectedLine.nextPaymentAmount ??
+                Math.max(
+                  selectedLine.utilized * 0.025,
+                  selectedLine.utilized * (selectedLine.apr / 100 / 12),
+                )
+              }
+            />
+
             <div className="flex items-center justify-between">
               <button
                 ref={helpTriggerRef}
@@ -437,6 +487,15 @@ export default function RepayPage() {
               nextPaymentAmount={selectedLine.nextPaymentAmount}
             />
 
+            {needsConfirm && (
+              <TypedAmountConfirmField
+                amount={amount}
+                value={confirmAmountStr}
+                onChange={setConfirmAmountStr}
+                idPrefix="repay-page-confirm"
+              />
+            )}
+
             <div className="flex gap-3">
               <button
                 type="button"
@@ -448,7 +507,9 @@ export default function RepayPage() {
               <button
                 type="button"
                 onClick={handleConfirm}
-                className="flex-[2] rounded-lg bg-accent px-4 py-3 text-sm font-semibold text-background transition-all hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+                disabled={isConfirmDisabled}
+                aria-disabled={isConfirmDisabled || undefined}
+                className="flex-[2] rounded-lg bg-accent px-4 py-3 text-sm font-semibold text-background transition-all hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Confirm Repayment
               </button>

@@ -56,41 +56,134 @@ export function isSameDay(iso: string | Date, reference: Date = new Date()): boo
   );
 }
 
-export function startOfDay(reference: Date = new Date()): Date {
-  const date = new Date(reference);
-  date.setHours(0, 0, 0, 0);
-  return date;
+// ─── Countdown helpers ────────────────────────────────────────────────────────
+
+/**
+ * Format a future ISO timestamp as a compact countdown string for inline
+ * chips (e.g. "2h 14m", "3d", "45m"). Omits zero-valued units so the
+ * label stays short. Falls back to "now" when the target is in the past.
+ */
+export function formatCountdown(
+  targetIso: string | Date,
+  now: Date = new Date(),
+): string {
+  const target = targetIso instanceof Date ? targetIso : new Date(targetIso);
+  const diffMs = target.getTime() - now.getTime();
+  if (diffMs <= 0) return 'now';
+
+  const totalSeconds = Math.ceil(diffMs / 1000);
+  const days = Math.floor(totalSeconds / 86400);
+  const hours = Math.floor((totalSeconds % 86400) / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+
+  const parts: string[] = [];
+  if (days > 0) parts.push(`${days}d`);
+  if (hours > 0) parts.push(`${hours}h`);
+  if (minutes > 0 || parts.length === 0) parts.push(`${minutes}m`);
+
+  return parts.join(' ');
 }
 
-export function endOfDay(reference: Date = new Date()): Date {
-  const date = new Date(reference);
-  date.setHours(23, 59, 59, 999);
-  return date;
+/**
+ * Return a full-sentence accessible label for screen readers describing
+ * when the next interest accrual will occur, e.g.
+ * "Next interest in 2 hours 14 minutes". Falls back to
+ * "Interest is accruing now" for past dates.
+ */
+export function getCountdownAriaLabel(
+  targetIso: string | Date,
+  now: Date = new Date(),
+  locale: string = DEFAULT_LOCALE,
+): string {
+  const target = targetIso instanceof Date ? targetIso : new Date(targetIso);
+  const diffMs = target.getTime() - now.getTime();
+
+  if (diffMs <= 0) {
+    return 'Interest is accruing now';
+  }
+
+  const rtf = new Intl.RelativeTimeFormat(locale, { numeric: 'auto' });
+
+  const totalSeconds = Math.ceil(diffMs / 1000);
+  const units: Array<[Intl.RelativeTimeFormatUnit, number]> = [
+    ['day', 86400],
+    ['hour', 3600],
+    ['minute', 60],
+  ];
+
+  for (const [unit, secondsPerUnit] of units) {
+    const value = Math.floor(totalSeconds / secondsPerUnit);
+    if (value > 0 || unit === 'minute') {
+      const formatted = rtf.format(value, unit);
+      const cleaned = formatted.replace(/^in\s+/, '');
+      return `Next interest in ${cleaned}`;
+    }
+  }
+
+  return `Next interest in ${rtf.format(0, 'second')}`;
 }
 
-export function startOfWeek(reference: Date = new Date()): Date {
-  const date = startOfDay(reference);
-  const day = date.getDay();
-  const diff = day === 0 ? -6 : 1 - day;
-  date.setDate(date.getDate() + diff);
-  return date;
-}
+/**
+ * Return a locale-aware relative label for a past timestamp.
+ *
+ * Examples:
+ *   – just now          (< 10 s ago)
+ *   – 3 minutes ago
+ *   – 2 hours ago
+ *   – yesterday
+ *   – Jun 12            (same year, > 1 day)
+ *   – Jun 12, 2024      (different year)
+ *
+ * Uses `Intl.RelativeTimeFormat` for the short-range cases and
+ * `Intl.DateTimeFormat` for anything older than 24 h, so the string
+ * is always locale-correct without a third-party library.
+ */
+export function formatRelative(
+  ts: Date | string | number,
+  now: Date = new Date(),
+  locale: string = DEFAULT_LOCALE,
+): string {
+  const then = ts instanceof Date ? ts : new Date(ts);
+  const diffMs = now.getTime() - then.getTime();
+  const diffSec = Math.round(diffMs / 1000);
 
-export function endOfWeek(reference: Date = new Date()): Date {
-  const date = startOfWeek(reference);
-  date.setDate(date.getDate() + 6);
-  return endOfDay(date);
-}
+  if (diffSec < 10) return 'just now';
 
-export function startOfMonth(reference: Date = new Date()): Date {
-  const date = startOfDay(reference);
-  date.setDate(1);
-  return date;
-}
+  if (diffSec < 60) {
+    return new Intl.RelativeTimeFormat(locale, { numeric: 'auto' }).format(
+      -diffSec,
+      'second',
+    );
+  }
 
-export function endOfMonth(reference: Date = new Date()): Date {
-  const date = startOfMonth(reference);
-  date.setMonth(date.getMonth() + 1);
-  date.setDate(0);
-  return endOfDay(date);
+  const diffMin = Math.round(diffSec / 60);
+  if (diffMin < 60) {
+    return new Intl.RelativeTimeFormat(locale, { numeric: 'auto' }).format(
+      -diffMin,
+      'minute',
+    );
+  }
+
+  const diffHr = Math.round(diffMin / 60);
+  if (diffHr < 24) {
+    return new Intl.RelativeTimeFormat(locale, { numeric: 'auto' }).format(
+      -diffHr,
+      'hour',
+    );
+  }
+
+  if (diffHr < 48) {
+    return new Intl.RelativeTimeFormat(locale, { numeric: 'auto' }).format(
+      -1,
+      'day',
+    );
+  }
+
+  // Older than 48 h → absolute date
+  const sameYear = then.getFullYear() === now.getFullYear();
+  return new Intl.DateTimeFormat(locale, {
+    month: 'short',
+    day: 'numeric',
+    ...(sameYear ? {} : { year: 'numeric' }),
+  }).format(then);
 }

@@ -1,9 +1,12 @@
-import { useMemo, useState, useEffect, useRef } from "react";
+import { useMemo, useState, useEffect, useRef, useCallback } from "react";
 import { Link } from "react-router-dom";
+import ActivityFeed from "../components/ActivityFeed";
 import { CopyToClipboard } from "../components/CopyToClipboard";
 import { StatusBadge } from "../components/StatusBadge";
 import { useWallet } from "../context/WalletContext";
+import { Sparkline } from "../components/Sparkline";
 import { RiskBandsPanel } from "../components/RiskBandsPanel";
+import { WhatsChangedPanel } from "../components/WhatsChangedPanel";
 import { MOCK_CREDIT_LINES } from "../data/mockData";
 import type { Transaction } from "../types/creditLine";
 import {
@@ -11,19 +14,24 @@ import {
   UTIL_COLOR,
   fmt,
   fmtDate,
-  getUtilizationLvl,
   utilizationPct,
   RISK_COLOR,
 } from "../utils/tokens";
 import { readJson, writeJson } from "../utils/storage";
 import "./Dashboard.css";
-import {T Skeleton} from "../components/Skeleton";
+import { Skeleton } from "../components/Skeleton";
 import { NoDataGraph } from "../components/illustrations";
 import CompareLinesPanel from "../components/CompareLinesPanel";
+import { WhatsChangedPanel } from "../components/WhatsChangedPanel";
 import { useFocusTrap } from "../hooks/useFocusTrap";
 import { useInertBackdrop } from "../hooks/useInertBackdrop";
 import { useBodyScrollLock } from "../hooks/useBodyScrollLock";
 import { getUtilizationLevel } from "../utils/tokens";
+import { TipJar } from "../components/TipJar";
+import { NextSteps } from "../components/NextSteps";
+import { WhatChanged } from "../components/WhatChanged";
+
+
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -54,24 +62,41 @@ const TX_COLOR: Record<string, string> = {
 
 // ─── Risk Score Gauge ─────────────────────────────────────────────────────────
 
-function RiskGauge({
+const easeCubicBezier = (x: number): number => {
+  if (x <= 0) return 0;
+  if (x >= 1) return 1;
+  const x1 = 0.16;
+  const x2 = 0.3;
+  let t = x;
+  for (let i = 0; i < 8; i++) {
+    const currentX = 3 * (1 - t) * (1 - t) * t * x1 + 3 * (1 - t) * t * t * x2 + t * t * t;
+    const diff = currentX - x;
+    if (Math.abs(diff) < 1e-6) break;
+    const dXdt = 3 * (1 - t) * (1 - t) * x1 + 6 * (1 - t) * t * (x2 - x1) + 3 * t * t * (1 - x2);
+    t -= diff / (dXdt || 1);
+  }
+  return 3 * t * (1 - t) + t * t * t;
+};
+
+export function RiskGauge({
   score,
   trend,
   lastUpdated,
+  history,
 }: {
   score: number;
   trend: "improving" | "declining" | "stable";
   lastUpdated: string;
+  history?: number[];
 }) {
   const radius = 55;
   const cx = 80;
   const cy = 75;
   const circumference = Math.PI * radius;
-  const normalizedScore = Math.min(100, Math.max(0, score));
-  const offset = circumference - (normalizedScore / 100) * circumference;
+  const normalizedScore = Math.min(850, Math.max(0, score));
+  const offset = circumference - (normalizedScore / 850) * circumference;
 
-  const gaugeColor =
-    score >= 70 ? COLOR.success : score >= 50 ? COLOR.warning : COLOR.danger;
+  const gaugeColor = RISK_COLOR(normalizedScore);
   const trendArrow =
     trend === "improving" ? "▲" : trend === "declining" ? "▼" : "─";
   const trendColor =
@@ -80,6 +105,49 @@ function RiskGauge({
       : trend === "declining"
         ? COLOR.danger
         : COLOR.muted;
+
+  const { isReducedMotionActive } = useReducedMotion();
+  const [displayedScore, setDisplayedScore] = useState(normalizedScore);
+  const prevScoreRef = useRef(normalizedScore);
+
+  useEffect(() => {
+    if (isReducedMotionActive) {
+      setDisplayedScore(normalizedScore);
+      prevScoreRef.current = normalizedScore;
+      return;
+    }
+
+    const startScore = prevScoreRef.current;
+    const endScore = normalizedScore;
+    if (startScore === endScore) return;
+
+    const duration = 280;
+    const startTime = Date.now();
+    let animationFrameId: number;
+
+    const animate = () => {
+      const elapsed = Date.now() - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      const easedProgress = easeCubicBezier(progress);
+
+      const currentVal = startScore + (endScore - startScore) * easedProgress;
+      setDisplayedScore(currentVal);
+
+      if (progress < 1) {
+        animationFrameId = requestAnimationFrame(animate);
+      } else {
+        prevScoreRef.current = endScore;
+      }
+    };
+
+    animationFrameId = requestAnimationFrame(animate);
+
+    return () => {
+      cancelAnimationFrame(animationFrameId);
+    };
+  }, [normalizedScore, isReducedMotionActive]);
+
+  const scoreFormatter = useMemo(() => new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 }), []);
 
   return (
     <div className="risk-gauge-container">
@@ -96,7 +164,7 @@ function RiskGauge({
           strokeDashoffset={offset}
         />
         <text x={cx} y={cy - 12} className="risk-gauge-score">
-          {normalizedScore}
+          {scoreFormatter.format(Math.round(displayedScore))}
         </text>
         <text x={cx} y={cy - 38} className="risk-gauge-label">
           Risk Score
@@ -106,8 +174,11 @@ function RiskGauge({
       <div className="risk-meta">
         <div className="risk-meta-item">
           <span className="rm-label">Trend</span>
-          <span className="rm-value" style={{ color: trendColor }}>
-            {trendArrow} {trend.charAt(0).toUpperCase() + trend.slice(1)}
+          <span className="rm-value" style={{ color: trendColor, display: "flex", alignItems: "center", gap: "8px" }}>
+            <span>{trendArrow} {trend.charAt(0).toUpperCase() + trend.slice(1)}</span>
+            {history && history.length > 0 && (
+              <Sparkline data={history} width={60} height={24} color={trendColor} />
+            )}
           </span>
         </div>
         <div className="risk-meta-item">
@@ -167,12 +238,34 @@ export function Dashboard() {
   const { wallet, status } = useWallet();
   const creditLines = MOCK_CREDIT_LINES;
 
+  const [repayCount, setRepayCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [isExplainOpen, setIsExplainOpen] = useState(false);
+
+  // ─── Sync timestamps ─────────────────────────────────────────────────────
+  const [riskSyncedAt, setRiskSyncedAt] = useState<Date>(() => new Date());
+  const [creditSyncedAt, setCreditSyncedAt] = useState<Date>(() => new Date());
+  const [activitySyncedAt, setActivitySyncedAt] = useState<Date>(() => new Date());
+
+  const handleRiskRefresh = useCallback(async () => {
+    await new Promise<void>((r) => setTimeout(r, 600));
+    setRiskSyncedAt(new Date());
+  }, []);
+
+  const handleCreditRefresh = useCallback(async () => {
+    await new Promise<void>((r) => setTimeout(r, 600));
+    setCreditSyncedAt(new Date());
+  }, []);
+
+  const handleActivityRefresh = useCallback(async () => {
+    await new Promise<void>((r) => setTimeout(r, 600));
+    setActivitySyncedAt(new Date());
+  }, []);
   const explainTriggerRef = useRef<HTMLButtonElement>(null);
   const [selectedCompareLines, setSelectedCompareLines] = useState<string[]>([]);
   const [showCompare, setShowCompare] = useState(false);
   const compareTriggerRef = useRef<HTMLButtonElement>(null);
+
 
   const handleCloseCompare = () => {
     setShowCompare(false);
@@ -222,13 +315,14 @@ export function Dashboard() {
       creditLines.filter(
         (cl) => cl.status === "Active" || cl.status === "Suspended",
       ),
-    [creditLines],
+    [creditLines, repayCount],
   );
 
   const activeLinesOnly = useMemo(
     () => creditLines.filter((cl) => cl.status === "Active"),
-    [creditLines],
+    [creditLines, repayCount],
   );
+
 
   const totalLimit = activeLinesOnly.reduce((s, cl) => s + cl.limit, 0);
   const totalUtilized = activeLinesOnly.reduce((s, cl) => s + cl.utilized, 0);
@@ -254,7 +348,8 @@ export function Dashboard() {
     });
     all.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     return all.slice(0, 5);
-  }, [creditLines]);
+  }, [creditLines, repayCount]);
+
 
   const notifications = useMemo(() => {
     const notes: {
@@ -326,7 +421,8 @@ export function Dashboard() {
       }
     });
     return notes;
-  }, [creditLines]);
+  }, [creditLines, repayCount]);
+
 
   const hasLines = creditLines.length > 0;
   const hasUtilized = totalUtilized > 0;
@@ -441,9 +537,8 @@ export function Dashboard() {
         )}
       </div>
 
-      <WhatsChangedPanel />
-
-      <div className="summary-cards" aria-busy={loading}>
+      {/* Summary Cards */}
+      <div className="summary-cards" data-tour-target="summaryCards" aria-busy={loading}>
         {loading ? (
           <>
             <div className="summary-card skeleton-card">
@@ -514,7 +609,10 @@ export function Dashboard() {
           <>
             <div className="summary-card">
               <div className="glow" style={{ background: COLOR.accent }} />
-              <p className="label">Total Credit Limit</p>
+              <p className="label">
+                Total Credit Limit
+                <WhatChanged metricId="total-limit" currentValue={totalLimit} format="currency" label="Total Credit Limit" />
+              </p>
               <p className="value" style={{ color: COLOR.accent }}>
                 {fmt(totalLimit)}
               </p>
@@ -528,7 +626,10 @@ export function Dashboard() {
                 className="glow"
                 style={{ background: UTIL_COLOR[overallLevel] }}
               />
-              <p className="label">Total Utilized</p>
+              <p className="label">
+                Total Utilized
+                <WhatChanged metricId="total-utilized" currentValue={totalUtilized} format="currency" label="Total Utilized" />
+              </p>
               <p className="value" style={{ color: UTIL_COLOR[overallLevel] }}>
                 {fmt(totalUtilized)}
               </p>
@@ -536,7 +637,10 @@ export function Dashboard() {
             </div>
             <div className="summary-card">
               <div className="glow" style={{ background: COLOR.success }} />
-              <p className="label">Available Credit</p>
+              <p className="label">
+                Available Credit
+                <WhatChanged metricId="available-credit" currentValue={totalAvailable} format="currency" label="Available Credit" />
+              </p>
               <p className="value" style={{ color: COLOR.success }}>
                 {fmt(totalAvailable)}
               </p>
@@ -546,11 +650,20 @@ export function Dashboard() {
         )}
       </div>
 
+      {!loading && <ActivityFeed />}
+
       <div className="dashboard-grid">
         <div>
           <div className="card" style={{ animationDelay: "0.1s" }}>
             <h2>
               <span className="icon">📊</span> Credit Summary
+              {!loading && (
+                <SyncIndicator
+                  lastSyncedAt={creditSyncedAt}
+                  onRefresh={handleCreditRefresh}
+                  className="sync-indicator--card-header"
+                />
+              )}
             </h2>
             <div className="util-bar-container">
               <div className="util-bar-header">
@@ -596,114 +709,33 @@ export function Dashboard() {
             </div>
           </div>
 
-           <div className="card" style={{ animationDelay: "0.15s" }} aria-busy={loading}>
-             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
-               <h2 style={{ margin: 0 }}><span className="icon">🛡️</span> Risk Score</h2>
-               {!loading && (
-                 <button 
-                   ref={explainTriggerRef}
-                   onClick={() => setIsExplainOpen(true)}
-                   style={{ 
-                     background: "transparent", 
-                     border: `1px solid ${COLOR.border}`, 
-                     color: COLOR.text, 
-                     fontSize: "0.75rem", 
-                     padding: "0.25rem 0.5rem", 
-                     borderRadius: 4, 
-                     cursor: "pointer",
-                     fontWeight: 500
-                   }}
-                 >
-                   Explain
-                 </button>
-               )}
-             </div>
-             {loading ? (
-               <div className="risk-gauge-container">
-                 <div
-                   style={{
-                     display: "flex",
-                     justifyContent: "center",
-                     alignItems: "center",
-                     height: "100px",
-                     width: "160px",
-                     marginBottom: "0.75rem",
-                   }}
-                 >
-                   <Skeleton
-                     style={{
-                       width: "80px",
-                       height: "80px",
-                       borderRadius: "50%",
-                     }}
-                   />
-                 </div>
-                 <div className="risk-meta" style={{ width: "100%" }}>
-                   <div
-                     className="risk-meta-item"
-                     style={{
-                       flex: 1,
-                       display: "flex",
-                       flexDirection: "column",
-                       alignItems: "center",
-                     }}
-                   >
-                     <Skeleton
-                       style={{
-                         width: "40px",
-                         height: "10px",
-                         marginBottom: "6px",
-                         borderRadius: "2px",
-                       }}
-                     />
-                     <Skeleton
-                       style={{
-                         width: "60px",
-                         height: "14px",
-                         borderRadius: "2px",
-                       }}
-                     />
-                   </div>
-                   <div
-                     className="risk-meta-item"
-                     style={{
-                       flex: 1,
-                       display: "flex",
-                       flexDirection: "column",
-                       alignItems: "center",
-                     }}
-                   >
-                     <Skeleton
-                       style={{
-                         width: "60px",
-                         height: "10px",
-                         marginBottom: "6px",
-                         borderRadius: "2px",
-                       }}
-                     />
-                     <Skeleton
-                       style={{
-                         width: "50px",
-                         height: "14px",
-                         borderRadius: "2px",
-                       }}
-                     />
-                   </div>
-                 </div>
-               </div>
-             ) : (
-               <>
-                 <RiskGauge
-                   score={avgRiskScore}
-                   trend="improving"
-                   lastUpdated={
-                     activeLinesOnly[0]?.updatedAt ?? new Date().toISOString()
-                   }
-                 />
-                 <RiskExplainer score={avgRiskScore} address={wallet?.publicKey} />
-               </>
-             )}
-           </div>
+          {/* Risk Score */}
+          <div className="card" data-tour-target="riskGauge" style={{ animationDelay: '0.15s' }} aria-busy={loading}>
+            <h2><span className="icon">🛡️</span> Risk Score</h2>
+            {loading ? (
+              <div className="risk-gauge-container">
+                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100px', width: '160px', marginBottom: '0.75rem' }}>
+                  <Skeleton style={{ width: '80px', height: '80px', borderRadius: '50%' }} />
+                </div>
+                <div className="risk-meta" style={{ width: '100%' }}>
+                  <div className="risk-meta-item" style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                    <Skeleton style={{ width: '40px', height: '10px', marginBottom: '6px', borderRadius: '2px' }} />
+                    <Skeleton style={{ width: '60px', height: '14px', borderRadius: '2px' }} />
+                  </div>
+                  <div className="risk-meta-item" style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                    <Skeleton style={{ width: '60px', height: '10px', marginBottom: '6px', borderRadius: '2px' }} />
+                    <Skeleton style={{ width: '50px', height: '14px', borderRadius: '2px' }} />
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <RiskGauge
+                score={avgRiskScore}
+                trend="improving"
+                lastUpdated={activeLinesOnly[0]?.updatedAt ?? new Date().toISOString()}
+              />
+            )}
+          </div>
 
            <div
              className="card"
@@ -1047,7 +1079,16 @@ export function Dashboard() {
            </div>
  
            <div className="card" style={{ animationDelay: "0.18s" }} aria-busy={loading}>
-             <h2><span className="icon">📝</span> Recent Activity</h2>
+             <h2>
+               <span className="icon">📝</span> Recent Activity
+               {!loading && (
+                 <SyncIndicator
+                   lastSyncedAt={activitySyncedAt}
+                   onRefresh={handleActivityRefresh}
+                   className="sync-indicator--card-header"
+                 />
+               )}
+             </h2>
              {loading ? (
                <>
                  <div className="activity-item">
@@ -1128,11 +1169,154 @@ export function Dashboard() {
          </div>
        </div>
 
-       <RiskBandsPanel 
-         isOpen={isExplainOpen} 
-         onClose={() => setIsExplainOpen(false)} 
-         triggerRef={explainTriggerRef}
-       />
-     </div>
-   );
+        {/* Right Column */}
+        <div>
+          {/* Quick Actions */}
+          <div className="card" style={{ animationDelay: '0.12s' }}>
+            <h2><span className="icon">⚡</span> Quick Actions</h2>
+            <div className="quick-actions-grid">
+              {!hasLines && (
+                <button
+                  className="qa-btn"
+                  data-tour-target="requestEvaluation"
+                  style={{ borderColor: 'rgba(88,166,255,0.3)' }}
+                >
+                  <div className="qa-icon" style={{ background: 'rgba(88,166,255,0.12)', color: COLOR.accent }}>🆕</div>
+                  <div>
+                    <div className="qa-label" style={{ color: COLOR.accent }}>Open Credit Line</div>
+                    <div className="qa-desc" style={{ color: COLOR.muted }}>Get started with your first line</div>
+                  </div>
+                  <span className="qa-arrow" style={{ color: COLOR.muted }}>→</span>
+                </button>
+              )}
+              {hasLines && activeLinesOnly.length > 0 && (
+                <button
+                  className="qa-btn"
+                  data-tour-target="requestEvaluation"
+                  style={{ borderColor: 'rgba(88,166,255,0.3)' }}
+                >
+                  <div className="qa-icon" style={{ background: 'rgba(88,166,255,0.12)', color: COLOR.accent }}>↗</div>
+                  <div>
+                    <div className="qa-label" style={{ color: COLOR.accent }}>Draw Credit</div>
+                    <div className="qa-desc" style={{ color: COLOR.muted }}>{fmt(totalAvailable)} available</div>
+                  </div>
+                  <span className="qa-arrow" style={{ color: COLOR.muted }}>→</span>
+                </button>
+              )}
+              {hasUtilized && (
+                <button
+                  className="qa-btn"
+                  style={{ borderColor: 'rgba(63,185,80,0.3)' }}
+                >
+                  <div className="qa-icon" style={{ background: 'rgba(63,185,80,0.12)', color: COLOR.success }}>↙</div>
+                  <div>
+                    <div className="qa-label" style={{ color: COLOR.success }}>Repay Credit</div>
+                    <div className="qa-desc" style={{ color: COLOR.muted }}>{fmt(totalUtilized)} outstanding</div>
+                  </div>
+                  <span className="qa-arrow" style={{ color: COLOR.muted }}>→</span>
+                </button>
+              )}
+              <Link
+                to="/credit-lines"
+                className="qa-btn"
+                style={{ borderColor: 'transparent', textDecoration: 'none' }}
+              >
+                <div className="qa-icon" style={{ background: 'rgba(139,148,158,0.12)', color: COLOR.muted }}>📋</div>
+                <div>
+                  <div className="qa-label" style={{ color: COLOR.text }}>View Credit Lines</div>
+                  <div className="qa-desc" style={{ color: COLOR.muted }}>Manage all your credit lines</div>
+                </div>
+                <span className="qa-arrow" style={{ color: COLOR.muted }}>→</span>
+              </Link>
+            </div>
+          </div>
+
+          {/* Recent Activity */}
+          <div className="card" style={{ animationDelay: '0.18s' }} aria-busy={loading}>
+            <h2><span className="icon">📝</span> Recent Activity</h2>
+
+            {loading ? (
+              <>
+                <div className="activity-item">
+                  <Skeleton className="activity-icon" style={{ borderRadius: '6px' }} />
+                  <div className="activity-content" style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                    <Skeleton style={{ width: '120px', height: '14px', borderRadius: '2px' }} />
+                    <Skeleton style={{ width: '180px', height: '10px', borderRadius: '2px' }} />
+                  </div>
+                  <Skeleton style={{ width: '60px', height: '14px', marginLeft: 'auto', borderRadius: '2px' }} />
+                </div>
+                <div className="activity-item">
+                  <Skeleton className="activity-icon" style={{ borderRadius: '6px' }} />
+                  <div className="activity-content" style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                    <Skeleton style={{ width: '100px', height: '14px', borderRadius: '2px' }} />
+                    <Skeleton style={{ width: '150px', height: '10px', borderRadius: '2px' }} />
+                  </div>
+                  <Skeleton style={{ width: '50px', height: '14px', marginLeft: 'auto', borderRadius: '2px' }} />
+                </div>
+                <div className="activity-item">
+                  <Skeleton className="activity-icon" style={{ borderRadius: '6px' }} />
+                  <div className="activity-content" style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                    <Skeleton style={{ width: '140px', height: '14px', borderRadius: '2px' }} />
+                    <Skeleton style={{ width: '160px', height: '10px', borderRadius: '2px' }} />
+                  </div>
+                  <Skeleton style={{ width: '70px', height: '14px', marginLeft: 'auto', borderRadius: '2px' }} />
+                </div>
+              </>
+            ) : recentActivity.length === 0 ? (
+              <p style={{ color: COLOR.muted, fontSize: '0.8rem', textAlign: 'center', padding: '1.5rem 0' }}>
+                No transactions yet
+              </p>
+            ) : (
+              recentActivity.map((tx, i) => (
+                <div key={`${tx.id}-${i}`} className="activity-item">
+                  <div
+                    className="activity-icon"
+                    style={{
+                      background: `${TX_COLOR[tx.type]}15`,
+                      color: TX_COLOR[tx.type],
+                    }}
+                  >
+                    {TX_ICON[tx.type]}
+                  </div>
+                  <div className="activity-content">
+                    <div className="activity-title">{tx.note || tx.type}</div>
+                    <div className="activity-sub">{tx.lineName} · {relativeTime(tx.date)}</div>
+                  </div>
+                  <div className="activity-amount" style={{ color: TX_COLOR[tx.type] }}>
+                    {tx.type === 'Repay' ? '+' : '-'}{fmt(tx.amount)}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+
+          {/* Notifications */}
+          {notifications.length > 0 && (
+            <div className="card" style={{ animationDelay: '0.22s' }}>
+              <h2><span className="icon">🔔</span> Alerts</h2>
+
+              {notifications.map((note, i) => (
+                <div 
+                  key={i} 
+                  className={`notification-item notification-item--${note.type}`}
+                  role={note.type === 'danger' ? 'alert' : 'status'}
+                >
+                  <span className="notification-icon" aria-hidden="true">{note.icon}</span>
+                  <div>
+                    <div className="notification-text">
+                      {note.content}
+                    </div>
+                    {note.time && (
+                      <div className="notification-time">{relativeTime(note.time)}</div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+      <DashboardTour />
+    </div>
+  );
 }

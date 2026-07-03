@@ -11,6 +11,7 @@ import { InlineHelpOverlay } from "@/components/InlineHelpOverlay";
 import { CreditLine, DrawStep, Transaction } from "@/types/draw-credit.types";
 import { mockCreditLines } from "@/lib/draw-credit-mock-data";
 import { WhyApr } from "@/components/WhyApr";
+import { DrawSummaryBar } from "@/components/DrawSummaryBar";
 
 const drawSteps = [
   { id: "select", label: "Select line" },
@@ -107,7 +108,7 @@ export default function DrawCreditPage() {
   );
 
   return (
-    <main className="min-h-screen bg-background px-4 py-6 sm:py-8">
+    <main className="min-h-screen bg-background px-4 pb-24 pt-6 sm:pb-28 sm:pt-8">
       <div className="mx-auto w-full max-w-4xl space-y-5">
         {step !== "status" && (
           <header className="card" aria-label="Draw credit progress">
@@ -163,13 +164,22 @@ export default function DrawCreditPage() {
         {step === "amount" && selectedCreditLine && (
           <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(280px,360px)] lg:items-start">
             <section className="card" style={{ margin: 0 }}>
-              <AmountInput
-                creditLine={selectedCreditLine}
-                onAmountChange={setAmount}
-                onNext={handleAmountNext}
-                onBack={handleBack}
-              />
-            </section>
+  <AmountInput
+    creditLine={selectedCreditLine}
+    onAmountChange={setAmount}
+    onNext={handleAmountNext}
+    onBack={handleBack}
+  />
+  {/* Drawing limit indicator */}
+  {selectedCreditLine && (
+    <div className="mt-6 border-t border-border pt-6">
+      <DrawingLimit
+        drawnAmount={selectedCreditLine.drawnAmount}
+        totalLimit={selectedCreditLine.limit}
+      />
+    </div>
+  )}
+</section>
             <aside className="card lg:sticky lg:top-6" style={{ margin: 0 }}>
               <PreviewSection creditLine={selectedCreditLine} amount={amount} />
             </aside>
@@ -261,6 +271,19 @@ export default function DrawCreditPage() {
         isOpen={isWhyAprOpen}
         onClose={() => setIsWhyAprOpen(false)}
         triggerRef={whyAprTriggerRef}
+      />
+      {/*
+        Sticky bottom summary bar — rendered at the page root so it
+        always anchors to the viewport bottom regardless of which step
+        card is currently mounted. The bar self-hides on the `select`
+        and `status` steps; see DrawSummaryBar.tsx for details. The
+        pb-32 / sm:pb-36 padding on <main> ensures content is never
+        occluded by the fixed-position bar.
+      */}
+      <DrawSummaryBar
+        creditLine={selectedCreditLine}
+        amount={amount}
+        step={step}
       />
     </main>
   );

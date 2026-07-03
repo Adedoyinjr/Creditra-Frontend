@@ -1,6 +1,7 @@
 import { useRef, useState, useMemo } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { StatusBadge } from "../components/StatusBadge";
+import { CreditLineRowMenu } from "../components/CreditLineRowMenu";
 import { MOCK_CREDIT_LINES } from "../data/mockData";
 import type {
   CreditLineStatus,
@@ -9,24 +10,11 @@ import type {
 } from "../types/creditLine";
 import type { CollateralAsset } from "../types/collateral";
 import {
-  COLOR,
-  UTIL_COLOR,
-  fmt,
-  fmtDate,
-  fmtDateTime,
-  relativeTime,
-  getUtilizationLevel,
-  utilizationPct,
-} from "../utils/tokens";
-import "./CreditLines.css";
-import { AccessibleTooltip } from "../components/AccessibleTooltip";
-import { AprHistoryChart } from "../components/AprHistoryChart";
-import { useFocusTrap } from "../hooks/useFocusTrap";
-import { useInertBackdrop } from "../hooks/useInertBackdrop";
-import { useBodyScrollLock } from "../hooks/useBodyScrollLock";
-import CompareLinesPanel from "../components/CompareLinesPanel";
-import { CollateralSubstitutionModal } from "../components/CollateralSubstitutionModal";
-import { NoLines } from "../components/illustrations";
+  COLOR, UTIL_COLOR,
+  fmt, fmtDate, getUtilizationLevel, utilizationPct,
+} from '../utils/tokens';
+import { formatCountdown, getCountdownAriaLabel } from '../utils/dates';
+import './CreditLines.css';
 
 // ─── Credit Line Card ────────────────────────────────────────────────────────
 
@@ -35,6 +23,9 @@ function CreditLineCard({
   isSelected,
   onToggle,
   onSwapCollateral,
+  onRepay,
+  onSchedule,
+  onDetails,
 }: {
   line: (typeof MOCK_CREDIT_LINES)[0];
   isSelected: boolean;
@@ -43,6 +34,9 @@ function CreditLineCard({
     line: (typeof MOCK_CREDIT_LINES)[0],
     triggerRef: React.RefObject<HTMLButtonElement | null>,
   ) => void;
+  onRepay?: () => void;
+  onSchedule?: (lineId: string) => void;
+  onDetails?: (lineId: string) => void;
 }) {
   const pct = utilizationPct(line.utilized, line.limit);
   const level = getUtilizationLevel(line.utilized, line.limit);
@@ -57,24 +51,33 @@ function CreditLineCard({
         isDefaulted ? `Credit line ${line.id} is defaulted` : undefined
       }
     >
-      <div className="cl-card-header">
-        <div className="cl-card-title-row">
-          <label className="cl-row-select">
-            <input
-              type="checkbox"
-              checked={isSelected}
-              onChange={onToggle}
-              aria-label={`Select ${line.name} for comparison`}
-            />
-            <span>Compare</span>
-          </label>
-          <div>
-            <h3 className="cl-name">{line.name}</h3>
-            <p className="cl-id">{line.id}</p>
-          </div>
-        </div>
-        <StatusBadge status={line.status} />
-      </div>
+       <div className="cl-card-header">
+         <div className="cl-card-title-row">
+           <label className="cl-row-select">
+             <input
+               type="checkbox"
+               checked={isSelected}
+               onChange={onToggle}
+               aria-label={`Select ${line.name} for comparison`}
+             />
+             <span>Compare</span>
+           </label>
+           <div>
+             <h3 className="cl-name">{line.name}</h3>
+             <p className="cl-id">{line.id}</p>
+           </div>
+         </div>
+         <div className="flex items-center gap-2">
+           <StatusBadge status={line.status} />
+           <CreditLineRowMenu
+             lineId={line.id}
+             lineName={line.name}
+             onRepay={onRepay}
+             onSchedule={onSchedule}
+             onDetails={onDetails}
+           />
+         </div>
+       </div>
 
       <div className="cl-card-body">
         <div className="cl-metrics">
@@ -131,60 +134,15 @@ function CreditLineCard({
           </div>
         </div>
 
-        {line.aprHistory && line.aprHistory.length > 0 && (
-          <section
-            className="cl-apr-history"
-            aria-label={`APR history for ${line.name}`}
-          >
-            <AprHistoryChart
-              history={line.aprHistory}
-              lineId={line.id}
-              label="APR History"
-            />
-          </section>
-        )}
-
-        <div className="cl-last-activity">
-          <span className="cl-last-activity__label">Last Activity</span>
-          <span className="cl-last-activity__time">
-            <AccessibleTooltip
-              label={`Last updated: ${fmtDateTime(line.updatedAt)}`}
-            >
-              {relativeTime(line.updatedAt)}
-            </AccessibleTooltip>
-          </span>
-        </div>
-      </div>
-
-      <div className="cl-card-footer">
-        {line.status === "Active" && line.limit > line.utilized && (
-          <Link
-            to={`/draw-credit?line=${line.id}`}
-            className="cl-action-btn draw"
-          >
-            ↗ Draw
-          </Link>
-        )}
-        {line.utilized > 0 && (
-          <button className="cl-action-btn repay">↙ Repay</button>
-        )}
-        {line.status === "Active" && onSwapCollateral && (
-          <button
-            ref={swapTriggerRef}
-            type="button"
-            className="cl-action-btn"
-            style={{
-              color: COLOR.accent,
-              borderColor: "rgba(88,166,255,0.3)",
-              background: "rgba(88,166,255,0.08)",
-            }}
-            onClick={() => onSwapCollateral(line, swapTriggerRef)}
-            aria-label={`Swap collateral for ${line.name}`}
-          >
-            ⇄ Swap Collateral
-          </button>
+        {line.nextInterestAccrualDate && (
+          <div className="cl-accrual">
+            <NextAccrualChip target={line.nextInterestAccrualDate} />
+          </div>
         )}
       </div>
+
+       <div className="cl-card-footer">
+       </div>
     </div>
   );
 }
@@ -192,6 +150,7 @@ function CreditLineCard({
 // ─── Main Component ────────────────────────────────────────────────────────────
 
 export default function CreditLines() {
+  const navigate = useNavigate();
   const [sortField, setSortField] = useState<SortField>("updatedAt");
   const [sortDir, setSortDir] = useState<SortDirection>("desc");
   const [statusFilter, setStatusFilter] = useState<CreditLineStatus | "all">(
@@ -199,6 +158,7 @@ export default function CreditLines() {
   );
 
   const creditLines = MOCK_CREDIT_LINES;
+  const hasCreditLines = creditLines.length > 0;
 
   const [showCompare, setShowCompare] = useState(false);
   const [selectedLines, setSelectedLines] = useState<string[]>([]);
@@ -222,6 +182,18 @@ export default function CreditLines() {
       currentAsset: "ETH",
       triggerRef,
     });
+  };
+
+  const handleRepay = (lineId: string) => {
+    navigate(`/repay?line=${lineId}`);
+  };
+
+  const handleSchedule = (lineId: string) => {
+    console.log(`Schedule requested for ${lineId}`);
+  };
+
+  const handleDetails = (lineId: string) => {
+    console.log(`Details requested for ${lineId}`);
   };
 
   const filteredAndSorted = useMemo(() => {
@@ -413,14 +385,39 @@ export default function CreditLines() {
       )}
 
       {filteredAndSorted.length === 0 ? (
-        <div className="cl-empty">
-          <NoLines className="empty-state-illustration--muted" />
-          <h3>No credit lines found</h3>
-          <p>Apply for a credit line to get started</p>
-          <Link to="/open-credit" className="cl-primary-btn">
-            Open Credit Line
-          </Link>
-        </div>
+        !hasCreditLines ? (
+          <div className="cl-empty" role="region" aria-label="No credit lines">
+            <NoLines className="empty-state-illustration--muted" />
+            <h2 className="cl-empty-title">Get started with Credit Lines</h2>
+            <p className="cl-empty-desc">
+              Credit lines give you access to flexible capital when you need it.
+              Open your first line and unlock funding tailored to your business.
+            </p>
+            <ul className="cl-empty-features">
+              <li>Flexible funding up to $500K</li>
+              <li>Competitive rates from 7.5% APR</li>
+              <li>Quick approval with digital collateral</li>
+            </ul>
+            <Link to="/open-credit" className="cl-primary-btn">
+              Open Credit Line
+            </Link>
+          </div>
+        ) : (
+          <div className="cl-empty" role="region" aria-label="No matching credit lines">
+            <NoLines className="empty-state-illustration--muted" />
+            <h2 className="cl-empty-title">No matching credit lines</h2>
+            <p className="cl-empty-desc">
+              No credit lines match your current filter. Try a different status
+              or adjust your sort to see more results.
+            </p>
+            <button
+              className="cl-primary-btn"
+              onClick={() => { setStatusFilter("all"); setSortField("updatedAt"); setSortDir("desc"); }}
+            >
+              Clear Filters
+            </button>
+          </div>
+        )
       ) : (
         <div className="cl-grid">
           {filteredAndSorted.map((line) => (
@@ -430,6 +427,9 @@ export default function CreditLines() {
               isSelected={selectedLines.includes(line.id)}
               onToggle={() => toggleSelection(line.id)}
               onSwapCollateral={handleSwapCollateral}
+              onRepay={() => handleRepay(line.id)}
+              onSchedule={() => handleSchedule(line.id)}
+              onDetails={() => handleDetails(line.id)}
             />
           ))}
         </div>

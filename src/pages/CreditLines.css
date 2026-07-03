@@ -114,6 +114,7 @@
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 8px;
+    animation: clFadeInUp 0.4s ease-out;
 }
 
 .cl-empty-icon {
@@ -121,18 +122,60 @@
     margin-bottom: 1rem;
 }
 
-.cl-empty h3 {
+.cl-empty-title {
     margin: 0 0 0.5rem;
     font-size: 1.25rem;
+    font-weight: 700;
     color: var(--text);
 }
 
-.cl-empty p {
+.cl-empty-desc {
     margin: 0 0 1.5rem;
     max-width: 26rem;
     font-size: 0.9rem;
-    line-height: 1.5;
+    line-height: 1.6;
     color: var(--muted);
+}
+
+.cl-empty-features {
+    list-style: none;
+    margin: 0 0 2rem;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    text-align: left;
+}
+
+.cl-empty-features li {
+    position: relative;
+    padding-left: 1.5rem;
+    font-size: 0.85rem;
+    color: var(--text);
+    line-height: 1.5;
+}
+
+.cl-empty-features li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0.35rem;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+    opacity: 0.6;
+}
+
+@keyframes clFadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 /* ─── Credit Lines Grid ─────────────────────────────────────────────────────── */
@@ -158,6 +201,13 @@
 .cl-card:hover {
     border-color: var(--accent);
     transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(88, 166, 255, 0.1);
+}
+
+.cl-card:focus-visible {
+    border-color: var(--accent);
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
 }
 
 .cl-card-header {
@@ -307,23 +357,39 @@
     line-height: var(--lh-body);
 }
 
-.cl-last-activity {
+.cl-accrual {
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    padding: 0.5rem 0;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
     border-top: 1px solid var(--border);
-    margin-top: 0.25rem;
-    font-size: 0.8rem;
 }
 
-.cl-last-activity__label {
+.cl-accrual-label {
+    font-size: 0.65rem;
     color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 500;
+    line-height: var(--lh-small);
 }
 
-.cl-last-activity__time {
-    color: var(--text);
+.cl-accrual-chip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.15rem 0.5rem;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-pill);
+    font-size: 0.7rem;
     font-weight: 500;
+    color: var(--muted);
+    line-height: var(--lh-small);
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+    min-width: 4.5rem;
 }
 
 .cl-card-footer {
