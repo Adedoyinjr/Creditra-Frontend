@@ -1,0 +1,39 @@
+import { Clock } from 'lucide-react';
+import { STATUS_COLOR } from '../utils/tokens';
+import './AgingTag.css';
+
+interface AgingTagProps {
+  /** The number of days the line is past due. */
+  daysPastDue: number;
+  /** Optional additional class names appended to the tag. */
+  className?: string;
+}
+
+/**
+ * A tag to visually flag delinquent credit lines.
+ *
+ * Renders in a high-contrast danger (Defaulted) colour scheme
+ * when daysPastDue > 0. Uses the Clock icon to provide a visual cue
+ * alongside the text.
+ *
+ * Accessibility: The icon is hidden from screen readers since the text
+ * already explicitly states "X days past due", avoiding redundant announcements.
+ */
+export function AgingTag({ daysPastDue, className = '' }: AgingTagProps) {
+  if (daysPastDue <= 0) return null;
+
+  // Use the "Defaulted" (danger) color palette for delinquent lines
+  const { bg, color, border } = STATUS_COLOR.Defaulted;
+  const classes = ['aging-tag', className].filter(Boolean).join(' ');
+
+  return (
+    <span
+      className={classes}
+      style={{ background: bg, color, borderColor: border }}
+      title={`${daysPastDue} days past due`}
+    >
+      <Clock size={12} className="aging-tag__icon" aria-hidden="true" />
+      <span>{daysPastDue} days past due</span>
+    </span>
+  );
+}
