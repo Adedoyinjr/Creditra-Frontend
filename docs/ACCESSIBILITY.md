@@ -164,7 +164,7 @@ The table below is updated on every accessibility-impacting PR. Status legend:
 
 | ID | Component | Gap | Target |
 | --- | --- | --- | --- |
-| A11Y-001 | `OnboardingFlow` | Arrow-key step navigation not wired (today uses Next/Back buttons only) | next minor release |
+| ~~A11Y-001~~ | ~~`OnboardingFlow`~~ | ~~Arrow-key step navigation not wired (today uses Next/Back buttons only)~~ | **Fixed** — arrow keys now advance/back and Escape skips; regression tests added |
 | ~~A11Y-002~~ | ~~`RepayModal`~~ | ~~Focus-trap call site uses legacy boolean signature; needs migration to `useFocusTrap({ isActive })`~~ | **Fixed** — migrated to `{ isActive }` form; `triggerRef` wired; regression test added |
 | A11Y-003 | `NotificationCenter` | Filter tabs use `aria-pressed` but should additionally expose `role="tab"` + `aria-selected` for AT consistency | next minor release |
 | ~~A11Y-004~~ | ~~Tables~~ | ~~`aria-sort` is set but caption text describing the table is not yet announced~~ | **Closed** — `<caption>` added to TransactionHistory; `<section aria-label>` added to CreditLines; both update dynamically with filter state |
