@@ -1,7 +1,8 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { loadDraft, saveDraft, clearDraft } from "@/state/wizardDraft";
 import { CreditLineSelector } from "@/components/CreditLineSelector";
 import { AmountInput } from "@/components/AmountInput";
 import { PreviewSection } from "@/components/PreviewSection";
@@ -26,12 +27,22 @@ export default function DrawCreditPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const routeTransaction = location.state?.transaction as Transaction | undefined;
+  const draftState = routeTransaction ? null : loadDraft();
+
   const [step, setStep] = useState<DrawStep>(
-    routeTransaction ? "status" : "select",
+    routeTransaction ? "status" : draftState?.step ?? "select",
   );
   const [selectedCreditLine, setSelectedCreditLine] =
-    useState<CreditLine | null>(null);
-  const [amount, setAmount] = useState(0);
+    useState<CreditLine | null>(draftState?.selectedCreditLine ?? null);
+  const [amount, setAmount] = useState(draftState?.amount ?? 0);
+
+  useEffect(() => {
+    if (step === "status") {
+      clearDraft();
+    } else {
+      saveDraft({ step, selectedCreditLine, amount });
+    }
+  }, [step, selectedCreditLine, amount]);
   const [isLoading, setIsLoading] = useState(false);
   const [isHelpOpen, setIsHelpOpen] = useState(false);
   const helpTriggerRef = useRef<HTMLButtonElement>(null);
