@@ -2,7 +2,7 @@
 @import "./styles/typography.css";
 @import "./styles/safe-area.css";
 @import "./components/FormField.css";
-
+@import "./styles/themes/high-contrast.css"; // High‑contrast overrides
 :root,
 .theme-default {
   --bg: #0d1117;
