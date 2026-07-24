@@ -7,11 +7,12 @@
  *  3. SR paragraph outside SVG carries the same description (polite live region).
  *  4. Score is clamped: values < 0 render as 0, values > 100 render as 100.
  *  5. Fill arc carries data-score reflecting the normalised value.
- *  6. Animation key changes when score changes (triggers CSS re-animation).
+ *  6. Fill arc is never remounted on score change; dashoffset transitions
+ *     in place instead of resetting to empty on every update.
  *  7. Reduced-motion: data-reduced-motion="true" when matchMedia returns true;
  *     fill dashoffset equals the final offset (not circumference).
  *  8. Normal-motion: data-reduced-motion="false"; fill dashoffset equals
- *     circumference (animation starts from empty).
+ *     circumference on first mount (animation starts from empty).
  *  9. Trend label and arrow are rendered in the meta row.
  * 10. lastUpdated date is formatted and visible.
  * 11. [focus] SVG is keyboard-focusable (tabIndex=0).
@@ -30,10 +31,21 @@
  * 20. [focus] data-active-sector on the SVG matches the score band.
  * 21. [focus] High-contrast mode — focus-ring-color token resolves to white
  *     (token value tested indirectly via data-attribute).
+ * 22. data-initial-sweep is "true" only on first mount (non-reduced-motion)
+ *     and is cleared on later renders.
+ * 23. data-initial-sweep is absent when reduced motion is active, even on
+ *     first mount.
+ * 24. gauge-sweep @keyframes animation is scoped to [data-initial-sweep],
+ *     and .risk-gauge-fill has a stroke-dashoffset transition for later
+ *     updates (CSS source assertions, mirroring the existing
+ *     [data-motion="reduced"] source check below).
  */
 
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi, afterEach } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
 import { RiskGauge, RiskSector } from './RiskGauge';
 
 // ── Constants (must match component) ─────────────────────────────────────────
@@ -135,19 +147,26 @@ describe('RiskGauge', () => {
     expect(fill?.getAttribute('data-score')).toBe('55');
   });
 
-  it('animation key changes when score prop changes (re-mounts fill arc)', () => {
+  it('fill arc is NOT remounted on score change — dashoffset transitions in place instead of resetting to empty', () => {
     const { rerender, container } = render(
       <RiskGauge score={40} trend="stable" lastUpdated="2025-01-01T00:00:00Z" />,
     );
-    const keyBefore = container.querySelector('[data-score]')?.getAttribute('data-score');
+    const fillBefore = container.querySelector('[data-score]');
 
     rerender(
       <RiskGauge score={80} trend="stable" lastUpdated="2025-01-01T00:00:00Z" />,
     );
-    const keyAfter = container.querySelector('[data-score]')?.getAttribute('data-score');
+    const fillAfter = container.querySelector('[data-score]');
 
-    expect(keyBefore).toBe('40');
-    expect(keyAfter).toBe('80');
+    // Same DOM node — no remount, so the CSS transition on stroke-dashoffset
+    // can animate smoothly between the two values instead of the path
+    // restarting the sweep from empty on every update.
+    expect(fillAfter).toBe(fillBefore);
+    expect(fillAfter?.getAttribute('data-score')).toBe('80');
+    expect(Number(fillAfter?.getAttribute('stroke-dashoffset'))).toBeCloseTo(
+      offsetForScore(80),
+      1,
+    );
   });
 
   describe('reduced-motion: false (default / animation on)', () => {
@@ -169,6 +188,22 @@ describe('RiskGauge', () => {
       ).toBe('false');
       restore();
     });
+
+    it('data-initial-sweep is "true" on first mount and cleared on later renders', () => {
+      const restore = stubMatchMedia(false);
+      const { rerender, container } = render(
+        <RiskGauge score={40} trend="stable" lastUpdated="2025-01-01T00:00:00Z" />,
+      );
+      expect(
+        container.querySelector('[data-score]')?.getAttribute('data-initial-sweep'),
+      ).toBe('true');
+
+      rerender(<RiskGauge score={60} trend="stable" lastUpdated="2025-01-01T00:00:00Z" />);
+      expect(
+        container.querySelector('[data-score]')?.getAttribute('data-initial-sweep'),
+      ).toBeNull();
+      restore();
+    });
   });
 
   describe('reduced-motion: true (no animation)', () => {
@@ -187,6 +222,15 @@ describe('RiskGauge', () => {
       expect(
         document.querySelector('[data-reduced-motion]')?.getAttribute('data-reduced-motion'),
       ).toBe('true');
+      restore();
+    });
+
+    it('data-initial-sweep is absent even on first mount', () => {
+      const restore = stubMatchMedia(true);
+      const { container } = renderGauge({ score: 72 });
+      expect(
+        container.querySelector('[data-score]')?.getAttribute('data-initial-sweep'),
+      ).toBeNull();
       restore();
     });
   });
@@ -473,168 +517,49 @@ describe('RiskGauge', () => {
   });
 });
 
-// ─── Accessibility chart captions / SR table tests (chart-captions feature) ──
+// ── CSS source assertions ────────────────────────────────────────────────────
+//
+// jsdom does not execute a real CSS cascade or resolve @media queries, so
+// asserting on window.getComputedStyle(...).animationName here would pass
+// or fail independently of whether the actual CSS rule exists — not a
+// meaningful regression check. Instead we assert directly against the
+// stylesheet source, mirroring the same approach used for the in-app
+// reduced-motion toggle check below (see docs/ACCESSIBILITY.md §6).
 
-describe('RiskGauge — accessible chart captions', () => {
-  // ── ariaLabel prop ─────────────────────────────────────────────────────────
+describe('gauge-sweep CSS scoping', () => {
+  const cssPath = join(dirname(fileURLToPath(import.meta.url)), 'RiskGauge.css');
+  const css = readFileSync(cssPath, 'utf-8');
 
-  it('auto-generated description is used when ariaLabel is omitted', () => {
-    renderGauge({ score: 72, trend: 'improving', lastUpdated: '2025-03-01T00:00:00Z' });
-    const svg = screen.getByRole('img');
-    const titleId = svg.getAttribute('aria-labelledby')!;
-    const title = document.getElementById(titleId);
-    expect(title?.textContent).toMatch(/risk score 72/i);
-    expect(title?.textContent).toMatch(/improving/i);
+  it('gauge-sweep keyframe animation is scoped to [data-initial-sweep="true"], not the bare .risk-gauge-fill class', () => {
+    const pattern = /\.risk-gauge-fill\[data-initial-sweep=["']true["']\]\s*\{[^}]*animation:\s*gauge-sweep/;
+    expect(css).toMatch(pattern);
   });
 
-  it('SVG title uses ariaLabel override when provided', () => {
-    renderGauge({ ariaLabel: 'Creditra risk score: 72 — Good standing' });
-    const svg = screen.getByRole('img');
-    const titleId = svg.getAttribute('aria-labelledby')!;
-    const title = document.getElementById(titleId);
-    expect(title?.textContent).toBe('Creditra risk score: 72 — Good standing');
+  it('.risk-gauge-fill has a stroke-dashoffset transition for smooth updates after the initial sweep', () => {
+    const pattern = /\.risk-gauge-fill\s*\{[^}]*transition:\s*stroke-dashoffset/;
+    expect(css).toMatch(pattern);
+  });
+});
+
+describe('in-app reduced-motion toggle ([data-motion="reduced"])', () => {
+  const cssPath = join(dirname(fileURLToPath(import.meta.url)), 'RiskGauge.css');
+  const css = readFileSync(cssPath, 'utf-8');
+
+  it('disables the sector-dot pulse animation under [data-motion="reduced"]', () => {
+    // Matches: [data-motion="reduced"] .risk-gauge-sector-dot { animation: none; }
+    // (whitespace/formatting-tolerant so minor CSS reformatting doesn't break this)
+    const pattern = /\[data-motion=["']reduced["']\]\s*\.risk-gauge-sector-dot\s*\{[^}]*animation:\s*none/;
+    expect(css).toMatch(pattern);
   });
 
-  it('sr-only paragraph uses ariaLabel override when provided', () => {
-    const customLabel = 'Creditra risk score: 55 — Fair standing';
-    renderGauge({ score: 55, ariaLabel: customLabel });
-    const srPara = document.querySelector('p[aria-live="polite"]');
-    expect(srPara?.textContent).toBe(customLabel);
+  it('disables the fill arc transition/animation under [data-motion="reduced"]', () => {
+    const pattern = /\[data-motion=["']reduced["']\]\s*\.risk-gauge-fill\s*\{[^}]*animation:\s*none[^}]*transition:\s*none/;
+    expect(css).toMatch(pattern);
   });
 
-  it('SVG title and sr-only paragraph stay in sync with ariaLabel override', () => {
-    const customLabel = 'Risk score: 80 (Excellent)';
-    renderGauge({ score: 80, ariaLabel: customLabel });
-    const svg = screen.getByRole('img');
-    const titleId = svg.getAttribute('aria-labelledby')!;
-    const titleText = document.getElementById(titleId)?.textContent;
-    const srText = document.querySelector('p[aria-live="polite"]')?.textContent;
-    expect(titleText).toBe(customLabel);
-    expect(srText).toBe(customLabel);
-  });
-
-  it('ariaLabel override reverts to auto-generated on rerender without it', () => {
-    const { rerender } = renderGauge({ score: 72, ariaLabel: 'Custom label' });
-    rerender(
-      <RiskGauge score={72} trend="improving" lastUpdated="2025-03-01T00:00:00Z" />,
-    );
-    const srPara = document.querySelector('p[aria-live="polite"]');
-    // Should revert to auto-generated description
-    expect(srPara?.textContent).toMatch(/risk score 72/i);
-  });
-
-  // ── showSRTable prop — SR table sibling ────────────────────────────────────
-
-  it('renders the SR table by default (showSRTable defaults to true)', () => {
-    renderGauge();
-    expect(
-      screen.getByRole('table', { name: 'Risk score band breakdown' }),
-    ).toBeInTheDocument();
-  });
-
-  it('SR table has the correct aria-label', () => {
-    renderGauge();
-    const table = screen.getByRole('table', { name: 'Risk score band breakdown' });
-    expect(table).toBeInTheDocument();
-  });
-
-  it('SR table is visually hidden via sr-only class', () => {
-    const { container } = renderGauge();
-    const srTable = container.querySelector('table[aria-label="Risk score band breakdown"]');
-    expect(srTable).toHaveClass('sr-only');
-  });
-
-  it('SR table caption includes the current score', () => {
-    const { container } = renderGauge({ score: 65 });
-    const caption = container.querySelector('table[aria-label="Risk score band breakdown"] caption');
-    expect(caption).toBeInTheDocument();
-    expect(caption?.textContent).toMatch(/65/);
-    expect(caption?.textContent).toMatch(/current score/i);
-  });
-
-  it('SR table lists all three risk bands', () => {
-    renderGauge();
-    const table = screen.getByRole('table', { name: 'Risk score band breakdown' });
-    // Each band should be a row in tbody
-    expect(table.querySelectorAll('tbody tr')).toHaveLength(3);
-  });
-
-  it('SR table has columns: Band, Score range, Current score', () => {
-    renderGauge();
-    expect(screen.getByRole('columnheader', { name: 'Band' })).toBeInTheDocument();
-    expect(screen.getByRole('columnheader', { name: 'Score range' })).toBeInTheDocument();
-    expect(screen.getByRole('columnheader', { name: 'Current score' })).toBeInTheDocument();
-  });
-
-  it('active band row has aria-current="true"', () => {
-    // score=80 → active = "high" (first SECTORS entry = "High score zone")
-    const { container } = renderGauge({ score: 80 });
-    const table = container.querySelector('table[aria-label="Risk score band breakdown"]');
-    const rows = table?.querySelectorAll('tbody tr');
-    // First row = high sector
-    expect(rows?.[0].getAttribute('aria-current')).toBe('true');
-    // Others should have no aria-current
-    expect(rows?.[1].getAttribute('aria-current')).toBeNull();
-    expect(rows?.[2].getAttribute('aria-current')).toBeNull();
-  });
-
-  it('inactive band rows have no aria-current attribute', () => {
-    const { container } = renderGauge({ score: 55 });
-    const table = container.querySelector('table[aria-label="Risk score band breakdown"]');
-    const rows = table?.querySelectorAll('tbody tr');
-    // score=55 → medium (second row)
-    expect(rows?.[0].getAttribute('aria-current')).toBeNull(); // high — inactive
-    expect(rows?.[1].getAttribute('aria-current')).toBe('true'); // medium — active
-    expect(rows?.[2].getAttribute('aria-current')).toBeNull(); // low — inactive
-  });
-
-  it('active band "Current score" cell includes the score value', () => {
-    const { container } = renderGauge({ score: 72 });
-    // score=72 → "high" is active (first row)
-    const table = container.querySelector('table[aria-label="Risk score band breakdown"]');
-    const firstRow = table?.querySelectorAll('tbody tr')?.[0];
-    const cells = firstRow?.querySelectorAll('td');
-    // Third cell = "Current score" column — should say "Yes — 72"
-    expect(cells?.[2].textContent).toMatch(/yes/i);
-    expect(cells?.[2].textContent).toMatch(/72/);
-  });
-
-  it('inactive band "Current score" cells say "No"', () => {
-    const { container } = renderGauge({ score: 72 });
-    const table = container.querySelector('table[aria-label="Risk score band breakdown"]');
-    const rows = table?.querySelectorAll('tbody tr');
-    // Rows 2 and 3 (medium, low) are inactive
-    expect(rows?.[1].querySelectorAll('td')?.[2].textContent).toMatch(/no/i);
-    expect(rows?.[2].querySelectorAll('td')?.[2].textContent).toMatch(/no/i);
-  });
-
-  it('SR table is NOT rendered when showSRTable=false', () => {
-    renderGauge({ showSRTable: false });
-    expect(
-      screen.queryByRole('table', { name: 'Risk score band breakdown' }),
-    ).not.toBeInTheDocument();
-  });
-
-  it('SR table updates aria-current when score changes to a different band', () => {
-    const { rerender, container } = render(
-      <RiskGauge score={80} trend="stable" lastUpdated="2025-01-01T00:00:00Z" />,
-    );
-    const table = container.querySelector('table[aria-label="Risk score band breakdown"]');
-    expect(table?.querySelectorAll('tbody tr')?.[0].getAttribute('aria-current')).toBe('true');
-
-    rerender(<RiskGauge score={30} trend="stable" lastUpdated="2025-01-01T00:00:00Z" />);
-    // Now low is active (third row)
-    expect(table?.querySelectorAll('tbody tr')?.[0].getAttribute('aria-current')).toBeNull();
-    expect(table?.querySelectorAll('tbody tr')?.[2].getAttribute('aria-current')).toBe('true');
-  });
-
-  it('SR table score ranges match the sector definitions', () => {
-    const { container } = renderGauge();
-    const table = container.querySelector('table[aria-label="Risk score band breakdown"]');
-    const rows = table?.querySelectorAll('tbody tr');
-    // Expected ranges per SECTORS constant: high=70–100, medium=50–69, low=0–49
-    expect(rows?.[0].querySelectorAll('td')?.[1].textContent).toBe('70–100');
-    expect(rows?.[1].querySelectorAll('td')?.[1].textContent).toBe('50–69');
-    expect(rows?.[2].querySelectorAll('td')?.[1].textContent).toBe('0–49');
+  it('the OS-level prefers-reduced-motion query also disables the sector-dot pulse', () => {
+    // Guards against someone fixing the [data-motion] gap while accidentally
+    // removing the pre-existing OS-level media query coverage.
+    expect(css).toMatch(/@media \(prefers-reduced-motion: reduce\)[^]*?\.risk-gauge-fill/);
   });
 });

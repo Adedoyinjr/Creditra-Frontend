@@ -2,13 +2,22 @@
   RiskGauge styles
   ────────────────────────────────────────────────────────────────────────────
   All colours use semantic tokens (var(--*)) — no hardcoded hex.
-  The animated fill arc uses a CSS @keyframes that drives stroke-dashoffset
-  from the full circumference (empty gauge) to the computed target offset.
+
+  The fill arc's animated sweep has two modes:
+  1. Initial mount: a @keyframes rule (scoped to [data-initial-sweep="true"])
+     drives stroke-dashoffset from full circumference (empty) to the
+     computed target offset.
+  2. Every later score change: the fill path is never remounted, so a plain
+     `transition` on stroke-dashoffset glides from the previous value to the
+     new one, instead of replaying the full empty→value sweep.
 
   Animation is suppressed entirely for users who prefer reduced motion:
-  - The @keyframes rule is wrapped in a `not prefers-reduced-motion` query.
-  - The JS component also reads matchMedia to initialise dashoffset at the
-    final value, preventing any flash-of-empty-arc.
+  - Both the @keyframes rule and the transition are killed via
+    `prefers-reduced-motion: reduce` and the in-app [data-motion="reduced"]
+    override.
+  - The JS component also reads the reduced-motion state to initialise
+    dashoffset at the final value on first mount, preventing any
+    flash-of-empty-arc.
 
   Focus rings
   ────────────────────────────────────────────────────────────────────────────
@@ -114,20 +123,32 @@
   */
   --gauge-circumference: 172.79;
   --gauge-target-offset: 0;
+
+  /*
+    Smooth glide for score updates *after* the initial mount. The fill path
+    is no longer remounted on every score change (see RiskGauge.tsx), so a
+    plain stroke-dashoffset change now animates via this transition instead
+    of replaying the full empty→value keyframe sweep. Same duration/easing
+    as gauge-sweep below, so the initial sweep and later updates feel
+    consistent.
+  */
+  transition: stroke-dashoffset 300ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* ── Arc sweep animation ─────────────────────────────────────────────────── */
+/* ── Arc sweep animation (initial mount only) ────────────────────────────── */
 /*
-  Only applied when the user has NOT requested reduced motion.
-  The keyframe sweeps dashoffset from circumference (empty) → target offset.
-  Duration: 900ms — long enough to be legible, short enough not to feel slow.
-  Easing: cubic-bezier(0.25, 0.46, 0.45, 0.94) — ease-out feel (fast start,
-  gentle deceleration), matching the util-bar-fill transition in Dashboard.css.
+  Only applied when the user has NOT requested reduced motion, and only on
+  the fill path's first paint — scoped via [data-initial-sweep="true"], which
+  the component clears after mount (see RiskGauge.tsx). Subsequent score
+  changes are handled by the `transition` on `.risk-gauge-fill` above instead,
+  so the gauge doesn't replay this empty→value sweep on every minor update.
+  Duration: 300ms. Easing: cubic-bezier(0.16, 1, 0.3, 1) — ease-out feel
+  (fast start, gentle deceleration).
 */
 
 @media (prefers-reduced-motion: no-preference) {
-  .risk-gauge-fill {
-    animation: gauge-sweep 900ms cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+  .risk-gauge-fill[data-initial-sweep="true"] {
+    animation: gauge-sweep 300ms cubic-bezier(0.16, 1, 0.3, 1) both;
   }
 }
 
@@ -142,8 +163,8 @@
 
 /* ── Reduced-motion explicit reset ──────────────────────────────────────── */
 /*
-  Belt-and-suspenders: even if the animation somehow fires, kill it instantly
-  and jump to the final state.
+  Belt-and-suspenders: even if the animation or transition somehow fires,
+  kill it instantly and jump to the final state.
   IMPORTANT: focus ring styles are NOT suppressed here — the ring must remain
   visible regardless of prefers-reduced-motion (WCAG 2.4.11).
 */
@@ -230,6 +251,10 @@
   }
 }
 
+[data-motion="reduced"] .risk-gauge-sector-dot {
+  animation: none;
+}
+
 @keyframes sector-dot-pulse {
   0%, 100% { opacity: 1; r: 4; }
   50%       { opacity: 0.6; r: 5; }
@@ -292,8 +317,7 @@
 
 /* Reduced Motion Override */
 [data-motion="reduced"] .risk-gauge-fill {
-    animation: none;
-    transition: none;
-    /* stroke-dashoffset is set to the final value by the JS component */
-  }
-
+  animation: none;
+  transition: none;
+  /* stroke-dashoffset is set to the final value by the JS component */
+}
