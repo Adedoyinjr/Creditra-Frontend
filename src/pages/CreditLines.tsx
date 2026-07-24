@@ -1,5 +1,5 @@
-import { useState, useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import { useState, useMemo, useRef } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { StatusBadge } from '../components/StatusBadge';
 import { RepaymentPlanChart } from '../components/RepaymentPlanChart';
 import { MOCK_CREDIT_LINES } from '../data/mockData';
@@ -9,7 +9,17 @@ import {
   fmt, fmtDate, getUtilizationLevel, utilizationPct,
 } from '../utils/tokens';
 import { formatCountdown, getCountdownAriaLabel } from '../utils/dates';
+import { useFocusTrap } from '../hooks/useFocusTrap';
+import { useInertBackdrop } from '../hooks/useInertBackdrop';
+import { useBodyScrollLock } from '../hooks/useBodyScrollLock';
+import { CompareLinesPanel } from '../components/CompareLinesPanel';
+import { CreditLineRowMenu } from '../components/CreditLineRowMenu';
+import { NextAccrualChip } from '../components/NextAccrualChip';
+import { CollateralSubstitutionModal } from '../components/CollateralSubstitutionModal';
+import { NoLines } from '../components/icons/NoLines';
+import type { CollateralAsset } from '../types/collateral';
 import './CreditLines.css';
+import '../styles/patterns.css';
 
 // ─── Credit Line Card ────────────────────────────────────────────────────────
 
@@ -46,7 +56,7 @@ function CreditLineCard({
 
   return (
     <div
-      className={`cl-card${isDefaulted ? " cl-row--defaulted" : ""}`}
+      className={`cl-card status-${line.status.toLowerCase()}${isDefaulted ? " cl-row--defaulted" : ""}`}
       aria-label={
         isDefaulted ? `Credit line ${line.id} is defaulted` : undefined
       }
