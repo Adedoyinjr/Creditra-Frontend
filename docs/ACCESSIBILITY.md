@@ -81,6 +81,40 @@ heading.
 - Example: `WalletButton.tsx` connected state — `aria-haspopup` and `aria-expanded` on the
   address chip, `role="menu"` on the dropdown.
 
+### Search combobox (TransactionHistory)
+
+The search field on the Transaction History page follows the **ARIA 1.2 combobox pattern**
+(single-select, list autocomplete). Implementation is in `src/pages/TransactionHistory.tsx`.
+
+| Attribute | Element | Value / purpose |
+| --- | --- | --- |
+| `role="combobox"` | `<input>` | Signals combined text-entry + popup to AT |
+| `aria-expanded` | `<input>` | `"true"` when suggestion listbox is visible |
+| `aria-controls` | `<input>` | ID of the `role="listbox"` element |
+| `aria-autocomplete="list"` | `<input>` | Completions appear in popup, not inline |
+| `aria-activedescendant` | `<input>` | ID of the currently keyboard-focused option |
+| `role="listbox"` | `<ul>` | Suggestion container |
+| `role="option"` | `<li>` | Individual suggestion |
+| `aria-selected` | `<li>` | `"true"` on the active (keyboard-navigated) option |
+| `aria-label="Clear search"` | `<button>` | ✕ clear button visible only when input is non-empty |
+
+Keyboard interaction:
+
+| Key | Behaviour |
+| --- | --- |
+| Arrow Down | Open list (if closed); move active option down (wraps) |
+| Arrow Up | Move active option up (wraps) |
+| Enter | Commit active option; if none active, close list |
+| Escape | Dismiss list, keep typed value |
+| Tab | Dismiss list, advance focus |
+
+Filtering is debounced (250 ms) to prevent layout thrashing on every keystroke; the raw
+input value drives the visible suggestion list immediately. The committed search query
+joins the existing AND-filter chain (type × date × amount × credit-line × status × search).
+
+`prefers-reduced-motion`: the listbox slide-in animation is suppressed via a
+`@media (prefers-reduced-motion: reduce)` block in `TransactionHistory.css`.
+
 ### Status badges and gauges
 
 - `StatusBadge` pairs a tinted pill with a single-letter glyph (`A | ! | X | C`). Color is
@@ -96,6 +130,7 @@ heading.
 | Form field errors | `role="alert"` (assertive, debounced 300 ms) | `FormMessage` |
 | Copy-to-clipboard success | `aria-live="polite"` | `CopyToClipboard` |
 | Route changes | `role="status" aria-live="polite"` | `RouteAnnouncer` |
+| Transaction filter result count | `role="status" aria-live="polite" aria-atomic="true"` | `TransactionHistory` filter bar |
 | Browser connectivity (header) | Assertive on offline; polite on restore | `NetworkStatus` |
 | Post-action confirmation | `role="status" aria-live="polite"` | `SuccessState` |
 | Toast notifications | Polite `ToastContainer` live region for confirmations; individual error toasts escalate to `role="alert"` | `ToastContainer` |
@@ -154,7 +189,7 @@ The table below is updated on every accessibility-impacting PR. Status legend:
 | `Dashboard` (risk gauge) | n/a | Score and trend exposed via `<title>` + polite `sr-only` sibling; arc animates on value change with reduced-motion fallback | AA | reduced-motion gated (CSS + JS `matchMedia`) | OK |
 | `Header` nav | Tab through links; Enter activates | `aria-current="page"` on active link | AA | n/a | OK |
 | `RepayModal` | Focus trap (canonical `{ isActive }` form) + return focus to trigger | `role="dialog"`, `aria-modal`, `aria-labelledby` | AA | n/a | OK |
-| `TransactionHistory` | Sortable headers via Enter/Space | `aria-sort` reflects column state | AA | n/a | OK |
+| `TransactionHistory` | Sortable headers via Enter/Space; search combobox fully keyboard navigable (ArrowDown/Up, Enter, Escape, Tab) | `aria-sort` reflects column state; search uses ARIA 1.2 combobox pattern (`role="combobox"`, `aria-expanded`, `aria-controls`, `aria-autocomplete="list"`, `aria-activedescendant`); result count in polite live region | AA | reduced-motion disables listbox animation | OK |
 | `HelpCenter` | Tab/Enter on sidebar anchor links; accordion buttons and transcript links keyboard reachable | Sidebar nav has `aria-label="Help topics"`; `aria-current="true"` on active section via IntersectionObserver | AA | `useReducedMotion()` gates smooth scroll | OK |
 | `SupportWidget` | Floating trigger, search field, FAQ toggles, and email handoff are keyboard reachable | `aria-expanded`, `aria-controls`, visible focus ring, non-modal `role="dialog"` shell | AA | n/a | OK |
 | `LandingPage` | Tab through CTAs and FAQ accordion | Framer Motion guarded by `useReducedMotion` | AA | reduced-motion gated | OK |
