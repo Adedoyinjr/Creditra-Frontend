@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Search, ChevronDown } from "lucide-react";
 import { useLocation } from "react-router-dom";
+import SupportForm from "../components/SupportForm";
+
 import { VideoThumbnail } from "../components/VideoThumbnail";
 import { useActiveSection } from "../hooks/useActiveSection";
 import { useReducedMotion } from "../context/ReducedMotionContext";
@@ -161,8 +163,25 @@ export default function HelpCenter() {
             ))}
           </div>
 
+          <div className="help-center__support">
+            <h2 className="help-center__support-title">Contact Support</h2>
+            <p className="help-center__support-subtitle">
+              Send us details about your issue. Attach a file if it helps (logs, screenshots, PDFs).
+            </p>
+
+            <SupportForm
+              onSubmit={async () => {
+                // This screen only demonstrates the form; the caller can wire to a real API.
+                return { success: true };
+              }}
+              maxAttachmentBytes={5 * 1024 * 1024}
+              acceptedAttachmentTypes={[".png", ".jpg", ".jpeg", ".pdf"]}
+            />
+          </div>
+
           <div id="faq" className="help-center__faq">
             <h2 className="help-center__faq-title">FAQ</h2>
+
             {filteredFaqs.map((item, i) => (
               <div key={item.id} className="help-center__faq-item">
                 <button

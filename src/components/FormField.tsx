@@ -22,6 +22,22 @@ interface BaseFormFieldProps {
   error?: string;
   /** Pass-through class name on the field wrapper. */
   className?: string;
+  /**
+   * Debounce window (ms) for the screen-reader announcement of the
+   * error message.  The visual error renders immediately; only the
+   * `aria-live` readback is delayed so rapid edits to a field
+   * ("1" → "10" → "100") produce one readback instead of three.
+   *
+   * Defaults to 300 ms — long enough to coalesce a typical typing
+   * burst, short enough to feel responsive.  Set to `0` to read each
+   * change instantly (useful in tests + critical forms).
+   *
+   * The value is forwarded to the inner `FormMessage` debounce hook so
+   * the announcement cadence is owned by `FormField` itself rather
+   * than buried in a child component.  This addresses GitHub
+   * issue #452 ("Add debounce-announce on FormField errors").
+   */
+  announceDelayMs?: number;
 }
 
 interface InputFormFieldProps extends BaseFormFieldProps {
@@ -55,6 +71,9 @@ type FormFieldProps = InputFormFieldProps | TextareaFormFieldProps | CustomFormF
  * - Required indicator with screen reader announcement
  * - Help text linked via aria-describedby
  * - Error messaging with aria-invalid and aria-describedby
+ * - Debounced live-region announcement (configurable via
+ *   `announceDelayMs`, default 300 ms) so rapid error toggles
+ *   collapse into one readback (#452).
  * - Consistent spacing and color tokens
  * - Focus management with visible focus rings
  *
@@ -70,7 +89,15 @@ type FormFieldProps = InputFormFieldProps | TextareaFormFieldProps | CustomFormF
  * />
  */
 export function FormField(props: FormFieldProps) {
-  const { id, label, required = false, helpText, error, className = '' } = props;
+  const {
+    id,
+    label,
+    required = false,
+    helpText,
+    error,
+    className = '',
+    announceDelayMs,
+  } = props;
 
   const helpTextId = `${id}-help`;
   const errorId = `${id}-error`;
@@ -122,12 +149,15 @@ export function FormField(props: FormFieldProps) {
       )}
 
       {error && (
+        // `announceDelayMs` is optionally forwarded.  React drops
+        // `undefined` props, so passing unconditionally is safe.
         <FormMessage
           id={errorId}
           title={error}
           type="danger"
           tone="inline"
           reserveSpace={false}
+          announceDelayMs={announceDelayMs}
         />
       )}
     </div>

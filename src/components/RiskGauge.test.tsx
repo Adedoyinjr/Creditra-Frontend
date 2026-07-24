@@ -472,3 +472,169 @@ describe('RiskGauge', () => {
     });
   });
 });
+
+// ─── Accessibility chart captions / SR table tests (chart-captions feature) ──
+
+describe('RiskGauge — accessible chart captions', () => {
+  // ── ariaLabel prop ─────────────────────────────────────────────────────────
+
+  it('auto-generated description is used when ariaLabel is omitted', () => {
+    renderGauge({ score: 72, trend: 'improving', lastUpdated: '2025-03-01T00:00:00Z' });
+    const svg = screen.getByRole('img');
+    const titleId = svg.getAttribute('aria-labelledby')!;
+    const title = document.getElementById(titleId);
+    expect(title?.textContent).toMatch(/risk score 72/i);
+    expect(title?.textContent).toMatch(/improving/i);
+  });
+
+  it('SVG title uses ariaLabel override when provided', () => {
+    renderGauge({ ariaLabel: 'Creditra risk score: 72 — Good standing' });
+    const svg = screen.getByRole('img');
+    const titleId = svg.getAttribute('aria-labelledby')!;
+    const title = document.getElementById(titleId);
+    expect(title?.textContent).toBe('Creditra risk score: 72 — Good standing');
+  });
+
+  it('sr-only paragraph uses ariaLabel override when provided', () => {
+    const customLabel = 'Creditra risk score: 55 — Fair standing';
+    renderGauge({ score: 55, ariaLabel: customLabel });
+    const srPara = document.querySelector('p[aria-live="polite"]');
+    expect(srPara?.textContent).toBe(customLabel);
+  });
+
+  it('SVG title and sr-only paragraph stay in sync with ariaLabel override', () => {
+    const customLabel = 'Risk score: 80 (Excellent)';
+    renderGauge({ score: 80, ariaLabel: customLabel });
+    const svg = screen.getByRole('img');
+    const titleId = svg.getAttribute('aria-labelledby')!;
+    const titleText = document.getElementById(titleId)?.textContent;
+    const srText = document.querySelector('p[aria-live="polite"]')?.textContent;
+    expect(titleText).toBe(customLabel);
+    expect(srText).toBe(customLabel);
+  });
+
+  it('ariaLabel override reverts to auto-generated on rerender without it', () => {
+    const { rerender } = renderGauge({ score: 72, ariaLabel: 'Custom label' });
+    rerender(
+      <RiskGauge score={72} trend="improving" lastUpdated="2025-03-01T00:00:00Z" />,
+    );
+    const srPara = document.querySelector('p[aria-live="polite"]');
+    // Should revert to auto-generated description
+    expect(srPara?.textContent).toMatch(/risk score 72/i);
+  });
+
+  // ── showSRTable prop — SR table sibling ────────────────────────────────────
+
+  it('renders the SR table by default (showSRTable defaults to true)', () => {
+    renderGauge();
+    expect(
+      screen.getByRole('table', { name: 'Risk score band breakdown' }),
+    ).toBeInTheDocument();
+  });
+
+  it('SR table has the correct aria-label', () => {
+    renderGauge();
+    const table = screen.getByRole('table', { name: 'Risk score band breakdown' });
+    expect(table).toBeInTheDocument();
+  });
+
+  it('SR table is visually hidden via sr-only class', () => {
+    const { container } = renderGauge();
+    const srTable = container.querySelector('table[aria-label="Risk score band breakdown"]');
+    expect(srTable).toHaveClass('sr-only');
+  });
+
+  it('SR table caption includes the current score', () => {
+    const { container } = renderGauge({ score: 65 });
+    const caption = container.querySelector('table[aria-label="Risk score band breakdown"] caption');
+    expect(caption).toBeInTheDocument();
+    expect(caption?.textContent).toMatch(/65/);
+    expect(caption?.textContent).toMatch(/current score/i);
+  });
+
+  it('SR table lists all three risk bands', () => {
+    renderGauge();
+    const table = screen.getByRole('table', { name: 'Risk score band breakdown' });
+    // Each band should be a row in tbody
+    expect(table.querySelectorAll('tbody tr')).toHaveLength(3);
+  });
+
+  it('SR table has columns: Band, Score range, Current score', () => {
+    renderGauge();
+    expect(screen.getByRole('columnheader', { name: 'Band' })).toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: 'Score range' })).toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: 'Current score' })).toBeInTheDocument();
+  });
+
+  it('active band row has aria-current="true"', () => {
+    // score=80 → active = "high" (first SECTORS entry = "High score zone")
+    const { container } = renderGauge({ score: 80 });
+    const table = container.querySelector('table[aria-label="Risk score band breakdown"]');
+    const rows = table?.querySelectorAll('tbody tr');
+    // First row = high sector
+    expect(rows?.[0].getAttribute('aria-current')).toBe('true');
+    // Others should have no aria-current
+    expect(rows?.[1].getAttribute('aria-current')).toBeNull();
+    expect(rows?.[2].getAttribute('aria-current')).toBeNull();
+  });
+
+  it('inactive band rows have no aria-current attribute', () => {
+    const { container } = renderGauge({ score: 55 });
+    const table = container.querySelector('table[aria-label="Risk score band breakdown"]');
+    const rows = table?.querySelectorAll('tbody tr');
+    // score=55 → medium (second row)
+    expect(rows?.[0].getAttribute('aria-current')).toBeNull(); // high — inactive
+    expect(rows?.[1].getAttribute('aria-current')).toBe('true'); // medium — active
+    expect(rows?.[2].getAttribute('aria-current')).toBeNull(); // low — inactive
+  });
+
+  it('active band "Current score" cell includes the score value', () => {
+    const { container } = renderGauge({ score: 72 });
+    // score=72 → "high" is active (first row)
+    const table = container.querySelector('table[aria-label="Risk score band breakdown"]');
+    const firstRow = table?.querySelectorAll('tbody tr')?.[0];
+    const cells = firstRow?.querySelectorAll('td');
+    // Third cell = "Current score" column — should say "Yes — 72"
+    expect(cells?.[2].textContent).toMatch(/yes/i);
+    expect(cells?.[2].textContent).toMatch(/72/);
+  });
+
+  it('inactive band "Current score" cells say "No"', () => {
+    const { container } = renderGauge({ score: 72 });
+    const table = container.querySelector('table[aria-label="Risk score band breakdown"]');
+    const rows = table?.querySelectorAll('tbody tr');
+    // Rows 2 and 3 (medium, low) are inactive
+    expect(rows?.[1].querySelectorAll('td')?.[2].textContent).toMatch(/no/i);
+    expect(rows?.[2].querySelectorAll('td')?.[2].textContent).toMatch(/no/i);
+  });
+
+  it('SR table is NOT rendered when showSRTable=false', () => {
+    renderGauge({ showSRTable: false });
+    expect(
+      screen.queryByRole('table', { name: 'Risk score band breakdown' }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('SR table updates aria-current when score changes to a different band', () => {
+    const { rerender, container } = render(
+      <RiskGauge score={80} trend="stable" lastUpdated="2025-01-01T00:00:00Z" />,
+    );
+    const table = container.querySelector('table[aria-label="Risk score band breakdown"]');
+    expect(table?.querySelectorAll('tbody tr')?.[0].getAttribute('aria-current')).toBe('true');
+
+    rerender(<RiskGauge score={30} trend="stable" lastUpdated="2025-01-01T00:00:00Z" />);
+    // Now low is active (third row)
+    expect(table?.querySelectorAll('tbody tr')?.[0].getAttribute('aria-current')).toBeNull();
+    expect(table?.querySelectorAll('tbody tr')?.[2].getAttribute('aria-current')).toBe('true');
+  });
+
+  it('SR table score ranges match the sector definitions', () => {
+    const { container } = renderGauge();
+    const table = container.querySelector('table[aria-label="Risk score band breakdown"]');
+    const rows = table?.querySelectorAll('tbody tr');
+    // Expected ranges per SECTORS constant: high=70–100, medium=50–69, low=0–49
+    expect(rows?.[0].querySelectorAll('td')?.[1].textContent).toBe('70–100');
+    expect(rows?.[1].querySelectorAll('td')?.[1].textContent).toBe('50–69');
+    expect(rows?.[2].querySelectorAll('td')?.[1].textContent).toBe('0–49');
+  });
+});
