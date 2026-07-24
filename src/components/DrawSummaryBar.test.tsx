@@ -3,10 +3,27 @@ import { render, screen, act } from "@testing-library/react";
 import { DrawSummaryBar } from "./DrawSummaryBar";
 import type { CreditLine } from "@/types/draw-credit.types";
 
-/**
- * Sample credit line for unit tests — chosen to exercise the "Standard"
- * risk band so the test asserts a deterministic APR of about 11.5%.
- */
+vi.mock("@/hooks/useMediaQuery", () => ({
+  BELOW_MD_MEDIA: "(max-width: 767px)",
+  useMediaQuery: vi.fn(() => true),
+}));
+
+vi.mock("@/hooks/useScrollCollapse", () => ({
+  useScrollCollapse: vi.fn(() => false),
+}));
+
+vi.mock("@/hooks/usePrefersReducedMotion", () => ({
+  usePrefersReducedMotion: vi.fn(() => false),
+}));
+
+import { useMediaQuery } from "@/hooks/useMediaQuery";
+import { useScrollCollapse } from "@/hooks/useScrollCollapse";
+import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
+
+const mockUseMediaQuery = vi.mocked(useMediaQuery);
+const mockUseScrollCollapse = vi.mocked(useScrollCollapse);
+const mockUsePrefersReducedMotion = vi.mocked(usePrefersReducedMotion);
+
 const standardLine: CreditLine = {
   id: "cl-standard-001",
   name: "Business Line of Credit",
@@ -18,6 +35,12 @@ const standardLine: CreditLine = {
 };
 
 describe("DrawSummaryBar", () => {
+  beforeEach(() => {
+    mockUseMediaQuery.mockReturnValue(true);
+    mockUseScrollCollapse.mockReturnValue(false);
+    mockUsePrefersReducedMotion.mockReturnValue(false);
+  });
+
   describe("visibility", () => {
     it("renders nothing when no credit line is selected", () => {
       const { container } = render(
@@ -35,7 +58,7 @@ describe("DrawSummaryBar", () => {
       expect(container.firstChild).toBeNull();
     });
 
-    it("renders nothing on the `confirm` step (avoids double sticky bars over ConfirmationStep)", () => {
+    it("renders nothing on the `confirm` step", () => {
       const { container } = render(
         <DrawSummaryBar
           creditLine={standardLine}
@@ -59,7 +82,21 @@ describe("DrawSummaryBar", () => {
       expect(container.firstChild).toBeNull();
     });
 
-    it("shows the bar on the `amount` step once a line is selected", () => {
+    it("renders nothing at md breakpoint and above", () => {
+      mockUseMediaQuery.mockReturnValue(false);
+
+      const { container } = render(
+        <DrawSummaryBar
+          creditLine={standardLine}
+          amount={1000}
+          step="amount"
+        />,
+      );
+
+      expect(container.firstChild).toBeNull();
+    });
+
+    it("shows the bar on the `amount` step below md once a line is selected", () => {
       const { container } = render(
         <DrawSummaryBar
           creditLine={standardLine}
@@ -71,9 +108,6 @@ describe("DrawSummaryBar", () => {
     });
 
     it("does not crash when visibility toggles across renders (rules of hooks)", () => {
-      // Mount visible, then navigate to invisible, then back to visible.
-      // Without correct hook ordering this throws "Rendered more hooks
-      // than during the previous render."
       const { rerender, container } = render(
         <DrawSummaryBar
           creditLine={standardLine}
@@ -83,7 +117,6 @@ describe("DrawSummaryBar", () => {
       );
       expect(container.firstChild).not.toBeNull();
 
-      // amount → confirm (invisible): bar disappears
       rerender(
         <DrawSummaryBar
           creditLine={standardLine}
@@ -93,7 +126,6 @@ describe("DrawSummaryBar", () => {
       );
       expect(container.firstChild).toBeNull();
 
-      // confirm → amount (visible again): bar reappears
       rerender(
         <DrawSummaryBar
           creditLine={standardLine}
@@ -106,7 +138,7 @@ describe("DrawSummaryBar", () => {
   });
 
   describe("rendered figures", () => {
-    it("shows formatted amount, APR (rounded), and total cost (amount + fee)", () => {
+    it("shows line name, formatted amount, and APR", () => {
       render(
         <DrawSummaryBar
           creditLine={standardLine}
@@ -115,22 +147,18 @@ describe("DrawSummaryBar", () => {
         />,
       );
 
-      // Amount tile shows the human-formatted money string.
+      expect(screen.getByTestId("draw-summary-line")).toHaveTextContent(
+        "Business Line of Credit",
+      );
       expect(screen.getByTestId("draw-summary-amount")).toHaveTextContent(
         /\$10,000/,
       );
 
-      // APR tile shows a numeric value followed by "%".
       const aprTile = screen.getByTestId("draw-summary-apr");
       expect(aprTile.textContent).toMatch(/^\d+(\.\d+)?%$/);
-
-      // Total cost = amount + fee = $10,000 + $100 (1 %) = $10,100.
-      expect(screen.getByTestId("draw-summary-total")).toHaveTextContent(
-        /\$10,100/,
-      );
     });
 
-    it("renders $0.00 totals and 0% APR gracefully when amount is zero", () => {
+    it("renders $0 amount and 0% APR gracefully when amount is zero", () => {
       render(
         <DrawSummaryBar
           creditLine={standardLine}
@@ -140,11 +168,10 @@ describe("DrawSummaryBar", () => {
       );
 
       expect(screen.getByTestId("draw-summary-amount")).toHaveTextContent("$0");
-      expect(screen.getByTestId("draw-summary-total")).toHaveTextContent("$0");
     });
 
-    it("clamps a negative amount prop to $0 instead of producing negative numbers", () => {
-      const { container } = render(
+    it("clamps a negative amount prop to $0", () => {
+      render(
         <DrawSummaryBar
           creditLine={standardLine}
           amount={-500}
@@ -152,14 +179,47 @@ describe("DrawSummaryBar", () => {
         />,
       );
 
-      expect(container.firstChild).not.toBeNull();
       expect(screen.getByTestId("draw-summary-amount")).toHaveTextContent("$0");
-      expect(screen.getByTestId("draw-summary-total")).toHaveTextContent("$0");
+    });
+  });
+
+  describe("scroll collapse", () => {
+    it("applies collapsed class and shows peek row when scroll hook reports collapsed", () => {
+      mockUseScrollCollapse.mockReturnValue(true);
+
+      render(
+        <DrawSummaryBar
+          creditLine={standardLine}
+          amount={5000}
+          step="amount"
+        />,
+      );
+
+      const region = screen.getByTestId("draw-summary-bar");
+      expect(region).toHaveClass("draw-summary-bar--collapsed");
+      expect(region).toHaveAttribute("aria-expanded", "false");
+      expect(screen.getByTestId("draw-summary-peek")).toBeInTheDocument();
+    });
+
+    it("uses instant transition class when reduced motion is preferred", () => {
+      mockUsePrefersReducedMotion.mockReturnValue(true);
+
+      render(
+        <DrawSummaryBar
+          creditLine={standardLine}
+          amount={1000}
+          step="amount"
+        />,
+      );
+
+      expect(screen.getByTestId("draw-summary-bar")).toHaveClass(
+        "draw-summary-bar--reduced-motion",
+      );
     });
   });
 
   describe("accessibility (WCAG 2.1 AA)", () => {
-    it("exposes a labelled region landmark", () => {
+    it("exposes a labelled, focusable region landmark", () => {
       render(
         <DrawSummaryBar
           creditLine={standardLine}
@@ -170,9 +230,10 @@ describe("DrawSummaryBar", () => {
 
       const region = screen.getByRole("region", { name: /draw summary/i });
       expect(region).toBeInTheDocument();
+      expect(region).toHaveAttribute("tabindex", "0");
     });
 
-    it("uses definition-list semantics with labelled terms for SR navigation", () => {
+    it("uses definition-list semantics with Line, Amount, and APR labels", () => {
       render(
         <DrawSummaryBar
           creditLine={standardLine}
@@ -189,7 +250,7 @@ describe("DrawSummaryBar", () => {
 
       const captionTexts = captions.map((node) => node.textContent);
       expect(captionTexts).toEqual(
-        expect.arrayContaining(["Amount", "APR", "Total cost"]),
+        expect.arrayContaining(["Line", "Amount", "APR"]),
       );
     });
 
@@ -228,13 +289,12 @@ describe("DrawSummaryBar", () => {
         />,
       );
 
-      // After mount + a tick of fake time, the debounced value equals the
-      // initial mount value (1000).
       act(() => {
         vi.advanceTimersByTime(450);
       });
       const live = screen.getByTestId("draw-summary-live");
       expect(live.textContent).toMatch(/1,000/);
+      expect(live.textContent).toMatch(/Business Line of Credit/);
     });
 
     it("coalesces rapid amount edits into one final announcement", () => {
@@ -246,14 +306,10 @@ describe("DrawSummaryBar", () => {
         />,
       );
 
-      // First, let the initial empty-string debounce settle.
       act(() => {
         vi.advanceTimersByTime(450);
       });
 
-      // Simulate rapid typing: 1 → 10 → 100 → 1000 within the same tick.
-      // Without the debounce, an SR polite region would queue four
-      // announcements; with it, the trailing edge fires once with 1000.
       for (const value of [1, 10, 100, 1000]) {
         rerender(
           <DrawSummaryBar
@@ -262,19 +318,14 @@ describe("DrawSummaryBar", () => {
             step="amount"
           />,
         );
-        // Each rerender resets the debounce timer; no advancement.
       }
 
-      // Just before the debounce settles, the live region text still
-      // reflects the previous value, not the latest amount.
       act(() => {
         vi.advanceTimersByTime(399);
       });
       let live = screen.getByTestId("draw-summary-live");
       expect(live.textContent).not.toMatch(/1,000/);
 
-      // Advance past the 400 ms debounce window — the trailing edge
-      // commits the LAST value to the live region.
       act(() => {
         vi.advanceTimersByTime(50);
       });

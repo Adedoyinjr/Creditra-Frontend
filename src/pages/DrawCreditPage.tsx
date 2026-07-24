@@ -11,6 +11,7 @@ import { InlineHelpOverlay } from "@/components/InlineHelpOverlay";
 import { CreditLine, DrawStep, Transaction } from "@/types/draw-credit.types";
 import { mockCreditLines } from "@/lib/draw-credit-mock-data";
 import { WhyApr } from "@/components/WhyApr";
+import { DrawingLimit } from "@/components/DrawingLimit";
 import { DrawSummaryBar } from "@/components/DrawSummaryBar";
 
 const drawSteps = [
@@ -108,7 +109,7 @@ export default function DrawCreditPage() {
   );
 
   return (
-    <main className="min-h-screen bg-background px-4 pb-24 pt-6 sm:pb-28 sm:pt-8">
+    <main className="min-h-screen bg-background px-4 pb-24 pt-6 max-md:pb-28 md:pb-8 sm:pt-8">
       <div className="mx-auto w-full max-w-4xl space-y-5">
         {step !== "status" && (
           <header className="card" aria-label="Draw credit progress">
@@ -273,12 +274,10 @@ export default function DrawCreditPage() {
         triggerRef={whyAprTriggerRef}
       />
       {/*
-        Sticky bottom summary bar — rendered at the page root so it
-        always anchors to the viewport bottom regardless of which step
-        card is currently mounted. The bar self-hides on the `select`
-        and `status` steps; see DrawSummaryBar.tsx for details. The
-        pb-32 / sm:pb-36 padding on <main> ensures content is never
-        occluded by the fixed-position bar.
+        Mobile-only sticky summary (below md) — fixed to the viewport so
+        line / amount / APR stay visible while scrolling the amount step.
+        Desktop uses the sidebar PreviewSection instead. Bottom padding on
+        <main> (max-md:pb-28) prevents content from sitting under the bar.
       */}
       <DrawSummaryBar
         creditLine={selectedCreditLine}
