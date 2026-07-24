@@ -266,9 +266,15 @@ Touch targets stay at 44×44 px regardless of density (see [`ACCESSIBILITY.md`](
 
 Implemented inline in `src/pages/Dashboard.tsx` as an SVG semicircle. A 180° arc from
 `(cx - r, cy)` to `(cx + r, cy)` is drawn twice — a muted background path and a coloured
-foreground path. The foreground's `strokeDashoffset` is computed from the normalised
 score (`0–100`). The colour comes from `RISK_COLOR(score)` and the trend arrow is
 `▲ | ▼ | ─` paired with `improving | declining | stable` text — never colour alone.
+
+### Risk bands
+
+`RiskBand` pairs a colored background with a secondary visual pattern to distinguish risk levels without relying solely on color (WCAG 1.4.1).
+- **Excellent/Success**: Minimal dotted pattern (`radial-gradient`).
+- **Good/Warning**: Diagonal stripes.
+- **Caution & Recovery/Danger**: Crosshatch pattern.
 
 ### Status badge
 

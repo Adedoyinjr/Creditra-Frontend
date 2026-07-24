@@ -1,0 +1,53 @@
+.risk-band {
+  position: relative;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: row;
+}
+
+.risk-band__pattern {
+  width: 12px;
+  flex-shrink: 0;
+  border-right: 1px solid var(--border);
+}
+
+.risk-band__content {
+  flex: 1;
+  padding: 1rem;
+}
+
+/* 
+  Color-blind safe patterns 
+  We use --bg as the contrasting color for the pattern shapes so it looks seamless.
+*/
+
+/* Success (Excellent): Dots */
+.risk-band__pattern--success {
+  background-color: var(--success);
+  background-image: radial-gradient(var(--bg) 1.5px, transparent 1.5px);
+  background-size: 6px 6px;
+  background-position: 0 0;
+}
+
+/* Warning (Good): Diagonal stripes */
+.risk-band__pattern--warning {
+  background-color: var(--warning);
+  background-image: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 4px,
+    var(--bg) 4px,
+    var(--bg) 8px
+  );
+}
+
+/* Danger (Caution/Recovery): Crosshatch */
+.risk-band__pattern--danger {
+  background-color: var(--error);
+  background-image: 
+    repeating-linear-gradient(45deg, transparent, transparent 3px, var(--bg) 3px, var(--bg) 6px),
+    repeating-linear-gradient(-45deg, transparent, transparent 3px, var(--bg) 3px, var(--bg) 6px);
+}
