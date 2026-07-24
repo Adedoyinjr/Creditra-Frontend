@@ -13,6 +13,7 @@ import {
   getDrawAmountValidation,
 } from "../utils/amountValidation";
 import { FormMessage } from "./FormMessage";
+import { Skeleton } from "./Skeleton";
 
 const STEP_AMOUNT = 100;
 
@@ -21,11 +22,99 @@ const stepClasses =
 
 const STEP_ICON_CLASS = "h-4 w-4 stroke-[2.5]";
 
-interface AmountInputProps {
-  creditLine: CreditLine;
-  onAmountChange: (amount: number) => void;
-  onNext: (amount: number) => void;
-  onBack: () => void;
+export interface AmountInputProps {
+  creditLine?: CreditLine;
+  onAmountChange?: (amount: number) => void;
+  onNext?: (amount: number) => void;
+  onBack?: () => void;
+  isLoading?: boolean;
+}
+
+export function AmountInputSkeleton() {
+  return (
+    <div
+      className="space-y-8"
+      role="region"
+      aria-busy="true"
+      aria-label="Loading amount input"
+      data-testid="amount-input-skeleton"
+    >
+      {/* Header section skeleton */}
+      <div>
+        <Skeleton width="180px" height="2.25rem" className="rounded-lg mb-2" />
+        <Skeleton width="220px" height="1.25rem" className="rounded-md" />
+      </div>
+
+      {/* Main input field section skeleton */}
+      <div className="space-y-3">
+        <Skeleton width="100px" height="1.25rem" className="rounded-md" />
+        <Skeleton width="260px" height="1.25rem" className="rounded-md" />
+
+        {/* Input box with stepper buttons skeleton */}
+        <div className="flex items-center gap-2 bg-surface p-4 rounded-xl border border-border">
+          <Skeleton width="44px" height="44px" className="rounded-lg shrink-0" />
+          <Skeleton width="24px" height="32px" className="rounded-md shrink-0" />
+          <Skeleton width="100%" height="40px" className="rounded-lg flex-1" />
+          <Skeleton width="44px" height="44px" className="rounded-lg shrink-0" />
+          <Skeleton width="56px" height="36px" className="rounded-lg shrink-0" />
+        </div>
+
+        {/* Constraint cards skeleton */}
+        <div className="grid gap-2 sm:grid-cols-3">
+          {[1, 2, 3].map((i) => (
+            <div
+              key={i}
+              className="rounded-lg border border-border bg-background/60 px-3 py-2 space-y-2"
+            >
+              <Skeleton width="60%" height="0.75rem" className="rounded-sm" />
+              <Skeleton width="80%" height="1.25rem" className="rounded-md" />
+            </div>
+          ))}
+        </div>
+
+        {/* Inline message placeholder skeleton */}
+        <div className="h-[60px] rounded-lg border border-border/40 bg-surface/30 p-3 flex items-center gap-3">
+          <Skeleton width="20px" height="20px" shape="circular" className="shrink-0" />
+          <div className="space-y-1 flex-1">
+            <Skeleton width="40%" height="0.875rem" className="rounded-sm" />
+            <Skeleton width="70%" height="0.75rem" className="rounded-sm" />
+          </div>
+        </div>
+      </div>
+
+      {/* Quick amount presets skeleton */}
+      <div>
+        <Skeleton width="100px" height="1.25rem" className="rounded-md mb-3" />
+        <div className="grid grid-cols-4 gap-2">
+          {[25, 50, 75, 100].map((percent) => (
+            <Skeleton key={percent} height="40px" className="rounded-lg" />
+          ))}
+        </div>
+      </div>
+
+      {/* Summary card skeleton */}
+      <div className="bg-surface p-5 rounded-xl border border-border space-y-3">
+        <div className="flex justify-between items-center">
+          <Skeleton width="80px" height="1rem" className="rounded-sm" />
+          <Skeleton width="90px" height="1rem" className="rounded-sm" />
+        </div>
+        <div className="flex justify-between items-center border-t border-border pt-3">
+          <Skeleton width="90px" height="1rem" className="rounded-sm" />
+          <Skeleton width="90px" height="1rem" className="rounded-sm" />
+        </div>
+        <div className="flex justify-between items-center border-t border-border pt-3">
+          <Skeleton width="120px" height="1rem" className="rounded-sm" />
+          <Skeleton width="90px" height="1rem" className="rounded-sm" />
+        </div>
+      </div>
+
+      {/* Action buttons skeleton */}
+      <div className="flex gap-3 pt-4">
+        <Skeleton height="48px" className="flex-1 rounded-lg" />
+        <Skeleton height="48px" className="flex-1 rounded-lg" />
+      </div>
+    </div>
+  );
 }
 
 export function AmountInput({
@@ -33,6 +122,7 @@ export function AmountInput({
   onAmountChange,
   onNext,
   onBack,
+  isLoading = false,
 }: AmountInputProps) {
   const [amount, setAmount] = useState("");
   const [pasteAnnouncement, setPasteAnnouncement] = useState("");
@@ -45,12 +135,14 @@ export function AmountInput({
   const announcementId = "amount-paste-announcement";
 
   useEffect(() => {
+    if (isLoading || !creditLine) return;
     const numAmount = parseFloat(amount) || 0;
-    onAmountChange(numAmount);
-  }, [amount, onAmountChange]);
+    onAmountChange?.(numAmount);
+  }, [amount, onAmountChange, isLoading, creditLine]);
 
   const handleStep = useCallback(
     (direction: "up" | "down") => {
+      if (!creditLine) return;
       setAmount((prev) => {
         const current = parseFloat(prev) || 0;
         const next = direction === "up"
@@ -59,7 +151,7 @@ export function AmountInput({
         return next.toString();
       });
     },
-    [creditLine.available],
+    [creditLine?.available],
   );
 
   const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
@@ -79,9 +171,6 @@ export function AmountInput({
     setAmount(sanitized);
     setPasteAnnouncement(`Pasted value sanitized to ${formatMoney(numValue)}`);
 
-    // Preserve caret position
-    // Note: since we are updating state, the re-render happens. 
-    // We can try to set the selection range after the render.
     setTimeout(() => {
       if (inputRef.current) {
         const start = e.target.selectionStart || 0;
@@ -105,9 +194,14 @@ export function AmountInput({
   );
 
   const handlePreset = (percent: number) => {
+    if (!creditLine) return;
     const preset = Math.floor((creditLine.available * percent) / 100);
     setAmount(preset.toString());
   };
+
+  if (isLoading || !creditLine) {
+    return <AmountInputSkeleton />;
+  }
 
   const numAmount = parseFloat(amount) || 0;
   const validation = getDrawAmountValidation(amount, creditLine);

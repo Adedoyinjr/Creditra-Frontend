@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { AmountInput } from "./AmountInput";
+import { AmountInput, AmountInputSkeleton } from "./AmountInput";
 
 describe("AmountInput", () => {
   const creditLine = {
@@ -356,5 +356,40 @@ describe("AmountInput", () => {
     });
 
     expect(input).toHaveAttribute("aria-invalid", "true");
+  });
+
+  describe("Skeleton Loading State (v7)", () => {
+    it("renders loading skeleton on first paint when isLoading is true", () => {
+      render(
+        <AmountInput
+          creditLine={creditLine}
+          isLoading={true}
+        />,
+      );
+
+      const skeletonRegion = screen.getByTestId("amount-input-skeleton");
+      expect(skeletonRegion).toBeInTheDocument();
+      expect(skeletonRegion).toHaveAttribute("aria-busy", "true");
+      expect(skeletonRegion).toHaveAttribute("aria-label", "Loading amount input");
+      expect(screen.queryByLabelText(/draw amount/i)).not.toBeInTheDocument();
+    });
+
+    it("renders skeleton when creditLine is not yet provided", () => {
+      render(<AmountInput isLoading={false} />);
+
+      const skeletonRegion = screen.getByTestId("amount-input-skeleton");
+      expect(skeletonRegion).toBeInTheDocument();
+      expect(skeletonRegion).toHaveAttribute("aria-busy", "true");
+    });
+
+    it("renders standalone AmountInputSkeleton correctly with accessibility attributes", () => {
+      render(<AmountInputSkeleton />);
+
+      const skeletonRegion = screen.getByTestId("amount-input-skeleton");
+      expect(skeletonRegion).toBeInTheDocument();
+      expect(skeletonRegion).toHaveAttribute("role", "region");
+      expect(skeletonRegion).toHaveAttribute("aria-busy", "true");
+      expect(skeletonRegion).toHaveAttribute("aria-label", "Loading amount input");
+    });
   });
 });
