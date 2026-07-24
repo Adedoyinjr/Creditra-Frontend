@@ -1,0 +1,411 @@
+/**
+ * Sessions.css — Settings › Sessions page styling
+ *
+ * Uses only CSS custom properties from src/index.css.
+ * Dark-mode ready via token variables.
+ * Touch targets: minimum 44×44 px.
+ * Respects prefers-reduced-motion for all transitions and animations.
+ */
+
+/* ── Page shell ────────────────────────────────────────────────────────────── */
+.sessions-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2xl);
+  padding: var(--space-xl) var(--space-lg);
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.sessions-page__title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  line-height: var(--lh-heading);
+  color: var(--text);
+  margin: 0 0 var(--space-md) 0;
+}
+
+/* ── Section card ──────────────────────────────────────────────────────────── */
+.sessions-page__section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  padding: var(--space-lg);
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+.sessions-page__section-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  line-height: var(--lh-heading);
+  color: var(--text);
+  margin: 0;
+}
+
+.sessions-page__section-description {
+  font-size: 0.9375rem;
+  line-height: var(--lh-body);
+  color: var(--muted);
+  margin: 0;
+}
+
+/* ── Global-revoke button row ──────────────────────────────────────────────── */
+.sessions-page__revoke-all-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-md);
+  padding-top: var(--space-sm);
+}
+
+.sessions-page__revoke-all-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  min-height: 44px;
+  padding: var(--space-md) var(--space-lg);
+  background-color: transparent;
+  color: var(--error);
+  border: 1px solid var(--error);
+  border-radius: var(--radius-md);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background-color 150ms ease-out,
+    color 150ms ease-out,
+    transform 150ms ease-out;
+  white-space: nowrap;
+}
+
+.sessions-page__revoke-all-btn:hover:not(:disabled) {
+  background-color: rgba(248, 81, 73, 0.12);
+}
+
+.sessions-page__revoke-all-btn:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.sessions-page__revoke-all-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.sessions-page__revoke-all-btn:focus-visible {
+  outline: 2px solid var(--error);
+  outline-offset: 2px;
+}
+
+/* ── ARIA-live status region ───────────────────────────────────────────────── */
+.sessions-page__status-region {
+  min-height: 1.5rem;
+}
+
+.sessions-page__status-message {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  font-size: 0.9375rem;
+  line-height: var(--lh-body);
+  margin: 0;
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-sm);
+  animation: sessions-slide-in 200ms ease-out;
+}
+
+@keyframes sessions-slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.sessions-page__status-message--success {
+  background-color: rgba(63, 185, 80, 0.12);
+  color: #8ee99d;
+  border-left: 3px solid var(--success);
+}
+
+.sessions-page__status-message--error {
+  background-color: rgba(248, 81, 73, 0.12);
+  color: #ffb0aa;
+  border-left: 3px solid var(--error);
+}
+
+/* ── Session list ──────────────────────────────────────────────────────────── */
+.sessions-page__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+/* ── Session row card ──────────────────────────────────────────────────────── */
+.session-row {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-md);
+  padding: var(--space-md) var(--space-lg);
+  background-color: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  transition: border-color 150ms ease-out;
+}
+
+.session-row--current {
+  border-color: var(--accent);
+}
+
+.session-row--revoking {
+  opacity: 0.7;
+}
+
+.session-row--revoked {
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+/* ── Device icon ───────────────────────────────────────────────────────────── */
+.session-row__icon {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: var(--radius-md);
+  background-color: var(--surface);
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+.session-row--current .session-row__icon {
+  color: var(--accent);
+  background-color: rgba(88, 166, 255, 0.1);
+}
+
+/* ── Text content ──────────────────────────────────────────────────────────── */
+.session-row__body {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.session-row__header {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-xs);
+}
+
+.session-row__device {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.session-row__current-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.125rem var(--space-sm);
+  background-color: rgba(88, 166, 255, 0.15);
+  color: var(--accent);
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: var(--radius-pill);
+  white-space: nowrap;
+  letter-spacing: 0.03em;
+}
+
+.session-row__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm) var(--space-lg);
+  font-size: 0.8125rem;
+  color: var(--muted);
+  line-height: var(--lh-small);
+}
+
+.session-row__meta-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+/* ── Revoke action ─────────────────────────────────────────────────────────── */
+.session-row__actions {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-left: auto;
+}
+
+.session-row__revoke-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+  min-height: 44px;
+  min-width: 44px;
+  padding: var(--space-sm) var(--space-md);
+  background-color: transparent;
+  color: var(--error);
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background-color 150ms ease-out,
+    border-color 150ms ease-out;
+  white-space: nowrap;
+}
+
+.session-row__revoke-btn:hover:not(:disabled) {
+  background-color: rgba(248, 81, 73, 0.1);
+  border-color: var(--error);
+}
+
+.session-row__revoke-btn:active:not(:disabled) {
+  background-color: rgba(248, 81, 73, 0.2);
+}
+
+.session-row__revoke-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.session-row__revoke-btn:focus-visible {
+  outline: 2px solid var(--error);
+  outline-offset: 2px;
+}
+
+/* ── Spinner ───────────────────────────────────────────────────────────────── */
+.sessions-page__spinner {
+  display: inline-block;
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid rgba(232, 234, 237, 0.2);
+  border-top-color: var(--muted);
+  border-radius: 50%;
+  animation: sessions-spin 600ms linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes sessions-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Skeleton loading state ────────────────────────────────────────────────── */
+.sessions-page__skeleton-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.sessions-page__skeleton-row {
+  height: 5rem;
+  background-color: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  animation: sessions-shimmer 1.4s ease-in-out infinite;
+}
+
+@keyframes sessions-shimmer {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.45; }
+}
+
+/* ── Empty state ───────────────────────────────────────────────────────────── */
+.sessions-page__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-2xl) var(--space-lg);
+  color: var(--muted);
+  font-size: 0.9375rem;
+  text-align: center;
+}
+
+/* ── Responsive ────────────────────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .sessions-page {
+    padding: var(--space-md) var(--space-sm);
+    gap: var(--space-xl);
+  }
+
+  .sessions-page__title {
+    font-size: 1.5rem;
+  }
+
+  .sessions-page__section {
+    padding: var(--space-md);
+  }
+
+  .session-row {
+    flex-wrap: wrap;
+    padding: var(--space-md);
+  }
+
+  .session-row__actions {
+    margin-left: 0;
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .sessions-page__revoke-all-btn {
+    width: 100%;
+  }
+}
+
+/* ── High-contrast mode ────────────────────────────────────────────────────── */
+@media (forced-colors: active) {
+  .session-row,
+  .sessions-page__section {
+    border: 2px solid CanvasText;
+  }
+
+  .session-row__revoke-btn:focus-visible,
+  .sessions-page__revoke-all-btn:focus-visible {
+    outline-width: 3px;
+  }
+}
+
+/* ── Reduced motion ────────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .sessions-page__status-message {
+    animation: none;
+  }
+
+  .sessions-page__skeleton-row {
+    animation: none;
+    opacity: 0.6;
+  }
+
+  .sessions-page__spinner {
+    animation: none;
+    opacity: 0.5;
+  }
+
+  .session-row__revoke-btn,
+  .sessions-page__revoke-all-btn {
+    transition: none;
+  }
+}
