@@ -21,7 +21,8 @@ import NotificationPreferences from "./pages/NotificationPreferences";
 import { WalletReconnectBanner } from "./components/WalletReconnectBanner";
 import { SessionTimeoutBanner } from "./components/SessionTimeoutBanner";
 import { NetworkMismatchBanner } from "./components/notifications/NetworkMismatchBanner";
-import { ToastContainer } from "./components/notifications/ToastContainer";
+import { NotificationPreferences } from "./pages/NotificationPreferences";
+import DataPrivacySettings from "./pages/settings/Data";
 import { Header } from "./layouts/Header";
 import { SessionTimeoutBanner } from "./components/SessionTimeoutBanner";
 import { NotificationPreferences } from "./pages/NotificationPreferences";
@@ -132,54 +133,59 @@ function App() {
                 onKycClick={() => setIsKycDrawerOpen(true)}
               />
 
-            {/* Wallet auto-reconnect timeout banner — self-dismissing,
-                non-blocking; only visible when reconnect takes > 8 s. */}
-            <WalletReconnectBanner />
-            {/* Session-timeout warning banner — visible 60 s before
-                the wallet extension silently disconnects (#227). */}
-            <SessionTimeoutBanner />
-            <main className="main">
-              <NetworkMismatchBanner />
-              <Routes>
-                <Route path="/" element={<Dashboard />} />
-                <Route path="/transactions" element={<TransactionHistory />} />
-                <Route path="/credit-lines" element={<CreditLines />} />
-                <Route path="/help" element={<HelpCenter />} />
-                <Route path="/draw-credit" element={<DrawCreditPage />} />
-                <Route
-                  path="/draw-credit/success"
-                  element={<DrawCreditPage />}
-                />
-                <Route path="/open-credit" element={<RequestEvaluation />} />
-                <Route path="/dutch-auctions" element={<DutchAuctions />} />
-                <Route path="/linked-accounts" element={<LinkedAccounts />} />
-                <Route path="/notification-preferences" element={<NotificationPreferences />} />
-                <Route path="/compare-credit-lines" element={<CreditLineCompare />} />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </main>
-            <ShortcutHelpOverlay
-              isOpen={isShortcutHelpOpen}
-              onClose={() => setIsShortcutHelpOpen(false)}
-              triggerRef={openedFromSettingsLink ? settingsTriggerRef : undefined}
-            />
-            <KycDrawer
-              isOpen={isKycDrawerOpen}
-              onClose={() => setIsKycDrawerOpen(false)}
-              onResume={(stepId) => {
-                // Navigate to the KYC page with the step pre-selected.
-                // Replace with router.push('/kyc?step=' + stepId) when the
-                // full KYC page exists.
-                console.info('[KYC] Resume at step:', stepId);
-              }}
-              triggerRef={kycTriggerRef}
-            />
-            <CommandPalette
-              isOpen={isPaletteOpen}
-              onClose={() => setIsPaletteOpen(false)}
-              triggerRef={paletteTriggerRef}
-            />
-          </div>
+              {/* Wallet auto-reconnect timeout banner — self-dismissing,
+                  non-blocking; only visible when reconnect takes > 8 s. */}
+              <WalletReconnectBanner />
+              {/* Session-timeout warning banner — visible 60 s before
+                  the wallet extension silently disconnects (#227). */}
+              <SessionTimeoutBanner />
+              <main className="main">
+                <NetworkMismatchBanner />
+                <Routes>
+                  <Route path="/" element={<Dashboard />} />
+                  <Route path="/transactions" element={<TransactionHistory />} />
+                  <Route path="/credit-lines" element={<CreditLines />} />
+                  <Route path="/help" element={<HelpCenter />} />
+                  <Route path="/draw-credit" element={<DrawCreditPage />} />
+                  <Route
+                    path="/draw-credit/success"
+                    element={<DrawCreditPage />}
+                  />
+                  <Route path="/open-credit" element={<RequestEvaluation />} />
+                  <Route path="/dutch-auctions" element={<DutchAuctions />} />
+                  <Route path="/linked-accounts" element={<LinkedAccounts />} />
+                  <Route path="/notification-preferences" element={<NotificationPreferences />} />
+                  <Route path="/settings/data" element={<DataPrivacySettings />} />
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </main>
+              <ShortcutHelpOverlay
+                isOpen={isShortcutHelpOpen}
+                onClose={() => setIsShortcutHelpOpen(false)}
+                triggerRef={openedFromSettingsLink ? settingsTriggerRef : undefined}
+              />
+              <KycDrawer
+                isOpen={isKycDrawerOpen}
+                onClose={() => setIsKycDrawerOpen(false)}
+                onResume={(stepId) => {
+                  // Navigate to the KYC page with the step pre-selected.
+                  // Replace with router.push('/kyc?step=' + stepId) when the
+                  // full KYC page exists.
+                  console.info('[KYC] Resume at step:', stepId);
+                }}
+                triggerRef={kycTriggerRef}
+              />
+              <CommandPalette
+                isOpen={isPaletteOpen}
+                onClose={() => setIsPaletteOpen(false)}
+                triggerRef={paletteTriggerRef}
+              />
+              {/* Per-route screen-reader announcer (#451).  Mounted at
+                  the bottom of the tree so route-side `useRouteHead`
+                  overrides apply before the announcer effect runs. */}
+              <RouteAnnouncer />
+            </div>
+          </RouteHeadProvider>
         </BrowserRouter>
         </ReducedMotionProvider>
         </NotificationProvider>
