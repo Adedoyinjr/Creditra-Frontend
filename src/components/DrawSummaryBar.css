@@ -55,9 +55,10 @@
   box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.35);
 
   /* Mobile safe area — pad inward so the gesture indicator never covers
-     the value text on iOS Safari or Chrome on Android. The `, 0px`
-     fallback is required so non-mobile browsers still see valid CSS. */
-  padding-bottom: env(safe-area-inset-bottom, 0px);
+     the value text on iOS Safari or Chrome on Android.
+     Uses --sab from safe-area.css (maps env(safe-area-inset-bottom, 0px)).
+     Non-PWA browsers read 0px, so the padding collapses gracefully. */
+  padding-bottom: var(--sab, env(safe-area-inset-bottom, 0px));
 
   /* Animation — fade up when the bar mounts to soften layout shifts */
   animation: draw-summary-bar-mount 0.18s ease-out both;

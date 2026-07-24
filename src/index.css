@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "./styles/typography.css";
+@import "./styles/safe-area.css";
 @import "./components/FormField.css";
 
 :root,
@@ -145,6 +146,12 @@ p {
   border-bottom: 1px solid var(--border);
   background: var(--surface);
   gap: 1rem;
+  /*
+   * iOS PWA / viewport-fit=cover: add top safe-area inset so header content
+   * clears the status bar and notch on Face ID iPhones.  --sat comes from
+   * src/styles/safe-area.css and is 0px on non-notched browsers.
+   */
+  padding-top: calc(0.75rem + var(--sat, 0px));
 }
 
 .logo {
