@@ -110,4 +110,84 @@ describe('FormField', () => {
 
     expect(screen.getByRole('alert')).toHaveTextContent('Second error');
   });
+
+  describe('aria-describedby', () => {
+    test('is omitted when there is no help text or error', () => {
+      render(<FormField id="username" label="Username" type="text" />);
+      expect(screen.getByLabelText('Username')).not.toHaveAttribute('aria-describedby');
+    });
+
+    test('points at the help text id when only helpText is set', () => {
+      render(
+        <FormField
+          id="username"
+          label="Username"
+          type="text"
+          helpText="Letters and numbers only"
+        />
+      );
+      const input = screen.getByLabelText('Username');
+      expect(input).toHaveAttribute('aria-describedby', 'username-help');
+      expect(screen.getByText('Letters and numbers only')).toHaveAttribute('id', 'username-help');
+    });
+
+    test('points at the error id when only error is set', () => {
+      render(<FormField id="username" label="Username" type="text" error="Username is taken" />);
+      const input = screen.getByLabelText('Username');
+      expect(input).toHaveAttribute('aria-describedby', 'username-error');
+      expect(screen.getByText('Username is taken').closest('#username-error')).not.toBeNull();
+    });
+
+    test('references both help and error ids, help first, when both are set', () => {
+      render(
+        <FormField
+          id="username"
+          label="Username"
+          type="text"
+          helpText="Letters and numbers only"
+          error="Username is taken"
+        />
+      );
+      const input = screen.getByLabelText('Username');
+      expect(input).toHaveAttribute('aria-describedby', 'username-help username-error');
+    });
+
+    test('scopes ids to the field id so two fields never collide', () => {
+      render(
+        <>
+          <FormField id="email" label="Email" type="email" error="Invalid email" />
+          <FormField id="password" label="Password" type="password" error="Too short" />
+        </>
+      );
+      expect(screen.getByLabelText('Email')).toHaveAttribute('aria-describedby', 'email-error');
+      expect(screen.getByLabelText('Password')).toHaveAttribute('aria-describedby', 'password-error');
+    });
+
+    test('wires up textarea fields the same way as inputs', () => {
+      render(
+        <FormField
+          id="bio"
+          label="Bio"
+          as="textarea"
+          helpText="Max 200 characters"
+          error="Too long"
+        />
+      );
+      const textarea = screen.getByLabelText('Bio');
+      expect(textarea.tagName).toBe('TEXTAREA');
+      expect(textarea).toHaveAttribute('aria-describedby', 'bio-help bio-error');
+    });
+
+    test('passes aria-describedby through to custom-rendered fields', () => {
+      render(
+        <FormField id="amount" label="Amount" as="custom" helpText="USD only" error="Required">
+          {(fieldProps) => <input {...fieldProps} data-testid="custom-input" />}
+        </FormField>
+      );
+      expect(screen.getByTestId('custom-input')).toHaveAttribute(
+        'aria-describedby',
+        'amount-help amount-error'
+      );
+    });
+  });
 });
