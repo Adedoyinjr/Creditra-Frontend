@@ -284,15 +284,13 @@ function TooltipBubble({ data }: { data: TooltipData }) {
     <div
       role="status"
       aria-live="polite"
+      className="p-2 sm:p-3 text-xs min-w-[140px] sm:min-w-[160px]"
       style={{
         background: 'var(--surface-raised, #1c2230)',
         border: `1px solid var(--border, ${COLOR.border})`,
         borderRadius: 8,
-        padding: '0.5rem 0.75rem',
-        fontSize: '0.75rem',
         color: `var(--text, ${COLOR.text})`,
         pointerEvents: 'none',
-        minWidth: 160,
         boxShadow: '0 4px 16px rgba(0,0,0,0.4)',
       }}
     >
@@ -372,7 +370,8 @@ function SRTable({ schedule, caption }: SRTableProps) {
 function Legend() {
   return (
     <div
-      style={{ display: 'flex', gap: '1rem', fontSize: '0.75rem', color: `var(--muted, ${COLOR.muted})` }}
+      className="flex flex-wrap gap-3 sm:gap-4 mt-3 sm:mt-4 text-xs"
+      style={{ color: `var(--muted, ${COLOR.muted})` }}
       aria-hidden="true"
     >
       <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
@@ -421,7 +420,7 @@ function VisibleTable({ schedule, limit = 12 }: VisibleTableProps) {
   };
 
   return (
-    <div style={{ overflowX: 'auto' }}>
+    <div className="overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
       <table
         aria-label="Repayment schedule"
         style={{ borderCollapse: 'collapse', width: '100%', minWidth: 460 }}
@@ -484,9 +483,8 @@ function VisibleTable({ schedule, limit = 12 }: VisibleTableProps) {
 function EmptyState() {
   return (
     <p
+      className="text-center p-4 sm:p-8"
       style={{
-        textAlign: 'center',
-        padding: '2rem',
         color: `var(--muted, ${COLOR.muted})`,
         fontSize: '0.875rem',
       }}
@@ -561,14 +559,14 @@ export function RepaymentVisualizer({
   return (
     <section
       aria-label="Repayment plan visualizer"
+      className="p-4 sm:p-5 md:p-6"
       style={{
         background: `var(--surface, ${COLOR.surface})`,
         border: `1px solid var(--border, ${COLOR.border})`,
         borderRadius: 10,
-        padding: '1.25rem',
       }}
     >
-      <header style={{ marginBottom: '1rem' }}>
+      <header className="mb-4 sm:mb-6 flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-1 sm:gap-4">
         <h2
           style={{
             fontSize: '1rem',
@@ -580,7 +578,7 @@ export function RepaymentVisualizer({
           Repayment Plan
         </h2>
         {schedule.length > 0 && (
-          <p style={{ fontSize: '0.8rem', color: `var(--muted, ${COLOR.muted})`, marginTop: 4 }}>
+          <p style={{ fontSize: '0.8rem', color: `var(--muted, ${COLOR.muted})`, margin: 0 }}>
             {termMonths} month{termMonths !== 1 ? 's' : ''} ·{' '}
             {new Intl.NumberFormat('en-US', {
               style: 'currency',

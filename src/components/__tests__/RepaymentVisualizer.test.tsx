@@ -210,3 +210,39 @@ describe('RepaymentVisualizer — accessible chart captions', () => {
     expect(document.querySelector('table.sr-only')).not.toBeInTheDocument();
   });
 });
+
+// ─── Responsive breakpoints (Tailwind) tests ───────────────────────────────
+
+describe('RepaymentVisualizer — responsive breakpoints', () => {
+  it('section wrapper has responsive padding classes', () => {
+    render(<RepaymentVisualizer {...BASE} />);
+    const section = screen.getByRole('region', { name: 'Repayment plan visualizer' });
+    expect(section).toHaveClass('p-4', 'sm:p-5', 'md:p-6');
+  });
+
+  it('header uses responsive flex layout', () => {
+    render(<RepaymentVisualizer {...BASE} />);
+    const heading = screen.getByText('Repayment Plan');
+    const header = heading.parentElement;
+    expect(header).toHaveClass('flex', 'flex-col', 'sm:flex-row', 'sm:justify-between');
+  });
+
+  it('legend uses responsive flex layout', () => {
+    render(<RepaymentVisualizer {...BASE} />);
+    // Find legend container via text
+    const legendItem = screen.getAllByText(/Principal remaining/i)[0];
+    const legendWrapper = legendItem.parentElement;
+    expect(legendWrapper).toHaveClass('flex', 'flex-wrap', 'gap-3', 'sm:gap-4');
+  });
+
+  it('visible table wrapper has responsive negative margin for bleed', () => {
+    render(<RepaymentVisualizer {...BASE} />);
+    const summary = screen.getByText(/Schedule table/i);
+    fireEvent.click(summary); // Open details
+    
+    // Find the visible table wrapper
+    const table = screen.getAllByRole('table').find((t) => !t.classList.contains('sr-only'));
+    const wrapper = table?.parentElement;
+    expect(wrapper).toHaveClass('overflow-x-auto', '-mx-4', 'sm:mx-0', 'px-4', 'sm:px-0');
+  });
+});
