@@ -1,14 +1,9 @@
-import { useRef, useState, useMemo } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { StatusBadge } from "../components/StatusBadge";
-import { CreditLineRowMenu } from "../components/CreditLineRowMenu";
-import { MOCK_CREDIT_LINES } from "../data/mockData";
-import type {
-  CreditLineStatus,
-  SortField,
-  SortDirection,
-} from "../types/creditLine";
-import type { CollateralAsset } from "../types/collateral";
+import { useState, useMemo } from 'react';
+import { Link } from 'react-router-dom';
+import { StatusBadge } from '../components/StatusBadge';
+import { RepaymentPlanChart } from '../components/RepaymentPlanChart';
+import { MOCK_CREDIT_LINES } from '../data/mockData';
+import type { CreditLineStatus, SortField, SortDirection } from '../types/creditLine';
 import {
   COLOR, UTIL_COLOR,
   fmt, fmtDate, getUtilizationLevel, utilizationPct,
@@ -141,8 +136,9 @@ function CreditLineCard({
         )}
       </div>
 
-       <div className="cl-card-footer">
-       </div>
+      <div className="cl-card-detail">
+        <RepaymentPlanChart line={line} />
+      </div>
     </div>
   );
 }
