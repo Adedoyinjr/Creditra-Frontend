@@ -30,7 +30,12 @@
   border-top: 1px solid var(--border, #30363d);
   color: var(--text, #e6edf3);
   box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.35);
-  padding-bottom: env(safe-area-inset-bottom, 0px);
+
+  /* Mobile safe area — pad inward so the gesture indicator never covers
+     the value text on iOS Safari or Chrome on Android.
+     Uses --sab from safe-area.css (maps env(safe-area-inset-bottom, 0px)).
+     Non-PWA browsers read 0px, so the padding collapses gracefully. */
+  padding-bottom: var(--sab, env(safe-area-inset-bottom, 0px));
 
   animation: draw-summary-bar-mount 0.18s ease-out both;
 }
