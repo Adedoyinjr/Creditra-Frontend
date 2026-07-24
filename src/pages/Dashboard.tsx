@@ -484,7 +484,7 @@ export function Dashboard() {
             Request Credit Evaluation
           </Link>
         </div>
-      </>
+      </div>
     );
   }
 
