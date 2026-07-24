@@ -2,7 +2,7 @@
  * Lifecycle states of a credit line. Drives badge color, available
  * actions in the UI, and any "view-only" guard rails on detail screens.
  */
-export type CreditLineStatus = 'Active' | 'Suspended' | 'Defaulted' | 'Closed';
+export type CreditLineStatus = 'Active' | 'Suspended' | 'Defaulted' | 'Closed' | 'Frozen';
 
 /**
  * Columns the credit-line list view can be sorted by. Kept narrow on

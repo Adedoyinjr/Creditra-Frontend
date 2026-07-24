@@ -21,6 +21,8 @@ function CreditLineCard({
   onRepay,
   onSchedule,
   onDetails,
+  onFreeze,
+  onUnfreeze,
 }: {
   line: (typeof MOCK_CREDIT_LINES)[0];
   isSelected: boolean;
@@ -32,12 +34,15 @@ function CreditLineCard({
   onRepay?: () => void;
   onSchedule?: (lineId: string) => void;
   onDetails?: (lineId: string) => void;
+  onFreeze?: (lineId: string) => void;
+  onUnfreeze?: (lineId: string) => void;
 }) {
   const pct = utilizationPct(line.utilized, line.limit);
   const level = getUtilizationLevel(line.utilized, line.limit);
   const swapTriggerRef = useRef<HTMLButtonElement>(null);
 
-  const isDefaulted = line.status === "Defaulted";
+  const isDefaulted = line.status === 'Defaulted';
+  const canFreeze = line.status === 'Active' || line.status === 'Frozen';
 
   return (
     <div
@@ -67,7 +72,10 @@ function CreditLineCard({
            <CreditLineRowMenu
              lineId={line.id}
              lineName={line.name}
+             frozen={line.status === 'Frozen'}
              onRepay={onRepay}
+             onFreeze={canFreeze ? onFreeze : undefined}
+             onUnfreeze={canFreeze ? onUnfreeze : undefined}
              onSchedule={onSchedule}
              onDetails={onDetails}
            />
@@ -153,7 +161,7 @@ export default function CreditLines() {
     "all",
   );
 
-  const creditLines = MOCK_CREDIT_LINES;
+  const [creditLines, setCreditLines] = useState(MOCK_CREDIT_LINES);
   const hasCreditLines = creditLines.length > 0;
 
   const [showCompare, setShowCompare] = useState(false);
@@ -182,6 +190,45 @@ export default function CreditLines() {
 
   const handleRepay = (lineId: string) => {
     navigate(`/repay?line=${lineId}`);
+  };
+
+  const handleFreeze = (lineId: string) => {
+    setCreditLines((prev) =>
+      prev.map((cl) =>
+        cl.id === lineId
+          ? {
+              ...cl,
+              status: 'Frozen' as const,
+              updatedAt: new Date().toISOString(),
+              statusHistory: [
+                ...cl.statusHistory,
+                { status: 'Frozen' as const, date: new Date().toISOString(), note: 'Frozen by user' },
+              ],
+            }
+          : cl,
+      ),
+    );
+  };
+
+  const handleUnfreeze = (lineId: string) => {
+    setCreditLines((prev) =>
+      prev.map((cl) => {
+        if (cl.id !== lineId) return cl;
+        const lastNonFrozen = cl.statusHistory
+          .filter((s) => s.status !== 'Frozen')
+          .pop();
+        const restoredStatus = lastNonFrozen?.status || 'Active';
+        return {
+          ...cl,
+          status: restoredStatus,
+          updatedAt: new Date().toISOString(),
+          statusHistory: [
+            ...cl.statusHistory,
+            { status: restoredStatus, date: new Date().toISOString(), note: 'Unfrozen by user' },
+          ],
+        };
+      }),
+    );
   };
 
   const handleSchedule = (lineId: string) => {
@@ -321,6 +368,7 @@ export default function CreditLines() {
             <option value="all">All Statuses</option>
             <option value="Active">Active</option>
             <option value="Suspended">Suspended</option>
+            <option value="Frozen">Frozen</option>
             <option value="Defaulted">Defaulted</option>
             <option value="Closed">Closed</option>
           </select>
@@ -424,6 +472,8 @@ export default function CreditLines() {
               onToggle={() => toggleSelection(line.id)}
               onSwapCollateral={handleSwapCollateral}
               onRepay={() => handleRepay(line.id)}
+              onFreeze={handleFreeze}
+              onUnfreeze={handleUnfreeze}
               onSchedule={() => handleSchedule(line.id)}
               onDetails={() => handleDetails(line.id)}
             />

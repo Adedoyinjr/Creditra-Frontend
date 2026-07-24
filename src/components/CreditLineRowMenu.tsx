@@ -1,13 +1,16 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { MoreHorizontal, ArrowUpCircle, ArrowDownCircle, Calendar, Info } from 'lucide-react';
+import { MoreHorizontal, ArrowUpCircle, ArrowDownCircle, Calendar, Info, Snowflake } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 interface CreditLineRowMenuProps {
   lineId: string;
   lineName: string;
+  frozen?: boolean;
   onRepay?: () => void;
   onSchedule?: (lineId: string) => void;
   onDetails?: (lineId: string) => void;
+  onFreeze?: (lineId: string) => void;
+  onUnfreeze?: (lineId: string) => void;
 }
 
 /**
@@ -24,9 +27,12 @@ interface CreditLineRowMenuProps {
 export function CreditLineRowMenu({
   lineId,
   lineName,
+  frozen,
   onRepay,
   onSchedule,
   onDetails,
+  onFreeze,
+  onUnfreeze,
 }: CreditLineRowMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -94,6 +100,22 @@ export function CreditLineRowMenu({
             <ArrowDownCircle className="w-4 h-4" />
             Draw
           </Link>
+
+          {/* Freeze / Unfreeze */}
+          {(onFreeze || onUnfreeze) && (
+            <button
+              onClick={() => {
+                setIsOpen(false);
+                if (frozen && onUnfreeze) onUnfreeze(lineId);
+                else if (!frozen && onFreeze) onFreeze(lineId);
+              }}
+              className="flex w-full items-center gap-3 px-4 py-2 text-sm text-foreground hover:bg-accent/10 hover:text-accent transition-colors text-left"
+              role="menuitem"
+            >
+              <Snowflake className="w-4 h-4" />
+              {frozen ? 'Unfreeze' : 'Freeze'}
+            </button>
+          )}
 
           {/* Schedule */}
           <button
