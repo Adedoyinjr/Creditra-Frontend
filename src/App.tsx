@@ -22,10 +22,6 @@ import { SessionTimeoutBanner } from "./components/SessionTimeoutBanner";
 import { NetworkMismatchBanner } from "./components/notifications/NetworkMismatchBanner";
 import { NotificationPreferences } from "./pages/NotificationPreferences";
 import { Header } from "./layouts/Header";
-import {
-  RouteHeadProvider,
-  RouteAnnouncer,
-} from "./components/RouteAnnouncer";
 import { SessionTimeoutBanner } from "./components/SessionTimeoutBanner";
 import { NotificationPreferences } from "./pages/NotificationPreferences";
 
