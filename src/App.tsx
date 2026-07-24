@@ -20,6 +20,9 @@ import { LinkedAccounts } from "./pages/LinkedAccounts";
 import { WalletReconnectBanner } from "./components/WalletReconnectBanner";
 import { NetworkMismatchBanner } from "./components/notifications/NetworkMismatchBanner";
 import { Header } from "./layouts/Header";
+import { SessionTimeoutBanner } from "./components/SessionTimeoutBanner";
+import { NotificationPreferences } from "./pages/NotificationPreferences";
+import CreditLineCompare from "./pages/CreditLineCompare";
 
 const isEditableTarget = (target: EventTarget | null) => {
   if (!(target instanceof HTMLElement)) return false;
@@ -129,6 +132,7 @@ function App() {
                 <Route path="/dutch-auctions" element={<DutchAuctions />} />
                 <Route path="/linked-accounts" element={<LinkedAccounts />} />
                 <Route path="/notification-preferences" element={<NotificationPreferences />} />
+                <Route path="/compare-credit-lines" element={<CreditLineCompare />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </main>
