@@ -31,7 +31,11 @@ export interface TypedAmountConfirmFieldProps {
 /**
  * Embedded typed-amount confirmation field for use inside review steps.
  *
- * Pairs a labelled currency input with hint text and validation styling.
+ * Pairs a labelled text input (type="text", inputMode="decimal") with hint
+ * text and validation styling.  Using `type="text"` instead of `type="number"`
+ * avoids browser-native spin-button UI and partial-input rejection that would
+ * interfere with the exact-match check while the user is typing.
+ *
  * The parent owns enable/disable logic for the primary action via
  * `isTypedAmountMatch(value, amount)`.
  */
@@ -65,9 +69,19 @@ export function TypedAmountConfirmField({
         <span className="typed-amount-confirm__prefix" aria-hidden="true">
           $
         </span>
+        {/*
+         * type="text" + inputMode="decimal" rather than type="number":
+         *   - Avoids browser-native numeric validation that would reject partial
+         *     input like "5000." mid-typing, conflicting with the exact-match check.
+         *   - Suppresses the spin-button UI (up/down arrows) irrelevant for
+         *     a confirmation field where the user must type a specific value.
+         *   - Makes onChange fire on every keystroke in all environments,
+         *     including jsdom-based tests using @testing-library/user-event v14.
+         * inputMode="decimal" keeps the correct numeric keyboard on mobile.
+         */}
         <input
           id={inputId}
-          type="number"
+          type="text"
           inputMode="decimal"
           value={value}
           onChange={(e) => onChange(e.target.value)}
@@ -76,6 +90,7 @@ export function TypedAmountConfirmField({
           aria-label="Type the repayment amount to confirm"
           aria-invalid={hasInput && !isMatch}
           autoComplete="off"
+          spellCheck={false}
           className={inputClass}
         />
       </div>
