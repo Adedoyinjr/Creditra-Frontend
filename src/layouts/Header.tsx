@@ -4,6 +4,7 @@ import { NetworkStatus } from '../components/NetworkStatus';
 import { KycTriggerButton } from '../components/KycDrawer';
 import { QuickRepayTrigger } from '../components/QuickRepayTrigger';
 import { WalletButton } from '../components/WalletButton';
+import { WalletBalance } from '../components/WalletBalance';
 
 export interface HeaderProps {
   settingsTriggerRef: RefObject<HTMLButtonElement | null>;
@@ -90,6 +91,7 @@ export function Header({
       <NetworkStatus />
       <KycTriggerButton triggerRef={kycTriggerRef} onClick={onKycClick} />
       <QuickRepayTrigger />
+      <WalletBalance />
       <WalletButton />
     </header>
   );

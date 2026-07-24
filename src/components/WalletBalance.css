@@ -1,0 +1,40 @@
+.wallet-balance {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0.75rem;
+  background-color: var(--color-bg-secondary, #21262d);
+  border: 1px solid var(--color-border, #30363d);
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  color: var(--color-text-primary, #c9d1d9);
+  margin-right: 0.5rem;
+}
+
+.wallet-balance-amount {
+  font-variant-numeric: tabular-nums;
+}
+
+.wallet-balance-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--color-success, #2ea043);
+  transition: opacity 0.3s ease;
+}
+
+.wallet-balance-indicator.polling {
+  animation: pulse 1s infinite alternate;
+  background-color: var(--color-accent, #58a6ff);
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0.5;
+    transform: scale(0.8);
+  }
+}
