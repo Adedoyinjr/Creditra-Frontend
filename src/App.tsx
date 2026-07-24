@@ -18,7 +18,9 @@ import { ShortcutHelpOverlay } from "./components/ShortcutHelpOverlay";
 import { DutchAuctions } from "./pages/DutchAuctions";
 import { LinkedAccounts } from "./pages/LinkedAccounts";
 import { WalletReconnectBanner } from "./components/WalletReconnectBanner";
+import { SessionTimeoutBanner } from "./components/SessionTimeoutBanner";
 import { NetworkMismatchBanner } from "./components/notifications/NetworkMismatchBanner";
+import { NotificationPreferences } from "./pages/NotificationPreferences";
 import { Header } from "./layouts/Header";
 
 const isEditableTarget = (target: EventTarget | null) => {
