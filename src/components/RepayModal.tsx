@@ -189,10 +189,34 @@ export function RepayModal({
   };
 
   const handleConfirm = () => {
+    const completedHash = `0x${Math.random().toString(16).slice(2, 18).padEnd(16, '0')}`;
+    const completedTimestamp = new Date().toISOString();
+    setTxHash(completedHash);
+    setTxTimestamp(completedTimestamp);
     setStep('pending');
     setTimeout(() => {
       setStep('success');
     }, 2500);
+  };
+
+  const handleCopySummary = async () => {
+    if (!txHash) return;
+
+    const summaryText = [
+      `Amount: ${fmt(amount)}`,
+      `Line: ${creditLine.name}`,
+      `Transaction Hash: ${txHash}`,
+      `Timestamp: ${new Date(txTimestamp).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' })}`,
+    ].join('\n');
+
+    try {
+      await navigator.clipboard.writeText(summaryText);
+      setCopyMessage('Transaction summary copied to clipboard.');
+    } catch {
+      setCopyMessage('Unable to copy summary. Please try again.');
+    } finally {
+      copyButtonRef.current?.focus();
+    }
   };
 
   const handleCloseComplete = () => {
