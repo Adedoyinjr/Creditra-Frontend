@@ -91,6 +91,12 @@ is the rightmost button — predictable hand position for thumb users on mobile.
 **Trade-off.** Two clicks for what used to be one. We accept this because the cost of an
 accidental repayment is real money; the cost of one extra click is zero.
 
+**Repay all shortcut (2025).** Full-balance repayments used to require manual entry of
+principal plus accrued interest. A **Repay all** button adjacent to the amount field
+pre-fills the exact payoff from `computeFullPayoffAmount` (`src/utils/currency.ts`),
+locks the input, and exposes an **Edit** affordance to unlock. Lock/unlock transitions
+are announced through a polite live region.
+
 ---
 
 ## 4. Show APR *and* total cost, not just APR
