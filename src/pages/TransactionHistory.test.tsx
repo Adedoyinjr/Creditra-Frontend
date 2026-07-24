@@ -102,14 +102,14 @@ describe("TransactionHistory", () => {
     expect(screen.getByText("8 transactions shown")).toBeTruthy();
   });
 
-  it("shows a no-results state with a clear filters action", () => {
+  it("shows a no-results state with a reset filters action", () => {
     const { container } = renderTransactionHistory();
 
     fireEvent.click(screen.getByRole("button", { name: "Fee" }));
     fireEvent.click(screen.getByRole("button", { name: "Today" }));
 
     const noResultsHeading = screen.getByRole("heading", {
-      name: /no transactions match these filters/i,
+      name: /no transactions found/i,
     });
     expect(noResultsHeading).toBeTruthy();
 
@@ -123,10 +123,10 @@ describe("TransactionHistory", () => {
     const noTransactionsMsg = screen.queryByText(/no transactions yet/i);
     expect(noTransactionsMsg).toBeFalsy();
 
-    fireEvent.click(screen.getByRole("button", { name: /clear filters/i }));
+    fireEvent.click(screen.getByRole("button", { name: /reset all filters/i }));
 
     const noResultsAfterClear = screen.queryByRole("heading", {
-      name: /no transactions match these filters/i,
+      name: /no transactions found/i,
     });
     expect(noResultsAfterClear).toBeFalsy();
 
@@ -171,7 +171,7 @@ describe("TransactionHistory", () => {
     expect(screen.getByText("0 transactions shown")).toBeTruthy();
 
     // Clear filters restores count
-    fireEvent.click(screen.getByRole("button", { name: /clear filters/i }));
+    fireEvent.click(screen.getByRole("button", { name: /reset all filters/i }));
     expect(screen.getByText("28 transactions shown")).toBeTruthy();
   });
 
@@ -231,7 +231,7 @@ describe("TransactionHistory", () => {
     renderTransactionHistory();
     fireEvent.click(screen.getByRole("button", { name: "Fee" }));
     fireEvent.click(screen.getByRole("button", { name: "Today" }));
-    fireEvent.click(screen.getByRole("button", { name: /clear filters/i }));
+    fireEvent.click(screen.getByRole("button", { name: /reset all filters/i }));
     const table = screen.getByRole("table", { name: /transaction history/i });
     expect(table.querySelector("caption")?.textContent).not.toMatch(
       /filtered by/i,
@@ -420,7 +420,7 @@ describe("TransactionHistory", () => {
       }
     });
 
-    it("clears search combobox value when Clear filters button is used", async () => {
+    it("clears search combobox value when Reset filters button is used", async () => {
       renderTransactionHistory();
       const input = screen.getByRole("combobox", { name: /search transactions/i });
       fireEvent.change(input, { target: { value: "equipment" } });
@@ -429,7 +429,7 @@ describe("TransactionHistory", () => {
       });
       // Trigger no-results state by stacking type filter
       fireEvent.click(screen.getByRole("button", { name: "Fee" }));
-      fireEvent.click(screen.getByRole("button", { name: /clear filters/i }));
+      fireEvent.click(screen.getByRole("button", { name: /reset all filters/i }));
 
       expect(input).toHaveValue("");
       await act(async () => {

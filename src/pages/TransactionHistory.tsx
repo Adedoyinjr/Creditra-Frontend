@@ -1440,17 +1440,25 @@ export function TransactionHistory() {
 
       <div className="th-table-container">
         {filteredTransactions.length === 0 ? (
-          <div className="empty-state">
+          <div 
+            className="empty-state"
+            role="status"
+            aria-live="polite"
+          >
             <NoDataGraph className="empty-state-illustration--muted" />
-            <h3>No transactions match these filters</h3>
-            <p>Try another transaction type, date range, or search term.</p>
+            <h2>No transactions found</h2>
+            <p>
+              We couldn't find any transactions matching your current filters. 
+              Try another transaction type, date range, or search term.
+            </p>
             {hasActiveFilters && (
               <button
                 type="button"
-                className="th-clear-filters-btn"
+                className="empty-state-btn"
                 onClick={clearFilters}
+                aria-label="Reset all filters to view transaction history"
               >
-                Clear filters
+                Reset Filters
               </button>
             )}
           </div>
