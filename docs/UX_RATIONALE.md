@@ -212,6 +212,11 @@ recommended reserve is `warning`; a healthy draw is `success`. The message tone 
 the input's border, the helper text, and the icon all at once — no separate "error
 state" UI.
 
+For the GrantFox draw flow, the amount input also exposes explicit `+` and `-` stepper
+buttons alongside the numeric field. The intent is to make the step-by-step edit pattern
+unambiguous for both touch and keyboard users while preserving the same clamped bounds
+of `0` through `available credit`.
+
 **Trade-off.** More validation states to maintain. We accept this because the input is
 the highest-stakes interaction on the screen.
 
