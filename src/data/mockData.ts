@@ -1,4 +1,39 @@
-import type { CreditLine } from '../types/creditLine';
+import type { CreditLine, AprHistoryEntry } from '../types/creditLine';
+
+// ─── APR history generation helper ───────────────────────────────────────────
+/**
+ * Generates a realistic-looking APR history for the past `days` days.
+ * Uses a simple bounded random walk anchored to `currentApr`.
+ * Deterministic seed per credit-line id keeps snapshots stable.
+ */
+function generateAprHistory(
+  currentApr: number,
+  days = 365,
+  seed = 42,
+): AprHistoryEntry[] {
+  const entries: AprHistoryEntry[] = [];
+  // Park the pseudo-random walk at currentApr at T=0 and walk backwards
+  let apr = currentApr;
+  const now = new Date();
+
+  // Simple LCG PRNG for stable, deterministic sequences
+  let s = seed;
+  const rand = () => { s = (s * 1664525 + 1013904223) & 0xffffffff; return (s >>> 0) / 0xffffffff; };
+
+  // Build from oldest to newest
+  for (let i = days; i >= 0; i--) {
+    const date = new Date(now);
+    date.setDate(date.getDate() - i);
+    // Small daily drift ±0.05 pp, clamped to ±2 pp from opening APR
+    const drift = (rand() - 0.5) * 0.1;
+    apr = Math.max(currentApr - 2, Math.min(currentApr + 2, apr + drift));
+    entries.push({
+      date: date.toISOString().slice(0, 10),
+      apr: Math.round(apr * 100) / 100,
+    });
+  }
+  return entries;
+}
 
 export const MOCK_CREDIT_LINES: CreditLine[] = [
   {
@@ -26,6 +61,7 @@ export const MOCK_CREDIT_LINES: CreditLine[] = [
     statusHistory: [
       { status: 'Active', date: '2024-03-15', note: 'Line opened and activated' },
     ],
+    aprHistory: generateAprHistory(8.5, 365, 101),
   },
   {
     id: 'CL-2024-002',
@@ -53,6 +89,7 @@ export const MOCK_CREDIT_LINES: CreditLine[] = [
     statusHistory: [
       { status: 'Active', date: '2024-06-01', note: 'Line opened' },
     ],
+    aprHistory: generateAprHistory(9.25, 365, 202),
   },
   {
     id: 'CL-2023-003',
@@ -74,6 +111,7 @@ export const MOCK_CREDIT_LINES: CreditLine[] = [
       { status: 'Active', date: '2023-11-10', note: 'Line opened' },
       { status: 'Suspended', date: '2025-01-15', note: 'Missed payment — under review' },
     ],
+    aprHistory: generateAprHistory(11.0, 365, 303),
   },
   {
     id: 'CL-2023-004',
@@ -99,6 +137,7 @@ export const MOCK_CREDIT_LINES: CreditLine[] = [
       { status: 'Suspended', date: '2024-09-01', note: 'Payment overdue' },
       { status: 'Defaulted', date: '2024-11-01', note: '90+ days overdue' },
     ],
+    aprHistory: generateAprHistory(14.5, 365, 404),
   },
   {
     id: 'CL-2022-005',
@@ -119,6 +158,7 @@ export const MOCK_CREDIT_LINES: CreditLine[] = [
       { status: 'Active', date: '2022-08-01', note: 'Line opened' },
       { status: 'Closed', date: '2024-06-30', note: 'Fully repaid and closed by borrower' },
     ],
+    aprHistory: generateAprHistory(10.0, 365, 505),
   },
   {
     id: 'CL-2025-006',
@@ -139,5 +179,6 @@ export const MOCK_CREDIT_LINES: CreditLine[] = [
     statusHistory: [
       { status: 'Active', date: '2025-01-15', note: 'Line opened and activated' },
     ],
+    aprHistory: generateAprHistory(7.5, 365, 606),
   },
 ];
