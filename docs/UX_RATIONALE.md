@@ -309,31 +309,29 @@ motion-reduced animation behavior.
 
 ---
 
-## 11. Mobile sticky draw summary bar
+## 11. Per-step micro-progress in the draw wizard
 
-**Problem.** On mobile, the draw wizard's amount step scrolls the inline preview
-off-screen. Users lose sight of line, amount, and APR while entering a figure —
-the three numbers they need to sanity-check before continuing.
+**Problem.** The draw wizard header shows which step is active but not whether
+each step's requirements are satisfied (line chosen, amount in bounds, preview
+computed, terms acknowledged). Users had to infer readiness from the form body.
 
 **Alternatives considered.**
 
-- **Always-visible inline preview above the fold.** Rejected — the amount form
-  and drawing-limit indicator need vertical space; pinning preview at the top
-  pushes the primary input below the fold.
-- **Sticky summary on every breakpoint.** Rejected — desktop already has a
-  sidebar `PreviewSection` (`lg:sticky`); a second bar would duplicate content.
-- **Summary on the `confirm` step too.** Rejected — `ConfirmationStep` ships its
-  own sticky action bar; stacking two bottom strips would obscure Cancel / Draw.
+- **Colour-only step borders.** Rejected — completion colour on the card does
+  not spell out *what* is missing ("amount out of bounds" vs. "not started").
+- **Toast on each validity change.** Rejected — too noisy for sighted users and
+  redundant with polite `aria-live` for AT.
+- **Separate progress bar.** Rejected — duplicates the existing four-step header.
 
-**Chosen approach.** `DrawSummaryBar` fixed to the viewport bottom, shown only
-below `md` on the `amount` step. It surfaces **Line**, **Amount**, and **APR**,
-respects `env(safe-area-inset-bottom)`, collapses to a one-line peek on
-scroll-down, and expands on scroll-up. `tabIndex={0}` makes the region
-keyboard-reachable; transitions are instant under reduced motion.
+**Chosen approach.** Compact chips beneath each step label in
+`DrawCreditPage` (`DrawWizardMicroIndicator`) driven by
+`computeDrawWizardMicroProgress`. Tones use existing `--success`, `--warning`,
+and `--muted` tokens. A single debounced `aria-live="polite"` region announces
+changes. Confirmation checkbox state is lifted to the page so the confirm chip
+stays in sync.
 
-**Trade-off.** Scroll-direction collapse adds a small scroll listener on mobile
-only. We accept it because the peek state recovers vertical space without
-hiding the summary entirely.
+**Trade-off.** Slightly denser header on mobile. Chips use ellipsis truncation
+so all four remain visible at compact density.
 
 ---
 

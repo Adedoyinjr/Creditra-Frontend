@@ -27,6 +27,10 @@ interface ConfirmationStepProps {
    * network request state.
    */
   isLoading?: boolean;
+  /** Controlled checkbox state for terms acknowledgment (lifted to wizard). */
+  agreedToTerms?: boolean;
+  /** Notified when the user toggles the terms checkbox. */
+  onAgreedToTermsChange?: (agreed: boolean) => void;
 }
 
 /**
@@ -52,8 +56,17 @@ export function ConfirmationStep({
   onBack,
   onCancel,
   isLoading = false,
+  agreedToTerms: agreedToTermsProp,
+  onAgreedToTermsChange,
 }: ConfirmationStepProps) {
-  const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [agreedToTermsInternal, setAgreedToTermsInternal] = useState(false);
+  const agreedToTerms = agreedToTermsProp ?? agreedToTermsInternal;
+  const setAgreedToTerms = (value: boolean) => {
+    onAgreedToTermsChange?.(value);
+    if (agreedToTermsProp === undefined) {
+      setAgreedToTermsInternal(value);
+    }
+  };
   const { status } = useWallet();
   const utilizedBalance = creditLine.limit - creditLine.available;
   const safeAmount = Math.max(amount, 0);
