@@ -340,7 +340,7 @@ export default function CreditLines() {
           <h1>Credit Lines</h1>
           <p className="subtitle">Manage your credit facilities</p>
         </div>
-        <div style={{ display: "flex", gap: "0.75rem" }}>
+        <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
           <button
             ref={triggerRef}
             className="cl-primary-btn"
@@ -350,6 +350,31 @@ export default function CreditLines() {
           >
             Compare Selected ({selectedLines.length}/2)
           </button>
+          {/* Full-page compare — only enabled when exactly 2 lines are selected */}
+          <Link
+            to={
+              selectedLines.length === 2
+                ? `/compare-credit-lines?a=${selectedLines[0]}&b=${selectedLines[1]}`
+                : '#'
+            }
+            className="cl-primary-btn"
+            aria-disabled={selectedLines.length !== 2}
+            aria-label={
+              selectedLines.length === 2
+                ? 'Open full-page comparison for the two selected credit lines'
+                : 'Select exactly 2 credit lines to open the full comparison page'
+            }
+            style={{
+              background: 'var(--surface)',
+              border: '1px solid var(--border)',
+              color: selectedLines.length === 2 ? 'var(--text)' : 'var(--muted)',
+              opacity: selectedLines.length === 2 ? 1 : 0.6,
+              pointerEvents: selectedLines.length === 2 ? 'auto' : 'none',
+            }}
+            tabIndex={selectedLines.length === 2 ? 0 : -1}
+          >
+            Full Compare →
+          </Link>
           <Link to="/open-credit" className="cl-primary-btn">
             + Open New Line
           </Link>
