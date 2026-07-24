@@ -9,6 +9,50 @@ const DEFAULT_LOCALE = 'en-US';
 const DEFAULT_CURRENCY = 'USD';
 
 /**
+ * Round a dollar amount to the nearest cent using standard half-up rounding.
+ */
+export function roundToCents(amount: number): number {
+  return Math.round(amount * 100) / 100;
+}
+
+/**
+ * Monthly accrued interest on an outstanding principal balance.
+ *
+ * Uses the same formula as the repay modal's payoff preview:
+ * `(principal × APR) / 12`, rounded to cents.
+ */
+export function computeMonthlyAccruedInterest(
+  principal: number,
+  aprPercent: number,
+): number {
+  if (principal <= 0 || aprPercent <= 0) {
+    return 0;
+  }
+  return roundToCents((principal * (aprPercent / 100)) / 12);
+}
+
+/**
+ * Full payoff for a credit line: outstanding principal plus accrued
+ * monthly interest. Derived from line state only — not approximated.
+ */
+export function computeFullPayoffAmount(
+  principal: number,
+  aprPercent: number,
+): number {
+  if (principal <= 0) {
+    return 0;
+  }
+  return roundToCents(principal + computeMonthlyAccruedInterest(principal, aprPercent));
+}
+
+/**
+ * Format a numeric amount as a fixed two-decimal string for controlled inputs.
+ */
+export function formatAmountInputValue(amount: number): string {
+  return roundToCents(amount).toFixed(2);
+}
+
+/**
  * Format a number as a localized currency string.
  *
  * @param amount   - The numeric amount to format.

@@ -11,7 +11,11 @@ import { InlineHelpOverlay } from "@/components/InlineHelpOverlay";
 import { CreditLine, DrawStep, Transaction } from "@/types/draw-credit.types";
 import { mockCreditLines } from "@/lib/draw-credit-mock-data";
 import { WhyApr } from "@/components/WhyApr";
+import { DrawingLimit } from "@/components/DrawingLimit";
 import { DrawSummaryBar } from "@/components/DrawSummaryBar";
+import { DrawWizardMicroIndicator } from "@/components/DrawWizardMicroIndicator";
+import { useDrawWizardMicroProgress } from "@/hooks/useDrawWizardMicroProgress";
+import "@/components/DrawWizardMicroProgress.css";
 
 const drawSteps = [
   { id: "select", label: "Select line" },
@@ -40,10 +44,21 @@ export default function DrawCreditPage() {
   const [transaction, setTransaction] = useState<Transaction | null>(
     routeTransaction ?? null,
   );
+  const [confirmationAcknowledged, setConfirmationAcknowledged] =
+    useState(false);
+
+  const { steps: microProgressSteps, debouncedAnnouncement: microProgressAnnouncement } =
+    useDrawWizardMicroProgress({
+      selectedCreditLine,
+      amount,
+      confirmationAcknowledged,
+      isOnConfirmStep: step === "confirm",
+    });
 
   const handleSelectCreditLine = (creditLine: CreditLine) => {
     setSelectedCreditLine(creditLine);
     setAmount(0);
+    setConfirmationAcknowledged(false);
     setStep("amount");
   };
 
@@ -85,6 +100,7 @@ export default function DrawCreditPage() {
     setStep("select");
     setSelectedCreditLine(null);
     setAmount(0);
+    setConfirmationAcknowledged(false);
     setTransaction(null);
   };
 
@@ -92,8 +108,10 @@ export default function DrawCreditPage() {
     if (step === "amount") {
       setStep("select");
       setSelectedCreditLine(null);
+      setConfirmationAcknowledged(false);
     } else if (step === "confirm") {
       setStep("amount");
+      setConfirmationAcknowledged(false);
     }
   };
 
@@ -108,7 +126,7 @@ export default function DrawCreditPage() {
   );
 
   return (
-    <main className="min-h-screen bg-background px-4 pb-24 pt-6 sm:pb-28 sm:pt-8">
+    <main className="min-h-screen bg-background px-4 pb-24 pt-6 max-md:pb-28 md:pb-8 sm:pt-8">
       <div className="mx-auto w-full max-w-4xl space-y-5">
         {step !== "status" && (
           <header className="card" aria-label="Draw credit progress">
@@ -124,6 +142,7 @@ export default function DrawCreditPage() {
               {drawSteps.map((drawStep, index) => {
                 const isActive = index === activeStepIndex;
                 const isComplete = index < activeStepIndex;
+                const microStep = microProgressSteps[index];
 
                 return (
                   <li
@@ -143,10 +162,31 @@ export default function DrawCreditPage() {
                     <p className="mt-1 text-sm font-semibold text-foreground">
                       {drawStep.label}
                     </p>
+                    {microStep && (
+                      <DrawWizardMicroIndicator
+                        stepId={microStep.id}
+                        tone={microStep.tone}
+                        label={microStep.label}
+                      />
+                    )}
                   </li>
                 );
               })}
             </ol>
+            {/*
+              Polite live region for micro-progress updates — one announcer
+              for the whole header so AT users hear validity changes without
+              four competing regions.
+            */}
+            <span
+              className="sr-only"
+              role="status"
+              aria-live="polite"
+              aria-atomic="true"
+              data-testid="draw-micro-progress-live"
+            >
+              {microProgressAnnouncement}
+            </span>
           </header>
         )}
 
@@ -156,6 +196,7 @@ export default function DrawCreditPage() {
               <CreditLineSelector
                 creditLines={mockCreditLines}
                 onSelect={handleSelectCreditLine}
+                microProgressDescribedBy="draw-wizard-micro-select"
               />
             </section>
           </div>
@@ -196,6 +237,8 @@ export default function DrawCreditPage() {
                 onBack={handleBack}
                 onCancel={handleCancel}
                 isLoading={isLoading}
+                agreedToTerms={confirmationAcknowledged}
+                onAgreedToTermsChange={setConfirmationAcknowledged}
               />
             </section>
           </div>
@@ -273,12 +316,10 @@ export default function DrawCreditPage() {
         triggerRef={whyAprTriggerRef}
       />
       {/*
-        Sticky bottom summary bar — rendered at the page root so it
-        always anchors to the viewport bottom regardless of which step
-        card is currently mounted. The bar self-hides on the `select`
-        and `status` steps; see DrawSummaryBar.tsx for details. The
-        pb-32 / sm:pb-36 padding on <main> ensures content is never
-        occluded by the fixed-position bar.
+        Mobile-only sticky summary (below md) — fixed to the viewport so
+        line / amount / APR stay visible while scrolling the amount step.
+        Desktop uses the sidebar PreviewSection instead. Bottom padding on
+        <main> (max-md:pb-28) prevents content from sitting under the bar.
       */}
       <DrawSummaryBar
         creditLine={selectedCreditLine}

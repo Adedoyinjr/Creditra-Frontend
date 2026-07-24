@@ -214,4 +214,26 @@ describe("App Styling and Accessibility", () => {
       screen.queryByRole("dialog", { name: /move around faster/i }),
     ).not.toBeInTheDocument();
   });
+
+  it("opens command palette on Ctrl+K", () => {
+    render(<App />);
+    fireEvent.keyDown(document, { key: "k", ctrlKey: true });
+    expect(screen.getByTestId("command-palette")).toBeInTheDocument();
+  });
+
+  it("opens command palette on Meta+K (Cmd+K on macOS)", () => {
+    render(<App />);
+    fireEvent.keyDown(document, { key: "k", metaKey: true });
+    expect(screen.getByTestId("command-palette")).toBeInTheDocument();
+  });
+
+  it("toggles command palette closed on second Ctrl+K", () => {
+    render(<App />);
+    // Open
+    fireEvent.keyDown(document, { key: "k", ctrlKey: true });
+    expect(screen.getByTestId("command-palette")).toBeInTheDocument();
+    // Close by toggling
+    fireEvent.keyDown(document, { key: "k", ctrlKey: true });
+    expect(screen.queryByTestId("command-palette")).not.toBeInTheDocument();
+  });
 });

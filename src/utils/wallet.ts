@@ -268,3 +268,11 @@ export const switchNetwork = async (type: WalletType, network: string): Promise<
   }
   throw new Error(`Please open your ${type} wallet and switch to ${network}.`);
 };
+
+export const getExplorerBaseUrl = (network: string): string => {
+  const normalized = network?.toUpperCase?.() ?? 'PUBLIC';
+  if (normalized === 'TESTNET') {
+    return 'https://stellar.expert/explorer/testnet/tx';
+  }
+  return 'https://stellar.expert/explorer/public/tx';
+};

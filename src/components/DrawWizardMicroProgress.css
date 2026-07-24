@@ -1,0 +1,58 @@
+/*
+ * draw-wizard-micro-progress.css — per-step validity chips in the draw header.
+ *
+ * Tones map to existing semantic tokens:
+ *   --muted   → not yet satisfied
+ *   --warning → needs attention
+ *   --success → requirement met
+ *
+ * Compact density: single-line chips with a 0.625rem icon dot so all four
+ * fit beneath step labels on narrow viewports.
+ */
+
+.draw-wizard-micro-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  margin: 0.375rem 0 0;
+  padding: 0;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: 0.01em;
+}
+
+.draw-wizard-micro-indicator__icon {
+  flex-shrink: 0;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: var(--muted);
+}
+
+.draw-wizard-micro-indicator__text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--muted);
+}
+
+.draw-wizard-micro-indicator[data-tone="warning"] .draw-wizard-micro-indicator__icon {
+  background: var(--warning);
+}
+
+.draw-wizard-micro-indicator[data-tone="warning"] .draw-wizard-micro-indicator__text {
+  color: var(--warning);
+}
+
+.draw-wizard-micro-indicator[data-tone="success"] .draw-wizard-micro-indicator__icon {
+  background: var(--success);
+}
+
+.draw-wizard-micro-indicator[data-tone="success"] .draw-wizard-micro-indicator__text {
+  color: var(--success);
+}
+
+[data-contrast="high"] .draw-wizard-micro-indicator__text {
+  font-weight: 700;
+}

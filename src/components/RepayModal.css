@@ -1,0 +1,61 @@
+.repay-modal-input--locked {
+  background: color-mix(in srgb, var(--surface, #161b22) 85%, var(--muted, #8b949e)) !important;
+  border-color: var(--accent, #58a6ff) !important;
+  color: var(--text, #e6edf3) !important;
+  cursor: default;
+}
+
+.repay-modal-input--locked:focus-visible {
+  outline: 2px solid var(--accent, #58a6ff);
+  outline-offset: 2px;
+}
+
+.repay-modal-repay-all-btn,
+.repay-modal-edit-btn {
+  flex-shrink: 0;
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0 1rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.repay-modal-repay-all-btn {
+  border: 1px solid color-mix(in srgb, var(--accent, #58a6ff) 40%, transparent);
+  background: color-mix(in srgb, var(--accent, #58a6ff) 12%, transparent);
+  color: var(--accent, #58a6ff);
+}
+
+.repay-modal-repay-all-btn:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--accent, #58a6ff) 20%, transparent);
+}
+
+.repay-modal-repay-all-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.repay-modal-repay-all-btn:focus-visible,
+.repay-modal-edit-btn:focus-visible {
+  outline: 2px solid var(--accent, #58a6ff);
+  outline-offset: 2px;
+}
+
+.repay-modal-edit-btn {
+  border: 1px solid var(--border, #30363d);
+  background: var(--surface, #161b22);
+  color: var(--text, #e6edf3);
+}
+
+.repay-modal-edit-btn:hover {
+  border-color: var(--accent, #58a6ff);
+  color: var(--accent, #58a6ff);
+}
+
+[data-contrast="high"] .repay-modal-input--locked {
+  border-width: 2px;
+  font-weight: 600;
+}

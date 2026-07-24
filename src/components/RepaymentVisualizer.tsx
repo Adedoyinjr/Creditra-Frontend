@@ -37,6 +37,28 @@ export interface RepaymentVisualizerProps {
   monthlyPayment: number;
   /** Max months to project (capped at 360) */
   maxMonths?: number;
+  /**
+   * Override the default `aria-label` on the SVG chart element.
+   *
+   * Defaults to: "Stacked area chart showing principal and cumulative interest
+   * over repayment months".  Supply a more specific label when the chart is
+   * embedded in a context where extra detail is useful — e.g. including the
+   * loan amount or product name.
+   *
+   * Example: "Repayment chart for $50,000 home-improvement loan at 7.25% APR"
+   */
+  chartAriaLabel?: string;
+  /**
+   * Plain-text caption appended to the SR-only data table's `<caption>`
+   * element.  When omitted the caption is generated automatically from
+   * `termMonths` and `totalInterest`.
+   *
+   * Use this prop to provide additional context that the automatic summary
+   * cannot derive — e.g. the loan product name or a custom note.
+   *
+   * Example: "Home improvement loan — 48 months · $4,230 total interest"
+   */
+  caption?: string;
 }
 
 // ─── Schedule generator ────────────────────────────────────────────────────────
@@ -106,9 +128,11 @@ interface ChartProps {
   tooltipId: string;
   onTooltip: (data: TooltipData | null) => void;
   tooltip: TooltipData | null;
+  /** Optional override for the SVG aria-label (from RepaymentVisualizerProps). */
+  chartAriaLabel?: string;
 }
 
-function StackedAreaChart({ schedule, tooltipId, onTooltip, tooltip }: ChartProps) {
+function StackedAreaChart({ schedule, tooltipId, onTooltip, tooltip, chartAriaLabel }: ChartProps) {
   if (schedule.length === 0) return null;
 
   const initPrincipal = schedule[0].principal + schedule[0].principalPaid;
@@ -169,7 +193,10 @@ function StackedAreaChart({ schedule, tooltipId, onTooltip, tooltip }: ChartProp
     <svg
       viewBox={`0 0 ${W} ${H}`}
       role="img"
-      aria-label="Stacked area chart showing principal and cumulative interest over repayment months"
+      aria-label={
+        chartAriaLabel ??
+        'Stacked area chart showing principal and cumulative interest over repayment months'
+      }
       aria-describedby={tooltipId}
       style={{ width: '100%', height: 'auto', overflow: 'visible' }}
       onMouseMove={handleMouseMove}
@@ -282,9 +309,31 @@ function TooltipBubble({ data }: { data: TooltipData }) {
 
 // ─── SR table fallback ─────────────────────────────────────────────────────────
 
-function SRTable({ schedule }: { schedule: ScheduleRow[] }) {
+interface SRTableProps {
+  schedule: ScheduleRow[];
+  /**
+   * Text for the table's `<caption>` element.
+   *
+   * When provided this value is used verbatim.  When omitted a summary is
+   * auto-generated from the schedule: "Monthly repayment schedule: N months,
+   * $X total interest".
+   */
+  caption?: string;
+}
+
+function SRTable({ schedule, caption }: SRTableProps) {
   const fmt = (n: number) =>
     new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 }).format(n);
+
+  const fmtShort = (n: number) =>
+    new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(n);
+
+  // Auto-generate a meaningful summary when no caption is supplied.
+  const termMonths = schedule.length;
+  const totalInterest = schedule[schedule.length - 1]?.cumulativeInterest ?? 0;
+  const resolvedCaption =
+    caption ??
+    `Monthly repayment schedule: ${termMonths} month${termMonths !== 1 ? 's' : ''}, ${fmtShort(totalInterest)} total interest`;
 
   // Limit visible rows; full table always in SR tree
   return (
@@ -293,7 +342,7 @@ function SRTable({ schedule }: { schedule: ScheduleRow[] }) {
       aria-label="Repayment schedule data table"
       style={{ borderCollapse: 'collapse', width: '100%', fontSize: '0.75rem' }}
     >
-      <caption className="sr-only">Monthly repayment schedule: principal and interest breakdown</caption>
+      <caption className="sr-only">{resolvedCaption}</caption>
       <thead>
         <tr>
           <th scope="col">Month</th>
@@ -452,12 +501,24 @@ function EmptyState() {
 /**
  * RepaymentVisualizer displays a stacked area chart (principal vs cumulative
  * interest) over the life of a loan, plus an accessible data table.
+ *
+ * Accessibility props
+ * ───────────────────
+ * `chartAriaLabel` — overrides the default `aria-label` on the SVG element.
+ *   Use this when embedding the chart in a context that needs a more specific
+ *   description (e.g. including the loan product name or exact figures).
+ *
+ * `caption` — overrides the auto-generated `<caption>` text in the SR-only
+ *   data table.  Defaults to "Monthly repayment schedule: N months, $X total
+ *   interest" — you only need to supply this if you want custom wording.
  */
 export function RepaymentVisualizer({
   principal,
   apr,
   monthlyPayment,
   maxMonths = 360,
+  chartAriaLabel,
+  caption,
 }: RepaymentVisualizerProps) {
   const [tooltip, setTooltip] = useState<TooltipData | null>(null);
   const tooltipId = useId();
@@ -546,6 +607,7 @@ export function RepaymentVisualizer({
               tooltipId={tooltipId}
               onTooltip={setTooltip}
               tooltip={tooltip}
+              chartAriaLabel={chartAriaLabel}
             />
 
             {/* Tooltip bubble — positioned absolutely over chart */}
@@ -566,7 +628,7 @@ export function RepaymentVisualizer({
           <Legend />
 
           {/* SR-only full data table (always present for assistive tech) */}
-          <SRTable schedule={schedule} />
+          <SRTable schedule={schedule} caption={caption} />
 
           {/* Visible table */}
           <details style={{ marginTop: '1rem' }}>
