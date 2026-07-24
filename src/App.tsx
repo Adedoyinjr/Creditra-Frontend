@@ -20,6 +20,12 @@ import { LinkedAccounts } from "./pages/LinkedAccounts";
 import { WalletReconnectBanner } from "./components/WalletReconnectBanner";
 import { NetworkMismatchBanner } from "./components/notifications/NetworkMismatchBanner";
 import { Header } from "./layouts/Header";
+import {
+  RouteHeadProvider,
+  RouteAnnouncer,
+} from "./components/RouteAnnouncer";
+import { SessionTimeoutBanner } from "./components/SessionTimeoutBanner";
+import { NotificationPreferences } from "./pages/NotificationPreferences";
 
 const isEditableTarget = (target: EventTarget | null) => {
   if (!(target instanceof HTMLElement)) return false;
@@ -42,15 +48,28 @@ const isEditableTarget = (target: EventTarget | null) => {
  *       <ContrastProvider> — high-contrast override, [data-contrast="high"]
  *         <WalletProvider> — wallet lifecycle visible to every route
  *           <BrowserRouter>
- *             <header />   — persistent nav chrome
- *             <main>
- *               <Routes /> — current route
- *             </main>
+ *             <RouteHeadProvider> — per-route title/description/announcement
+ *               <RouteAnnouncer /> — bound to the URL + override context
+ *               <header />         — persistent nav chrome
+ *               <main>
+ *                 <Routes />        — current route
+ *               </main>
+ *             </RouteHeadProvider>
  *           </BrowserRouter>
  *         </WalletProvider>
  *       </ContrastProvider>
  *     </ThemeProvider>
  *   </ErrorBoundary>
+ *
+ * Note on the RouteStack pair (RouteHeadProvider + RouteAnnouncer):
+ *   Previously the RouteAnnouncer component was defined but never
+ *   mounted in the running app; pages relied on whatever browser
+ *   title survived from the last navigation.  GitHub issue #451
+ *   ("Add per-route RouteAnnouncer") asked us to (a) actually mount
+ *   it so every navigation triggers a screen-reader announcement,
+ *   and (b) let individual pages push custom titles + descriptions
+ *   via `useRouteHead`.  The provider context here enables (b) without
+ *   forcing every page into a wrapper.
  *
  * See docs/ARCHITECTURE.md for the full component topology.
  */
@@ -96,64 +115,70 @@ function App() {
         <NotificationProvider>
         <ReducedMotionProvider>
         <BrowserRouter>
-          <div className="app">
-            <Header
-              settingsTriggerRef={settingsTriggerRef}
-              kycTriggerRef={kycTriggerRef}
-              onSettingsClick={() => {
-                setOpenedFromSettingsLink(true);
-                setIsShortcutHelpOpen(true);
-              }}
-              onKycClick={() => setIsKycDrawerOpen(true)}
-            />
+          <RouteHeadProvider>
+            <div className="app">
+              <Header
+                settingsTriggerRef={settingsTriggerRef}
+                kycTriggerRef={kycTriggerRef}
+                onSettingsClick={() => {
+                  setOpenedFromSettingsLink(true);
+                  setIsShortcutHelpOpen(true);
+                }}
+                onKycClick={() => setIsKycDrawerOpen(true)}
+              />
 
-            {/* Wallet auto-reconnect timeout banner — self-dismissing,
-                non-blocking; only visible when reconnect takes > 8 s. */}
-            <WalletReconnectBanner />
-            {/* Session-timeout warning banner — visible 60 s before
-                the wallet extension silently disconnects (#227). */}
-            <SessionTimeoutBanner />
-            <main className="main">
-              <NetworkMismatchBanner />
-              <Routes>
-                <Route path="/" element={<Dashboard />} />
-                <Route path="/transactions" element={<TransactionHistory />} />
-                <Route path="/credit-lines" element={<CreditLines />} />
-                <Route path="/help" element={<HelpCenter />} />
-                <Route path="/draw-credit" element={<DrawCreditPage />} />
-                <Route
-                  path="/draw-credit/success"
-                  element={<DrawCreditPage />}
-                />
-                <Route path="/open-credit" element={<RequestEvaluation />} />
-                <Route path="/dutch-auctions" element={<DutchAuctions />} />
-                <Route path="/linked-accounts" element={<LinkedAccounts />} />
-                <Route path="/notification-preferences" element={<NotificationPreferences />} />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </main>
-            <ShortcutHelpOverlay
-              isOpen={isShortcutHelpOpen}
-              onClose={() => setIsShortcutHelpOpen(false)}
-              triggerRef={openedFromSettingsLink ? settingsTriggerRef : undefined}
-            />
-            <KycDrawer
-              isOpen={isKycDrawerOpen}
-              onClose={() => setIsKycDrawerOpen(false)}
-              onResume={(stepId) => {
-                // Navigate to the KYC page with the step pre-selected.
-                // Replace with router.push('/kyc?step=' + stepId) when the
-                // full KYC page exists.
-                console.info('[KYC] Resume at step:', stepId);
-              }}
-              triggerRef={kycTriggerRef}
-            />
-            <CommandPalette
-              isOpen={isPaletteOpen}
-              onClose={() => setIsPaletteOpen(false)}
-              triggerRef={paletteTriggerRef}
-            />
-          </div>
+              {/* Wallet auto-reconnect timeout banner — self-dismissing,
+                  non-blocking; only visible when reconnect takes > 8 s. */}
+              <WalletReconnectBanner />
+              {/* Session-timeout warning banner — visible 60 s before
+                  the wallet extension silently disconnects (#227). */}
+              <SessionTimeoutBanner />
+              <main className="main">
+                <NetworkMismatchBanner />
+                <Routes>
+                  <Route path="/" element={<Dashboard />} />
+                  <Route path="/transactions" element={<TransactionHistory />} />
+                  <Route path="/credit-lines" element={<CreditLines />} />
+                  <Route path="/help" element={<HelpCenter />} />
+                  <Route path="/draw-credit" element={<DrawCreditPage />} />
+                  <Route
+                    path="/draw-credit/success"
+                    element={<DrawCreditPage />}
+                  />
+                  <Route path="/open-credit" element={<RequestEvaluation />} />
+                  <Route path="/dutch-auctions" element={<DutchAuctions />} />
+                  <Route path="/linked-accounts" element={<LinkedAccounts />} />
+                  <Route path="/notification-preferences" element={<NotificationPreferences />} />
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </main>
+              <ShortcutHelpOverlay
+                isOpen={isShortcutHelpOpen}
+                onClose={() => setIsShortcutHelpOpen(false)}
+                triggerRef={openedFromSettingsLink ? settingsTriggerRef : undefined}
+              />
+              <KycDrawer
+                isOpen={isKycDrawerOpen}
+                onClose={() => setIsKycDrawerOpen(false)}
+                onResume={(stepId) => {
+                  // Navigate to the KYC page with the step pre-selected.
+                  // Replace with router.push('/kyc?step=' + stepId) when the
+                  // full KYC page exists.
+                  console.info('[KYC] Resume at step:', stepId);
+                }}
+                triggerRef={kycTriggerRef}
+              />
+              <CommandPalette
+                isOpen={isPaletteOpen}
+                onClose={() => setIsPaletteOpen(false)}
+                triggerRef={paletteTriggerRef}
+              />
+              {/* Per-route screen-reader announcer (#451).  Mounted at
+                  the bottom of the tree so route-side `useRouteHead`
+                  overrides apply before the announcer effect runs. */}
+              <RouteAnnouncer />
+            </div>
+          </RouteHeadProvider>
         </BrowserRouter>
         </ReducedMotionProvider>
         </NotificationProvider>

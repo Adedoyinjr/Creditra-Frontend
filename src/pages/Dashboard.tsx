@@ -7,6 +7,7 @@ import { useWallet } from "../context/WalletContext";
 import { Sparkline } from "../components/Sparkline";
 import { RiskBandsPanel } from "../components/RiskBandsPanel";
 import { WhatsChangedPanel } from "../components/WhatsChangedPanel";
+import { RiskExplainerOverlay } from "../components/RiskExplainerOverlay";
 import { MOCK_CREDIT_LINES } from "../data/mockData";
 import type { Transaction } from "../types/creditLine";
 import {
@@ -241,6 +242,9 @@ export function Dashboard() {
   const [repayCount, setRepayCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [isExplainOpen, setIsExplainOpen] = useState(false);
+  // `isExplainOpen` now drives the centred RiskExplainerOverlay (#426).
+  // The slide-out panel (`RiskBandsPanel`) keeps its own local state and
+  // is unaffected.
 
   // ─── Sync timestamps ─────────────────────────────────────────────────────
   const [riskSyncedAt, setRiskSyncedAt] = useState<Date>(() => new Date());
@@ -711,7 +715,35 @@ export function Dashboard() {
 
           {/* Risk Score */}
           <div className="card" data-tour-target="riskGauge" style={{ animationDelay: '0.15s' }} aria-busy={loading}>
-            <h2><span className="icon">🛡️</span> Risk Score</h2>
+            <h2>
+              <span className="icon">🛡️</span> Risk Score
+              {!loading && (
+                <button
+                  ref={explainTriggerRef}
+                  type="button"
+                  onClick={() => setIsExplainOpen(true)}
+                  aria-haspopup="dialog"
+                  aria-expanded={isExplainOpen}
+                  aria-label="Explain risk bands"
+                  className="risk-explainer-trigger"
+                  data-testid="risk-explainer-trigger"
+                  style={{
+                    marginLeft: "auto",
+                    fontSize: "0.75rem",
+                    fontWeight: 600,
+                    padding: "0.25rem 0.6rem",
+                    borderRadius: 6,
+                    background: "transparent",
+                    border: "1px solid var(--border, #30363d)",
+                    color: "var(--muted, #8b949e)",
+                    cursor: "pointer",
+                    minHeight: "32px",
+                  }}
+                >
+                  Explain
+                </button>
+              )}
+            </h2>
             {loading ? (
               <div className="risk-gauge-container">
                 <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100px', width: '160px', marginBottom: '0.75rem' }}>
@@ -1317,6 +1349,15 @@ export function Dashboard() {
         </div>
       </div>
       <DashboardTour />
+      {/* Centered risk-band explainer overlay (#426).  Triggered by the
+          "Explain risk bands" button rendered next to the risk gauge
+          header.  The component manages its own focus trap, body scroll
+          lock, and inert backdrop. */}
+      <RiskExplainerOverlay
+        isOpen={isExplainOpen}
+        onClose={() => setIsExplainOpen(false)}
+        triggerRef={explainTriggerRef}
+      />
     </div>
   );
 }

@@ -1,6 +1,14 @@
 import { render, screen, act } from '@testing-library/react';
 import { FormField } from '../FormField';
 
+/**
+ * Tests for FormField — particularly the debounced `aria-live` error
+ * announcement introduced in (#452).
+ *
+ * The 300 ms default debounce is the original behaviour; the
+ * `announceDelayMs` prop exposes it so callers can tune the cadence
+ * for critical (or test-only) forms.
+ */
 describe('FormField', () => {
   beforeAll(() => {
     vi.useFakeTimers();
@@ -109,5 +117,58 @@ describe('FormField', () => {
     });
 
     expect(screen.getByRole('alert')).toHaveTextContent('Second error');
+  });
+
+  test('honors a custom announceDelayMs prop — short delay', () => {
+    const { rerender } = render(
+      <FormField
+        id="test"
+        label="Test Field"
+        type="text"
+        announceDelayMs={50}
+      />
+    );
+
+    rerender(
+      <FormField
+        id="test"
+        label="Test Field"
+        type="text"
+        error="Custom delay error"
+        announceDelayMs={50}
+      />
+    );
+
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    act(() => {
+      vi.advanceTimersByTime(50);
+    });
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      'Custom delay error',
+    );
+  });
+
+  test('announceDelayMs={0} disables the debounce entirely', () => {
+    const { rerender } = render(
+      <FormField
+        id="test"
+        label="Test Field"
+        type="text"
+        announceDelayMs={0}
+      />
+    );
+
+    rerender(
+      <FormField
+        id="test"
+        label="Test Field"
+        type="text"
+        error="Immediate error"
+        announceDelayMs={0}
+      />
+    );
+
+    // No timer advance — the announcement should be live immediately.
+    expect(screen.getByRole('alert')).toHaveTextContent('Immediate error');
   });
 });
