@@ -1,6 +1,7 @@
 import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { BrowserRouter, MemoryRouter } from "react-router-dom";
+import transactionHistoryCss from "./TransactionHistory.css?raw";
 import { TransactionHistory } from "./TransactionHistory";
 import { NotificationProvider } from "../context/NotificationContext";
 
@@ -490,6 +491,13 @@ describe("TransactionHistory", () => {
   // are brittle); they assert the class names that index.css tokens target.
 
   describe("Design-token class usage (issue #626 v7)", () => {
+    it("keeps TransactionHistory spacing and line-height pinned to design tokens", () => {
+      const rawSpacingOrLeading = /^\s*(gap|padding|margin|margin-bottom|margin-top|line-height):\s*(?!.*var\(--(?:space|lh)-)[^;]*(?:rem|px|\b1\b)/gm;
+      const matches = transactionHistoryCss.match(rawSpacingOrLeading) ?? [];
+
+      expect(matches).toEqual([]);
+    });
+
     it("page wrapper carries transaction-history-page class", () => {
       const { container } = renderTransactionHistory();
       expect(container.querySelector(".transaction-history-page")).toBeInTheDocument();

@@ -32,7 +32,7 @@
 
 .th-header h1 {
     margin: 0 0 var(--space-xs);
-    font-size: 1.5rem;
+    font-size: var(--space-xl);
     font-weight: 700;
     line-height: var(--lh-heading);
     color: var(--text);
@@ -65,7 +65,7 @@
     gap: var(--space-sm);
     /* 44 px touch target (WCAG 2.5.5) */
     min-height: 44px;
-    padding: 0.625rem var(--space-lg);
+    padding: var(--space-md) var(--space-lg);
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: var(--radius-md);
@@ -117,8 +117,8 @@
 .th-stat-card {
     display: flex;
     align-items: center;
-    gap: 0.875rem;
-    padding: var(--space-lg) 1.25rem;
+    gap: var(--space-md);
+    padding: var(--space-lg) var(--space-xl);
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: var(--radius-lg);
@@ -177,7 +177,7 @@
     display: flex;
     flex-wrap: wrap;
     gap: var(--space-lg);
-    padding: 1.25rem;
+    padding: var(--space-xl);
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: var(--radius-lg);
@@ -189,7 +189,7 @@
 .th-filter-group {
     display: flex;
     flex-direction: column;
-    gap: 0.35rem;
+    gap: var(--space-sm);
     min-width: 160px;
     flex: 1;
 }
@@ -202,7 +202,7 @@
 .th-subgroup {
     display: flex;
     flex-direction: column;
-    gap: 0.35rem;
+    gap: var(--space-sm);
     margin-bottom: var(--space-md);
 }
 
@@ -263,7 +263,7 @@
     color: var(--text);
     font-size: 0.8rem;
     font-weight: 600;
-    line-height: 1;
+    line-height: var(--lh-small);
     cursor: pointer;
     /* 44 px touch target (WCAG 2.5.5) */
     min-height: 44px;
@@ -296,7 +296,7 @@
 .th-search-group {
     display: flex;
     flex-direction: column;
-    gap: 0.35rem;
+    gap: var(--space-sm);
     min-width: 200px;
     flex: 2;
 }
@@ -313,7 +313,7 @@
 .date-range-custom-field {
     display: flex;
     flex-direction: column;
-    gap: 0.35rem;
+    gap: var(--space-sm);
     min-width: 150px;
     font-size: 0.75rem;
     line-height: var(--lh-small);
@@ -419,11 +419,11 @@
 .th-search-listbox {
     display: none;
     position: absolute;
-    top: calc(100% + 4px);
+    top: calc(100% + var(--space-xs));
     left: 0;
     right: 0;
     margin: 0;
-    padding: 0.375rem 0;
+    padding: var(--space-sm) 0;
     list-style: none;
     background: var(--surface);
     border: 1px solid var(--border);
@@ -451,7 +451,7 @@
     align-items: center;
     gap: var(--space-sm);
     /* horizontal padding mirrors the filter chip padding for visual rhythm */
-    padding: var(--space-sm) 0.875rem;
+    padding: var(--space-sm) var(--space-lg);
     font-size: 0.85rem;
     line-height: var(--lh-body);
     color: var(--text);
@@ -525,8 +525,7 @@
 }
 
 .th-table th {
-    /* vertical padding uses lg token; horizontal stays at lg for alignment */
-    padding: 0.875rem var(--space-lg);
+    padding: var(--space-md) var(--space-lg);
     text-align: left;
     font-size: 0.7rem;
     font-weight: 600;
@@ -553,7 +552,7 @@
 }
 
 .tx-row td {
-    padding: var(--space-lg);
+    padding: var(--space-md) var(--space-lg);
     font-size: 0.875rem;
     line-height: var(--lh-body);
     vertical-align: middle;
@@ -586,8 +585,8 @@
 .tx-type-badge {
     display: inline-flex;
     align-items: center;
-    gap: 0.375rem;
-    padding: var(--space-xs) 0.625rem;
+    gap: var(--space-xs);
+    padding: var(--space-xs) var(--space-sm);
     border-radius: var(--radius-sm);
     font-size: 0.75rem;
     font-weight: 500;
@@ -702,7 +701,7 @@
 }
 
 .tx-detail {
-    padding: 1.25rem var(--space-xl);
+    padding: var(--space-xl);
     border-top: 1px solid var(--border);
 }
 
@@ -790,11 +789,11 @@
 }
 
 .th-empty-no-results p {
-    margin-bottom: 1.25rem;
+    margin-bottom: var(--space-xl);
 }
 
 .th-clear-filters-btn {
-    padding: 0.625rem var(--space-lg);
+    padding: var(--space-md) var(--space-lg);
     background: var(--accent);
     border: 1px solid var(--accent);
     border-radius: var(--radius-md);
@@ -997,7 +996,7 @@
     }
 
     .th-stat-card {
-        padding: 0.875rem var(--space-lg);
+        padding: var(--space-md) var(--space-lg);
     }
 
     .th-stat-value {
