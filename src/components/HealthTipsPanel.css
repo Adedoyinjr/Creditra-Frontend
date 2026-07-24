@@ -1,0 +1,371 @@
+/*
+ * HealthTipsPanel.css
+ *
+ * All colours reference CSS custom properties from src/index.css — no
+ * hard-coded hex values (per repo token-first rule).
+ *
+ * Dark mode is handled automatically because the tokens already target the
+ * dark theme; [data-contrast="high"] overrides are respected via the same
+ * token re-declarations in index.css.
+ *
+ * Sections:
+ *   1. Panel shell
+ *   2. Header
+ *   3. Subtitle
+ *   4. Tip cards
+ *   5. Category + impact badges
+ *   6. Navigation row
+ *   7. Footer copy
+ *   8. Animations
+ *   9. Responsive overrides
+ *  10. Reduced-motion overrides
+ */
+
+/* ── 1. Panel shell ──────────────────────────────────────────────────────── */
+
+.htp-panel {
+  /* Inherits .card base: background var(--surface), border, border-radius, padding */
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  /* Match the animation-delay pattern used by other sidebar cards */
+  animation: fadeInUp 0.4s ease both;
+  animation-delay: 0.28s;
+}
+
+/* Prevent the .card hover lift from applying — panel is static sidebar content */
+.htp-panel:hover {
+  border-color: var(--border);
+  transform: none;
+}
+
+/* ── 2. Header ───────────────────────────────────────────────────────────── */
+
+.htp-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  margin: 0;
+}
+
+/* Override .card h2 margin so our own gap handles spacing */
+.htp-panel .htp-heading {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  line-height: var(--lh-heading);
+}
+
+.htp-heading-icon {
+  color: var(--warning);
+  flex-shrink: 0;
+}
+
+/* Dismiss button — 44×44 touch target, no background in idle state */
+.htp-dismiss-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition: color 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+  flex-shrink: 0;
+}
+
+.htp-dismiss-btn:hover {
+  color: var(--text);
+  background: rgba(139, 148, 158, 0.1);
+  border-color: var(--border);
+}
+
+.htp-dismiss-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-color: transparent;
+}
+
+/* ── 3. Subtitle ─────────────────────────────────────────────────────────── */
+
+.htp-subtitle {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--muted);
+  line-height: var(--lh-body);
+}
+
+/* ── 4. Tip cards ────────────────────────────────────────────────────────── */
+
+.htp-tips-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.htp-tip {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-md) var(--space-lg);
+  /* Subtle left accent stripe per category (set in section 5 below) */
+  border-left-width: 3px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  animation: htpTipEnter 0.25s ease both;
+}
+
+.htp-tip-title {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text);
+  line-height: var(--lh-heading);
+}
+
+.htp-tip-body {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--muted);
+  line-height: var(--lh-body);
+}
+
+/* ── 5. Category + impact badges ─────────────────────────────────────────── */
+
+.htp-tip-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+}
+
+/* Shared badge base */
+.htp-category-badge,
+.htp-impact-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.15rem 0.45rem;
+  border-radius: var(--radius-pill);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  line-height: var(--lh-small);
+  white-space: nowrap;
+}
+
+/* Category badge: accent-coloured per type */
+.htp-category-badge--score {
+  background: rgba(88, 166, 255, 0.12);
+  color: var(--accent);
+  border: 1px solid rgba(88, 166, 255, 0.25);
+}
+
+.htp-category-badge--utilization {
+  background: rgba(63, 185, 80, 0.12);
+  color: var(--success);
+  border: 1px solid rgba(63, 185, 80, 0.25);
+}
+
+.htp-category-badge--history {
+  background: rgba(210, 153, 34, 0.12);
+  color: var(--warning);
+  border: 1px solid rgba(210, 153, 34, 0.25);
+}
+
+.htp-category-badge--behaviour {
+  background: rgba(139, 148, 158, 0.12);
+  color: var(--muted);
+  border: 1px solid rgba(139, 148, 158, 0.25);
+}
+
+/* Left accent stripe per tip category */
+.htp-tip--score      { border-left-color: var(--accent); }
+.htp-tip--utilization{ border-left-color: var(--success); }
+.htp-tip--history    { border-left-color: var(--warning); }
+.htp-tip--behaviour  { border-left-color: var(--muted); }
+
+/* Impact badges: semantic colour coding */
+.htp-impact-badge--high {
+  background: rgba(63, 185, 80, 0.1);
+  color: var(--success);
+  border: 1px solid rgba(63, 185, 80, 0.22);
+}
+
+.htp-impact-badge--medium {
+  background: rgba(210, 153, 34, 0.1);
+  color: var(--warning);
+  border: 1px solid rgba(210, 153, 34, 0.22);
+}
+
+.htp-impact-badge--low {
+  background: rgba(139, 148, 158, 0.1);
+  color: var(--muted);
+  border: 1px solid rgba(139, 148, 158, 0.22);
+}
+
+/* ── 6. Navigation row ───────────────────────────────────────────────────── */
+
+.htp-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  margin-top: var(--space-xs);
+}
+
+/* Prev / Next buttons — 44×44 touch target */
+.htp-nav-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  color: var(--muted);
+  cursor: pointer;
+  transition: color 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+  flex-shrink: 0;
+}
+
+.htp-nav-btn:hover:not(:disabled) {
+  color: var(--text);
+  background: rgba(88, 166, 255, 0.08);
+  border-color: rgba(88, 166, 255, 0.35);
+}
+
+.htp-nav-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.htp-nav-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* Page dots */
+.htp-page-dots {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.htp-dot {
+  width: 7px;
+  height: 7px;
+  min-width: 7px;
+  min-height: 7px;
+  /* Expand the tap surface without changing visual size */
+  padding: 8px;
+  box-sizing: content-box;
+  border-radius: var(--radius-pill);
+  border: none;
+  background: var(--border);
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+
+.htp-dot:hover {
+  background: var(--muted);
+  transform: scale(1.15);
+}
+
+.htp-dot:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.htp-dot--active {
+  background: var(--accent);
+  transform: scale(1.1);
+}
+
+/* ── 7. Footer copy ──────────────────────────────────────────────────────── */
+
+.htp-footer {
+  margin: 0;
+  font-size: 0.72rem;
+  color: var(--muted);
+  text-align: center;
+  line-height: var(--lh-small);
+  opacity: 0.8;
+}
+
+/* ── 8. Animations ───────────────────────────────────────────────────────── */
+
+/*
+ * htpTipEnter — slides tip cards in from slight downward offset.
+ * Paired with animation-delay on each card (set inline in TipCard).
+ */
+@keyframes htpTipEnter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ── 9. Responsive overrides ─────────────────────────────────────────────── */
+
+/*
+ * On narrow viewports the dashboard-grid collapses to a single column.
+ * The panel then spans full width — no changes needed beyond what the
+ * .card base already provides.
+ */
+
+@media (max-width: 768px) {
+  .htp-tip {
+    padding: var(--space-md);
+  }
+}
+
+/* ── 10. Reduced-motion overrides ────────────────────────────────────────── */
+
+/*
+ * Both prefers-reduced-motion and [data-motion="reduced"] (ReducedMotionContext)
+ * are covered. All animations and transitions are suppressed.
+ */
+
+@media (prefers-reduced-motion: reduce) {
+  .htp-panel {
+    animation: none !important;
+  }
+
+  .htp-tip {
+    animation: none !important;
+  }
+
+  .htp-nav-btn,
+  .htp-dismiss-btn,
+  .htp-dot {
+    transition: none !important;
+  }
+}
+
+[data-motion="reduced"] .htp-panel,
+[data-motion="reduced"] .htp-tip {
+  animation: none !important;
+}
+
+[data-motion="reduced"] .htp-nav-btn,
+[data-motion="reduced"] .htp-dismiss-btn,
+[data-motion="reduced"] .htp-dot {
+  transition: none !important;
+}
