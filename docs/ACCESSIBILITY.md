@@ -89,6 +89,26 @@ heading.
   arrow (`▲ | ▼ | ─`) plus the trend word as a sibling element so screen readers don't
   miss it.
 
+### Chart captions and SR-friendly table siblings
+
+Both `RepaymentVisualizer` and `RiskGauge` expose accessible descriptions at two levels:
+
+**SVG-level label** — the `aria-label` / `aria-labelledby` on the `<svg role="img">` element
+is the first thing screen readers announce when the user focuses the chart.  Both components
+accept an optional prop to override the default description with a more specific one.
+
+**SR-only data table sibling** — a visually-hidden `<table className="sr-only">` is rendered
+adjacent to each chart so users who prefer table navigation get full data access without
+interacting with SVG arcs:
+
+| Component | SR table contents | Key attributes |
+| --- | --- | --- |
+| `RepaymentVisualizer` | Month-by-month principal/interest breakdown | `<caption>` auto-generated from term length + total interest; overridable via `caption` prop |
+| `RiskGauge` | Three risk bands (High/Medium/Low) with score ranges | `aria-current="true"` on the row for the active band; rendered before the SVG so it appears first in reading order |
+
+These tables are always present in the accessibility tree (no `aria-hidden`) and follow
+the standard `<caption>` + `<th scope="col">` + `<td>` pattern.
+
 ### Live regions
 
 | Use | Politeness | Component |
@@ -151,7 +171,8 @@ The table below is updated on every accessibility-impacting PR. Status legend:
 | `NotificationCenter` | Focus trap inside the panel; mobile Expand/Collapse snap controls for keyboard users | `role="dialog"`, category filters use `role="tab"` + `aria-selected`; iOS safe-area insets on bottom sheet | AA | reduced-motion disables snap transitions | OK |
 | `ToastContainer` | Tab/Esc to dismiss | `role="status"` / `role="alert"` per severity | AA | reduced-motion gated | OK |
 | `BannerAlert` | Tab/Enter on action & dismiss | `role="alert"` for warning/error | AA | n/a | OK |
-| `Dashboard` (risk gauge) | n/a | Score and trend exposed via `<title>` + polite `sr-only` sibling; arc animates on value change with reduced-motion fallback | AA | reduced-motion gated (CSS + JS `matchMedia`) | OK |
+| `Dashboard` (risk gauge) | Tab/Enter/Space on SVG root and individual sector bands; keyboard fires `onSectorActivate` | Score and trend exposed via `<title>` + polite `sr-only` sibling; arc animates on value change with reduced-motion fallback; `ariaLabel` prop overrides the auto-generated description; SR-only risk-band table sibling with `aria-current` on the active band; `showSRTable` prop | AA | reduced-motion gated (CSS + JS `matchMedia`) | OK |
+| `RepaymentVisualizer` | n/a (display chart) | `role="img"` SVG with `aria-label` (overridable via `chartAriaLabel` prop); SR-only data table with `<caption>` auto-generated from term + total interest (overridable via `caption` prop); visible schedule table with expand/collapse | AA | n/a | OK |
 | `Header` nav | Tab through links; Enter activates | `aria-current="page"` on active link | AA | n/a | OK |
 | `RepayModal` | Focus trap (canonical `{ isActive }` form) + return focus to trigger | `role="dialog"`, `aria-modal`, `aria-labelledby` | AA | n/a | OK |
 | `TransactionHistory` | Sortable headers via Enter/Space | `aria-sort` reflects column state | AA | n/a | OK |
