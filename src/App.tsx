@@ -18,7 +18,9 @@ import { ShortcutHelpOverlay } from "./components/ShortcutHelpOverlay";
 import { DutchAuctions } from "./pages/DutchAuctions";
 import { LinkedAccounts } from "./pages/LinkedAccounts";
 import { WalletReconnectBanner } from "./components/WalletReconnectBanner";
+import { SessionTimeoutBanner } from "./components/SessionTimeoutBanner";
 import { NetworkMismatchBanner } from "./components/notifications/NetworkMismatchBanner";
+import { NotificationPreferences } from "./pages/NotificationPreferences";
 import { Header } from "./layouts/Header";
 import { SessionTimeoutBanner } from "./components/SessionTimeoutBanner";
 import { NotificationPreferences } from "./pages/NotificationPreferences";
@@ -45,15 +47,28 @@ const isEditableTarget = (target: EventTarget | null) => {
  *       <ContrastProvider> — high-contrast override, [data-contrast="high"]
  *         <WalletProvider> — wallet lifecycle visible to every route
  *           <BrowserRouter>
- *             <header />   — persistent nav chrome
- *             <main>
- *               <Routes /> — current route
- *             </main>
+ *             <RouteHeadProvider> — per-route title/description/announcement
+ *               <RouteAnnouncer /> — bound to the URL + override context
+ *               <header />         — persistent nav chrome
+ *               <main>
+ *                 <Routes />        — current route
+ *               </main>
+ *             </RouteHeadProvider>
  *           </BrowserRouter>
  *         </WalletProvider>
  *       </ContrastProvider>
  *     </ThemeProvider>
  *   </ErrorBoundary>
+ *
+ * Note on the RouteStack pair (RouteHeadProvider + RouteAnnouncer):
+ *   Previously the RouteAnnouncer component was defined but never
+ *   mounted in the running app; pages relied on whatever browser
+ *   title survived from the last navigation.  GitHub issue #451
+ *   ("Add per-route RouteAnnouncer") asked us to (a) actually mount
+ *   it so every navigation triggers a screen-reader announcement,
+ *   and (b) let individual pages push custom titles + descriptions
+ *   via `useRouteHead`.  The provider context here enables (b) without
+ *   forcing every page into a wrapper.
  *
  * See docs/ARCHITECTURE.md for the full component topology.
  */
@@ -99,16 +114,17 @@ function App() {
         <NotificationProvider>
         <ReducedMotionProvider>
         <BrowserRouter>
-          <div className="app">
-            <Header
-              settingsTriggerRef={settingsTriggerRef}
-              kycTriggerRef={kycTriggerRef}
-              onSettingsClick={() => {
-                setOpenedFromSettingsLink(true);
-                setIsShortcutHelpOpen(true);
-              }}
-              onKycClick={() => setIsKycDrawerOpen(true)}
-            />
+          <RouteHeadProvider>
+            <div className="app">
+              <Header
+                settingsTriggerRef={settingsTriggerRef}
+                kycTriggerRef={kycTriggerRef}
+                onSettingsClick={() => {
+                  setOpenedFromSettingsLink(true);
+                  setIsShortcutHelpOpen(true);
+                }}
+                onKycClick={() => setIsKycDrawerOpen(true)}
+              />
 
             {/* Wallet auto-reconnect timeout banner — self-dismissing,
                 non-blocking; only visible when reconnect takes > 8 s. */}

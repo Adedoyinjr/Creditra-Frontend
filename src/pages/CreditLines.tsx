@@ -1,14 +1,9 @@
-import { useRef, useState, useMemo } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { StatusBadge } from "../components/StatusBadge";
-import { CreditLineRowMenu } from "../components/CreditLineRowMenu";
-import { MOCK_CREDIT_LINES } from "../data/mockData";
-import type {
-  CreditLineStatus,
-  SortField,
-  SortDirection,
-} from "../types/creditLine";
-import type { CollateralAsset } from "../types/collateral";
+import { useState, useMemo } from 'react';
+import { Link } from 'react-router-dom';
+import { StatusBadge } from '../components/StatusBadge';
+import { RepaymentPlanChart } from '../components/RepaymentPlanChart';
+import { MOCK_CREDIT_LINES } from '../data/mockData';
+import type { CreditLineStatus, SortField, SortDirection } from '../types/creditLine';
 import {
   COLOR, UTIL_COLOR,
   fmt, fmtDate, getUtilizationLevel, utilizationPct,
@@ -42,12 +37,14 @@ function CreditLineCard({
   const level = getUtilizationLevel(line.utilized, line.limit);
   const swapTriggerRef = useRef<HTMLButtonElement>(null);
 
-  const isDefaulted = line.status === 'Defaulted';
+  const isDefaulted = line.status === "Defaulted";
 
   return (
     <div
-      className={`cl-card${isDefaulted ? ' cl-row--defaulted' : ''}`}
-      aria-label={isDefaulted ? `Credit line ${line.id} is defaulted` : undefined}
+      className={`cl-card${isDefaulted ? " cl-row--defaulted" : ""}`}
+      aria-label={
+        isDefaulted ? `Credit line ${line.id} is defaulted` : undefined
+      }
     >
        <div className="cl-card-header">
          <div className="cl-card-title-row">
@@ -105,7 +102,9 @@ function CreditLineCard({
         <div className="cl-util-bar">
           <div className="cl-util-header">
             <span>Utilization</span>
-            <span className="num-tabular" style={{ color: UTIL_COLOR[level] }}>{pct}%</span>
+            <span className="num-tabular" style={{ color: UTIL_COLOR[level] }}>
+              {pct}%
+            </span>
           </div>
           <div className="cl-util-track">
             <div
@@ -137,8 +136,9 @@ function CreditLineCard({
         )}
       </div>
 
-       <div className="cl-card-footer">
-       </div>
+      <div className="cl-card-detail">
+        <RepaymentPlanChart line={line} />
+      </div>
     </div>
   );
 }
