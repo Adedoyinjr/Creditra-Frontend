@@ -150,6 +150,7 @@ Every component below lives in `src/components/`.
 | Component | Purpose | Notes |
 | --- | --- | --- |
 | `StatusBadge` | Pill for `CreditLineStatus` | Color + glyph cue (`A`, `!`, `X`, `C`) so meaning survives monochrome screenshots |
+| `AgingTag` | Flag for delinquent lines | High-contrast danger style + Clock icon, text is self-labelling for screen readers |
 | `Skeleton` | Shimmer placeholder | Animation respects `prefers-reduced-motion` |
 | `SuccessState` | Post-action confirmation | `role="status" aria-live="polite"` |
 | `TransactionStatus` | Pending / success / failure for draws and repays | Step indicator + retry CTA |
