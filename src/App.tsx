@@ -21,6 +21,7 @@ import { WalletReconnectBanner } from "./components/WalletReconnectBanner";
 import { SessionTimeoutBanner } from "./components/SessionTimeoutBanner";
 import { NetworkMismatchBanner } from "./components/notifications/NetworkMismatchBanner";
 import { NotificationPreferences } from "./pages/NotificationPreferences";
+import DataPrivacySettings from "./pages/settings/Data";
 import { Header } from "./layouts/Header";
 import {
   RouteHeadProvider,
@@ -151,6 +152,7 @@ function App() {
                   <Route path="/dutch-auctions" element={<DutchAuctions />} />
                   <Route path="/linked-accounts" element={<LinkedAccounts />} />
                   <Route path="/notification-preferences" element={<NotificationPreferences />} />
+                  <Route path="/settings/data" element={<DataPrivacySettings />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </main>
