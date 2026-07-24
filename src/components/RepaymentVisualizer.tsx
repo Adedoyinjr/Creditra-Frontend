@@ -8,10 +8,12 @@
  *  - Pure SVG — no third-party charting library.
  *  - Theme tokens from CSS custom properties; colours from src/utils/tokens.ts.
  *  - WCAG 2.1 AA: focus ring, aria-label, role="img", table fallback, reduced-motion.
+ *  - WCAG 1.4.1: principal vs interest use distinct hatch patterns (SVG + legend swatches).
  */
 
 import { useState, useRef, useCallback, useId } from 'react';
 import { COLOR } from '@/utils/tokens';
+import '@/styles/patterns.css';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -133,6 +135,12 @@ interface ChartProps {
 }
 
 function StackedAreaChart({ schedule, tooltipId, onTooltip, tooltip, chartAriaLabel }: ChartProps) {
+  const chartPatternUid = useId().replace(/:/g, '');
+  const gradPrincipalId = `rv-grad-principal-${chartPatternUid}`;
+  const gradInterestId = `rv-grad-interest-${chartPatternUid}`;
+  const hatchPrincipalId = `rv-principal-hatch-${chartPatternUid}`;
+  const hatchInterestId = `rv-interest-hatch-${chartPatternUid}`;
+
   if (schedule.length === 0) return null;
 
   const initPrincipal = schedule[0].principal + schedule[0].principalPaid;
@@ -204,14 +212,50 @@ function StackedAreaChart({ schedule, tooltipId, onTooltip, tooltip, chartAriaLa
       onTouchEnd={() => onTooltip(null)}
     >
       <defs>
-        <linearGradient id="grad-principal" x1="0" y1="0" x2="0" y2="1">
+        <linearGradient id={gradPrincipalId} x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stopColor={COLOR.accent} stopOpacity="0.7" />
           <stop offset="100%" stopColor={COLOR.accent} stopOpacity="0.15" />
         </linearGradient>
-        <linearGradient id="grad-interest" x1="0" y1="0" x2="0" y2="1">
+        <linearGradient id={gradInterestId} x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stopColor={COLOR.warning} stopOpacity="0.7" />
           <stop offset="100%" stopColor={COLOR.warning} stopOpacity="0.15" />
         </linearGradient>
+        <pattern
+          id={hatchPrincipalId}
+          width="6"
+          height="6"
+          patternUnits="userSpaceOnUse"
+          patternTransform="rotate(45)"
+        >
+          <rect width="6" height="6" fill="transparent" />
+          <line
+            x1="0"
+            y1="0"
+            x2="0"
+            y2="6"
+            stroke={COLOR.accent}
+            strokeWidth="1.25"
+            strokeOpacity="0.75"
+          />
+        </pattern>
+        <pattern
+          id={hatchInterestId}
+          width="6"
+          height="6"
+          patternUnits="userSpaceOnUse"
+          patternTransform="rotate(135)"
+        >
+          <rect width="6" height="6" fill="transparent" />
+          <line
+            x1="0"
+            y1="0"
+            x2="0"
+            y2="6"
+            stroke={COLOR.warning}
+            strokeWidth="1.25"
+            strokeOpacity="0.75"
+          />
+        </pattern>
       </defs>
 
       {/* Grid lines */}
@@ -239,9 +283,35 @@ function StackedAreaChart({ schedule, tooltipId, onTooltip, tooltip, chartAriaLa
       ))}
 
       {/* Interest area (painted first — sits below principal visually in stacking) */}
-      <path d={interestPath} fill="url(#grad-interest)" />
+      <path
+        d={interestPath}
+        fill={`url(#${gradInterestId})`}
+        data-series="interest"
+        className="rv-area rv-area--interest"
+      />
+      <path
+        d={interestPath}
+        fill={`url(#${hatchInterestId})`}
+        opacity={0.42}
+        aria-hidden="true"
+        data-series="interest"
+        className="rv-area-hatch rv-area-hatch--interest"
+      />
       {/* Principal area */}
-      <path d={principalPath} fill="url(#grad-principal)" />
+      <path
+        d={principalPath}
+        fill={`url(#${gradPrincipalId})`}
+        data-series="principal"
+        className="rv-area rv-area--principal"
+      />
+      <path
+        d={principalPath}
+        fill={`url(#${hatchPrincipalId})`}
+        opacity={0.42}
+        aria-hidden="true"
+        data-series="principal"
+        className="rv-area-hatch rv-area-hatch--principal"
+      />
 
       {/* X-axis ticks */}
       {xTicks.map(({ month, x }) => (
@@ -261,12 +331,24 @@ function StackedAreaChart({ schedule, tooltipId, onTooltip, tooltip, chartAriaLa
             stroke={COLOR.border}
             strokeWidth="1"
           />
-          <circle cx={tooltip.x} cy={yScale(tooltip.principal)} r="4" fill={COLOR.accent} />
+          <circle
+            cx={tooltip.x}
+            cy={yScale(tooltip.principal)}
+            r="4"
+            fill={COLOR.accent}
+            stroke={COLOR.accent}
+            strokeWidth="1.5"
+            data-series="principal"
+          />
           <circle
             cx={tooltip.x}
             cy={yScale(tooltip.principal + tooltip.cumulativeInterest)}
             r="4"
             fill={COLOR.warning}
+            stroke={COLOR.warning}
+            strokeWidth="1.5"
+            strokeDasharray="2 2"
+            data-series="interest"
           />
         </g>
       )}
@@ -375,15 +457,11 @@ function Legend() {
       aria-hidden="true"
     >
       <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-        <span
-          style={{ width: 12, height: 12, borderRadius: 2, background: COLOR.accent, display: 'inline-block' }}
-        />
+        <span className="rv-legend-swatch rv-legend-swatch--principal" data-series="principal" />
         Principal remaining
       </span>
       <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-        <span
-          style={{ width: 12, height: 12, borderRadius: 2, background: COLOR.warning, display: 'inline-block' }}
-        />
+        <span className="rv-legend-swatch rv-legend-swatch--interest" data-series="interest" />
         Cumulative interest
       </span>
     </div>
