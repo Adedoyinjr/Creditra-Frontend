@@ -31,6 +31,7 @@ import { getUtilizationLevel } from "../utils/tokens";
 import { TipJar } from "../components/TipJar";
 import { NextSteps } from "../components/NextSteps";
 import { WhatChanged } from "../components/WhatChanged";
+import { ContinuePrompt } from "../components/ContinuePrompt";
 
 
 
@@ -655,6 +656,8 @@ export function Dashboard() {
       </div>
 
       {!loading && <ActivityFeed />}
+
+      {!loading && hasLines && <ContinuePrompt creditLines={creditLines} />}
 
       <div className="dashboard-grid">
         <div>
