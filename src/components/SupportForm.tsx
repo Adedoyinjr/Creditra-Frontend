@@ -1,283 +1,345 @@
-import { useId, useMemo, useState } from "react";
-import type React from "react";
+/**
+ * SupportForm — inline contact form for the GrantFox FWC26 campaign.
+ *
+ * Rendered inside SupportWidget when the user selects the "Contact" tab.
+ * The form collects a subject and message, validates both fields client-side
+ * before allowing submission, and cycles through three display states:
+ *
+ *   idle → submitting → success  (or back to idle on error)
+ *
+ * Submission behaviour is decoupled from transport: the caller supplies an
+ * `onSubmit` prop so the component stays testable and backend-agnostic.
+ * The default no-op simulates a brief async call so the pending state is
+ * visible in Storybook / local development.
+ *
+ * Accessibility notes:
+ * - All inputs are associated with labels via `htmlFor`/`id`.
+ * - Required fields carry `aria-required` and a visible "*" marker whose
+ *   screen-reader text reads "required".
+ * - `aria-describedby` wires inline error messages to their inputs.
+ * - Submit button uses `aria-busy` while pending (via PendingButton).
+ * - Success and error outcomes are announced via a `role="status"` region.
+ * - The entire form is reset when the widget panel closes (`isOpen` → false).
+ *
+ * Design tokens:
+ * - Colors and spacing reference CSS custom properties from `:root`
+ *   (src/index.css) — no hard-coded hex values.
+ * - Dark-mode and high-contrast work automatically because the tokens adapt
+ *   via `[data-contrast="high"]` in index.css.
+ */
 
-import { FileText, Paperclip, Send, X } from "lucide-react";
+import { useEffect, useId, useReducer } from "react";
+import { CheckCircle, AlertCircle } from "lucide-react";
 import { FormField } from "./FormField";
-import { FormMessage } from "./FormMessage";
+import { PendingButton } from "./PendingButton";
 import "./SupportForm.css";
 
-export type SupportFormValues = {
-    name: string;
-    email: string;
-    message: string;
-    attachment?: File;
-};
+// ─── Public API ───────────────────────────────────────────────────────────────
 
-export type SupportFormSubmitResult =
-    | void
-    | {
-        success?: boolean;
-        error?: string;
-    };
-
-export type SupportFormProps = {
-    onSubmit: (values: SupportFormValues) => Promise<SupportFormSubmitResult> | SupportFormSubmitResult;
-    /**
-     * Optional security constraints for file attachments.
-     * Defaults are conservative for UX + safety.
-     */
-    maxAttachmentBytes?: number;
-    acceptedAttachmentTypes?: string[]; // e.g. [".png", ".pdf"]
-};
-
-function bytesToMB(bytes: number) {
-    return (bytes / 1024 / 1024).toFixed(1);
+/** Shape passed to the `onSubmit` callback. */
+export interface SupportFormData {
+  subject: string;
+  message: string;
 }
 
-function getExtension(fileName: string): string {
-    const dotIndex = fileName.lastIndexOf(".");
-    if (dotIndex === -1) return "";
-    return fileName.slice(dotIndex).toLowerCase();
+export interface SupportFormProps {
+  /**
+   * Called with validated form data when the user submits.
+   * Should return a Promise; rejection triggers the error state.
+   * Defaults to a 600 ms no-op (useful in development / Storybook).
+   */
+  onSubmit?: (data: SupportFormData) => Promise<void>;
+  /**
+   * When this flips from true → false (i.e. the widget closes) the form
+   * resets to its idle state so it's clean the next time it's opened.
+   */
+  isOpen?: boolean;
 }
 
-export default function SupportForm({
-    onSubmit,
-    maxAttachmentBytes = 5 * 1024 * 1024,
-    acceptedAttachmentTypes = [".png", ".jpg", ".jpeg", ".pdf"],
+// ─── Validation ───────────────────────────────────────────────────────────────
+
+const MIN_SUBJECT_LEN = 3;
+const MAX_SUBJECT_LEN = 120;
+const MIN_MESSAGE_LEN = 10;
+const MAX_MESSAGE_LEN = 1000;
+
+export interface FieldErrors {
+  subject?: string;
+  message?: string;
+}
+
+/**
+ * Validate the raw field values.
+ * Returns an error map — empty object means all fields are valid.
+ */
+export function validateSupportForm(
+  subject: string,
+  message: string,
+): FieldErrors {
+  const errors: FieldErrors = {};
+
+  const trimmedSubject = subject.trim();
+  if (!trimmedSubject) {
+    errors.subject = "Subject is required.";
+  } else if (trimmedSubject.length < MIN_SUBJECT_LEN) {
+    errors.subject = `Subject must be at least ${MIN_SUBJECT_LEN} characters.`;
+  } else if (trimmedSubject.length > MAX_SUBJECT_LEN) {
+    errors.subject = `Subject must be ${MAX_SUBJECT_LEN} characters or fewer.`;
+  }
+
+  const trimmedMessage = message.trim();
+  if (!trimmedMessage) {
+    errors.message = "Message is required.";
+  } else if (trimmedMessage.length < MIN_MESSAGE_LEN) {
+    errors.message = `Message must be at least ${MIN_MESSAGE_LEN} characters.`;
+  } else if (trimmedMessage.length > MAX_MESSAGE_LEN) {
+    errors.message = `Message must be ${MAX_MESSAGE_LEN} characters or fewer.`;
+  }
+
+  return errors;
+}
+
+// ─── State machine ────────────────────────────────────────────────────────────
+
+type FormStatus = "idle" | "submitting" | "success" | "error";
+
+interface FormState {
+  subject: string;
+  message: string;
+  /** Errors are only populated after the first submit attempt. */
+  errors: FieldErrors;
+  /** True once the user has attempted to submit at least once. */
+  touched: boolean;
+  status: FormStatus;
+  /** Human-readable failure reason surfaced from a rejected onSubmit. */
+  submitError: string;
+}
+
+type FormAction =
+  | { type: "SET_SUBJECT"; value: string }
+  | { type: "SET_MESSAGE"; value: string }
+  | { type: "SUBMIT_VALIDATE_FAIL"; errors: FieldErrors }
+  | { type: "SUBMIT_START" }
+  | { type: "SUBMIT_SUCCESS" }
+  | { type: "SUBMIT_ERROR"; message: string }
+  | { type: "RESET" };
+
+const initialState: FormState = {
+  subject: "",
+  message: "",
+  errors: {},
+  touched: false,
+  status: "idle",
+  submitError: "",
+};
+
+function formReducer(state: FormState, action: FormAction): FormState {
+  switch (action.type) {
+    case "SET_SUBJECT": {
+      const newSubject = action.value;
+      // Re-validate on every keystroke once the form has been submitted once
+      const errors = state.touched
+        ? validateSupportForm(newSubject, state.message)
+        : state.errors;
+      return { ...state, subject: newSubject, errors };
+    }
+
+    case "SET_MESSAGE": {
+      const newMessage = action.value;
+      const errors = state.touched
+        ? validateSupportForm(state.subject, newMessage)
+        : state.errors;
+      return { ...state, message: newMessage, errors };
+    }
+
+    case "SUBMIT_VALIDATE_FAIL":
+      return { ...state, touched: true, errors: action.errors, status: "idle" };
+
+    case "SUBMIT_START":
+      return { ...state, status: "submitting" };
+
+    case "SUBMIT_SUCCESS":
+      return { ...initialState, status: "success" };
+
+    case "SUBMIT_ERROR":
+      return {
+        ...state,
+        status: "error",
+        submitError: action.message,
+      };
+
+    case "RESET":
+      return { ...initialState };
+  }
+}
+
+// ─── Default submit handler (dev / Storybook) ─────────────────────────────────
+
+const DEFAULT_SUBMIT_DELAY_MS = 600;
+
+async function defaultOnSubmit(_data: SupportFormData): Promise<void> {
+  return new Promise((resolve) =>
+    window.setTimeout(resolve, DEFAULT_SUBMIT_DELAY_MS),
+  );
+}
+
+// ─── Component ────────────────────────────────────────────────────────────────
+
+/**
+ * Inline support form for the GrantFox FWC26 campaign.
+ *
+ * @example
+ * <SupportForm onSubmit={async (data) => postToApi(data)} isOpen={isWidgetOpen} />
+ */
+export function SupportForm({
+  onSubmit = defaultOnSubmit,
+  isOpen = true,
 }: SupportFormProps) {
-    const id = useId();
+  const [state, dispatch] = useReducer(formReducer, initialState);
+  const formId = useId();
 
-    const [name, setName] = useState("");
-    const [email, setEmail] = useState("");
-    const [message, setMessage] = useState("");
+  const subjectId = `${formId}-subject`;
+  const messageId = `${formId}-message`;
+  const outcomeId = `${formId}-outcome`;
 
-    const [attachment, setAttachment] = useState<File | undefined>(undefined);
-    const [attachmentError, setAttachmentError] = useState<string>("");
+  // Reset the form when the parent widget closes so it's clean on next open.
+  useEffect(() => {
+    if (!isOpen) {
+      dispatch({ type: "RESET" });
+    }
+  }, [isOpen]);
 
-    const [formError, setFormError] = useState<string>("");
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    const [submitSuccess, setSubmitSuccess] = useState(false);
+  const hasFieldErrors = Object.keys(state.errors).length > 0;
+  const isPending = state.status === "submitting";
 
-    const acceptAttr = useMemo(() => acceptedAttachmentTypes.join(","), [acceptedAttachmentTypes]);
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
 
-    const validateEmail = (value: string) => {
-        // Simple, pragmatic validation for client-side UX.
-        // Server should do final validation.
-        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
-    };
+    // Validate first — mark touched so errors show immediately
+    const errors = validateSupportForm(state.subject, state.message);
+    if (Object.keys(errors).length > 0) {
+      dispatch({ type: "SUBMIT_VALIDATE_FAIL", errors });
+      return;
+    }
 
-    const errors = useMemo(() => {
-        const next: {
-            name?: string;
-            email?: string;
-            message?: string;
-        } = {};
+    dispatch({ type: "SUBMIT_START" });
 
-        if (!name.trim()) next.name = "Please enter your name.";
-        if (!email.trim()) next.email = "Please enter your email.";
-        else if (!validateEmail(email)) next.email = "Enter a valid email address.";
+    try {
+      await onSubmit({
+        subject: state.subject.trim(),
+        message: state.message.trim(),
+      });
+      dispatch({ type: "SUBMIT_SUCCESS" });
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error
+          ? err.message
+          : "Something went wrong. Please try again.";
+      dispatch({ type: "SUBMIT_ERROR", message });
+    }
+  }
 
-        if (!message.trim()) next.message = "Please describe your issue.";
-        else if (message.trim().length < 10) next.message = "Message must be at least 10 characters.";
-        else if (message.trim().length > 2000) next.message = "Message must be 2000 characters or less.";
-
-        return next;
-    }, [email, message, name]);
-
-    const hasFieldErrors = Boolean(errors.name || errors.email || errors.message);
-
-    const validateAttachment = (file: File | undefined) => {
-        if (!file) {
-            setAttachmentError("");
-            return true;
-        }
-
-        const ext = getExtension(file.name);
-        if (!acceptedAttachmentTypes.includes(ext)) {
-            const allowed = acceptedAttachmentTypes.join(", ");
-            setAttachmentError(`Unsupported file type. Allowed: ${allowed}`);
-            return false;
-        }
-
-        if (file.size > maxAttachmentBytes) {
-            setAttachmentError(`Attachment must be ${bytesToMB(maxAttachmentBytes)} MB or less.`);
-            return false;
-        }
-
-        setAttachmentError("");
-        return true;
-    };
-
-    const onPickFile = (file: File | undefined) => {
-        setAttachment(file);
-        validateAttachment(file);
-    };
-
-    const handleSubmit = async (event: React.FormEvent) => {
-        event.preventDefault();
-        setFormError("");
-        setSubmitSuccess(false);
-
-        if (!validateAttachment(attachment)) {
-            return;
-        }
-
-        if (hasFieldErrors) {
-            // Triggering per-field aria-invalid by rendering FormField with errors.
-            return;
-        }
-
-        try {
-            setIsSubmitting(true);
-            const result = await onSubmit({ name: name.trim(), email: email.trim(), message: message.trim(), attachment });
-            const success = typeof result === "object" && result ? result.success !== false : true;
-            const error = typeof result === "object" && result ? result.error : undefined;
-
-            if (!success || error) {
-                setFormError(error || "Could not send your request. Please try again.");
-                return;
-            }
-
-            setSubmitSuccess(true);
-            setName("");
-            setEmail("");
-            setMessage("");
-            setAttachment(undefined);
-            setAttachmentError("");
-        } catch (e: any) {
-            setFormError(e?.message || "Could not send your request. Please try again.");
-        } finally {
-            setIsSubmitting(false);
-        }
-    };
-
-    const attachmentLabelId = `${id}-attachment-label`;
-
+  // ── Success state ──────────────────────────────────────────────────────────
+  if (state.status === "success") {
     return (
-        <form className="support-form" onSubmit={handleSubmit} aria-label="Support form">
-            <div className="support-form__grid">
-                <FormField
-                    id={`${id}-name`}
-                    label="Your name"
-                    required
-                    error={errors.name}
-                    inputProps={{
-                        value: name,
-                        onChange: (e) => setName(e.target.value),
-                        placeholder: "Jane Doe",
-                        autoComplete: "name",
-                    }}
-                />
-
-                <FormField
-                    id={`${id}-email`}
-                    label="Email address"
-                    required
-                    type="email"
-                    error={errors.email}
-                    inputProps={{
-                        value: email,
-                        onChange: (e) => setEmail(e.target.value),
-                        placeholder: "jane@company.com",
-                        autoComplete: "email",
-                        inputMode: "email",
-                    }}
-                />
-
-                <div className="support-form__full">
-                    <FormField
-                        as="textarea"
-                        id={`${id}-message`}
-                        label="How can we help?"
-                        required
-                        helpText="Include any details that would help us troubleshoot."
-                        error={errors.message}
-                        inputProps={{
-                            value: message,
-                            onChange: (e) => setMessage(e.target.value),
-                            placeholder: "Tell us what happened…",
-                            rows: 5,
-                            maxLength: 2000,
-                        }}
-                    />
-                </div>
-
-                <div className="support-form__full">
-                    <div className="support-form__attachment">
-                        <label id={attachmentLabelId} className="support-form__attachment-label">
-                            <Paperclip size={16} aria-hidden="true" />
-                            <span>Attachment (optional)</span>
-                            <span className="support-form__attachment-sub">Up to {bytesToMB(maxAttachmentBytes)} MB. {acceptedAttachmentTypes.join(", ")}</span>
-                        </label>
-
-                        <div className="support-form__attachment-controls">
-                            <input
-                                className="support-form__attachment-input"
-                                type="file"
-                                id={`${id}-attachment`}
-                                name="attachment"
-                                aria-labelledby={attachmentLabelId}
-                                accept={acceptAttr}
-                                onChange={(e) => onPickFile(e.target.files?.[0])}
-                            />
-
-                            {attachment ? (
-                                <div className="support-form__attachment-chip" role="group" aria-label="Selected attachment">
-                                    <FileText size={16} aria-hidden="true" />
-                                    <span className="support-form__attachment-name" title={attachment.name}>
-                                        {attachment.name}
-                                    </span>
-                                    <button
-                                        className="support-form__attachment-remove"
-                                        type="button"
-                                        onClick={() => onPickFile(undefined)}
-                                        aria-label="Remove attachment"
-                                    >
-                                        <X size={16} aria-hidden="true" />
-                                    </button>
-                                </div>
-                            ) : (
-                                <div className="support-form__attachment-empty" aria-hidden="true">
-                                    No file selected
-                                </div>
-                            )}
-                        </div>
-
-                        {attachmentError ? (
-                            <FormMessage id={`${id}-attachment-error`} title={attachmentError} tone="inline" type="danger" reserveSpace={false} />
-                        ) : null}
-                    </div>
-                </div>
-
-                {formError ? (
-                    <div className="support-form__full">
-                        <FormMessage id={`${id}-form-error`} title={formError} tone="alert" type="danger" reserveSpace={false} />
-                    </div>
-                ) : null}
-
-                {submitSuccess ? (
-                    <div className="support-form__full">
-                        <FormMessage title="Request sent" message="We’ll get back to you by email." tone="alert" type="success" reserveSpace={false} />
-                    </div>
-                ) : null}
-
-                <div className="support-form__actions">
-                    <button
-                        className="support-form__submit"
-                        type="submit"
-                        disabled={isSubmitting}
-                        aria-disabled={isSubmitting}
-                    >
-                        <Send size={16} aria-hidden="true" />
-                        <span>{isSubmitting ? "Sending…" : "Send"}</span>
-                    </button>
-
-                    <p className="support-form__privacy">
-                        We only use your message to respond to your request.
-                    </p>
-                </div>
-            </div>
-        </form>
+      <div
+        className="support-form support-form--success"
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+      >
+        <CheckCircle
+          className="support-form__success-icon"
+          size={32}
+          aria-hidden="true"
+        />
+        <p className="support-form__success-title">Message sent!</p>
+        <p className="support-form__success-body">
+          We&apos;ll get back to you at your registered email address within one
+          business day.
+        </p>
+        <button
+          type="button"
+          className="support-form__reset-btn"
+          onClick={() => dispatch({ type: "RESET" })}
+        >
+          Send another message
+        </button>
+      </div>
     );
+  }
+
+  // ── Idle / submitting / error states ───────────────────────────────────────
+  return (
+    <form
+      className="support-form"
+      onSubmit={handleSubmit}
+      noValidate
+      aria-label="Contact support"
+    >
+      {/* Submit-level error announcement */}
+      {state.status === "error" && (
+        <div
+          id={outcomeId}
+          className="support-form__submit-error"
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+        >
+          <AlertCircle
+            className="support-form__error-icon"
+            size={16}
+            aria-hidden="true"
+          />
+          {state.submitError}
+        </div>
+      )}
+
+      <FormField
+        id={subjectId}
+        label="Subject"
+        required
+        helpText={`${state.subject.length} / ${MAX_SUBJECT_LEN}`}
+        error={state.errors.subject}
+        inputProps={{
+          value: state.subject,
+          maxLength: MAX_SUBJECT_LEN,
+          placeholder: "Briefly describe your issue",
+          autoComplete: "off",
+          onChange: (e) =>
+            dispatch({ type: "SET_SUBJECT", value: e.target.value }),
+        }}
+      />
+
+      <FormField
+        id={messageId}
+        label="Message"
+        as="textarea"
+        required
+        helpText={`${state.message.length} / ${MAX_MESSAGE_LEN}`}
+        error={state.errors.message}
+        inputProps={{
+          value: state.message,
+          maxLength: MAX_MESSAGE_LEN,
+          placeholder: "Describe your issue in detail…",
+          rows: 4,
+          onChange: (e) =>
+            dispatch({ type: "SET_MESSAGE", value: e.target.value }),
+        }}
+      />
+
+      <PendingButton
+        type="submit"
+        pending={isPending}
+        pendingLabel="Sending…"
+        disabled={state.touched && hasFieldErrors}
+        className="support-form__submit"
+        aria-describedby={state.status === "error" ? outcomeId : undefined}
+      >
+        Send message
+      </PendingButton>
+    </form>
+  );
 }
 
+export default SupportForm;
