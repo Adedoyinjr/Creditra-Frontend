@@ -35,5 +35,13 @@
 
 /* Reduced Motion Override */
 [data-motion="reduced"] .skeleton::after {
-  animation: none;
+    animation: none;
+  }
+
+.skeleton--circular {
+  border-radius: 50%;
+}
+
+.skeleton--rounded {
+  border-radius: var(--radius-md, 8px);
 }

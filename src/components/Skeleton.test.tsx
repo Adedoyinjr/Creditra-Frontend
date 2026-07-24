@@ -31,20 +31,15 @@ describe('Skeleton', () => {
     expect(element.getAttribute('aria-hidden')).toBe('true');
   });
 
-  it('disables shimmer animation when reduced-motion data attribute is present', () => {
-    const { container } = render(
-      <div data-motion="reduced">
-        <Skeleton data-testid="skeleton-element" />
-      </div>,
-    );
+  it('applies shape classes correctly', () => {
+    const { container: containerRect } = render(<Skeleton shape="rectangular" />);
+    expect((containerRect.firstChild as HTMLElement).className).toContain('skeleton--rectangular');
 
-    const element = container.querySelector('[data-testid="skeleton-element"]') as HTMLElement;
-    expect(element).toBeInTheDocument();
+    const { container: containerCirc } = render(<Skeleton shape="circular" />);
+    expect((containerCirc.firstChild as HTMLElement).className).toContain('skeleton--circular');
 
-    // Same rationale: only validate that the reduced-motion override selector is applicable.
-    // We verify the parent attribute exists to ensure the CSS selector can match.
-    const motionRoot = container.firstChild as HTMLElement;
-    expect(motionRoot.getAttribute('data-motion')).toBe('reduced');
+    const { container: containerRound } = render(<Skeleton shape="rounded" />);
+    expect((containerRound.firstChild as HTMLElement).className).toContain('skeleton--rounded');
   });
 });
 
