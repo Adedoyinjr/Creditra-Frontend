@@ -1,3 +1,22 @@
+/**
+ * CreditLineSelector
+ *
+ * Step 1 of the draw-credit flow. Renders a list of available credit lines
+ * for the user to choose from.
+ *
+ * Design-token classes used (all from `src/index.css` `.dc-*` block):
+ *   dc-credit-line-list, dc-credit-line-item, dc-credit-line-item__name,
+ *   dc-credit-line-item__meta, dc-credit-line-item__label,
+ *   dc-credit-line-item__value, dc-credit-line-item__value--warning,
+ *   dc-credit-line-item__warning-badge, dc-progress-track, dc-progress-bar,
+ *   dc-progress-bar--warning, dc-chevron
+ *
+ * Accessibility:
+ *   - Each button has an aria-label describing the credit line and available balance.
+ *   - Utilization progress bar is a <div role="progressbar"> with aria-valuenow/min/max.
+ *   - High-utilization badge has role="status" so it is announced by screen readers.
+ */
+
 import { CreditLine } from "@/types/draw-credit.types";
 import { AlertCircle, ChevronRight } from "lucide-react";
 
@@ -11,68 +30,102 @@ export function CreditLineSelector({
   onSelect,
 }: CreditLineSelectorProps) {
   return (
-    <div className="space-y-8">
+    <div className="dc-step">
+      {/* Step header */}
       <div>
-        <h2 className="text-3xl font-bold text-foreground">
-          Select Credit Line
-        </h2>
-        <p className="text-muted mt-2">
+        <h2 className="dc-step__title">Select Credit Line</h2>
+        <p className="dc-step__subtitle">
           Choose which line of credit to draw from
         </p>
       </div>
-      <div className="space-y-3">
-        {creditLines.map((line) => (
-          <button
-            key={line.id}
-            onClick={() => onSelect(line)}
-            className="w-full text-left p-5 border-2 border-border rounded-xl hover:border-blue-400 hover:bg-surface hover:shadow-lg hover:shadow-blue-500/20 transition-all duration-200 group"
-            aria-label={`Select ${line.name} credit line, available balance ${line.available.toLocaleString()} dollars`}
-          >
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                <div className="font-semibold text-foreground text-lg mb-3">
-                  {line.name}
-                </div>
-                <div className="flex items-center gap-6 mb-3 flex-wrap">
-                  <div className="text-sm">
-                    <span className="text-muted">Available:</span>
-                    <span className="font-semibold text-foreground ml-2">
-                      ${line.available.toLocaleString()}
-                    </span>
-                  </div>
-                  <div className="text-sm">
-                    <span className="text-muted">Utilization:</span>
-                    <span
-                      className={`font-semibold ml-2 ${line.utilization > 80 ? "text-yellow-500" : "text-foreground"}`}
-                    >
-                      {line.utilization}%
-                    </span>
-                  </div>
-                  {line.utilization > 80 && (
-                    <div className="flex items-center gap-1 text-yellow-500 text-sm" role="status">
-                      <AlertCircle className="w-4 h-4" aria-hidden="true" />
-                      <span>High utilization</span>
+
+      {/* Credit-line list */}
+      <ul className="dc-credit-line-list" role="list">
+        {creditLines.map((line) => {
+          const isHighUtilization = line.utilization > 80;
+
+          return (
+            <li key={line.id}>
+              <button
+                onClick={() => onSelect(line)}
+                className="dc-credit-line-item"
+                aria-label={`Select ${line.name} credit line, available balance $${line.available.toLocaleString()}`}
+              >
+                <div className="dc-credit-line-item__inner">
+                  <div className="dc-credit-line-item__body">
+                    {/* Name */}
+                    <div className="dc-credit-line-item__name">{line.name}</div>
+
+                    {/* Meta row: available, utilization, warning badge */}
+                    <div className="dc-credit-line-item__meta">
+                      <div>
+                        <span className="dc-credit-line-item__label">
+                          Available:
+                        </span>
+                        <span className="dc-credit-line-item__value">
+                          ${line.available.toLocaleString()}
+                        </span>
+                      </div>
+
+                      <div>
+                        <span className="dc-credit-line-item__label">
+                          Utilization:
+                        </span>
+                        <span
+                          className={
+                            isHighUtilization
+                              ? "dc-credit-line-item__value--warning"
+                              : "dc-credit-line-item__value"
+                          }
+                        >
+                          {line.utilization}%
+                        </span>
+                      </div>
+
+                      {/* High-utilization badge — announced as a status region */}
+                      {isHighUtilization && (
+                        <div
+                          className="dc-credit-line-item__warning-badge"
+                          role="status"
+                        >
+                          <AlertCircle
+                            className="dc-banner__icon"
+                            aria-hidden="true"
+                          />
+                          <span>High utilization</span>
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
-                <div className="w-full bg-border rounded-full h-2" 
-                  role="progressbar" 
-                  aria-valuenow={line.utilization} 
-                  aria-valuemin={0} 
-                  aria-valuemax={100}
-                  aria-label={`${line.name} utilization percentage`}
-                >
-                  <div
-                    className={`h-2 rounded-full transition-all ${line.utilization > 80 ? "bg-yellow-500" : "bg-blue-500"}`}
-                    style={{ width: `${line.utilization}%` }}
+
+                    {/* Utilization progress bar */}
+                    <div
+                      className="dc-progress-track"
+                      role="progressbar"
+                      aria-valuenow={line.utilization}
+                      aria-valuemin={0}
+                      aria-valuemax={100}
+                      aria-label={`${line.name} utilization: ${line.utilization}%`}
+                    >
+                      <div
+                        className={`dc-progress-bar${isHighUtilization ? " dc-progress-bar--warning" : ""}`}
+                        style={{ width: `${line.utilization}%` }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Chevron — colour handled by CSS hover rule on parent */}
+                  <ChevronRight
+                    className="dc-chevron"
+                    width={20}
+                    height={20}
+                    aria-hidden="true"
                   />
                 </div>
-              </div>
-              <ChevronRight className="w-5 h-5 text-muted group-hover:text-blue-400 ml-4 shrink-0 mt-1 transition-colors" aria-hidden="true" />
-            </div>
-          </button>
-        ))}
-      </div>
+              </button>
+            </li>
+          );
+        })}
+      </ul>
     </div>
   );
 }

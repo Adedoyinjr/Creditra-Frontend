@@ -1,4 +1,21 @@
-"use client";
+/**
+ * DrawCreditPage
+ *
+ * Multi-step draw-credit flow:
+ *   1. "select"  – choose a credit line
+ *   2. "amount"  – enter draw amount (+ live preview)
+ *   3. "confirm" – review details and accept terms
+ *   4. "status"  – loading spinner → transaction result
+ *
+ * Spacing, colour and typography all reference design tokens via the
+ * `dc-*` CSS classes defined in `src/index.css`. No raw Tailwind colour
+ * utilities (blue-500, green-400, etc.) are used in this module.
+ *
+ * Accessibility:
+ *   - <main> labelled with aria-label for screen-reader landmark navigation
+ *   - Loading state wrapped in role="status" + aria-live="polite"
+ *   - Spinner has aria-label describing the in-progress action
+ */
 
 import { useState } from "react";
 import { CreditLineSelector } from "@/components/CreditLineSelector";
@@ -65,75 +82,96 @@ export default function DrawCreditPage() {
   };
 
   return (
-    <main className="min-h-screen bg-background flex items-center justify-center p-4">
-      <div className="w-full max-w-2xl">
-        <div className="card card-large" style={{ maxWidth: 'none', margin: 0 }}>
-            {step === "select" && (
-              <CreditLineSelector
-                creditLines={mockCreditLines}
-                onSelect={handleSelectCreditLine}
-              />
-            )}
+    /*
+     * `dc-page` sets min-height:100vh + flex centering via tokens.
+     * aria-label exposes this landmark to screen readers as "Draw credit".
+     */
+    <main className="dc-page" aria-label="Draw credit">
+      <div className="dc-page__inner">
+        {/* Card uses dc-page__card (token-backed padding + radius) — no inline style override */}
+        <div className="dc-page__card">
 
-            {step === "amount" && selectedCreditLine && (
-              <div className="space-y-8">
-                <AmountInput
-                  creditLine={selectedCreditLine}
-                  onAmountChange={setAmount}
-                  onNext={handleAmountNext}
-                  onBack={handleBack}
-                />
-                <div className="border-t border-border pt-8">
-                  <PreviewSection
-                    creditLine={selectedCreditLine}
-                    amount={amount}
-                  />
-                </div>
-              </div>
-            )}
+          {/* ── Step 1: Select a credit line ── */}
+          {step === "select" && (
+            <CreditLineSelector
+              creditLines={mockCreditLines}
+              onSelect={handleSelectCreditLine}
+            />
+          )}
 
-            {step === "confirm" && selectedCreditLine && (
-              <ConfirmationStep
+          {/* ── Step 2: Enter amount + live preview ── */}
+          {step === "amount" && selectedCreditLine && (
+            <div className="dc-step">
+              <AmountInput
                 creditLine={selectedCreditLine}
-                amount={amount}
-                onConfirm={handleConfirm}
+                onAmountChange={setAmount}
+                onNext={handleAmountNext}
                 onBack={handleBack}
-                isLoading={isLoading}
               />
-            )}
+              {/* Separator uses dc-separator (border-top with space-8 padding — token-backed) */}
+              <div className="dc-separator">
+                <PreviewSection
+                  creditLine={selectedCreditLine}
+                  amount={amount}
+                />
+              </div>
+            </div>
+          )}
 
-            {step === "status" && (isLoading || transaction) && (
-              <>
-                {isLoading && (
-                  <div className="space-y-8 text-center">
-                    <div className="flex justify-center">
-                      <div className="bg-primary/20 p-8 rounded-full">
-                        <div className="w-16 h-16 border-4 border-border border-t-primary rounded-full animate-spin" />
-                      </div>
-                    </div>
-                    <div>
-                      <h2 className="text-3xl font-bold text-foreground mb-3">
-                        Processing
-                      </h2>
-                      <p className="text-muted text-lg">
-                        Your draw request is being processed.
-                      </p>
-                    </div>
+          {/* ── Step 3: Review & confirm ── */}
+          {step === "confirm" && selectedCreditLine && (
+            <ConfirmationStep
+              creditLine={selectedCreditLine}
+              amount={amount}
+              onConfirm={handleConfirm}
+              onBack={handleBack}
+              isLoading={isLoading}
+            />
+          )}
+
+          {/* ── Step 4: Status (loading → result) ── */}
+          {step === "status" && (isLoading || transaction) && (
+            <>
+              {isLoading && (
+                /*
+                 * role="status" + aria-live="polite" announce the loading state
+                 * to screen readers without interrupting the user.
+                 * aria-label on the spinner ring itself provides a text
+                 * alternative for the animated element.
+                 */
+                <div
+                  className="dc-spinner-wrap"
+                  role="status"
+                  aria-live="polite"
+                  aria-label="Processing your draw request"
+                >
+                  <div className="dc-spinner-ring-bg">
+                    <div
+                      className="dc-spinner-ring"
+                      aria-hidden="true"
+                    />
                   </div>
-                )}
-                {transaction && !isLoading && (
-                  <TransactionStatus
-                    transaction={transaction}
-                    onNewDraw={handleNewDraw}
-                  />
-                )}
-              </>
-            )}
+                  <div>
+                    <h2 className="dc-step__title">Processing</h2>
+                    <p className="dc-step__subtitle">
+                      Your draw request is being processed.
+                    </p>
+                  </div>
+                </div>
+              )}
+              {transaction && !isLoading && (
+                <TransactionStatus
+                  transaction={transaction}
+                  onNewDraw={handleNewDraw}
+                />
+              )}
+            </>
+          )}
         </div>
 
-        <div className="text-center mt-8 text-sm text-muted">
-          <p>Need help? Contact support at 1-800-CREDIT-1</p>
-        </div>
+        <p className="dc-page__footer">
+          Need help? Contact support at 1-800-CREDIT-1
+        </p>
       </div>
     </main>
   );

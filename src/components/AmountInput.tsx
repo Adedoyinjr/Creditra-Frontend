@@ -1,3 +1,24 @@
+/**
+ * AmountInput
+ *
+ * Step 2 of the draw-credit flow. Lets the user type a draw amount or
+ * choose from quick-preset percentage buttons (25 / 50 / 75 / 100 %).
+ *
+ * Design-token classes used (all from `src/index.css` `.dc-*` block):
+ *   dc-step, dc-step__title, dc-step__subtitle,
+ *   dc-amount-field, dc-amount-field__prefix, dc-amount-field__input,
+ *   dc-banner, dc-banner--error, dc-banner__icon,
+ *   dc-presets, dc-preset-btn,
+ *   dc-balance-card, dc-balance-row, dc-balance-row__label, dc-balance-row__value,
+ *   dc-actions, dc-btn, dc-btn--secondary, dc-btn--primary
+ *
+ * Accessibility:
+ *   - Input linked to helper and error IDs via aria-describedby.
+ *   - Error message has role="alert" so it is announced immediately.
+ *   - Preset buttons have aria-label with percentage text for screen readers.
+ *   - Continue button is disabled (not hidden) when the amount is invalid.
+ */
+
 import { CreditLine } from "@/types/draw-credit.types";
 import { AlertCircle } from "lucide-react";
 import { useState, useEffect } from "react";
@@ -17,7 +38,8 @@ export function AmountInput({
 }: AmountInputProps) {
   const [amount, setAmount] = useState("");
   const [error, setError] = useState("");
-  const inputId = "draw-amount-input";
+
+  /* Stable IDs for ARIA associations */
   const helperId = "draw-amount-helper";
   const errorId = "draw-amount-error";
 
@@ -41,54 +63,71 @@ export function AmountInput({
 
   const numAmount = parseFloat(amount) || 0;
   const isValid = numAmount > 0 && numAmount <= creditLine.available;
-  const hasNoAvailability = creditLine.available <= 0;
   const describedBy = error ? `${helperId} ${errorId}` : helperId;
 
   return (
-    <div className="space-y-8">
+    <div className="dc-step">
+      {/* Step header */}
       <div>
-        <h2 className="text-3xl font-bold text-foreground">Enter Amount</h2>
-        <p className="text-muted mt-2">{creditLine.name}</p>
+        <h2 className="dc-step__title">Enter Amount</h2>
+        <p className="dc-step__subtitle" id={helperId}>
+          {creditLine.name}
+        </p>
       </div>
 
-      <div className="space-y-3">
-        <label htmlFor="amount-input" className="sr-only">Amount to draw</label>
-        <div className="flex items-center gap-2 bg-surface p-4 rounded-xl border-2 border-border overflow-hidden">
-          <span className="text-3xl font-bold text-foreground flex-shrink-0" aria-hidden="true">
+      {/* Amount input field */}
+      <div>
+        <label htmlFor="draw-amount-input" className="sr-only">
+          Amount to draw
+        </label>
+        <div className="dc-amount-field">
+          {/* Dollar prefix — hidden from assistive tech since input has its own label */}
+          <span className="dc-amount-field__prefix" aria-hidden="true">
             $
           </span>
           <input
-            id="amount-input"
+            id="draw-amount-input"
             type="number"
             placeholder="0"
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
-            className="text-2xl font-bold bg-transparent outline-none flex-1 text-foreground placeholder:text-muted/50 min-w-0"
+            className="dc-amount-field__input"
             min="0"
             max={creditLine.available}
             aria-invalid={!!error}
-            aria-describedby={error ? "amount-error" : undefined}
+            aria-describedby={describedBy}
           />
         </div>
+
+        {/* Error banner — role="alert" ensures immediate announcement */}
         {error && (
-          <div id="amount-error" className="flex items-center gap-2 text-sm text-destructive bg-destructive/10 p-3 rounded-lg border border-destructive/30" role="alert">
-            <AlertCircle className="w-4 h-4 flex-shrink-0" aria-hidden="true" />
-            {error}
+          <div
+            id={errorId}
+            className="dc-banner dc-banner--error"
+            role="alert"
+            style={{ marginTop: "var(--space-3)" }}
+          >
+            <AlertCircle
+              className="dc-banner__icon"
+              aria-hidden="true"
+            />
+            <span>{error}</span>
           </div>
         )}
       </div>
 
+      {/* Quick-preset buttons */}
       <div>
-        <p className="text-sm font-semibold text-foreground mb-3">
+        <p className="dc-section-label" style={{ marginBottom: "var(--space-3)" }}>
           Quick preset
         </p>
-        <div className="grid grid-cols-4 gap-2">
+        <div className="dc-presets">
           {[25, 50, 75, 100].map((percent) => (
             <button
               key={percent}
               onClick={() => handlePreset(percent)}
-              className="py-2 px-3 border-2 border-border rounded-lg hover:border-blue-400 hover:bg-surface hover:shadow-md hover:shadow-blue-500/20 transition-all text-foreground font-medium text-sm"
-              aria-label={`Set amount to ${percent} percent`}
+              className="dc-preset-btn"
+              aria-label={`Set amount to ${percent} percent of available balance`}
             >
               {percent}%
             </button>
@@ -96,38 +135,41 @@ export function AmountInput({
         </div>
       </div>
 
-      <div className="bg-surface p-5 rounded-xl border border-border space-y-3 shadow-lg shadow-blue-500/5">
-        <div className="flex justify-between text-sm">
-          <span className="text-muted">Available:</span>
-          <span className="font-semibold text-foreground">
+      {/* Balance summary */}
+      <div className="dc-balance-card">
+        <div className="dc-balance-row">
+          <span className="dc-balance-row__label">Available:</span>
+          <span className="dc-balance-row__value">
             ${creditLine.available.toLocaleString()}
           </span>
         </div>
-        <div className="flex justify-between text-sm border-t border-border pt-3">
-          <span className="text-muted">Requested:</span>
-          <span className="font-semibold text-foreground">
+        <div className="dc-balance-row">
+          <span className="dc-balance-row__label">Requested:</span>
+          <span className="dc-balance-row__value">
             ${numAmount.toLocaleString()}
           </span>
         </div>
-        <div className="flex justify-between text-sm border-t border-border pt-3">
-          <span className="text-muted">Remaining:</span>
-          <span className="font-semibold text-foreground">
+        <div className="dc-balance-row">
+          <span className="dc-balance-row__label">Remaining:</span>
+          <span className="dc-balance-row__value">
             ${(creditLine.available - numAmount).toLocaleString()}
           </span>
         </div>
       </div>
 
-      <div className="flex gap-3 pt-4">
+      {/* Back / Continue actions */}
+      <div className="dc-actions">
         <button
           onClick={onBack}
-          className="flex-1 py-3 px-4 border-2 border-border text-foreground rounded-lg hover:bg-surface transition-colors font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          className="dc-btn dc-btn--secondary dc-actions__slot"
         >
           Back
         </button>
         <button
           onClick={() => onNext(numAmount)}
           disabled={!isValid}
-          className="flex-1 py-3 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-500 hover:shadow-lg hover:shadow-blue-500/40 transition-all font-semibold disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          className="dc-btn dc-btn--primary dc-actions__slot"
+          aria-disabled={!isValid}
         >
           Continue
         </button>

@@ -1,3 +1,23 @@
+/**
+ * PreviewSection
+ *
+ * Live draw summary rendered alongside the AmountInput step. Shows the
+ * draw amount, projected new utilization, and two progress bars for
+ * current vs. post-draw utilization.
+ *
+ * Design-token classes used (all from `src/index.css` `.dc-*` block):
+ *   dc-section-label, dc-stat-grid, dc-stat-card, dc-stat-card--accent,
+ *   dc-stat-card--success, dc-stat-card__header, dc-stat-card__label,
+ *   dc-stat-card__value, dc-stat-card__icon, dc-util-section, dc-util-row,
+ *   dc-util-row__label, dc-util-row__value, dc-util-row__value--warning,
+ *   dc-progress-track, dc-progress-track--lg, dc-progress-bar,
+ *   dc-progress-bar--warning
+ *
+ * Accessibility:
+ *   - Each progress bar is a <div role="progressbar"> with aria-valuenow.
+ *   - Stat card values have visually-clear colour associations backed by tokens.
+ */
+
 import { CreditLine } from "@/types/draw-credit.types";
 import { DollarSign, TrendingUp } from "lucide-react";
 
@@ -11,70 +31,92 @@ export function PreviewSection({ creditLine, amount }: PreviewSectionProps) {
     ((creditLine.limit - creditLine.available + amount) / creditLine.limit) *
       100,
   );
+  const isHighAfterDraw = newUtilization > 80;
 
   return (
-    <div className="space-y-6">
-      <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide">
-        Summary
-      </h3>
+    <div className="dc-step">
+      <h3 className="dc-section-label">Summary</h3>
 
-      <div className="grid grid-cols-2 gap-4">
-        <div className="bg-blue-500/10 p-4 rounded-xl border border-blue-500/30 shadow-lg shadow-blue-500/5">
-          <div className="flex items-start justify-between">
+      {/* Stat cards: draw amount + projected utilization */}
+      <div className="dc-stat-grid">
+        {/* Draw amount card — accent colour (var(--accent)) */}
+        <div className="dc-stat-card dc-stat-card--accent">
+          <div className="dc-stat-card__header">
             <div>
-              <p className="text-xs text-muted font-medium mb-2">Draw Amount</p>
-              <p className="text-2xl font-bold text-blue-400">
+              <p className="dc-stat-card__label">Draw Amount</p>
+              <p className="dc-stat-card__value">
                 ${amount.toLocaleString()}
               </p>
             </div>
-            <DollarSign className="w-5 h-5 text-blue-500 shrink-0" />
+            <DollarSign
+              className="dc-stat-card__icon dc-stat-card--accent dc-stat-card__icon"
+              aria-hidden="true"
+            />
           </div>
         </div>
 
-        <div className="bg-green-500/10 p-4 rounded-xl border border-green-500/30 shadow-lg shadow-green-500/5">
-          <div className="flex items-start justify-between">
+        {/* New utilization card — success colour (var(--success)) */}
+        <div className="dc-stat-card dc-stat-card--success">
+          <div className="dc-stat-card__header">
             <div>
-              <p className="text-xs text-muted font-medium mb-2">
-                New Utilization
-              </p>
-              <p className="text-2xl font-bold text-green-400">
+              <p className="dc-stat-card__label">New Utilization</p>
+              <p className="dc-stat-card__value">
                 {newUtilization}%
               </p>
             </div>
-            <TrendingUp className="w-5 h-5 text-green-500 shrink-0" />
+            <TrendingUp
+              className="dc-stat-card__icon dc-stat-card--success dc-stat-card__icon"
+              aria-hidden="true"
+            />
           </div>
         </div>
       </div>
 
-      <div className="space-y-2">
-        <div className="flex justify-between text-sm">
-          <span className="text-muted">Current utilization</span>
-          <span className="font-semibold text-foreground">
-            {creditLine.utilization}%
-          </span>
+      {/* Current utilization progress bar */}
+      <div className="dc-util-section">
+        <div className="dc-util-row">
+          <span className="dc-util-row__label">Current utilization</span>
+          <span className="dc-util-row__value">{creditLine.utilization}%</span>
         </div>
-        <div className="w-full bg-border rounded-full h-2.5">
+        <div
+          className="dc-progress-track dc-progress-track--lg"
+          role="progressbar"
+          aria-valuenow={creditLine.utilization}
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-label={`Current utilization: ${creditLine.utilization}%`}
+        >
           <div
-            className="bg-blue-500 h-2.5 rounded-full"
+            className="dc-progress-bar"
             style={{ width: `${creditLine.utilization}%` }}
           />
         </div>
       </div>
 
-      <div className="space-y-2">
-        <div className="flex justify-between text-sm">
-          <span className="text-muted">After draw</span>
+      {/* Post-draw utilization progress bar */}
+      <div className="dc-util-section">
+        <div className="dc-util-row">
+          <span className="dc-util-row__label">After draw</span>
           <span
-            className={`font-semibold ${newUtilization > 80 ? "text-yellow-500" : "text-foreground"}`}
+            className={
+              isHighAfterDraw
+                ? "dc-util-row__value--warning"
+                : "dc-util-row__value"
+            }
           >
             {newUtilization}%
           </span>
         </div>
-        <div className="w-full bg-border rounded-full h-2.5">
+        <div
+          className="dc-progress-track dc-progress-track--lg"
+          role="progressbar"
+          aria-valuenow={newUtilization}
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-label={`Utilization after draw: ${newUtilization}%`}
+        >
           <div
-            className={`h-2.5 rounded-full transition-all ${
-              newUtilization > 80 ? "bg-yellow-500" : "bg-blue-500"
-            }`}
+            className={`dc-progress-bar${isHighAfterDraw ? " dc-progress-bar--warning" : ""}`}
             style={{ width: `${newUtilization}%` }}
           />
         </div>

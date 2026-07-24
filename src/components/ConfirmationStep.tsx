@@ -1,3 +1,25 @@
+/**
+ * ConfirmationStep
+ *
+ * Step 3 of the draw-credit flow. Displays a full summary of the draw
+ * (credit line, amounts, projected utilization) and requires the user to
+ * accept the terms before submitting.
+ *
+ * Design-token classes used (all from `src/index.css` `.dc-*` block):
+ *   dc-step, dc-step__title, dc-step__subtitle,
+ *   dc-balance-card, dc-balance-row, dc-balance-row__label, dc-balance-row__value,
+ *   dc-banner, dc-banner--warning, dc-banner__icon, dc-banner__body, dc-banner__title,
+ *   dc-terms-label, dc-terms-label__checkbox, dc-terms-label__text,
+ *   dc-actions, dc-actions--stacked, dc-actions__slot,
+ *   dc-btn, dc-btn--secondary, dc-btn--primary, dc-btn--full,
+ *   dc-hint, dc-hint--right
+ *
+ * Accessibility:
+ *   - High-utilization warning banner has role="alert" so it is announced.
+ *   - Confirm button is `disabled` (not hidden) when terms are not accepted.
+ *   - aria-disabled mirrors the disabled prop for redundant AT signals.
+ */
+
 import { CreditLine } from "@/types/draw-credit.types";
 import { AlertCircle } from "lucide-react";
 import { useState } from "react";
@@ -19,92 +41,119 @@ export function ConfirmationStep({
   isLoading = false,
 }: ConfirmationStepProps) {
   const [agreedToTerms, setAgreedToTerms] = useState(false);
+
   const newUtilization = Math.round(
     ((creditLine.limit - creditLine.available + amount) / creditLine.limit) *
       100,
   );
+  const isHighUtilization = newUtilization > 80;
+  const canConfirm = agreedToTerms && !isLoading;
 
   return (
-    <div className="space-y-8">
+    <div className="dc-step">
+      {/* Step header */}
       <div>
-        <h2 className="text-3xl font-bold text-foreground">Review & Confirm</h2>
-        <p className="text-muted mt-2">
+        <h2 className="dc-step__title">Review &amp; Confirm</h2>
+        <p className="dc-step__subtitle">
           Confirm your draw details before submitting.
         </p>
       </div>
 
+      {/* Credit-line summary block (limit / utilized / available) */}
       <CreditLineSummaryBlock creditLine={creditLine} amount={amount} />
 
-      <div className="space-y-4">
-        <div className="bg-surface p-5 rounded-xl border border-border space-y-4">
-          <div className="flex justify-between items-center">
-            <span className="text-sm text-muted font-medium">Draw Amount</span>
-            <span className="text-2xl font-bold text-foreground">
-              ${amount.toLocaleString()}
-            </span>
-          </div>
-          <div className="flex justify-between items-center border-t border-border pt-4">
-            <span className="text-sm text-muted font-medium">Current Utilization</span>
-            <span className="text-sm font-semibold text-foreground">
-              {creditLine.utilization}%
-            </span>
-          </div>
-          <div className="flex justify-between items-center border-t border-border pt-4">
-            <span className="text-sm text-muted font-medium">After Draw</span>
-            <span
-              className={`text-sm font-semibold ${newUtilization > 80 ? "text-yellow-500" : "text-foreground"}`}
-            >
-              {newUtilization}%
-            </span>
-          </div>
-          {newUtilization > 80 && (
-            <div className="flex items-start gap-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-3 mt-4">
-              <AlertCircle className="w-5 h-5 text-yellow-500 mt-0.5 shrink-0" />
-              <div>
-                <p className="text-sm font-semibold text-yellow-500">
-                  High Utilization Warning
-                </p>
-                <p className="text-sm text-yellow-500 mt-1">
-                  Your credit utilization will exceed 80%. This may impact your
-                  credit terms.
-                </p>
-              </div>
-            </div>
-          )}
+      {/* Draw details card */}
+      <div className="dc-balance-card">
+        {/* Draw amount */}
+        <div className="dc-balance-row" style={{ alignItems: "center" }}>
+          <span className="dc-balance-row__label" style={{ fontSize: "var(--text-sm)", fontWeight: "var(--font-medium)" }}>
+            Draw Amount
+          </span>
+          <span style={{ fontSize: "var(--text-2xl)", fontWeight: "var(--font-bold)", color: "var(--text)" }}>
+            ${amount.toLocaleString()}
+          </span>
         </div>
+
+        {/* Current utilization */}
+        <div className="dc-balance-row" style={{ alignItems: "center" }}>
+          <span className="dc-balance-row__label" style={{ fontSize: "var(--text-sm)", fontWeight: "var(--font-medium)" }}>
+            Current Utilization
+          </span>
+          <span className="dc-balance-row__value">
+            {creditLine.utilization}%
+          </span>
+        </div>
+
+        {/* After-draw utilization */}
+        <div className="dc-balance-row" style={{ alignItems: "center" }}>
+          <span className="dc-balance-row__label" style={{ fontSize: "var(--text-sm)", fontWeight: "var(--font-medium)" }}>
+            After Draw
+          </span>
+          <span
+            className={isHighUtilization ? "dc-util-row__value--warning" : "dc-balance-row__value"}
+          >
+            {newUtilization}%
+          </span>
+        </div>
+
+        {/* High-utilization warning — role="alert" ensures immediate announcement */}
+        {isHighUtilization && (
+          <div
+            className="dc-banner dc-banner--warning"
+            role="alert"
+            style={{ marginTop: "var(--space-4)" }}
+          >
+            <AlertCircle
+              className="dc-banner__icon"
+              aria-hidden="true"
+            />
+            <div className="dc-banner__body">
+              <p className="dc-banner__title">High Utilization Warning</p>
+              <p>
+                Your credit utilization will exceed 80%. This may impact your
+                credit terms.
+              </p>
+            </div>
+          </div>
+        )}
       </div>
 
-      <label className="flex items-start gap-3 cursor-pointer p-4 bg-surface rounded-lg hover:bg-border transition-colors border border-border">
+      {/* Terms & conditions checkbox */}
+      <label className="dc-terms-label">
         <input
           type="checkbox"
           checked={agreedToTerms}
           onChange={(e) => setAgreedToTerms(e.target.checked)}
-          className="mt-1 w-5 h-5 rounded accent-accent"
+          className="dc-terms-label__checkbox"
+          aria-label="I agree to the terms and conditions and authorise this draw"
         />
-        <span className="text-sm text-foreground">
+        <span className="dc-terms-label__text">
           I agree to the terms and conditions and authorize this draw. The funds
           will be deposited within 1-2 business days.
         </span>
       </label>
 
-      <div className="flex flex-col-reverse sm:flex-row gap-3 pt-2">
+      {/* Back / Confirm actions */}
+      <div className="dc-actions dc-actions--stacked">
         <button
           onClick={onBack}
           disabled={isLoading}
-          className="sm:flex-1 py-3 px-4 border-2 border-border text-foreground rounded-lg hover:bg-surface transition-colors font-semibold disabled:opacity-50"
+          className="dc-btn dc-btn--secondary dc-actions__slot"
         >
           Back
         </button>
-        <div className="sm:flex-1 space-y-2">
+        <div className="dc-actions__slot">
           <button
             onClick={onConfirm}
-            disabled={!agreedToTerms || isLoading}
-            className="w-full py-3 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-500 hover:shadow-lg hover:shadow-blue-500/40 transition-all font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={!canConfirm}
+            aria-disabled={!canConfirm}
+            className="dc-btn dc-btn--primary dc-btn--full"
           >
-            {isLoading ? "Processing..." : "Confirm draw"}
+            {isLoading ? "Processing…" : "Confirm draw"}
           </button>
+          {/* Hint shown only when terms not yet accepted */}
           {!agreedToTerms && !isLoading && (
-            <p className="text-xs text-muted text-center sm:text-right">
+            <p className="dc-hint dc-hint--right">
               Accept terms to enable confirmation.
             </p>
           )}
