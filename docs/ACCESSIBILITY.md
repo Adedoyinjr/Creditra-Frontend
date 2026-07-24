@@ -159,6 +159,7 @@ The table below is updated on every accessibility-impacting PR. Status legend:
 | `SupportWidget` | Floating trigger, search field, FAQ toggles, and email handoff are keyboard reachable | `aria-expanded`, `aria-controls`, visible focus ring, non-modal `role="dialog"` shell | AA | n/a | OK |
 | `LandingPage` | Tab through CTAs and FAQ accordion | Framer Motion guarded by `useReducedMotion` | AA | reduced-motion gated | OK |
 | `ErrorBoundary` / `ErrorPage` | Tab through "Go back" and "Reload" | Semantic landmarks | AA | n/a | OK |
+| `LoginPage` | Tab through all inputs, checkbox, links, submit; Shift+Tab reverses | Both fields use `<FormField>` — `aria-describedby` always present on password input (`password-help`; `password-help password-error` on error), `aria-required="true"`, `aria-invalid` toggled by error state | AA | n/a | OK |
 
 ### Known gaps and target fix dates
 
@@ -168,6 +169,7 @@ The table below is updated on every accessibility-impacting PR. Status legend:
 | ~~A11Y-002~~ | ~~`RepayModal`~~ | ~~Focus-trap call site uses legacy boolean signature; needs migration to `useFocusTrap({ isActive })`~~ | **Fixed** — migrated to `{ isActive }` form; `triggerRef` wired; regression test added |
 | A11Y-003 | `NotificationCenter` | Filter tabs use `aria-pressed` but should additionally expose `role="tab"` + `aria-selected` for AT consistency | next minor release |
 | ~~A11Y-004~~ | ~~Tables~~ | ~~`aria-sort` is set but caption text describing the table is not yet announced~~ | **Closed** — `<caption>` added to TransactionHistory; `<section aria-label>` added to CreditLines; both update dynamically with filter state |
+| ~~A11Y-005~~ | ~~`LoginPage`~~ | ~~Password `<input>` had no `aria-describedby` in the non-error state because `FormField` was rendered without `helpText`, violating WCAG 2.1 SC 1.3.1~~ | **Fixed** — added `helpText="Enter the password for your account"` to the password `FormField`; the input now always carries `aria-describedby="password-help"` (or `"password-help password-error"` when an error is active); 16-test suite added |
 
 ---
 
