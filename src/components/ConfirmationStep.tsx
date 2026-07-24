@@ -6,6 +6,7 @@ import { CreditLineSummaryBlock } from "@/components/CreditLineSummaryBlock";
 import { PendingButton } from "@/components/PendingButton";
 import { formatMoney } from "@/utils/amountValidation";
 import { useWallet } from "@/context/WalletContext";
+import { getDrawPricingQuote } from "@/lib/draw-credit-pricing";
 
 interface ConfirmationStepProps {
   /** The credit line the user is drawing from. */
@@ -210,7 +211,11 @@ export function ConfirmationStep({
       )}
 
       <div className="sticky bottom-0 z-10 -mx-6 border-t border-border bg-surface/95 px-6 py-4 backdrop-blur sm:-mx-8 sm:px-8">
+        {/* Button order rule (docs/BUTTON_ORDER.md):
+            Cancel (exit flow) — Back (previous step) — Draw (primary/confirm)
+            flex-col-reverse reverses this on mobile so the primary stacks on top. */}
         <div className="flex flex-col-reverse gap-3 sm:flex-row">
+          {/* Cancel: leftmost — exits the wizard entirely */}
           <button
             type="button"
             onClick={onCancel}
@@ -219,6 +224,7 @@ export function ConfirmationStep({
           >
             Cancel
           </button>
+          {/* Back: adjacent to primary — returns to the previous step */}
           <button
             type="button"
             onClick={onBack}
@@ -227,6 +233,7 @@ export function ConfirmationStep({
           >
             Back
           </button>
+          {/* Primary: rightmost — the forward/confirm action */}
           <div className="space-y-2 sm:ml-auto sm:min-w-64">
             <PendingButton
               type="button"
