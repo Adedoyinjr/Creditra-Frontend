@@ -30,6 +30,7 @@ import { getUtilizationLevel } from "../utils/tokens";
 import { TipJar } from "../components/TipJar";
 import { NextSteps } from "../components/NextSteps";
 import { WhatChanged } from "../components/WhatChanged";
+import { HealthTipsPanel } from "../components/HealthTipsPanel";
 
 
 
@@ -1314,6 +1315,9 @@ export function Dashboard() {
               ))}
             </div>
           )}
+
+          {/* Health Tips — contextual credit-education panel */}
+          <HealthTipsPanel />
         </div>
       </div>
       <DashboardTour />
