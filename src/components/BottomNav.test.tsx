@@ -151,12 +151,14 @@ describe('BottomNav', () => {
     expect(activeLinks).toHaveLength(0);
   });
 
-  it('sets a positive tabIndex on every link for keyboard navigation', () => {
+  it('renders semantic <a> elements that are natively keyboard-focusable', () => {
     renderNav();
     const nav = screen.getByRole('navigation');
     const links = within(nav).getAllByRole('link');
     links.forEach((link) => {
-      expect(link).toHaveAttribute('tabIndex', '0');
+      // <Link> renders an <a> element — natively focusable, no explicit tabIndex needed
+      expect(link.tagName.toLowerCase()).toBe('a');
+      expect(link).not.toHaveAttribute('tabIndex');
     });
   });
 

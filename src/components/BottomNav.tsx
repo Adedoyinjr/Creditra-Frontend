@@ -76,7 +76,6 @@ export function BottomNav() {
             to={item.to}
             className={cx('bottom-nav__link', { 'bottom-nav__link--active': isActive })}
             aria-current={isActive ? 'page' : undefined}
-            tabIndex={0}
           >
             <item.Icon
               className="bottom-nav__icon"
