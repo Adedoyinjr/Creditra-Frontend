@@ -17,9 +17,12 @@ import HelpCenter from "./pages/HelpCenter";
 import { ShortcutHelpOverlay } from "./components/ShortcutHelpOverlay";
 import { DutchAuctions } from "./pages/DutchAuctions";
 import { LinkedAccounts } from "./pages/LinkedAccounts";
+import { NotificationPreferences } from "./pages/NotificationPreferences";
 import { WalletReconnectBanner } from "./components/WalletReconnectBanner";
+import { SessionTimeoutBanner } from "./components/SessionTimeoutBanner";
 import { NetworkMismatchBanner } from "./components/notifications/NetworkMismatchBanner";
 import { Header } from "./layouts/Header";
+import { BottomNav } from "./components/BottomNav";
 
 const isEditableTarget = (target: EventTarget | null) => {
   if (!(target instanceof HTMLElement)) return false;
@@ -132,6 +135,7 @@ function App() {
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </main>
+            <BottomNav />
             <ShortcutHelpOverlay
               isOpen={isShortcutHelpOpen}
               onClose={() => setIsShortcutHelpOpen(false)}
