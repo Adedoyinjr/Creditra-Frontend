@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { matchPath, useLocation } from "react-router-dom";
+import { useDocumentTitle } from "../hooks/useDocumentTitle";
 
 type RouteMetadata = {
   path: string;
@@ -77,21 +78,6 @@ const getRouteMetadata = (pathname: string) =>
     matchPath({ path: route.path, end: true }, pathname),
   ) ?? NOT_FOUND_METADATA;
 
-const syncMetaDescription = (description: string) => {
-  let metaDescription = document.querySelector<HTMLMetaElement>(
-    'meta[name="description"]',
-  );
-
-  // Keep a single native description tag current without adding a head manager.
-  if (!metaDescription) {
-    metaDescription = document.createElement("meta");
-    metaDescription.name = "description";
-    document.head.append(metaDescription);
-  }
-
-  metaDescription.content = description;
-};
-
 export function RouteAnnouncer() {
   const location = useLocation();
   const [announcement, setAnnouncement] = useState("");
@@ -99,9 +85,7 @@ export function RouteAnnouncer() {
   useEffect(() => {
     const metadata = getRouteMetadata(location.pathname);
     const title = titleFor(metadata.pageName);
-
-    document.title = title;
-    syncMetaDescription(metadata.description);
+    useDocumentTitle(title, metadata.description);
     setAnnouncement(`${metadata.pageName} page loaded`);
   }, [location.pathname]);
 
