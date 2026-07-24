@@ -239,10 +239,72 @@ describe('RepaymentVisualizer — responsive breakpoints', () => {
     render(<RepaymentVisualizer {...BASE} />);
     const summary = screen.getByText(/Schedule table/i);
     fireEvent.click(summary); // Open details
-    
+
     // Find the visible table wrapper
     const table = screen.getAllByRole('table').find((t) => !t.classList.contains('sr-only'));
     const wrapper = table?.parentElement;
     expect(wrapper).toHaveClass('overflow-x-auto', '-mx-4', 'sm:mx-0', 'px-4', 'sm:px-0');
+  });
+});
+
+// ─── Tabular-nums tests ────────────────────────────────────────────────────────
+
+describe('RepaymentVisualizer — tabular-nums on numeric displays', () => {
+  it('SR-only table has tabular-nums class', () => {
+    render(<RepaymentVisualizer {...BASE} />);
+    const srTable = document.querySelector('table.sr-only.tabular-nums');
+    expect(srTable).toBeInTheDocument();
+  });
+
+  it('visible table has tabular-nums class', () => {
+    render(<RepaymentVisualizer {...BASE} />);
+    fireEvent.click(screen.getByText(/Schedule table/i));
+    const visibleTable = screen.getAllByRole('table').find((t) => !t.classList.contains('sr-only'));
+    expect(visibleTable).toHaveClass('tabular-nums');
+  });
+
+  it('visible table td cells have tabular-nums style', () => {
+    render(<RepaymentVisualizer {...BASE} />);
+    fireEvent.click(screen.getByText(/Schedule table/i));
+    const visibleTable = screen.getAllByRole('table').find((t) => !t.classList.contains('sr-only'));
+    const firstDataCell = visibleTable?.querySelector('tbody td');
+    expect(firstDataCell).toBeDefined();
+    expect(firstDataCell).toHaveStyle({ fontVariantNumeric: 'tabular-nums' });
+  });
+
+  it('tooltip bubble has tabular-nums style', () => {
+    render(<RepaymentVisualizer {...BASE} />);
+    const svg = screen.getByRole('img');
+    fireEvent.mouseMove(svg, { clientX: 100, clientY: 100 });
+    const tooltip = screen.getByRole('status');
+    expect(tooltip).toHaveStyle({ fontVariantNumeric: 'tabular-nums' });
+  });
+
+  it('header summary has tabular-nums style', () => {
+    render(<RepaymentVisualizer {...BASE} />);
+    // The summary <p> is a sibling of the <h2> inside the <header>
+    const heading = screen.getByText('Repayment Plan');
+    const summaryP = heading.parentElement?.querySelector('p');
+    expect(summaryP).toHaveStyle({ fontVariantNumeric: 'tabular-nums' });
+  });
+
+  it('SVG y-axis labels have tabular-nums style', () => {
+    render(<RepaymentVisualizer {...BASE} />);
+    const svg = screen.getByRole('img');
+    const yAxisTexts = svg.querySelectorAll('text');
+    // At least the y-axis label texts should have tabular-nums
+    const yAxisText = Array.from(yAxisTexts).find((t) => t.textContent?.includes('$'));
+    expect(yAxisText).toBeDefined();
+    expect(yAxisText).toHaveAttribute('style', expect.stringContaining('tabular-nums'));
+  });
+
+  it('SVG x-axis labels have tabular-nums style', () => {
+    render(<RepaymentVisualizer {...BASE} />);
+    const svg = screen.getByRole('img');
+    const xAxisText = Array.from(svg.querySelectorAll('text')).find((t) =>
+      t.textContent?.startsWith('mo '),
+    );
+    expect(xAxisText).toBeDefined();
+    expect(xAxisText).toHaveAttribute('style', expect.stringContaining('tabular-nums'));
   });
 });
