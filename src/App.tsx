@@ -21,11 +21,9 @@ import NotificationPreferences from "./pages/NotificationPreferences";
 import { WalletReconnectBanner } from "./components/WalletReconnectBanner";
 import { SessionTimeoutBanner } from "./components/SessionTimeoutBanner";
 import { NetworkMismatchBanner } from "./components/notifications/NetworkMismatchBanner";
-import { NotificationPreferences } from "./pages/NotificationPreferences";
 import DataPrivacySettings from "./pages/settings/Data";
+import SessionsSettings from "./pages/settings/Sessions";
 import { Header } from "./layouts/Header";
-import { SessionTimeoutBanner } from "./components/SessionTimeoutBanner";
-import { NotificationPreferences } from "./pages/NotificationPreferences";
 import CreditLineCompare from "./pages/CreditLineCompare";
 
 const isEditableTarget = (target: EventTarget | null) => {
@@ -156,6 +154,7 @@ function App() {
                   <Route path="/linked-accounts" element={<LinkedAccounts />} />
                   <Route path="/notification-preferences" element={<NotificationPreferences />} />
                   <Route path="/settings/data" element={<DataPrivacySettings />} />
+                  <Route path="/settings/sessions" element={<SessionsSettings />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </main>

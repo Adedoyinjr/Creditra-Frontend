@@ -182,3 +182,65 @@ export const MOCK_CREDIT_LINES: CreditLine[] = [
     aprHistory: generateAprHistory(7.5, 365, 606),
   },
 ];
+
+// ─── Sessions mock data ───────────────────────────────────────────────────────
+import type { Session } from '../types/session';
+
+/**
+ * Mock active sessions returned by the /auth/sessions endpoint.
+ *
+ * The first entry (`sess-001`) is flagged `isCurrent: true` to represent the
+ * in-progress browser session.  The rest simulate sessions from other devices.
+ */
+export const MOCK_SESSIONS: Session[] = [
+  {
+    id: 'sess-001',
+    isCurrent: true,
+    deviceLabel: 'Chrome 124 on macOS',
+    deviceType: 'desktop',
+    ipAddress: '203.0.113.42',
+    location: 'San Francisco, CA, US',
+    createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),       // 2 h ago
+    lastActiveAt: new Date().toISOString(),
+  },
+  {
+    id: 'sess-002',
+    isCurrent: false,
+    deviceLabel: 'Safari on iPhone',
+    deviceType: 'mobile',
+    ipAddress: '198.51.100.7',
+    location: 'New York, NY, US',
+    createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),  // 3 d ago
+    lastActiveAt: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(),    // 1 h ago
+  },
+  {
+    id: 'sess-003',
+    isCurrent: false,
+    deviceLabel: 'Firefox 125 on Windows',
+    deviceType: 'desktop',
+    ipAddress: '192.0.2.188',
+    location: 'Austin, TX, US',
+    createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 d ago
+    lastActiveAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+  },
+  {
+    id: 'sess-004',
+    isCurrent: false,
+    deviceLabel: 'Chrome on Android',
+    deviceType: 'mobile',
+    ipAddress: '203.0.113.99',
+    location: 'London, UK',
+    createdAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(),
+    lastActiveAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
+  },
+  {
+    id: 'sess-005',
+    isCurrent: false,
+    deviceLabel: 'Safari on iPad',
+    deviceType: 'tablet',
+    ipAddress: '198.51.100.55',
+    location: 'Toronto, ON, CA',
+    createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+    lastActiveAt: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000).toISOString(),
+  },
+];
