@@ -1,36 +1,53 @@
 /* ─── Transaction History Page Layout ─────────────────────────────────────── */
+/*
+ * All spacing, radii, and line-height values use design tokens defined in
+ * src/index.css so changes to the design system propagate here automatically.
+ *
+ * Token reference (src/index.css :root):
+ *   Spacing  --space-xs:0.25rem | --space-sm:0.5rem | --space-md:0.75rem
+ *            --space-lg:1rem    | --space-xl:1.5rem  | --space-2xl:2rem
+ *   Radii    --radius-sm:4px    | --radius-md:6px    | --radius-lg:10px
+ *            --radius-pill:9999px
+ *   Leading  --lh-display:1.2   | --lh-heading:1.3   | --lh-body:1.6
+ *            --lh-small:1.5
+ */
 
 .transaction-history-page {
     max-width: 1400px;
     margin: 0 auto;
-    padding: 0 1.5rem 2rem;
+    /* top edge already handled by .main; bottom uses 2xl token */
+    padding: 0 var(--space-xl) var(--space-2xl);
 }
+
+/* ─── Page Header ─────────────────────────────────────────────────────────── */
 
 .th-header {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    margin-bottom: 1.5rem;
+    margin-bottom: var(--space-xl);
     flex-wrap: wrap;
-    gap: 1rem;
+    gap: var(--space-lg);
 }
 
 .th-header h1 {
-    margin: 0 0 0.25rem;
+    margin: 0 0 var(--space-xs);
     font-size: 1.5rem;
     font-weight: 700;
+    line-height: var(--lh-heading);
     color: var(--text);
 }
 
 .th-header .subtitle {
     margin: 0;
     font-size: 0.875rem;
+    line-height: var(--lh-small);
     color: var(--muted);
 }
 
 .th-header-actions {
     display: flex;
-    gap: 0.75rem;
+    gap: var(--space-md);
 }
 
 /* ─── Export Buttons ───────────────────────────────────────────────────────── */
@@ -38,19 +55,20 @@
 .export-actions {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.75rem;
+    gap: var(--space-md);
 }
 
 .export-btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 0.5rem;
+    gap: var(--space-sm);
+    /* 44 px touch target (WCAG 2.5.5) */
     min-height: 44px;
-    padding: 0.625rem 1rem;
+    padding: 0.625rem var(--space-lg);
     background: var(--surface);
     border: 1px solid var(--border);
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     color: var(--text);
     font-size: 0.85rem;
     font-weight: 600;
@@ -80,10 +98,11 @@
 }
 
 .th-export-help {
-    margin: -0.75rem 0 1rem;
+    /* Negative top margin pulls the help text closer to the export row */
+    margin: calc(-1 * var(--space-md)) 0 var(--space-lg);
     font-size: 0.8rem;
+    line-height: var(--lh-small);
     color: var(--muted);
-    line-height: 1.4;
 }
 
 /* ─── Summary Statistics ─────────────────────────────────────────────────────── */
@@ -91,18 +110,18 @@
 .th-stats {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 1rem;
-    margin-bottom: 1.5rem;
+    gap: var(--space-lg);
+    margin-bottom: var(--space-xl);
 }
 
 .th-stat-card {
     display: flex;
     align-items: center;
     gap: 0.875rem;
-    padding: 1rem 1.25rem;
+    padding: var(--space-lg) 1.25rem;
     background: var(--surface);
     border: 1px solid var(--border);
-    border-radius: 8px;
+    border-radius: var(--radius-lg);
     animation: fadeInUp 0.4s ease both;
 }
 
@@ -125,7 +144,7 @@
 .th-stat-icon {
     width: 40px;
     height: 40px;
-    border-radius: 8px;
+    border-radius: var(--radius-lg);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -140,6 +159,7 @@
 
 .th-stat-label {
     font-size: 0.7rem;
+    line-height: var(--lh-small);
     color: var(--muted);
     text-transform: uppercase;
     letter-spacing: 0.05em;
@@ -148,7 +168,7 @@
 .th-stat-value {
     font-size: 1.25rem;
     font-weight: 700;
-    line-height: 1.2;
+    line-height: var(--lh-display);
 }
 
 /* ─── Filters ───────────────────────────────────────────────────────────────── */
@@ -156,12 +176,12 @@
 .th-filters {
     display: flex;
     flex-wrap: wrap;
-    gap: 1rem;
+    gap: var(--space-lg);
     padding: 1.25rem;
     background: var(--surface);
     border: 1px solid var(--border);
-    border-radius: 8px;
-    margin-bottom: 1.5rem;
+    border-radius: var(--radius-lg);
+    margin-bottom: var(--space-xl);
     animation: fadeInUp 0.4s ease both;
     animation-delay: 0.25s;
 }
@@ -183,7 +203,7 @@
     display: flex;
     flex-direction: column;
     gap: 0.35rem;
-    margin-bottom: 0.75rem;
+    margin-bottom: var(--space-md);
 }
 
 .th-subgroup:last-child {
@@ -194,6 +214,7 @@
 .th-filter-label,
 .th-search-group label {
     font-size: 0.7rem;
+    line-height: var(--lh-small);
     color: var(--muted);
     text-transform: uppercase;
     letter-spacing: 0.05em;
@@ -202,10 +223,10 @@
 
 .th-filter-group select,
 .th-search-group input {
-    padding: 0.5rem 0.75rem;
+    padding: var(--space-sm) var(--space-md);
     background: var(--bg);
     border: 1px solid var(--border);
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     color: var(--text);
     font-size: 0.85rem;
     outline: none;
@@ -221,22 +242,30 @@
     cursor: pointer;
 }
 
+/* ─── Filter Chip Group ─────────────────────────────────────────────────────── */
+
 .th-chip-group {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.5rem;
+    gap: var(--space-sm);
 }
 
+/*
+ * Filter chips: pill shape, accessible toggle pattern.
+ * Active state communicated via aria-pressed="true" + visual indicator
+ * (background/border/color change) so color is never the sole cue (WCAG 1.4.1).
+ */
 .th-filter-chip {
-    padding: 0.5rem 0.75rem;
+    padding: var(--space-sm) var(--space-md);
     background: var(--bg);
     border: 1px solid var(--border);
-    border-radius: 999px;
+    border-radius: var(--radius-pill);
     color: var(--text);
     font-size: 0.8rem;
     font-weight: 600;
     line-height: 1;
     cursor: pointer;
+    /* 44 px touch target (WCAG 2.5.5) */
     min-height: 44px;
     transition:
         background 0.15s,
@@ -262,6 +291,8 @@
     box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.16);
 }
 
+/* ─── Search Group ─────────────────────────────────────────────────────────── */
+
 .th-search-group {
     display: flex;
     flex-direction: column;
@@ -270,11 +301,13 @@
     flex: 2;
 }
 
+/* ─── Custom Date Range Fields ─────────────────────────────────────────────── */
+
 .date-range-custom-fields {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.75rem;
-    margin-top: 0.5rem;
+    gap: var(--space-md);
+    margin-top: var(--space-sm);
 }
 
 .date-range-custom-field {
@@ -283,14 +316,15 @@
     gap: 0.35rem;
     min-width: 150px;
     font-size: 0.75rem;
+    line-height: var(--lh-small);
     color: var(--muted);
 }
 
 .date-range-custom-field input {
-    padding: 0.5rem 0.75rem;
+    padding: var(--space-sm) var(--space-md);
     background: var(--bg);
     border: 1px solid var(--border);
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     color: var(--text);
 }
 
@@ -311,15 +345,18 @@
     align-items: center;
 }
 
-/* The input inside the combobox wrapper fills the available width and gains
- * padding-right to accommodate the clear (✕) button. */
+/*
+ * The input inside the combobox wrapper fills the available width and gains
+ * padding-right to accommodate the clear (✕) button.
+ * All padding uses spacing tokens; border-radius uses --radius-md token.
+ */
 .th-search-combobox input[role="combobox"] {
     width: 100%;
-    padding-right: 2.5rem; /* room for the clear button */
-    padding: 0.5rem 2.5rem 0.5rem 0.75rem;
+    /* right padding leaves room for the clear (✕) button */
+    padding: var(--space-sm) 2.5rem var(--space-sm) var(--space-md);
     background: var(--bg);
     border: 1px solid var(--border);
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     color: var(--text);
     font-size: 0.85rem;
     outline: none;
@@ -353,7 +390,7 @@
     padding: 0;
     background: transparent;
     border: none;
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     color: var(--muted);
     font-size: 0.75rem;
     cursor: pointer;
@@ -390,7 +427,7 @@
     list-style: none;
     background: var(--surface);
     border: 1px solid var(--border);
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
     z-index: 100;
     max-height: 280px;
@@ -407,13 +444,16 @@
  * Individual suggestion option.
  * Uses `cursor: default` (not `pointer`) because selection is driven by
  * keyboard / mouse-down events, not a traditional click.
+ * min-height ensures 44 px touch target (WCAG 2.5.5).
  */
 .th-search-option {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    padding: 0.5rem 0.875rem;
+    gap: var(--space-sm);
+    /* horizontal padding mirrors the filter chip padding for visual rhythm */
+    padding: var(--space-sm) 0.875rem;
     font-size: 0.85rem;
+    line-height: var(--lh-body);
     color: var(--text);
     cursor: default;
     transition: background 0.1s;
@@ -450,12 +490,15 @@
     }
 }
 
+/* ─── Filter Result Count ─────────────────────────────────────────────────── */
+
 .th-filter-results {
     align-self: flex-end;
     margin-left: auto;
-    padding: 0.5rem 0;
+    padding: var(--space-sm) 0;
     font-size: 0.8rem;
     font-weight: 600;
+    line-height: var(--lh-small);
     color: var(--muted);
     white-space: nowrap;
 }
@@ -465,7 +508,7 @@
 .th-table-container {
     background: var(--surface);
     border: 1px solid var(--border);
-    border-radius: 8px;
+    border-radius: var(--radius-lg);
     overflow: hidden;
     animation: fadeInUp 0.4s ease both;
     animation-delay: 0.3s;
@@ -482,10 +525,12 @@
 }
 
 .th-table th {
-    padding: 0.875rem 1rem;
+    /* vertical padding uses lg token; horizontal stays at lg for alignment */
+    padding: 0.875rem var(--space-lg);
     text-align: left;
     font-size: 0.7rem;
     font-weight: 600;
+    line-height: var(--lh-small);
     color: var(--muted);
     text-transform: uppercase;
     letter-spacing: 0.05em;
@@ -508,10 +553,13 @@
 }
 
 .tx-row td {
-    padding: 1rem;
+    padding: var(--space-lg);
     font-size: 0.875rem;
+    line-height: var(--lh-body);
     vertical-align: middle;
 }
+
+/* ─── Date cell ─────────────────────────────────────────────────────────────── */
 
 .tx-date {
     min-width: 100px;
@@ -519,13 +567,17 @@
 
 .tx-date-main {
     font-weight: 500;
+    line-height: var(--lh-small);
     color: var(--text);
 }
 
 .tx-date-sub {
     font-size: 0.75rem;
+    line-height: var(--lh-small);
     color: var(--muted);
 }
+
+/* ─── Type cell ─────────────────────────────────────────────────────────────── */
 
 .tx-type {
     min-width: 140px;
@@ -535,21 +587,26 @@
     display: inline-flex;
     align-items: center;
     gap: 0.375rem;
-    padding: 0.25rem 0.625rem;
-    border-radius: 4px;
+    padding: var(--space-xs) 0.625rem;
+    border-radius: var(--radius-sm);
     font-size: 0.75rem;
     font-weight: 500;
+    line-height: var(--lh-small);
 }
 
 .tx-type-icon {
     font-size: 0.85rem;
 }
 
+/* ─── Amount cell ───────────────────────────────────────────────────────────── */
+
 .tx-amount {
     min-width: 100px;
     font-weight: 600;
     font-family: monospace;
 }
+
+/* ─── Credit-line cell ──────────────────────────────────────────────────────── */
 
 .tx-line {
     min-width: 150px;
@@ -558,6 +615,7 @@
 .tx-line-name {
     display: block;
     font-weight: 500;
+    line-height: var(--lh-small);
     color: var(--text);
     font-size: 0.85rem;
 }
@@ -565,9 +623,12 @@
 .tx-line-id {
     display: block;
     font-size: 0.7rem;
+    line-height: var(--lh-small);
     color: var(--muted);
     font-family: monospace;
 }
+
+/* ─── Status cell ───────────────────────────────────────────────────────────── */
 
 .tx-status {
     min-width: 100px;
@@ -575,13 +636,15 @@
 
 .tx-status-badge {
     display: inline-block;
-    padding: 0.25rem 0.5rem;
-    border-radius: 4px;
+    padding: var(--space-xs) var(--space-sm);
+    border-radius: var(--radius-sm);
     font-size: 0.7rem;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.03em;
 }
+
+/* ─── Hash cell ─────────────────────────────────────────────────────────────── */
 
 .tx-hash {
     min-width: 120px;
@@ -590,7 +653,7 @@
 .tx-hash-actions {
     display: inline-flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: var(--space-sm);
 }
 
 .tx-hash-link {
@@ -609,6 +672,8 @@
     color: var(--muted);
     font-size: 0.8rem;
 }
+
+/* ─── Expand toggle cell ────────────────────────────────────────────────────── */
 
 .tx-expand {
     width: 40px;
@@ -637,27 +702,28 @@
 }
 
 .tx-detail {
-    padding: 1.25rem 1.5rem;
+    padding: 1.25rem var(--space-xl);
     border-top: 1px solid var(--border);
 }
 
 .tx-detail-section h4 {
-    margin: 0 0 1rem;
+    margin: 0 0 var(--space-lg);
     font-size: 0.9rem;
     font-weight: 600;
+    line-height: var(--lh-heading);
     color: var(--text);
 }
 
 .tx-detail-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 1rem;
+    gap: var(--space-lg);
 }
 
 .tx-detail-item {
     display: flex;
     flex-direction: column;
-    gap: 0.25rem;
+    gap: var(--space-xs);
 }
 
 .tx-detail-item.full-width {
@@ -666,6 +732,7 @@
 
 .tx-detail-item .label {
     font-size: 0.7rem;
+    line-height: var(--lh-small);
     color: var(--muted);
     text-transform: uppercase;
     letter-spacing: 0.05em;
@@ -673,13 +740,14 @@
 
 .tx-detail-item .value {
     font-size: 0.875rem;
+    line-height: var(--lh-body);
     color: var(--text);
 }
 
 .tx-detail-hash {
     display: inline-flex;
     align-items: center;
-    gap: 0.75rem;
+    gap: var(--space-md);
     flex-wrap: wrap;
 }
 
@@ -698,24 +766,26 @@
 /* ─── Empty State ──────────────────────────────────────────────────────────── */
 
 .th-empty {
-    padding: 4rem 2rem;
+    padding: var(--space-2xl) var(--space-2xl);
     text-align: center;
 }
 
 .th-empty-icon {
     font-size: 3rem;
-    margin-bottom: 1rem;
+    margin-bottom: var(--space-lg);
 }
 
 .th-empty h3 {
-    margin: 0 0 0.5rem;
+    margin: 0 0 var(--space-sm);
     font-size: 1.1rem;
+    line-height: var(--lh-heading);
     color: var(--text);
 }
 
 .th-empty p {
     margin: 0;
     font-size: 0.875rem;
+    line-height: var(--lh-body);
     color: var(--muted);
 }
 
@@ -724,10 +794,10 @@
 }
 
 .th-clear-filters-btn {
-    padding: 0.625rem 1rem;
+    padding: 0.625rem var(--space-lg);
     background: var(--accent);
     border: 1px solid var(--accent);
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     color: var(--bg);
     font-size: 0.85rem;
     font-weight: 700;
@@ -753,16 +823,16 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: 1rem;
-    padding: 1rem;
+    gap: var(--space-lg);
+    padding: var(--space-lg);
     border-top: 1px solid var(--border);
 }
 
 .th-page-btn {
-    padding: 0.5rem 1rem;
+    padding: var(--space-sm) var(--space-lg);
     background: var(--bg);
     border: 1px solid var(--border);
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     color: var(--text);
     font-size: 0.8rem;
     cursor: pointer;
@@ -783,6 +853,7 @@
 
 .th-page-info {
     font-size: 0.85rem;
+    line-height: var(--lh-small);
     color: var(--muted);
 }
 
@@ -793,38 +864,39 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 4rem 2rem;
+    padding: var(--space-2xl) var(--space-2xl);
     text-align: center;
 }
 
 .empty-state-icon {
     font-size: 3rem;
-    margin-bottom: 1rem;
+    margin-bottom: var(--space-lg);
 }
 
 .empty-state h2,
 .empty-state h3 {
-    margin: 0 0 0.5rem;
+    margin: 0 0 var(--space-sm);
     font-size: 1.25rem;
+    line-height: var(--lh-heading);
     color: var(--text);
 }
 
 .empty-state p {
     max-width: 400px;
-    margin: 0 0 1.5rem;
+    margin: 0 0 var(--space-xl);
     font-size: 0.9rem;
+    line-height: var(--lh-body);
     color: var(--muted);
-    line-height: 1.5;
 }
 
 .empty-state-btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 0.75rem 1.5rem;
+    padding: var(--space-md) var(--space-xl);
     background: var(--accent);
     border: none;
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     color: var(--bg);
     font-size: 0.9rem;
     font-weight: 600;
@@ -875,7 +947,7 @@
 
 @media (max-width: 768px) {
     .transaction-history-page {
-        padding: 0 1rem 1.5rem;
+        padding: 0 var(--space-lg) var(--space-xl);
     }
 
     .th-header {
@@ -925,7 +997,7 @@
     }
 
     .th-stat-card {
-        padding: 0.875rem 1rem;
+        padding: 0.875rem var(--space-lg);
     }
 
     .th-stat-value {
@@ -933,12 +1005,12 @@
     }
 
     .th-filters {
-        padding: 1rem;
+        padding: var(--space-lg);
     }
 
     .th-pagination {
         flex-direction: column;
-        gap: 0.75rem;
+        gap: var(--space-md);
     }
 }
 

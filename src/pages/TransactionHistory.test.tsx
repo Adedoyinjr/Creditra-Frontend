@@ -481,4 +481,120 @@ describe("TransactionHistory", () => {
       expect(input).toHaveAttribute("aria-expanded", "false");
     });
   });
+
+  // ── Design-token spacing/typography audit (issue #626, v7) ─────────────────
+  //
+  // These tests verify that structural DOM elements carry the CSS classes whose
+  // styles are declared exclusively through design tokens (--space-*, --radius-*,
+  // --lh-*).  They do NOT test computed pixel values (those vary by viewport and
+  // are brittle); they assert the class names that index.css tokens target.
+
+  describe("Design-token class usage (issue #626 v7)", () => {
+    it("page wrapper carries transaction-history-page class", () => {
+      const { container } = renderTransactionHistory();
+      expect(container.querySelector(".transaction-history-page")).toBeInTheDocument();
+    });
+
+    it("page header carries th-header class", () => {
+      const { container } = renderTransactionHistory();
+      expect(container.querySelector(".th-header")).toBeInTheDocument();
+    });
+
+    it("stat cards carry th-stat-card class", () => {
+      const { container } = renderTransactionHistory();
+      const cards = container.querySelectorAll(".th-stat-card");
+      expect(cards.length).toBe(4);
+    });
+
+    it("stat icons carry th-stat-icon class", () => {
+      const { container } = renderTransactionHistory();
+      const icons = container.querySelectorAll(".th-stat-icon");
+      expect(icons.length).toBe(4);
+    });
+
+    it("filter container carries th-filters class", () => {
+      const { container } = renderTransactionHistory();
+      expect(container.querySelector(".th-filters")).toBeInTheDocument();
+    });
+
+    it("filter chips carry th-filter-chip class", () => {
+      const { container } = renderTransactionHistory();
+      const chips = container.querySelectorAll(".th-filter-chip");
+      // At minimum: 5 type chips + 3 range preset chips + 5 date chips
+      expect(chips.length).toBeGreaterThanOrEqual(13);
+    });
+
+    it("search combobox wrapper carries th-search-combobox class", () => {
+      const { container } = renderTransactionHistory();
+      expect(container.querySelector(".th-search-combobox")).toBeInTheDocument();
+    });
+
+    it("table container carries th-table-container class for token-driven border-radius", () => {
+      const { container } = renderTransactionHistory();
+      expect(container.querySelector(".th-table-container")).toBeInTheDocument();
+    });
+
+    it("transaction rows carry tx-row class", () => {
+      const { container } = renderTransactionHistory();
+      const rows = container.querySelectorAll(".tx-row");
+      // Mock data has transactions; expect at least 1 row
+      expect(rows.length).toBeGreaterThan(0);
+    });
+
+    it("type badges carry tx-type-badge class", () => {
+      const { container } = renderTransactionHistory();
+      const badges = container.querySelectorAll(".tx-type-badge");
+      expect(badges.length).toBeGreaterThan(0);
+    });
+
+    it("status badges carry tx-status-badge class", () => {
+      const { container } = renderTransactionHistory();
+      const badges = container.querySelectorAll(".tx-status-badge");
+      expect(badges.length).toBeGreaterThan(0);
+    });
+
+    it("expanded detail panel carries tx-detail class when a row is expanded", () => {
+      const { container } = renderTransactionHistory();
+      // Click the first transaction row to expand it
+      const rows = container.querySelectorAll(".tx-row");
+      expect(rows.length).toBeGreaterThan(0);
+      fireEvent.click(rows[0]);
+      expect(container.querySelector(".tx-detail")).toBeInTheDocument();
+    });
+
+    it("expanded detail grid carries tx-detail-grid class", () => {
+      const { container } = renderTransactionHistory();
+      const rows = container.querySelectorAll(".tx-row");
+      fireEvent.click(rows[0]);
+      expect(container.querySelector(".tx-detail-grid")).toBeInTheDocument();
+    });
+
+    it("result count region carries th-filter-results class", () => {
+      const { container } = renderTransactionHistory();
+      expect(container.querySelector(".th-filter-results")).toBeInTheDocument();
+    });
+
+    it("export buttons carry export-btn class", () => {
+      const { container } = renderTransactionHistory();
+      const exportBtns = container.querySelectorAll(".export-btn");
+      expect(exportBtns.length).toBeGreaterThanOrEqual(2);
+    });
+
+    it("export help text carries th-export-help class", () => {
+      const { container } = renderTransactionHistory();
+      expect(container.querySelector(".th-export-help")).toBeInTheDocument();
+    });
+
+    it("date sub-line carries tx-date-sub class for muted token colour", () => {
+      const { container } = renderTransactionHistory();
+      const dateSubs = container.querySelectorAll(".tx-date-sub");
+      expect(dateSubs.length).toBeGreaterThan(0);
+    });
+
+    it("line-id cell carries tx-line-id class for monospace + muted token", () => {
+      const { container } = renderTransactionHistory();
+      const lineIds = container.querySelectorAll(".tx-line-id");
+      expect(lineIds.length).toBeGreaterThan(0);
+    });
+  });
 });
