@@ -269,6 +269,8 @@ export const WalletConnectionModal: React.FC<WalletConnectionModalProps> = ({
   // Don't render if not open
   if (!isOpen) return null;
 
+  const selectedProvider = wallets.find(w => w.type === selectedWallet);
+
   return (
     <div
       id={modalId}

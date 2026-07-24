@@ -1,0 +1,170 @@
+/* ─── AprHistoryChart ──────────────────────────────────────────────────────────
+ *
+ * Scoped BEM-like classes for the APR history sparkline component.
+ * All colour values reference CSS custom properties from src/index.css so
+ * dark-mode and high-contrast overrides apply automatically.
+ *
+ * Breakpoints
+ * ───────────
+ *   ≥ 0px   : full layout (default)
+ *   ≤ 480px : compact axis labels; reduced font-sizes
+ *
+ * prefers-reduced-motion
+ * ─────────────────────
+ *   Area-fill animation is suppressed via the global rule in index.css;
+ *   no extra override needed here.
+ * ────────────────────────────────────────────────────────────────────────── */
+
+.apr-history-chart {
+    /* Contain children; let the card width drive the SVG width */
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    width: 100%;
+    min-width: 0;
+}
+
+/* ── Toolbar ── */
+
+.apr-history-chart__toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+.apr-history-chart__title {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+    /* Prevent the label from shrinking when the window buttons need space */
+    flex-shrink: 0;
+}
+
+.apr-history-chart__windows {
+    display: flex;
+    gap: 0.25rem;
+}
+
+.apr-history-chart__window-btn {
+    padding: 0.2rem 0.5rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm, 4px);
+    background: transparent;
+    color: var(--muted);
+    font-size: 0.65rem;
+    font-weight: 600;
+    cursor: pointer;
+    /* Ensure minimum tap target height (WCAG 2.5.5) */
+    min-height: 28px;
+    transition:
+        background 0.15s,
+        border-color 0.15s,
+        color 0.15s;
+}
+
+.apr-history-chart__window-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+.apr-history-chart__window-btn:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+
+.apr-history-chart__window-btn.active {
+    background: rgba(88, 166, 255, 0.14);
+    border-color: rgba(88, 166, 255, 0.5);
+    color: var(--accent);
+}
+
+/* ── SVG ── */
+
+.apr-history-chart__svg {
+    width: 100%;
+    /* Fixed height keeps the chart predictable across card widths */
+    height: 72px;
+    display: block;
+    overflow: visible;
+}
+
+/* Area fill draw-in animation — suppressed via prefers-reduced-motion */
+.apr-history-chart__area {
+    transition: opacity 0.3s;
+}
+
+/* ── Axis labels row ── */
+
+.apr-history-chart__axis {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 0.25rem;
+}
+
+.apr-history-chart__axis-label {
+    font-size: 0.6rem;
+    color: var(--muted);
+    white-space: nowrap;
+    /* Truncate on very small containers instead of wrapping */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 40%;
+}
+
+.apr-history-chart__axis-value {
+    font-size: 0.85rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    flex-shrink: 0;
+}
+
+.apr-history-chart__empty-copy {
+    margin: 0;
+    font-size: 0.75rem;
+    color: var(--muted);
+}
+
+/* ── Responsive: compact mode at narrow widths ── */
+
+@media (max-width: 480px) {
+    .apr-history-chart__title {
+        font-size: 0.65rem;
+    }
+
+    .apr-history-chart__window-btn {
+        font-size: 0.6rem;
+        padding: 0.15rem 0.4rem;
+    }
+
+    .apr-history-chart__axis-label {
+        font-size: 0.55rem;
+    }
+
+    .apr-history-chart__axis-value {
+        font-size: 0.75rem;
+    }
+}
+
+/* ── High-contrast mode: thicker stroke, opaque fills ── */
+
+@media (forced-colors: active) {
+    .apr-history-chart__line {
+        stroke: ButtonText;
+        stroke-width: 2;
+    }
+
+    .apr-history-chart__area {
+        fill: transparent;
+    }
+
+    .apr-history-chart__window-btn.active {
+        forced-color-adjust: none;
+        background: Highlight;
+        color: HighlightText;
+        border-color: Highlight;
+    }
+}

@@ -657,9 +657,24 @@ export function CollateralSubstitutionModal({
           />
         ) : null}
 
-        {/* Footer action bar */}
+        {/* Footer action bar
+            Button order rule (docs/BUTTON_ORDER.md):
+            Cancel (exit flow) — Back (previous step) — Primary (forward/confirm)
+            This puts the safe escape on the left and the primary action on the right,
+            matching WCAG 3.2.4 consistent navigation and thumb-reach conventions. */}
         {status !== 'success' && (
           <div className="csm-footer">
+            {/* Cancel always comes first (leftmost) — exits the flow entirely */}
+            <button
+              type="button"
+              className="csm-btn csm-btn--ghost"
+              onClick={handleClose}
+              disabled={isPending}
+            >
+              Cancel
+            </button>
+
+            {/* Back comes after Cancel — returns to previous step, not an exit */}
             {step !== 'select' && (
               <button
                 type="button"
@@ -670,15 +685,8 @@ export function CollateralSubstitutionModal({
                 Back
               </button>
             )}
-            <button
-              type="button"
-              className="csm-btn csm-btn--ghost"
-              onClick={handleClose}
-              disabled={isPending}
-            >
-              Cancel
-            </button>
 
+            {/* Primary action always comes last (rightmost) */}
             {step === 'select' && (
               <button
                 type="button"

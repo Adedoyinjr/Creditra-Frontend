@@ -11,6 +11,11 @@ interface CreditLineSelectorProps {
    * state in this component.
    */
   onSelect: (creditLine: CreditLine) => void;
+  /**
+   * Optional id of the header micro-indicator (`draw-wizard-micro-select`)
+   * so the step heading is described by the wizard validity chip.
+   */
+  microProgressDescribedBy?: string;
 }
 
 /**
@@ -34,6 +39,7 @@ interface CreditLineSelectorProps {
 export function CreditLineSelector({
   creditLines,
   onSelect,
+  microProgressDescribedBy,
 }: CreditLineSelectorProps) {
   return (
     <div className="space-y-8">
@@ -42,6 +48,9 @@ export function CreditLineSelector({
         <h2
           id="select-credit-line-heading"
           className="mt-1 text-2xl font-bold text-foreground sm:text-3xl"
+          {...(microProgressDescribedBy
+            ? { "aria-describedby": microProgressDescribedBy }
+            : {})}
         >
           Select Credit Line
         </h2>

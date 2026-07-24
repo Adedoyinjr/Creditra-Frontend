@@ -3,9 +3,9 @@ import {
   AlertCircle,
   AlertTriangle,
   CheckCircle,
-  ChevronDown,
-  ChevronUp,
   Info,
+  Minus,
+  Plus,
 } from "lucide-react";
 import { useState, useEffect, useCallback, useRef } from "react";
 import {
@@ -17,9 +17,9 @@ import { FormMessage } from "./FormMessage";
 const STEP_AMOUNT = 100;
 
 const stepClasses =
-  "flex items-center justify-center w-10 h-10 rounded-lg border border-border bg-background/60 text-foreground hover:bg-surface hover:border-accent/50 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-surface disabled:opacity-40 disabled:cursor-not-allowed";
+  "flex items-center justify-center w-11 h-11 rounded-lg border border-border bg-background/60 text-foreground hover:bg-surface hover:border-accent/50 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-surface disabled:opacity-40 disabled:cursor-not-allowed";
 
-const STEP_ICON_CLASS = "h-4 w-4";
+const STEP_ICON_CLASS = "h-4 w-4 stroke-[2.5]";
 
 interface AmountInputProps {
   creditLine: CreditLine;
@@ -185,9 +185,10 @@ export function AmountInput({
             disabled={numAmount <= 0}
             className={stepClasses}
             aria-label="Decrease amount"
+            aria-controls={inputId}
             type="button"
           >
-            <ChevronDown className={STEP_ICON_CLASS} aria-hidden="true" />
+            <Minus className={STEP_ICON_CLASS} aria-hidden="true" />
           </button>
           <span
             className="text-3xl font-bold text-foreground flex-shrink-0"
@@ -202,6 +203,7 @@ export function AmountInput({
              value={amount}
              onChange={(e) => setAmount(e.target.value)}
              onPaste={handlePaste}
+             onKeyDown={handleKeyDown}
              ref={inputRef}
              className="text-2xl font-bold bg-transparent outline-none flex-1 text-foreground placeholder:text-muted/50 min-w-0 tabular-nums"
              min={validation.minAmount}
@@ -218,9 +220,10 @@ export function AmountInput({
             disabled={numAmount >= creditLine.available}
             className={stepClasses}
             aria-label="Increase amount"
+            aria-controls={inputId}
             type="button"
           >
-            <ChevronUp className={STEP_ICON_CLASS} aria-hidden="true" />
+            <Plus className={STEP_ICON_CLASS} aria-hidden="true" />
           </button>
           {/* Max button for quick-fill with accessible label */}
           <button
