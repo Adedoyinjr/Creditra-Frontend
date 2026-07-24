@@ -1,0 +1,205 @@
+/*
+  safe-area.css — iOS PWA safe-area inset support
+  ────────────────────────────────────────────────
+  Exposes the four native safe-area inset env() values as CSS custom
+  properties so that layout components can respond to the notch, home
+  indicator, and status bar on iPhones and iPads running as a PWA
+  (standalone mode) or in Safari with viewport-fit=cover.
+
+  Prerequisites
+  ─────────────
+  index.html must include `viewport-fit=cover` in the viewport meta tag:
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+
+  This is required for env(safe-area-inset-*) to return non-zero values
+  on iOS devices.  Without it, all four insets are always 0.
+
+  Usage
+  ─────
+  Apply the semantic utility classes to fixed/sticky or full-bleed elements:
+
+    Class                    Effect
+    ─────────────────────    ──────────────────────────────────────────────
+    .safe-top                padding-top += safe-area-inset-top
+    .safe-bottom             padding-bottom += safe-area-inset-bottom
+    .safe-left               padding-left += safe-area-inset-left
+    .safe-right              padding-right += safe-area-inset-right
+    .safe-x                  safe-left + safe-right
+    .safe-y                  safe-top + safe-bottom
+    .safe-all                safe-top + safe-bottom + safe-left + safe-right
+
+  Or read the custom properties directly in bespoke components:
+    padding-top: calc(1rem + var(--sat));
+
+  Token reference (added to :root)
+  ─────────────────────────────────
+    --sat   safe-area-inset-top
+    --sar   safe-area-inset-right
+    --sab   safe-area-inset-bottom
+    --sal   safe-area-inset-left
+
+  The abbreviated names mirror the widely-used community convention and
+  are distinct from --space-* tokens to avoid collisions.
+
+  The 0px fallback in env(…, 0px) ensures non-zero values on browsers
+  that do not support env() — notably JSDOM in tests.
+*/
+
+/* ── Root tokens ─────────────────────────────────────────────────────────── */
+
+:root {
+  /**
+   * --sat / --sar / --sab / --sal
+   *
+   * Bridge between env(safe-area-inset-*) and CSS custom properties.
+   *
+   * Why custom properties instead of env() directly?
+   *   1. Custom properties can be read by JavaScript (getComputedStyle).
+   *   2. A single re-declaration here covers all consumers — no env()
+   *      duplication scattered across component stylesheets.
+   *   3. Easier to override in tests or on unsupported browsers.
+   *
+   * env() is only meaningful when viewport-fit=cover is present in the
+   * viewport meta tag.  See index.html.
+   */
+  --sat: env(safe-area-inset-top,    0px);
+  --sar: env(safe-area-inset-right,  0px);
+  --sab: env(safe-area-inset-bottom, 0px);
+  --sal: env(safe-area-inset-left,   0px);
+}
+
+/* ── Utility classes ─────────────────────────────────────────────────────── */
+
+/*
+ * .safe-top
+ * Use on fixed headers and sticky banners so content clears the status
+ * bar / notch on notched iPhones (Face ID models).
+ * The `calc()` form preserves any existing padding the component declares
+ * when the class is combined with an inline style or another rule.
+ * Here we add the inset on top of zero so that the class is self-contained.
+ */
+.safe-top {
+  padding-top: var(--sat);
+}
+
+/*
+ * .safe-bottom
+ * Use on fixed bottom navigation bars, floating action buttons, and toast
+ * containers positioned at the bottom edge.  Required on all iPhones
+ * (home-indicator area at the bottom).
+ */
+.safe-bottom {
+  padding-bottom: var(--sab);
+}
+
+/*
+ * .safe-left / .safe-right
+ * Use on full-width panels (drawers, notification sheets) and any element
+ * that touches the left or right screen edge in landscape orientation.
+ */
+.safe-left {
+  padding-left: var(--sal);
+}
+
+.safe-right {
+  padding-right: var(--sar);
+}
+
+/*
+ * .safe-x — horizontal shorthand
+ * Applies both safe-left and safe-right.  Suitable for full-width
+ * containers where both edges may be obscured in landscape.
+ */
+.safe-x {
+  padding-left:  var(--sal);
+  padding-right: var(--sar);
+}
+
+/*
+ * .safe-y — vertical shorthand
+ * Applies both safe-top and safe-bottom.  Suitable for full-height
+ * panels that span the entire viewport (e.g. mobile drawers).
+ */
+.safe-y {
+  padding-top:    var(--sat);
+  padding-bottom: var(--sab);
+}
+
+/*
+ * .safe-all — all-sides shorthand
+ * Use on full-screen overlays (modals, drawers in standalone mode) so
+ * that all four edges respect device safe areas.
+ */
+.safe-all {
+  padding-top:    var(--sat);
+  padding-right:  var(--sar);
+  padding-bottom: var(--sab);
+  padding-left:   var(--sal);
+}
+
+/* ── Fixed positioned element helpers ───────────────────────────────────── */
+
+/*
+ * .fixed-safe-top
+ * Combines `position: fixed` at the top of the viewport with safe-area
+ * padding.  Intended for persistent navigation bars that must sit above
+ * the notch area.
+ *
+ * The component is responsible for setting left/right/width.
+ */
+.fixed-safe-top {
+  position: fixed;
+  top: 0;
+  /* Push content below the status bar / notch */
+  padding-top: var(--sat);
+}
+
+/*
+ * .fixed-safe-bottom
+ * Combines `position: fixed` at the bottom of the viewport with safe-area
+ * padding.  Intended for bottom navigation bars and floating controls that
+ * must clear the home indicator on Face ID / modern iPhones.
+ */
+.fixed-safe-bottom {
+  position: fixed;
+  bottom: 0;
+  /* Push content above the home indicator */
+  padding-bottom: var(--sab);
+}
+
+/* ── margin-based variants ───────────────────────────────────────────────── */
+
+/*
+ * When a component uses margin rather than padding for layout offset, these
+ * helpers add the safe-area inset as margin instead.  Prefix: mt/mr/mb/ml
+ * for top/right/bottom/left.
+ *
+ * These are additive: they only set the margin; the component's own
+ * margins are NOT preserved.  Combine with calc() in bespoke CSS.
+ */
+.mt-safe { margin-top:    var(--sat); }
+.mr-safe { margin-right:  var(--sar); }
+.mb-safe { margin-bottom: var(--sab); }
+.ml-safe { margin-left:   var(--sal); }
+
+/* ── min-height / min-width helpers ─────────────────────────────────────── */
+
+/*
+ * Some scroll containers need their minimum height to account for safe-area
+ * insets so that the last scrollable item is not obscured by the home
+ * indicator or the on-screen keyboard.  Apply these to scrollable lists
+ * that contain interactive items at the very end.
+ */
+.min-h-safe-bottom {
+  min-height: var(--sab);
+}
+
+/*
+ * Adds bottom padding to a scroll container so that the last item is
+ * not obscured by fixed bottom UI (navbar + home indicator).
+ * Override --scroll-pb-extra in the component to add extra breathing room.
+ */
+.scroll-pb-safe {
+  --scroll-pb-extra: 0px;
+  padding-bottom: calc(var(--sab) + var(--scroll-pb-extra));
+}

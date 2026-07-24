@@ -2,6 +2,8 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { PasswordResetRequestData, AuthError } from "../types/auth.types";
+import { PendingButton } from "../components/PendingButton";
+import { FormField } from "../components/FormField";
 
 export function ForgotPasswordPage() {
   const [formData, setFormData] = useState<PasswordResetRequestData>({
@@ -108,31 +110,29 @@ export function ForgotPasswordPage() {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
-              <label
-                htmlFor="email"
-                className="block text-sm font-medium text-gray-500 mb-2"
-              >
-                Email Address
-              </label>
-              <input
-                id="email"
-                type="email"
-                required
-                value={formData.email}
-                onChange={(e) => setFormData({ email: e.target.value })}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-                placeholder="you@example.com"
-              />
-            </div>
+            <FormField
+              id="email"
+              label="Email Address"
+              type="email"
+              required
+              helpText="Enter the email associated with your account"
+              error={error?.field === 'email' ? error.message : undefined}
+              inputProps={{
+                value: formData.email,
+                onChange: (e) => setFormData({ email: e.target.value }),
+                placeholder: "you@example.com",
+                autoComplete: "email"
+              }}
+            />
 
-            <button
+            <PendingButton
               type="submit"
-              disabled={loading}
+              pending={loading}
+              pendingLabel="Sending..."
               className="w-full bg-[#58a6ff] hover:bg-blue-700 disabled:bg-blue-400 text-white font-medium py-3 rounded-lg transition-colors"
             >
-              {loading ? "Sending..." : "Send Reset Link"}
-            </button>
+              Send Reset Link
+            </PendingButton>
           </form>
 
           <div className="mt-6 text-center">

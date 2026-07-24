@@ -218,18 +218,37 @@ Recommended principles:
 - responsive: the UI should acknowledge user input quickly
 - trustworthy: status, risk, and feedback should never feel ambiguous
 
+## Copy To Clipboard Pattern
+
+Creditra should use one shared copy interaction across wallet addresses and transaction identifiers.
+
+Pattern rules:
+
+- Always show a visible `Copy` label so the affordance is discoverable without hover.
+- Place the copy icon after the label in every instance.
+- Use a real `button` for the action and keep it keyboard accessible.
+- Keep the copied value visible next to the action, whether the value is truncated or full-length.
+- Replace `Copy` with `Copied` for 2 seconds after activation, then revert automatically.
+- Use a polite live region so assistive technology users hear the success state.
+
+Implementation reference:
+
+- Reusable component: `src/components/CopyToClipboard.tsx`
+- Clipboard helper: `src/utils/clipboard.ts`
+
 These principles are especially important if Creditra handles money, approvals, requests, or sensitive account actions.
 
 ## Accessibility Expectations
 
 This page should explicitly document accessibility-related behavior, including:
 
-- visible focus states
-- keyboard navigation order
-- screen-reader-friendly status messaging
-- reduced-motion considerations
-- disabled-state clarity
-- sufficient state contrast
+- **Visible Focus States**: High-contrast rings for all interactive elements.
+- **Keyboard Navigation**: Logical tab order; `Escape` key closes modals/popovers.
+- **Screen Reader Support**: Use of `aria-live` for status updates; descriptive `aria-label` for icon buttons.
+- **Reduced Motion**: Avoid rapid movement; respect `prefers-reduced-motion` media query.
+- **Disabled States**: Ensure disabled buttons are identifiable but still readable.
+- **Contrast**: Maintain 4.5:1 ratio for text and 3:1 for non-text UI components.
+- **Touch Targets**: Minimum size of 44x44px for mobile accessibility.
 
 Interaction documentation is one of the best places to capture accessibility behavior because many accessibility problems come from missing state definitions rather than missing colors.
 

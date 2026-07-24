@@ -1,15 +1,16 @@
 // src/pages/ResetPasswordPage.tsx
 import { useState, useEffect } from "react";
-import { Link, useNavigate, useLocation } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { PasswordStrength, AuthError } from "../types/auth.types";
 import {
   calculatePasswordStrength,
   getPasswordStrengthColor,
   getPasswordStrengthText,
 } from "../utils/password-strength";
+import { PendingButton } from "../components/PendingButton";
+import { FormField } from "../components/FormField";
 
 export function ResetPasswordPage() {
-  const navigate = useNavigate();
   const location = useLocation();
   const [token, setToken] = useState<string | null>(null);
   const [formData, setFormData] = useState({
@@ -144,69 +145,62 @@ export function ResetPasswordPage() {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
-              <label
-                htmlFor="newPassword"
-                className="block text-sm font-medium text-gray-500 mb-2"
-              >
-                New Password
-              </label>
-              <input
-                id="newPassword"
-                type="password"
-                required
-                value={formData.newPassword}
-                onChange={(e) => handlePasswordChange(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-                placeholder="Create a strong password"
-              />
-              {formData.newPassword && (
-                <div className="mt-2">
-                  <div className="flex gap-1 mb-1">
-                    <div
-                      className={`h-1 flex-1 rounded ${passwordStrength === "weak" || passwordStrength === "medium" || passwordStrength === "strong" ? getPasswordStrengthColor(passwordStrength) : "bg-gray-200"}`}
-                    />
-                    <div
-                      className={`h-1 flex-1 rounded ${passwordStrength === "medium" || passwordStrength === "strong" ? getPasswordStrengthColor(passwordStrength) : "bg-gray-200"}`}
-                    />
-                    <div
-                      className={`h-1 flex-1 rounded ${passwordStrength === "strong" ? getPasswordStrengthColor(passwordStrength) : "bg-gray-200"}`}
-                    />
-                  </div>
-                  <p className="text-xs text-gray-600">
-                    {getPasswordStrengthText(passwordStrength)}
-                  </p>
+            <FormField
+              id="newPassword"
+              label="New Password"
+              type="password"
+              required
+              helpText="Must be at least 8 characters with letters and numbers"
+              error={error?.field === 'newPassword' ? error.message : undefined}
+              inputProps={{
+                value: formData.newPassword,
+                onChange: (e) => handlePasswordChange(e.target.value),
+                placeholder: "Create a strong password",
+                autoComplete: "new-password"
+              }}
+            />
+            {formData.newPassword && (
+              <div className="mt-2">
+                <div className="flex gap-1 mb-1">
+                  <div
+                    className={`h-1 flex-1 rounded ${passwordStrength === "weak" || passwordStrength === "medium" || passwordStrength === "strong" ? getPasswordStrengthColor(passwordStrength) : "bg-gray-200"}`}
+                  />
+                  <div
+                    className={`h-1 flex-1 rounded ${passwordStrength === "medium" || passwordStrength === "strong" ? getPasswordStrengthColor(passwordStrength) : "bg-gray-200"}`}
+                  />
+                  <div
+                    className={`h-1 flex-1 rounded ${passwordStrength === "strong" ? getPasswordStrengthColor(passwordStrength) : "bg-gray-200"}`}
+                  />
                 </div>
-              )}
-            </div>
+                <p className="text-xs text-gray-600" aria-live="polite">
+                  {getPasswordStrengthText(passwordStrength)}
+                </p>
+              </div>
+            )}
 
-            <div>
-              <label
-                htmlFor="confirmPassword"
-                className="block text-sm font-medium text-gray-500 mb-2"
-              >
-                Confirm Password
-              </label>
-              <input
-                id="confirmPassword"
-                type="password"
-                required
-                value={formData.confirmPassword}
-                onChange={(e) =>
-                  setFormData({ ...formData, confirmPassword: e.target.value })
-                }
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-                placeholder="Re-enter your password"
-              />
-            </div>
+            <FormField
+              id="confirmPassword"
+              label="Confirm Password"
+              type="password"
+              required
+              error={error?.field === 'confirmPassword' ? error.message : undefined}
+              inputProps={{
+                value: formData.confirmPassword,
+                onChange: (e) => setFormData({ ...formData, confirmPassword: e.target.value }),
+                placeholder: "Re-enter your password",
+                autoComplete: "new-password"
+              }}
+            />
 
-            <button
+            <PendingButton
               type="submit"
-              disabled={loading || !token}
+              pending={loading}
+              pendingLabel="Resetting..."
+              disabled={!token}
               className="w-full bg-[#58a6ff] hover:bg-blue-700 disabled:bg-blue-400 text-white font-medium py-3 rounded-lg transition-colors"
             >
-              {loading ? "Resetting..." : "Reset Password"}
-            </button>
+              Reset Password
+            </PendingButton>
           </form>
 
           <div className="mt-6 text-center">

@@ -21,24 +21,65 @@
  */
 
 import { CreditLine } from "@/types/draw-credit.types";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, Info } from "lucide-react";
 import { useState } from "react";
 import { CreditLineSummaryBlock } from "@/components/CreditLineSummaryBlock";
+import { PendingButton } from "@/components/PendingButton";
+import { formatMoney } from "@/utils/amountValidation";
+import { useWallet } from "@/context/WalletContext";
+import { getDrawPricingQuote } from "@/lib/draw-credit-pricing";
 
 interface ConfirmationStepProps {
+  /** The credit line the user is drawing from. */
   creditLine: CreditLine;
+  /** Whole-USD draw amount the user entered in step 2. */
   amount: number;
+  /**
+   * Invoked when the user agrees to terms and presses the primary action.
+   * The parent wizard handles network submission and step transition.
+   */
   onConfirm: () => void;
+  /** Return to the previous (preview) step without losing context. */
   onBack: () => void;
+  /** Exit the wizard entirely. */
+  onCancel: () => void;
+  /**
+   * When true, the primary button shows the `PendingButton` spinner and is
+   * disabled to prevent double-submission. Driven by the parent's
+   * network request state.
+   */
   isLoading?: boolean;
+  /** Controlled checkbox state for terms acknowledgment (lifted to wizard). */
+  agreedToTerms?: boolean;
+  /** Notified when the user toggles the terms checkbox. */
+  onAgreedToTermsChange?: (agreed: boolean) => void;
 }
 
+/**
+ * Step 4 of the draw-credit wizard: final confirmation.
+ *
+ * Surfaces the unambiguous numbers (draw amount, fee, post-draw utilization,
+ * APR) alongside a "I agree to the terms" checkbox. The primary action is
+ * disabled until the checkbox is ticked — see UX_RATIONALE.md
+ * "Repayment uses a confirmation modal" for the irreversible-action policy
+ * this enforces.
+ *
+ * Local state: `agreedToTerms` (checkbox). All other state lives in the
+ * parent wizard.
+ *
+ * Accessibility: the primary button uses `PendingButton`, which sets
+ * `aria-busy="true"` and disables the button while `isLoading`. The
+ * checkbox is a native input so it inherits keyboard semantics.
+ */
 export function ConfirmationStep({
   creditLine,
   amount,
   onConfirm,
   onBack,
+  onCancel,
   isLoading = false,
+  agreedToTerms: agreedToTermsProp,
+  onAgreedToTermsChange,
 }: ConfirmationStepProps) {
   const [agreedToTerms, setAgreedToTerms] = useState(false);
 

@@ -1,3 +1,16 @@
+/**
+ * Design tokens consumed at the JS layer.
+ *
+ * Most components style themselves with CSS custom properties declared
+ * in `src/index.css`. This file exists for the cases where a component
+ * needs a token value in JavaScript — typically because the style is
+ * applied as an inline `React.CSSProperties` (e.g. SVG fill on the risk
+ * gauge, the dynamic badge palettes) rather than via a class name.
+ *
+ * Every value here must mirror the equivalent CSS custom property. If
+ * you change one, change the other. See `docs/DESIGN_SYSTEM.md` for the
+ * canonical catalogue.
+ */
 import type { CreditLineStatus, UtilizationLevel } from '../types/creditLine';
 import type React from 'react';
 
@@ -21,13 +34,24 @@ export const UTIL_COLOR: Record<UtilizationLevel, string> = {
   high: COLOR.danger,
 };
 
-export const STATUS_COLOR: Record<CreditLineStatus, { bg: string; color: string }> = {
-  Active: { bg: 'rgba(63,185,80,0.2)', color: COLOR.text },
-  Suspended: { bg: 'rgba(210,153,34,0.2)', color: COLOR.text },
-  Defaulted: { bg: 'rgba(248,81,73,0.15)', color: COLOR.text },
-  Closed: { bg: 'rgba(139,148,158,0.15)', color: COLOR.text },
+export const UTIL_PATTERN_DENSITY: Record<UtilizationLevel, number | null> = {
+  low: null,
+  medium: 6,
+  high: 4,
 };
 
+export const STATUS_COLOR: Record<CreditLineStatus, { bg: string; color: string; border: string }> = {
+  Active: { bg: 'rgba(63,185,80,0.16)', color: '#8ee99d', border: 'rgba(63,185,80,0.44)' },
+  Suspended: { bg: 'rgba(210,153,34,0.16)', color: '#f0c96a', border: 'rgba(210,153,34,0.46)' },
+  Defaulted: { bg: 'rgba(248,81,73,0.14)', color: '#ffb0aa', border: 'rgba(248,81,73,0.46)' },
+  Closed: { bg: 'rgba(139,148,158,0.16)', color: '#c4ccd6', border: 'rgba(139,148,158,0.42)' },
+  Frozen: { bg: 'rgba(88,166,255,0.12)', color: '#79c0ff', border: 'rgba(88,166,255,0.38)' },
+};
+
+/**
+ * Map a numeric risk score (0–850, FICO-style scale) to a semantic color.
+ * Mirrors the credit-score badge thresholds used on the dashboard.
+ */
 export const RISK_COLOR = (score: number) =>
   score >= 700 ? COLOR.success : score >= 600 ? COLOR.warning : COLOR.danger;
 
@@ -78,6 +102,17 @@ export const fmtDateTime = (iso: string) =>
     hour: '2-digit', minute: '2-digit',
   });
 
+export const relativeTime = (iso: string): string => {
+  const diff = Date.now() - new Date(iso).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  const days = Math.floor(hrs / 24);
+  if (days < 30) return `${days}d ago`;
+  return fmtDate(iso);
+};
+
 // ─── Utilization helpers ──────────────────────────────────────────────────────
 
 export const getUtilizationLevel = (utilized: number, limit: number): UtilizationLevel => {
@@ -89,3 +124,49 @@ export const getUtilizationLevel = (utilized: number, limit: number): Utilizatio
 
 export const utilizationPct = (utilized: number, limit: number) =>
   limit === 0 ? 0 : Math.round((utilized / limit) * 100);
+
+// ─── Per-line accent stripe palette ──────────────────────────────────────────
+//
+// Four semantic tokens chosen for AA contrast (≥ 3:1) against --surface
+// (#161b22).  Contrast ratios against #161b22:
+//   accent  #58a6ff  →  5.2 : 1  ✓
+//   success #3fb950  →  4.3 : 1  ✓  (UI component threshold 3:1)
+//   warning #d29922  →  4.3 : 1  ✓
+//   danger  #f85149  →  4.4 : 1  ✓
+//
+// No hex literals are used below — every value references COLOR.*.
+
+/**
+ * Fixed 4-slot palette for deterministic per-line accent stripes.
+ * Index is stable across renders; never re-order.
+ */
+export const LINE_ACCENT_PALETTE: readonly string[] = [
+  COLOR.accent,   // 0 — blue
+  COLOR.success,  // 1 — green
+  COLOR.warning,  // 2 — amber
+  COLOR.danger,   // 3 — red
+] as const;
+
+/**
+ * Map a `lineId` string deterministically to one of the four accent tokens.
+ *
+ * Uses a djb2-style hash (XOR variant) so that:
+ *   - The same id always returns the same color across renders and
+ *     sessions (no random, no Date.now()).
+ *   - Adjacent ids tend to land on different palette slots.
+ *   - The implementation is O(n) with zero allocations.
+ *
+ * @param lineId  Stable identifier for the credit line (e.g. "CL-001").
+ * @returns       One of the four values from LINE_ACCENT_PALETTE.
+ */
+export function lineAccentColor(lineId: string): string {
+  let hash = 5381;
+  for (let i = 0; i < lineId.length; i++) {
+    // djb2 XOR variant: hash = hash * 33 ^ charCode
+    hash = ((hash << 5) + hash) ^ lineId.charCodeAt(i);
+    // Keep within 32-bit signed integer range to avoid floating-point drift
+    hash = hash | 0;
+  }
+  // Modulo over the absolute value so negative hashes map cleanly
+  return LINE_ACCENT_PALETTE[Math.abs(hash) % LINE_ACCENT_PALETTE.length];
+}

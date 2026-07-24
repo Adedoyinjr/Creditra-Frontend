@@ -17,26 +17,76 @@
  *   - Spinner has aria-label describing the in-progress action
  */
 
-import { useState } from "react";
+import { useRef, useState, useEffect } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { loadDraft, saveDraft, clearDraft } from "@/state/wizardDraft";
 import { CreditLineSelector } from "@/components/CreditLineSelector";
 import { AmountInput } from "@/components/AmountInput";
 import { PreviewSection } from "@/components/PreviewSection";
 import { ConfirmationStep } from "@/components/ConfirmationStep";
 import { TransactionStatus } from "@/components/TransactionStatus";
+import { InlineHelpOverlay } from "@/components/InlineHelpOverlay";
 import { CreditLine, DrawStep, Transaction } from "@/types/draw-credit.types";
 import { mockCreditLines } from "@/lib/draw-credit-mock-data";
+import { WhyApr } from "@/components/WhyApr";
+import { DrawingLimit } from "@/components/DrawingLimit";
+import { DrawSummaryBar } from "@/components/DrawSummaryBar";
+import { DrawWizardMicroIndicator } from "@/components/DrawWizardMicroIndicator";
+import { useDrawWizardMicroProgress } from "@/hooks/useDrawWizardMicroProgress";
+import "@/components/DrawWizardMicroProgress.css";
+
+const drawSteps = [
+  { id: "select", label: "Select line" },
+  { id: "amount", label: "Enter amount" },
+  { id: "preview", label: "Preview" },
+  { id: "confirm", label: "Confirm" },
+] as const;
+
+type ProgressStep = (typeof drawSteps)[number]["id"];
 
 export default function DrawCreditPage() {
-  const [step, setStep] = useState<DrawStep>("select");
+  const navigate = useNavigate();
+  const location = useLocation();
+  const routeTransaction = location.state?.transaction as Transaction | undefined;
+  const draftState = routeTransaction ? null : loadDraft();
+
+  const [step, setStep] = useState<DrawStep>(
+    routeTransaction ? "status" : draftState?.step ?? "select",
+  );
   const [selectedCreditLine, setSelectedCreditLine] =
-    useState<CreditLine | null>(null);
-  const [amount, setAmount] = useState(0);
+    useState<CreditLine | null>(draftState?.selectedCreditLine ?? null);
+  const [amount, setAmount] = useState(draftState?.amount ?? 0);
+
+  useEffect(() => {
+    if (step === "status") {
+      clearDraft();
+    } else {
+      saveDraft({ step, selectedCreditLine, amount });
+    }
+  }, [step, selectedCreditLine, amount]);
   const [isLoading, setIsLoading] = useState(false);
-  const [transaction, setTransaction] = useState<Transaction | null>(null);
+  const [isHelpOpen, setIsHelpOpen] = useState(false);
+  const helpTriggerRef = useRef<HTMLButtonElement>(null);
+  const [isWhyAprOpen, setIsWhyAprOpen] = useState(false);
+  const whyAprTriggerRef = useRef<HTMLButtonElement>(null);
+  const [transaction, setTransaction] = useState<Transaction | null>(
+    routeTransaction ?? null,
+  );
+  const [confirmationAcknowledged, setConfirmationAcknowledged] =
+    useState(false);
+
+  const { steps: microProgressSteps, debouncedAnnouncement: microProgressAnnouncement } =
+    useDrawWizardMicroProgress({
+      selectedCreditLine,
+      amount,
+      confirmationAcknowledged,
+      isOnConfirmStep: step === "confirm",
+    });
 
   const handleSelectCreditLine = (creditLine: CreditLine) => {
     setSelectedCreditLine(creditLine);
     setAmount(0);
+    setConfirmationAcknowledged(false);
     setStep("amount");
   };
 
@@ -47,28 +97,38 @@ export default function DrawCreditPage() {
 
   const handleConfirm = async () => {
     setIsLoading(true);
-    setStep("status");
 
     // Simulate API call
     await new Promise((resolve) => setTimeout(resolve, 2000));
 
+    const succeeded = Math.random() > 0.2;
     const newTransaction: Transaction = {
       id: `TXN-${Date.now()}`,
       creditLineId: selectedCreditLine!.id,
       amount,
-      status: Math.random() > 0.2 ? "success" : "error",
-      message: Math.random() > 0.2 ? undefined : "Insufficient funds available",
+      status: succeeded ? "success" : "error",
+      message: succeeded ? undefined : "Insufficient funds available",
       timestamp: new Date(),
     };
 
     setTransaction(newTransaction);
     setIsLoading(false);
+    setStep("status");
+
+    if (newTransaction.status === "success") {
+      navigate("/draw-credit/success", {
+        replace: true,
+        state: { transaction: newTransaction },
+      });
+    }
   };
 
   const handleNewDraw = () => {
+    navigate("/draw-credit", { replace: true });
     setStep("select");
     setSelectedCreditLine(null);
     setAmount(0);
+    setConfirmationAcknowledged(false);
     setTransaction(null);
   };
 
@@ -76,10 +136,22 @@ export default function DrawCreditPage() {
     if (step === "amount") {
       setStep("select");
       setSelectedCreditLine(null);
+      setConfirmationAcknowledged(false);
     } else if (step === "confirm") {
       setStep("amount");
+      setConfirmationAcknowledged(false);
     }
   };
+
+  const handleCancel = () => {
+    navigate("/");
+  };
+
+  const currentProgressStep: ProgressStep =
+    step === "confirm" ? "confirm" : step === "amount" ? "preview" : "select";
+  const activeStepIndex = drawSteps.findIndex(
+    (drawStep) => drawStep.id === currentProgressStep,
+  );
 
   return (
     /*
@@ -173,6 +245,27 @@ export default function DrawCreditPage() {
           Need help? Contact support at 1-800-CREDIT-1
         </p>
       </div>
+      <InlineHelpOverlay
+        isOpen={isHelpOpen}
+        onClose={() => setIsHelpOpen(false)}
+        triggerRef={helpTriggerRef}
+      />
+      <WhyApr
+        isOpen={isWhyAprOpen}
+        onClose={() => setIsWhyAprOpen(false)}
+        triggerRef={whyAprTriggerRef}
+      />
+      {/*
+        Mobile-only sticky summary (below md) — fixed to the viewport so
+        line / amount / APR stay visible while scrolling the amount step.
+        Desktop uses the sidebar PreviewSection instead. Bottom padding on
+        <main> (max-md:pb-28) prevents content from sitting under the bar.
+      */}
+      <DrawSummaryBar
+        creditLine={selectedCreditLine}
+        amount={amount}
+        step={step}
+      />
     </main>
   );
 }
