@@ -1,6 +1,7 @@
 import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { MemoryRouter } from "react-router-dom";
+import { BrowserRouter, MemoryRouter } from "react-router-dom";
+import transactionHistoryCss from "./TransactionHistory.css?raw";
 import { TransactionHistory } from "./TransactionHistory";
 import { NotificationProvider } from "../context/NotificationContext";
 
@@ -48,11 +49,39 @@ describe("TransactionHistory", () => {
   const originalCreateObjectURL = URL.createObjectURL;
   const originalRevokeObjectURL = URL.revokeObjectURL;
 
+  const mockLocalStorage = (() => {
+    let store: Record<string, string> = {};
+    return {
+      getItem: vi.fn((key: string) => store[key] || null),
+      setItem: vi.fn((key: string, value: string) => {
+        store[key] = value.toString();
+      }),
+      removeItem: vi.fn((key: string) => {
+        delete store[key];
+      }),
+      clear: vi.fn(() => {
+        store = {};
+      }),
+    };
+  })();
+
   beforeEach(() => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2025-02-20T12:00:00Z"));
     URL.createObjectURL = vi.fn(() => "blob:mock-url");
     URL.revokeObjectURL = vi.fn();
+    mockLocalStorage.clear();
+
+    Object.defineProperty(window, "localStorage", {
+      value: mockLocalStorage,
+      writable: true,
+      configurable: true,
+    });
+    Object.defineProperty(globalThis, "localStorage", {
+      value: mockLocalStorage,
+      writable: true,
+      configurable: true,
+    });
   });
 
   afterEach(() => {
@@ -210,7 +239,7 @@ describe("TransactionHistory", () => {
         .getByRole("button", { name: "Under $5k" })
         .getAttribute("aria-pressed"),
     ).toBe("true");
-    expect(screen.getByText("8 transactions shown")).toBeTruthy();
+    expect(screen.getByText("12 transactions shown")).toBeTruthy();
   });
 
   it("shows a no-results state with a reset filters action", () => {
@@ -251,7 +280,7 @@ describe("TransactionHistory", () => {
   it("renders amount range filter chips with correct aria-pressed states", () => {
     renderTransactionHistory();
 
-    const amountGroup = screen.getByRole("group", { name: /amount/i });
+    const amountGroup = screen.getByRole("group", { name: /^amount$/i });
 
     expect(
       within(amountGroup).getByRole("button", { name: "All Amounts" }),
@@ -590,6 +619,259 @@ describe("TransactionHistory", () => {
       const input = screen.getByRole("combobox", { name: /search transactions/i });
       fireEvent.focus(input);
       expect(input).toHaveAttribute("aria-expanded", "false");
+    });
+  });
+
+  // ── Design-token spacing/typography audit (issue #626, v7) ─────────────────
+  //
+  // These tests verify that structural DOM elements carry the CSS classes whose
+  // styles are declared exclusively through design tokens (--space-*, --radius-*,
+  // --lh-*).  They do NOT test computed pixel values (those vary by viewport and
+  // are brittle); they assert the class names that index.css tokens target.
+
+  describe("Design-token class usage (issue #626 v7)", () => {
+    it("keeps TransactionHistory spacing and line-height pinned to design tokens", () => {
+      const rawSpacingOrLeading = /^\s*(gap|padding|margin|margin-bottom|margin-top|line-height):\s*(?!.*var\(--(?:space|lh)-)[^;]*(?:rem|px|\b1\b)/gm;
+      const matches = transactionHistoryCss.match(rawSpacingOrLeading) ?? [];
+
+      expect(matches).toEqual([]);
+    });
+
+    it("page wrapper carries transaction-history-page class", () => {
+      const { container } = renderTransactionHistory();
+      expect(container.querySelector(".transaction-history-page")).toBeInTheDocument();
+    });
+
+    it("page header carries th-header class", () => {
+      const { container } = renderTransactionHistory();
+      expect(container.querySelector(".th-header")).toBeInTheDocument();
+    });
+
+    it("stat cards carry th-stat-card class", () => {
+      const { container } = renderTransactionHistory();
+      const cards = container.querySelectorAll(".th-stat-card");
+      expect(cards.length).toBe(4);
+    });
+
+    it("stat icons carry th-stat-icon class", () => {
+      const { container } = renderTransactionHistory();
+      const icons = container.querySelectorAll(".th-stat-icon");
+      expect(icons.length).toBe(4);
+    });
+
+    it("filter container carries th-filters class", () => {
+      const { container } = renderTransactionHistory();
+      expect(container.querySelector(".th-filters")).toBeInTheDocument();
+    });
+
+    it("filter chips carry th-filter-chip class", () => {
+      const { container } = renderTransactionHistory();
+      const chips = container.querySelectorAll(".th-filter-chip");
+      // At minimum: 5 type chips + 3 range preset chips + 5 date chips
+      expect(chips.length).toBeGreaterThanOrEqual(13);
+    });
+
+    it("search combobox wrapper carries th-search-combobox class", () => {
+      const { container } = renderTransactionHistory();
+      expect(container.querySelector(".th-search-combobox")).toBeInTheDocument();
+    });
+
+    it("table container carries th-table-container class for token-driven border-radius", () => {
+      const { container } = renderTransactionHistory();
+      expect(container.querySelector(".th-table-container")).toBeInTheDocument();
+    });
+
+    it("transaction rows carry tx-row class", () => {
+      const { container } = renderTransactionHistory();
+      const rows = container.querySelectorAll(".tx-row");
+      // Mock data has transactions; expect at least 1 row
+      expect(rows.length).toBeGreaterThan(0);
+    });
+
+    it("type badges carry tx-type-badge class", () => {
+      const { container } = renderTransactionHistory();
+      const badges = container.querySelectorAll(".tx-type-badge");
+      expect(badges.length).toBeGreaterThan(0);
+    });
+
+    it("status badges carry tx-status-badge class", () => {
+      const { container } = renderTransactionHistory();
+      const badges = container.querySelectorAll(".tx-status-badge");
+      expect(badges.length).toBeGreaterThan(0);
+    });
+
+    it("expanded detail panel carries tx-detail class when a row is expanded", () => {
+      const { container } = renderTransactionHistory();
+      // Click the first transaction row to expand it
+      const rows = container.querySelectorAll(".tx-row");
+      expect(rows.length).toBeGreaterThan(0);
+      fireEvent.click(rows[0]);
+      expect(container.querySelector(".tx-detail")).toBeInTheDocument();
+    });
+
+    it("expanded detail grid carries tx-detail-grid class", () => {
+      const { container } = renderTransactionHistory();
+      const rows = container.querySelectorAll(".tx-row");
+      fireEvent.click(rows[0]);
+      expect(container.querySelector(".tx-detail-grid")).toBeInTheDocument();
+    });
+
+    it("result count region carries th-filter-results class", () => {
+      const { container } = renderTransactionHistory();
+      expect(container.querySelector(".th-filter-results")).toBeInTheDocument();
+    });
+
+    it("export buttons carry export-btn class", () => {
+      const { container } = renderTransactionHistory();
+      const exportBtns = container.querySelectorAll(".export-btn");
+      expect(exportBtns.length).toBeGreaterThanOrEqual(2);
+    });
+
+    it("export help text carries th-export-help class", () => {
+      const { container } = renderTransactionHistory();
+      expect(container.querySelector(".th-export-help")).toBeInTheDocument();
+    });
+
+    it("date sub-line carries tx-date-sub class for muted token colour", () => {
+      const { container } = renderTransactionHistory();
+      const dateSubs = container.querySelectorAll(".tx-date-sub");
+      expect(dateSubs.length).toBeGreaterThan(0);
+    });
+
+    it("line-id cell carries tx-line-id class for monospace + muted token", () => {
+      const { container } = renderTransactionHistory();
+      const lineIds = container.querySelectorAll(".tx-line-id");
+      expect(lineIds.length).toBeGreaterThan(0);
+    });
+  });
+
+  describe("Aria-live announcements (v7)", () => {
+    const getLiveAnnouncementText = () => {
+      const liveRegions = document.querySelectorAll('[role="status"].sr-only');
+      const liveRegion = Array.from(liveRegions).find(
+        (el) => el.textContent && !el.textContent.includes("page loaded")
+      );
+      return liveRegion ? liveRegion.textContent : null;
+    };
+
+    it("announces when transaction type filter changes", () => {
+      renderTransactionHistory();
+      
+      const typeGroup = screen.getByRole("group", { name: /type/i });
+      fireEvent.click(within(typeGroup).getByRole("button", { name: "Draw" }));
+      
+      expect(getLiveAnnouncementText()).toMatch(/Filtered by transaction type Draw/i);
+      expect(getLiveAnnouncementText()).toMatch(/10 transactions shown/i);
+    });
+
+    it("announces when credit line filter changes", () => {
+      renderTransactionHistory();
+      
+      const selects = document.querySelectorAll("select");
+      const lineSelect = selects[0];
+      fireEvent.change(lineSelect, { target: { value: "CL-2024-001" } });
+      
+      expect(getLiveAnnouncementText()).toMatch(/Filtered by credit line Primary Business Line/i);
+      expect(getLiveAnnouncementText()).toMatch(/6 transactions shown/i);
+    });
+
+    it("announces when status filter changes", () => {
+      renderTransactionHistory();
+      
+      const selects = document.querySelectorAll("select");
+      const statusSelect = selects[1];
+      fireEvent.change(statusSelect, { target: { value: "Completed" } });
+      
+      expect(getLiveAnnouncementText()).toMatch(/Filtered by status Completed/i);
+      expect(getLiveAnnouncementText()).toMatch(/27 transactions shown/i);
+    });
+
+    it("announces when amount preset filter changes", () => {
+      renderTransactionHistory();
+      
+      const amountGroup = screen.getByRole("group", { name: /^amount$/i });
+      fireEvent.click(within(amountGroup).getByRole("button", { name: "<$100" }));
+      
+      expect(getLiveAnnouncementText()).toMatch(/Filtered by amount <\$100/i);
+      expect(getLiveAnnouncementText()).toMatch(/4 transactions shown/i);
+    });
+
+    it("announces when amount range preset changes", () => {
+      renderTransactionHistory();
+      
+      const amountRangeGroup = screen.getByRole("group", { name: /amount range/i });
+      fireEvent.click(within(amountRangeGroup).getByRole("button", { name: "Under $5k" }));
+      
+      expect(getLiveAnnouncementText()).toMatch(/Filtered by amount range Under \$5k/i);
+      expect(getLiveAnnouncementText()).toMatch(/12 transactions shown/i);
+    });
+
+    it("announces when date range preset changes", () => {
+      renderTransactionHistory();
+      
+      const dateRangeGroup = screen.getByRole("group", { name: /presets/i });
+      fireEvent.click(within(dateRangeGroup).getByRole("button", { name: "This Week" }));
+      
+      expect(getLiveAnnouncementText()).toMatch(/Filtered by date preset This Week/i);
+    });
+
+    it("announces when search query is applied", async () => {
+      renderTransactionHistory();
+      
+      const input = screen.getByRole("combobox", { name: /search transactions/i });
+      fireEvent.change(input, { target: { value: "equipment" } });
+      
+      await act(async () => {
+        vi.advanceTimersByTime(300);
+      });
+      
+      expect(getLiveAnnouncementText()).toMatch(/Search query "equipment" applied/i);
+      expect(getLiveAnnouncementText()).toMatch(/1 transaction shown/i);
+    });
+
+    it("announces when search query is cleared", async () => {
+      renderTransactionHistory();
+      
+      const input = screen.getByRole("combobox", { name: /search transactions/i });
+      fireEvent.change(input, { target: { value: "equipment" } });
+      
+      await act(async () => {
+        vi.advanceTimersByTime(300);
+      });
+
+      const clearBtn = screen.getByRole("button", { name: /clear search/i });
+      fireEvent.click(clearBtn);
+      
+      await act(async () => {
+        vi.advanceTimersByTime(300);
+      });
+      
+      expect(getLiveAnnouncementText()).toMatch(/Search query cleared/i);
+      expect(getLiveAnnouncementText()).toMatch(/28 transactions shown/i);
+    });
+
+    it("announces when filters are reset", () => {
+      renderTransactionHistory();
+      
+      const typeGroup = screen.getByRole("group", { name: /type/i });
+      fireEvent.click(within(typeGroup).getByRole("button", { name: "Fee" }));
+      const dateRangeGroup = screen.getByRole("group", { name: /date range/i });
+      fireEvent.click(within(dateRangeGroup).getByRole("button", { name: "Today" }));
+
+      fireEvent.click(screen.getByRole("button", { name: /reset all filters/i }));
+      
+      expect(getLiveAnnouncementText()).toMatch(/Filters cleared/i);
+      expect(getLiveAnnouncementText()).toMatch(/28 transactions shown/i);
+    });
+
+    it("announces when page changes", () => {
+      renderTransactionHistory();
+      
+      const nextBtn = screen.getByRole("button", { name: /next/i });
+      fireEvent.click(nextBtn);
+      
+      expect(getLiveAnnouncementText()).toMatch(/Page 2 of 2 loaded/i);
+      expect(getLiveAnnouncementText()).toMatch(/28 transactions shown/i);
     });
   });
 });

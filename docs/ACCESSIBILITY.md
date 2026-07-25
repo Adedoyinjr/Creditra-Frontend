@@ -10,6 +10,17 @@ expected to behave.
 
 ---
 
+### Command palette (Cmd/Ctrl+K)
+
+Global keyboard navigation overlay (`src/components/CommandPalette.tsx`):
+
+- **Open:** `Cmd/Ctrl+K` anywhere, or the header **Search ⌘K** button
+- **Navigate:** Arrow keys; **Enter** activates; **Esc** closes and restores focus
+- Uses `useFocusTrap`, `useBodyScrollLock`, and `useInertBackdrop` (same modal contract)
+- Default registry covers Dashboard, Transactions, Credit Lines, Repay, Draw, Linked Accounts, Help, and notification preferences
+
+---
+
 ## 1. Why AA, not A or AAA
 
 - **AA is the legal baseline** under most public-procurement, EU, and US accessibility
@@ -127,6 +138,11 @@ joins the existing AND-filter chain (type × date × amount × credit-line × st
 
 Both `RepaymentVisualizer` and `RiskGauge` expose accessible descriptions at two levels:
 
+**Chart series patterns (RepaymentVisualizer)** — principal remaining and cumulative
+interest are distinguished by hatch direction (45° vs 135°) layered on the area
+gradients, with matching patterned legend swatches in `src/styles/patterns.css`
+(WCAG 1.4.1 — colour is not the only visual means of identification).
+
 **SVG-level label** — the `aria-label` / `aria-labelledby` on the `<svg role="img">` element
 is the first thing screen readers announce when the user focuses the chart.  Both components
 accept an optional prop to override the default description with a more specific one.
@@ -137,11 +153,23 @@ interacting with SVG arcs:
 
 | Component | SR table contents | Key attributes |
 | --- | --- | --- |
-| `RepaymentVisualizer` | Month-by-month principal/interest breakdown | `<caption>` auto-generated from term length + total interest; overridable via `caption` prop |
+| `RepaymentVisualizer` | Month-by-month principal/interest breakdown | `<caption>` auto-generated from term length + total interest; overridable via `caption` prop; `KbdHint` keyboard navigation (`←`/`→`/`Home`/`End`/`Esc`) |
 | `RiskGauge` | Three risk bands (High/Medium/Low) with score ranges | `aria-current="true"` on the row for the active band; rendered before the SVG so it appears first in reading order |
 
 These tables are always present in the accessibility tree (no `aria-hidden`) and follow
 the standard `<caption>` + `<th scope="col">` + `<td>` pattern.
+
+### Keyboard shortcut hints (`KbdHint`)
+
+The `KbdHint` component (`src/components/KbdHint.tsx`) provides standardized visual and screen-reader accessible keyboard shortcut hints.
+
+- Renders semantic `<kbd>` elements styled with design tokens (`var(--surface-raised)`, `var(--border)`, `var(--text)`).
+- Provides screen-reader accessible text via `.sr-only` element describing the shortcut action.
+- `RepaymentVisualizer` embeds `KbdHint` to indicate keyboard controls for chart inspection:
+  - `←` / `→`: Step backward / forward through schedule months
+  - `Home` / `End`: Jump to first / last repayment month
+  - `Esc`: Clear active data point inspection
+
 
 ### Live regions
 
@@ -158,6 +186,10 @@ the standard `<caption>` + `<th scope="col">` + `<td>` pattern.
 ### Focus management
 
 - Global `:focus-visible` rule in `src/index.css` is `outline: 2px solid var(--accent); outline-offset: 2px`.
+- `RepaymentVisualizer` applies `.repayment-visualizer-focus` to its interactive
+  chart, schedule disclosure, and row-expansion control. The class uses shared
+  focus tokens and `:focus-visible`, so keyboard users receive a consistent
+  outline without adding a focus ring on pointer clicks.
 - Active nav links keep focus styling distinct from active styling (see the comment block
   around `.header-nav-link.active` in `src/index.css`).
 - Modal close returns focus to the trigger via `useFocusTrap`'s `triggerRef`.
@@ -207,7 +239,7 @@ The table below is updated on every accessibility-impacting PR. Status legend:
 | `ToastContainer` | Tab/Esc to dismiss | `role="status"` / `role="alert"` per severity | AA | reduced-motion gated | OK |
 | `BannerAlert` | Tab/Enter on action & dismiss | `role="alert"` for warning/error | AA | n/a | OK |
 | `Dashboard` (risk gauge) | Tab/Enter/Space on SVG root and individual sector bands; keyboard fires `onSectorActivate` | Score and trend exposed via `<title>` + polite `sr-only` sibling; arc animates on value change with reduced-motion fallback; `ariaLabel` prop overrides the auto-generated description; SR-only risk-band table sibling with `aria-current` on the active band; `showSRTable` prop | AA | reduced-motion gated (CSS + JS `matchMedia`) | OK |
-| `RepaymentVisualizer` | n/a (display chart) | `role="img"` SVG with `aria-label` (overridable via `chartAriaLabel` prop); SR-only data table with `<caption>` auto-generated from term + total interest (overridable via `caption` prop); visible schedule table with expand/collapse | AA | n/a | OK |
+| `RepaymentVisualizer` | n/a (display chart) | `role="img"` SVG with `aria-label` (overridable via `chartAriaLabel` prop); principal/interest hatch patterns + legend swatches (not colour alone); SR-only data table with `<caption>` auto-generated from term + total interest (overridable via `caption` prop); visible schedule table with expand/collapse | AA | n/a | OK |
 | `Header` nav | Tab through links; Enter activates | `aria-current="page"` on active link | AA | n/a | OK |
 | `RepayModal` | Focus trap (canonical `{ isActive }` form) + return focus to trigger | `role="dialog"`, `aria-modal`, `aria-labelledby` | AA | n/a | OK |
 | `TransactionHistory` | Sortable headers via Enter/Space; search combobox fully keyboard navigable (ArrowDown/Up, Enter, Escape, Tab) | `aria-sort` reflects column state; search uses ARIA 1.2 combobox pattern (`role="combobox"`, `aria-expanded`, `aria-controls`, `aria-autocomplete="list"`, `aria-activedescendant`); result count in polite live region | AA | reduced-motion disables listbox animation | OK |

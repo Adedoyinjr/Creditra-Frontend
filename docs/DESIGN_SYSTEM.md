@@ -100,16 +100,30 @@ loaded; this keeps CLS at zero and removes a third-party request.
 #### Utility: tabular numerals
 
 ```css
-.num-tabular { font-variant-numeric: tabular-nums; }
+.num-tabular,
+.tabular-nums,
+.amount,
+[data-amount] {
+  font-variant-numeric: tabular-nums;
+}
 ```
 
 Apply to any cell that displays money, percentages, or APR so digit widths are fixed and
-columns stay visually stable as values change. Currently used on:
+columns stay visually stable as values change. Defined in `src/styles/typography.css` and
+used on:
 
-- `TransactionHistory` — `tx-amount` column cells, `th-stat-value` summary cards, and the
-  Amount row in the expanded detail panel.
-- `CreditLines` — `cl-metric-value` (Limit / Utilized / Available), utilization percentage,
-  APR, and Risk Score cells.
+- `AmountInput` — draw field, available limit, validation metrics (`.tabular-nums.amount`)
+- `TransactionHistory` — `tx-amount` / `th-stat-value` via `.num-tabular`
+- `CreditLines` — Limit / Utilized / Available metric values
+- `ConfirmationStep`, `RepayModal`, `RepaySuccessShareCard` — amount summaries
+- Dashboard summary cards via `.num-display` / `.num-tabular`
+
+#### Utility: per-account color stripe
+
+`src/utils/colorFromId.ts` maps a stable account id to a palette color via a djb2 hash.
+Use `colorFromId(id)` for the hex token and `accountStripeStyle(id)` for a 3 px absolute
+left-edge stripe. LinkedAccounts provider cards render the stripe + an inline swatch so
+identity survives monochrome / forced-colors viewing (WCAG 1.4.1).
 
 ### Motion
 
@@ -143,6 +157,7 @@ Every component below lives in `src/components/`.
 | `FormField` | Labelled input/textarea/custom child with help and error slots | `htmlFor` linkage, `aria-describedby`, `aria-invalid`, `aria-required` set automatically; required indicator announced |
 | `FormMessage` | Tone-coded helper/error text | `role="alert"` for `danger`; live region wrapping for transient feedback |
 | `AmountInput` | Currency input with preset chips (25/50/75/100%) and per-severity feedback | `aria-describedby` aggregates helper + constraint + status + error IDs |
+| `HealthFactorChart` | Per-credit-line health-factor trend (SVG + SR table) | `role="img"` + labelledby; band label pairs colour with text |
 | `PendingButton` | Submit button with inline spinner | `aria-busy="true"` while loading; spinner `aria-hidden` so label-change communicates state |
 
 ### Status, feedback, success

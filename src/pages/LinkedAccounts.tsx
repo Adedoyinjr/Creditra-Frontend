@@ -27,6 +27,7 @@ import {
 import type { LinkedAccount, AccountProvider, AccountLinkError } from '../types/linkedAccount';
 import { Skeleton } from '../components/Skeleton';
 import { PendingButton } from '../components/PendingButton';
+import { accountStripeStyle, colorFromId } from '../utils/colorFromId';
 import './LinkedAccounts.css';
 
 /**
@@ -55,19 +56,32 @@ function ProviderCard({
   const isConnected = account?.status === 'connected';
   const hasError = account?.status === 'error';
   const isPending = loadingAccountId === account?.id;
+  // Stable per-account identity stripe (falls back to provider key when unlinked).
+  const stripeId = account?.id ?? `provider:${provider}`;
+  const stripeColor = colorFromId(stripeId);
 
   return (
     <div
       className={`provider-card ${isConnected ? 'provider-card--connected' : ''} ${hasError ? 'provider-card--error' : ''}`}
       role="article"
       aria-label={`${info.name} account ${isConnected ? 'connected' : 'not connected'}`}
+      style={{ position: 'relative', overflow: 'hidden' }}
     >
+      {/* Decorative identity stripe — meaning carried by the provider name below */}
+      <span aria-hidden="true" style={accountStripeStyle(stripeId)} />
       <div className="provider-card__header">
         <div className="provider-card__icon" style={{ backgroundColor: info.color }} aria-hidden="true">
           {info.icon}
         </div>
         <div className="provider-card__info">
-          <h3 className="provider-card__name">{info.name}</h3>
+          <h3 className="provider-card__name">
+            <span
+              aria-hidden="true"
+              className="provider-card__swatch"
+              style={{ background: stripeColor }}
+            />
+            {info.name}
+          </h3>
           {isConnected && account && (
             <p className="provider-card__details">
               <span className="provider-card__email">{account.externalId}</span>

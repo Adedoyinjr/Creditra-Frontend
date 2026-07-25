@@ -82,9 +82,13 @@ const DEFAULT_ITEMS: CommandItem[] = [
   { id: 'nav-draw-credit',  label: 'Draw',                 icon: '⬇️',  action: '/draw-credit',               description: 'Draw from a credit line' },
   { id: 'nav-open-credit',  label: 'Request Evaluation',   icon: '📝',  action: '/open-credit',               description: 'Apply for a new credit line' },
   { id: 'nav-auctions',     label: 'Dutch Auctions',       icon: '🔨',  action: '/dutch-auctions',            description: 'View active auctions' },
+  { id: 'nav-linked',       label: 'Linked Accounts',      icon: '🔗',  action: '/linked-accounts',           description: 'Manage linked external accounts' },
   { id: 'nav-help',         label: 'Help Center',          icon: '❓',  action: '/help',                      description: 'Browse help articles' },
   { id: 'nav-notif-prefs',  label: 'Notification Settings',icon: '🔔',  action: '/notification-preferences',  description: 'Manage notification preferences' },
 ];
+
+/** Exported for tests and documentation of the default registry. */
+export { DEFAULT_ITEMS as COMMAND_PALETTE_DEFAULT_ITEMS };
 
 // ─── Fuzzy-search helpers ─────────────────────────────────────────────────────
 

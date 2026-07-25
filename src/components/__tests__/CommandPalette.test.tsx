@@ -400,4 +400,16 @@ describe('CommandPalette', () => {
     expect(secondBtn).toHaveClass('cp-item--active');
     expect(options[0].querySelector('button')).not.toHaveClass('cp-item--active');
   });
+
+  it('includes Linked Accounts in the default registry', () => {
+    render(<Wrapper />);
+    expect(screen.getByText('Linked Accounts')).toBeInTheDocument();
+  });
+
+  it('navigates to /linked-accounts when Linked Accounts is activated', async () => {
+    const user = userEvent.setup();
+    render(<Wrapper />);
+    await user.click(screen.getByRole('button', { name: /linked accounts/i }));
+    expect(mockNavigate).toHaveBeenCalledWith('/linked-accounts');
+  });
 });
