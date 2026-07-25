@@ -2,6 +2,7 @@ import { useMemo, useState, useEffect, useRef, useCallback } from "react";
 import { Link } from "react-router-dom";
 import ActivityFeed from "../components/ActivityFeed";
 import { CopyToClipboard } from "../components/CopyToClipboard";
+import { CopyLoanButton } from "../components/CopyLoanButton";
 import { StatusBadge } from "../components/StatusBadge";
 import { useWallet } from "../context/WalletContext";
 import { Sparkline } from "../components/Sparkline";
@@ -982,6 +983,9 @@ export function Dashboard() {
                  </div>
                  <span className="qa-arrow" style={{ color: COLOR.muted }}>→</span>
                </Link>
+                {hasLines && (
+                  <CopyLoanButton creditLines={creditLines} />
+                )}
              </div>
            </div>
  
