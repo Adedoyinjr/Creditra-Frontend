@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef } from 'react';
+import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { AlertCircle, AlertTriangle, CheckCircle, Info, ArrowLeft } from 'lucide-react';
 import { PayoffProjection } from '@/components/PayoffProjection';
@@ -124,7 +124,7 @@ export default function RepayPage() {
     setStep('input');
   };
 
-  const handleBack = () => {
+  const handleBack = useCallback(() => {
     if (step === 'review') {
       setStep('input');
     } else if (!preselectedId) {
@@ -132,7 +132,39 @@ export default function RepayPage() {
     } else {
       navigate(-1);
     }
-  };
+  }, [step, preselectedId, navigate]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+        if (e.key === 'Escape') {
+          e.target.blur();
+        }
+        return;
+      }
+
+      if (e.key === 'Escape') {
+        handleBack();
+      } else if (e.key === 's' || e.key === 'S') {
+        if (step === 'input' && selectedLine) {
+          handleSmartPay();
+        }
+      } else if (e.key === 'm' || e.key === 'M') {
+        if (step === 'input' && selectedLine) {
+          handlePercent(100);
+        }
+      } else if (e.key === 'Enter') {
+        if (step === 'input' && selectedLine && !isInvalid && amount > 0) {
+          handleReview();
+        } else if (step === 'review' && !isConfirmDisabled) {
+          handleConfirm();
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [step, selectedLine, isInvalid, amount, isConfirmDisabled, handleBack, suggestedAmount, walletBalance]);
 
   if (!selectedLine) {
     return (
@@ -144,6 +176,7 @@ export default function RepayPage() {
         >
           <ArrowLeft className="h-4 w-4" aria-hidden="true" />
           Back
+          <KbdHint keys={['Esc']} className="ml-1" />
         </button>
 
         <header>
@@ -231,7 +264,10 @@ export default function RepayPage() {
         className="mb-4 inline-flex items-center gap-1.5 rounded-md text-sm text-muted transition-colors hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
       >
         <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-        {step === 'input' ? 'Back to credit lines' : 'Back to input'}
+        <span className="flex items-center gap-1.5">
+          {step === 'input' ? 'Back to credit lines' : 'Back to input'}
+          <KbdHint keys={['Esc']} />
+        </span>
       </button>
 
       <div className="space-y-6">
@@ -303,7 +339,13 @@ export default function RepayPage() {
                         className="flex-1 rounded-md border border-accent/30 px-2 py-1.5 text-xs font-medium text-accent transition-colors hover:bg-accent/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
                         aria-label={`Set amount to ${pct === 100 ? 'maximum' : `${pct} percent`}`}
                       >
-                        {pct === 100 ? 'MAX' : `${pct}%`}
+                        {pct === 100 ? (
+                          <span className="flex items-center justify-center gap-1">
+                            MAX <KbdHint keys={['M']} />
+                          </span>
+                        ) : (
+                          `${pct}%`
+                        )}
                       </button>
                     ))}
                     <button
@@ -312,7 +354,9 @@ export default function RepayPage() {
                       className="flex-1 rounded-md border border-success/30 px-2 py-1.5 text-xs font-medium text-success transition-colors hover:bg-success/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-success"
                       aria-label={`Smart Pay suggested repayment of ${formatMoney(suggestedAmount)}`}
                     >
-                      Smart Pay
+                      <span className="flex items-center justify-center gap-1">
+                        Smart Pay <KbdHint keys={['S']} />
+                      </span>
                     </button>
                   </div>
 
@@ -448,7 +492,9 @@ export default function RepayPage() {
                     disabled={isInvalid || amount <= 0}
                     className="mt-4 w-full rounded-lg bg-accent px-4 py-3 text-sm font-semibold text-background transition-all hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-50"
                   >
-                    Review Repayment
+                    <span className="flex items-center justify-center gap-2">
+                      Review Repayment <KbdHint keys={['Enter']} />
+                    </span>
                   </button>
                 </div>
               </div>
@@ -555,7 +601,9 @@ export default function RepayPage() {
                 onClick={handleBack}
                 className="flex-1 rounded-lg border border-border bg-surface px-4 py-3 text-sm font-semibold text-foreground transition-all hover:bg-border focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
               >
-                Back
+                <span className="flex items-center justify-center gap-2">
+                  Back <KbdHint keys={['Esc']} />
+                </span>
               </button>
               <button
                 type="button"
@@ -564,7 +612,9 @@ export default function RepayPage() {
                 aria-disabled={isConfirmDisabled || undefined}
                 className="flex-[2] rounded-lg bg-accent px-4 py-3 text-sm font-semibold text-background transition-all hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-50"
               >
-                Confirm Repayment
+                <span className="flex items-center justify-center gap-2">
+                  Confirm Repayment <KbdHint keys={['Enter']} />
+                </span>
               </button>
             </div>
           </div>

@@ -78,7 +78,7 @@ describe('RepayPage', () => {
 
   it('Review Repayment button is disabled with no amount', () => {
     renderPage(['/repay?line=CL-2024-001']);
-    expect(screen.getByText('Review Repayment')).toBeDisabled();
+    expect(screen.getByRole('button', { name: /review repayment/i })).toBeDisabled();
   });
 
   it('has I need help button', () => {
@@ -112,7 +112,7 @@ describe('RepayPage', () => {
 
   it('Smart Pay enables Review Repayment when clicked', () => {
     renderPage(['/repay?line=CL-2024-001']);
-    const reviewBtn = screen.getByText('Review Repayment');
+    const reviewBtn = screen.getByRole('button', { name: /review repayment/i });
     expect(reviewBtn).toBeDisabled();
     const smartPayBtn = screen.getByRole('button', { name: /smart pay/i });
     fireEvent.click(smartPayBtn);
