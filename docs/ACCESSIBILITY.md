@@ -10,6 +10,17 @@ expected to behave.
 
 ---
 
+### Command palette (Cmd/Ctrl+K)
+
+Global keyboard navigation overlay (`src/components/CommandPalette.tsx`):
+
+- **Open:** `Cmd/Ctrl+K` anywhere, or the header **Search ⌘K** button
+- **Navigate:** Arrow keys; **Enter** activates; **Esc** closes and restores focus
+- Uses `useFocusTrap`, `useBodyScrollLock`, and `useInertBackdrop` (same modal contract)
+- Default registry covers Dashboard, Transactions, Credit Lines, Repay, Draw, Linked Accounts, Help, and notification preferences
+
+---
+
 ## 1. Why AA, not A or AAA
 
 - **AA is the legal baseline** under most public-procurement, EU, and US accessibility

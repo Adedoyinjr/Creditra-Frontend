@@ -190,6 +190,19 @@ function App() {
                   >
                     Settings
                   </button>
+                  <button
+                    type="button"
+                    className="header-nav-link header-cmdk-btn"
+                    aria-label="Open command palette"
+                    aria-keyshortcuts="Control+K Meta+K"
+                    onClick={(e) => {
+                      paletteTriggerRef.current = e.currentTarget;
+                      setIsPaletteOpen(true);
+                    }}
+                  >
+                    <span aria-hidden="true">Search</span>
+                    <kbd className="header-cmdk-kbd" aria-hidden="true">⌘K</kbd>
+                  </button>
                   <KycTriggerButton
                     triggerRef={kycTriggerRef}
                     onClick={() => setIsKycDrawerOpen(true)}
