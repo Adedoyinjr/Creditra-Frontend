@@ -103,60 +103,77 @@ export function ConfirmationStep({
       {/* Credit-line summary block (limit / utilized / available) */}
       <CreditLineSummaryBlock creditLine={creditLine} amount={amount} />
 
-      {/* Draw details card */}
-      <div className="dc-balance-card">
-        {/* Draw amount */}
-        <div className="dc-balance-row" style={{ alignItems: "center" }}>
-          <span className="dc-balance-row__label" style={{ fontSize: "var(--text-sm)", fontWeight: "var(--font-medium)" }}>
-            Draw Amount
-          </span>
-          <span style={{ fontSize: "var(--text-2xl)", fontWeight: "var(--font-bold)", color: "var(--text)" }}>
-            ${amount.toLocaleString()}
-          </span>
-        </div>
-
-        {/* Current utilization */}
-        <div className="dc-balance-row" style={{ alignItems: "center" }}>
-          <span className="dc-balance-row__label" style={{ fontSize: "var(--text-sm)", fontWeight: "var(--font-medium)" }}>
-            Current Utilization
-          </span>
-          <span className="dc-balance-row__value">
-            {creditLine.utilization}%
-          </span>
-        </div>
-
-        {/* After-draw utilization */}
-        <div className="dc-balance-row" style={{ alignItems: "center" }}>
-          <span className="dc-balance-row__label" style={{ fontSize: "var(--text-sm)", fontWeight: "var(--font-medium)" }}>
-            After Draw
-          </span>
-          <span
-            className={isHighUtilization ? "dc-util-row__value--warning" : "dc-balance-row__value"}
-          >
-            {newUtilization}%
-          </span>
-        </div>
-
-        {/* High-utilization warning — role="alert" ensures immediate announcement */}
-        {isHighUtilization && (
-          <div
-            className="dc-banner dc-banner--warning"
-            role="alert"
-            style={{ marginTop: "var(--space-4)" }}
-          >
-            <AlertCircle
-              className="dc-banner__icon"
-              aria-hidden="true"
-            />
-            <div className="dc-banner__body">
-              <p className="dc-banner__title">High Utilization Warning</p>
-              <p>
-                Your credit utilization will exceed 80%. This may impact your
-                credit terms.
+      <div className="space-y-4">
+        <div className="rounded-lg border border-border bg-surface p-5">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="sm:col-span-2">
+              <p className="text-sm text-muted font-medium">Draw amount</p>
+              <p className="mt-1 text-3xl font-bold text-foreground tabular-nums">
+                {formatMoney(safeAmount)}
+              </p>
+            </div>
+            <div className="rounded-lg border border-border bg-background/60 p-3">
+              <p className="text-sm text-muted font-medium">Estimated fee</p>
+              <p className="mt-1 font-semibold text-foreground tabular-nums">
+                {formatMoney(fee)}
+              </p>
+            </div>
+            <div className="rounded-lg border border-border bg-background/60 p-3">
+              <p className="text-sm text-muted font-medium">
+                Estimated monthly interest
+              </p>
+              <p className="mt-1 font-semibold text-foreground tabular-nums">
+                {formatMoney(estimatedMonthlyInterest)}
+              </p>
+            </div>
+            <div className="rounded-lg border border-border bg-background/60 p-3">
+              <p className="text-sm text-muted font-medium">New balance</p>
+              <p className="mt-1 font-semibold text-foreground tabular-nums">
+                {formatMoney(newBalance)}
+              </p>
+            </div>
+            <div className="rounded-lg border border-border bg-background/60 p-3">
+              <p className="text-sm text-muted font-medium">
+                Available after draw
+              </p>
+              <p className="mt-1 font-semibold text-foreground tabular-nums">
+                {formatMoney(remainingAvailable)}
               </p>
             </div>
           </div>
-        )}
+          <div className="mt-4 grid gap-3 border-t border-border pt-4 sm:grid-cols-2">
+            <div className="flex justify-between gap-4 text-sm">
+              <span className="text-muted font-medium">
+                Current utilization
+              </span>
+              <span className="font-semibold text-foreground tabular-nums">
+                {creditLine.utilization}%
+              </span>
+            </div>
+            <div className="flex justify-between gap-4 text-sm">
+              <span className="text-muted font-medium">After draw</span>
+              <span
+                className={`font-semibold tabular-nums ${newUtilization > 80 ? "text-yellow-500" : "text-foreground"}`}
+              >
+                {newUtilization}%
+              </span>
+            </div>
+          </div>
+          {newUtilization > 80 && (
+            <div className="flex items-start gap-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-3 mt-4">
+              <AlertCircle className="w-5 h-5 text-yellow-500 mt-0.5 shrink-0" />
+              <div>
+                <p className="text-sm font-semibold text-yellow-500">
+                  High Utilization Warning
+                </p>
+                <p className="text-sm text-yellow-500 mt-1">
+                  Your credit utilization will exceed 80%. This may impact your
+                  credit terms.
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Terms & conditions checkbox */}
