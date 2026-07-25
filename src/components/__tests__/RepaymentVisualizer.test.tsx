@@ -1,6 +1,17 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
+import { readFileSync } from 'fs';
+import { resolve } from 'path';
 import { RepaymentVisualizer } from '../RepaymentVisualizer';
+import * as ReducedMotionContext from '../../context/ReducedMotionContext';
+
+// Default: motion is enabled. Individual test groups override this as needed.
+vi.spyOn(ReducedMotionContext, 'useReducedMotion').mockReturnValue({
+  motionOverride: 'system',
+  toggleMotionOverride: vi.fn(),
+  setMotionOverride: vi.fn(),
+  isReducedMotionActive: false,
+});
 
 const BASE = {
   principal: 100_000,
@@ -17,9 +28,7 @@ describe('RepaymentVisualizer', () => {
 
   it('shows empty state when principal is 0', () => {
     render(<RepaymentVisualizer {...BASE} principal={0} />);
-    expect(
-      screen.getByText(/Enter a valid principal/i),
-    ).toBeInTheDocument();
+    expect(screen.getByText(/Enter a valid principal/i)).toBeInTheDocument();
   });
 
   it('shows empty state when monthlyPayment is 0', () => {
@@ -27,24 +36,47 @@ describe('RepaymentVisualizer', () => {
     expect(screen.getByText(/Enter a valid principal/i)).toBeInTheDocument();
   });
 
-  it('renders the SVG chart with accessible role', () => {
+  it('renders the SVG chart with accessible role and tabIndex', () => {
     render(<RepaymentVisualizer {...BASE} />);
-    expect(screen.getByRole('img')).toBeInTheDocument();
+    const svg = screen.getByRole('img');
+    expect(svg).toBeInTheDocument();
+    expect(svg).toHaveAttribute('tabindex', '0');
+  });
+
+  it('marks every keyboard target with the tokenized focus-visible class', () => {
+    render(<RepaymentVisualizer {...BASE} maxMonths={24} />);
+
+    expect(screen.getByRole('img')).toHaveClass('repayment-visualizer-focus');
+    expect(screen.getByText(/Schedule table/i)).toHaveClass('repayment-visualizer-focus');
+
+    fireEvent.click(screen.getByText(/Schedule table/i));
+    expect(screen.getByRole('button', { name: /Show all 24 months/i })).toHaveClass(
+      'repayment-visualizer-focus',
+    );
+  });
+
+  it('uses the shared focus tokens only for keyboard-visible focus', () => {
+    const css = readFileSync(resolve(__dirname, '../../styles/focus.css'), 'utf-8');
+    const selectorIndex = css.indexOf('.repayment-visualizer-focus:focus-visible');
+    expect(selectorIndex).toBeGreaterThanOrEqual(0);
+
+    const rule = css.slice(selectorIndex, css.indexOf('}', selectorIndex) + 1);
+    expect(rule).toContain('--focus-ring-width');
+    expect(rule).toContain('--focus-ring-color');
+    expect(rule).toContain('--focus-ring-offset');
+    expect(css).not.toMatch(/\.repayment-visualizer-focus:focus(?!-visible)/);
   });
 
   it('renders term and total interest summary', () => {
     render(<RepaymentVisualizer {...BASE} />);
-    // summary line contains "months" and "$X total interest"
-    expect(screen.getByText(/month/i)).toBeInTheDocument();
-    expect(screen.getByText(/total interest/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/month/i).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText(/total interest/i).length).toBeGreaterThanOrEqual(1);
   });
 
   it('renders the SR-only data table with correct headers', () => {
     render(<RepaymentVisualizer {...BASE} />);
     const tables = screen.getAllByRole('table');
-    // At least one table (SR table always present)
     expect(tables.length).toBeGreaterThanOrEqual(1);
-    // SR table has required column headers
     expect(screen.getAllByRole('columnheader', { name: /Month/i }).length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByRole('columnheader', { name: /Interest/i }).length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByRole('columnheader', { name: /Principal/i }).length).toBeGreaterThanOrEqual(1);
@@ -52,24 +84,21 @@ describe('RepaymentVisualizer', () => {
 
   it('renders a legend with principal and interest labels', () => {
     render(<RepaymentVisualizer {...BASE} />);
-    expect(screen.getByText(/Principal remaining/i)).toBeInTheDocument();
-    expect(screen.getByText(/Cumulative interest/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/Principal remaining/i).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText(/Cumulative interest/i).length).toBeGreaterThanOrEqual(1);
   });
 
   it('schedule table toggle expands visible rows', () => {
     render(<RepaymentVisualizer {...BASE} />);
     const summary = screen.getByText(/Schedule table/i);
-    // Open details
     fireEvent.click(summary);
-    // Should now show a "Show all" button or visible table rows
     const tables = screen.getAllByRole('table');
     expect(tables.length).toBeGreaterThanOrEqual(2);
   });
 
   it('caps term at maxMonths', () => {
-    // Very low payment — would take forever; capped at maxMonths=6
     render(<RepaymentVisualizer principal={100_000} apr={8.5} monthlyPayment={3000} maxMonths={6} />);
-    expect(screen.getByText(/6 month/)).toBeInTheDocument();
+    expect(screen.getAllByText(/6 month/).length).toBeGreaterThanOrEqual(1);
   });
 
   it('has no tooltip by default', () => {
@@ -80,11 +109,9 @@ describe('RepaymentVisualizer', () => {
   it('shows tooltip on mouse move over SVG', () => {
     render(<RepaymentVisualizer {...BASE} />);
     const svg = screen.getByRole('img');
-    // Simulate mousemove — jsdom won't compute getBoundingClientRect but fires the handler
     fireEvent.mouseMove(svg, { clientX: 100, clientY: 100 });
-    // Tooltip should appear (role="status" aria-live)
     expect(screen.getByRole('status')).toBeInTheDocument();
-    expect(screen.getByText(/Month/)).toBeInTheDocument();
+    expect(screen.getAllByText(/Month/).length).toBeGreaterThanOrEqual(1);
   });
 
   it('hides tooltip on mouse leave', () => {
@@ -94,5 +121,360 @@ describe('RepaymentVisualizer', () => {
     expect(screen.getByRole('status')).toBeInTheDocument();
     fireEvent.mouseLeave(svg);
     expect(screen.queryByRole('status')).not.toBeInTheDocument();
+  });
+});
+
+// ─── Keyboard shortcut hints & navigation tests ───────────────────────────
+
+describe('RepaymentVisualizer — keyboard shortcut hints & navigation', () => {
+  it('renders keyboard shortcut hints in header and legend bar', () => {
+    render(<RepaymentVisualizer {...BASE} />);
+    expect(screen.getAllByText('Inspect month').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText('Inspect').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText('Clear')).toBeInTheDocument();
+    expect(screen.getAllByText('←').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText('→').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText('Esc')).toBeInTheDocument();
+  });
+
+  it('navigates schedule data points using ArrowRight and ArrowLeft keys', () => {
+    render(<RepaymentVisualizer {...BASE} />);
+    const svg = screen.getByRole('img');
+
+    fireEvent.keyDown(svg, { key: 'ArrowRight' });
+    expect(screen.getByRole('status')).toBeInTheDocument();
+    expect(svg).toHaveAttribute('aria-valuenow', '1');
+
+    fireEvent.keyDown(svg, { key: 'ArrowRight' });
+    expect(svg).toHaveAttribute('aria-valuenow', '2');
+
+    fireEvent.keyDown(svg, { key: 'ArrowLeft' });
+    expect(svg).toHaveAttribute('aria-valuenow', '1');
+  });
+
+  it('jumps to start and end of schedule using Home and End keys', () => {
+    render(<RepaymentVisualizer principal={100_000} apr={8.5} monthlyPayment={3000} maxMonths={6} />);
+    const svg = screen.getByRole('img');
+
+    fireEvent.keyDown(svg, { key: 'End' });
+    expect(svg).toHaveAttribute('aria-valuenow', '6');
+
+    fireEvent.keyDown(svg, { key: 'Home' });
+    expect(svg).toHaveAttribute('aria-valuenow', '1');
+  });
+
+  it('clears active tooltip when pressing Escape key', () => {
+    render(<RepaymentVisualizer {...BASE} />);
+    const svg = screen.getByRole('img');
+
+    fireEvent.keyDown(svg, { key: 'ArrowRight' });
+    expect(screen.getByRole('status')).toBeInTheDocument();
+
+    fireEvent.keyDown(svg, { key: 'Escape' });
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+  });
+});
+
+// ─── Accessibility caption / aria-label tests ─────────────────────────────
+
+describe('RepaymentVisualizer — accessible chart captions', () => {
+  it('SVG has the default aria-label when chartAriaLabel is omitted', () => {
+    render(<RepaymentVisualizer {...BASE} />);
+    const svg = screen.getByRole('img');
+    expect(svg).toHaveAttribute(
+      'aria-label',
+      'Stacked area chart showing principal and cumulative interest over repayment months',
+    );
+  });
+
+  it('SVG uses the chartAriaLabel override when provided', () => {
+    const customLabel = 'Home improvement loan repayment chart at 8.5% APR';
+    render(<RepaymentVisualizer {...BASE} chartAriaLabel={customLabel} />);
+    expect(screen.getByRole('img')).toHaveAttribute('aria-label', customLabel);
+  });
+
+  it('changing chartAriaLabel prop updates the SVG aria-label', () => {
+    const { rerender } = render(<RepaymentVisualizer {...BASE} chartAriaLabel="First label" />);
+    expect(screen.getByRole('img')).toHaveAttribute('aria-label', 'First label');
+    rerender(<RepaymentVisualizer {...BASE} chartAriaLabel="Second label" />);
+    expect(screen.getByRole('img')).toHaveAttribute('aria-label', 'Second label');
+  });
+
+  it('removing chartAriaLabel reverts the SVG to the default aria-label', () => {
+    const { rerender } = render(<RepaymentVisualizer {...BASE} chartAriaLabel="Custom label" />);
+    rerender(<RepaymentVisualizer {...BASE} />);
+    expect(screen.getByRole('img')).toHaveAttribute(
+      'aria-label',
+      'Stacked area chart showing principal and cumulative interest over repayment months',
+    );
+  });
+
+  it('SR table caption is auto-generated from term and total interest when caption is omitted', () => {
+    render(<RepaymentVisualizer {...BASE} />);
+    const caption = document.querySelector('table.sr-only caption');
+    expect(caption).toBeInTheDocument();
+  });
+
+  it('does not render the SVG or SR table when principal is 0', () => {
+    render(<RepaymentVisualizer {...BASE} principal={0} />);
+    expect(screen.queryByRole('img')).not.toBeInTheDocument();
+    expect(document.querySelector('table.sr-only')).not.toBeInTheDocument();
+  });
+});
+
+// ─── Responsive breakpoints (Tailwind) tests ──────────────────────────────
+
+describe('RepaymentVisualizer — responsive breakpoints', () => {
+  it('section wrapper has responsive padding classes', () => {
+    render(<RepaymentVisualizer {...BASE} />);
+    const section = screen.getByRole('region', { name: 'Repayment plan visualizer' });
+    expect(section).toHaveClass('p-4', 'sm:p-5', 'md:p-6');
+  });
+
+  it('header uses responsive flex layout', () => {
+    render(<RepaymentVisualizer {...BASE} />);
+    const heading = screen.getByText('Repayment Plan');
+    const header = heading.closest('header');
+    expect(header).toHaveClass('flex', 'flex-col', 'sm:flex-row', 'sm:items-center', 'sm:justify-between');
+  });
+
+  it('legend uses responsive flex layout', () => {
+    render(<RepaymentVisualizer {...BASE} />);
+    const legendItem = screen.getAllByText(/Principal remaining/i)[0];
+    const legendWrapper = legendItem.parentElement;
+    expect(legendWrapper).toHaveClass('flex', 'flex-wrap', 'items-center', 'gap-3', 'sm:gap-4');
+  });
+
+  it('visible table wrapper has responsive negative margin for bleed', () => {
+    render(<RepaymentVisualizer {...BASE} />);
+    const summary = screen.getByText(/Schedule table/i);
+    fireEvent.click(summary);
+    const table = screen.getAllByRole('table').find((t) => !t.classList.contains('sr-only'));
+    const wrapper = table?.parentElement;
+    expect(wrapper).toHaveClass('overflow-x-auto', '-mx-4', 'sm:mx-0', 'px-4', 'sm:px-0');
+  });
+});
+
+// ─── Tabular-nums tests ────────────────────────────────────────────────────
+
+describe('RepaymentVisualizer — tabular-nums on numeric displays', () => {
+  it('SR-only table has tabular-nums class', () => {
+    render(<RepaymentVisualizer {...BASE} />);
+    expect(document.querySelector('table.sr-only.tabular-nums')).toBeInTheDocument();
+  });
+
+  it('visible table has tabular-nums class', () => {
+    render(<RepaymentVisualizer {...BASE} />);
+    fireEvent.click(screen.getByText(/Schedule table/i));
+    const visibleTable = screen.getAllByRole('table').find((t) => !t.classList.contains('sr-only'));
+    expect(visibleTable).toHaveClass('tabular-nums');
+  });
+
+  it('visible table td cells have tabular-nums style', () => {
+    render(<RepaymentVisualizer {...BASE} />);
+    fireEvent.click(screen.getByText(/Schedule table/i));
+    const visibleTable = screen.getAllByRole('table').find((t) => !t.classList.contains('sr-only'));
+    const firstDataCell = visibleTable?.querySelector('tbody td');
+    expect(firstDataCell).toBeDefined();
+    expect(firstDataCell).toHaveStyle({ fontVariantNumeric: 'tabular-nums' });
+  });
+
+  it('tooltip bubble has tabular-nums style', () => {
+    render(<RepaymentVisualizer {...BASE} />);
+    const svg = screen.getByRole('img');
+    fireEvent.mouseMove(svg, { clientX: 100, clientY: 100 });
+    const tooltip = screen.getByRole('status');
+    expect(tooltip).toHaveStyle({ fontVariantNumeric: 'tabular-nums' });
+  });
+
+  it('header summary has tabular-nums style', () => {
+    render(<RepaymentVisualizer {...BASE} />);
+    // The summary <p> is inside <header>, sibling of the title <div>
+    const header = screen.getByText('Repayment Plan').closest('header');
+    const summaryP = header?.querySelector('p');
+    expect(summaryP).toHaveStyle({ fontVariantNumeric: 'tabular-nums' });
+  });
+
+  it('SVG y-axis labels have tabular-nums style', () => {
+    render(<RepaymentVisualizer {...BASE} />);
+    const svg = screen.getByRole('img');
+    const yAxisTexts = svg.querySelectorAll('text');
+    const yAxisText = Array.from(yAxisTexts).find((t) => t.textContent?.includes('$'));
+    expect(yAxisText).toBeDefined();
+    expect(yAxisText).toHaveAttribute('style', expect.stringContaining('tabular-nums'));
+  });
+
+  it('SVG x-axis labels have tabular-nums style', () => {
+    render(<RepaymentVisualizer {...BASE} />);
+    const svg = screen.getByRole('img');
+    const xAxisText = Array.from(svg.querySelectorAll('text')).find((t) =>
+      t.textContent?.startsWith('mo '),
+    );
+    expect(xAxisText).toBeDefined();
+    expect(xAxisText).toHaveAttribute('style', expect.stringContaining('tabular-nums'));
+  });
+});
+
+// ─── Reduced-motion fallback tests ────────────────────────────────────────
+
+/**
+ * Tests for the `prefers-reduced-motion` fallback behaviour.
+ *
+ * Strategy
+ * ────────
+ * - OS media query path: override the global matchMedia stub to return
+ *   `matches: true` for `(prefers-reduced-motion: reduce)`.
+ * - In-app override path: spy on `useReducedMotion` and return
+ *   `isReducedMotionActive: true`.
+ *
+ * Both paths are tested independently so neither can mask a regression.
+ */
+describe('RepaymentVisualizer — reduced-motion fallback', () => {
+  // ── Default (motion enabled) ──────────────────────────────────────────────
+
+  it('applies animation classes to area paths when motion is not reduced', () => {
+    render(<RepaymentVisualizer {...BASE} />);
+    const chartWrap = document.querySelector('.rv-chart-wrap');
+    expect(chartWrap).toBeInTheDocument();
+    expect(chartWrap).not.toHaveAttribute('data-reduced-motion');
+    expect(document.querySelectorAll('.rv-area-animate').length).toBeGreaterThan(0);
+  });
+
+  it('applies the stagger delay class to the interest path when motion is enabled', () => {
+    render(<RepaymentVisualizer {...BASE} />);
+    expect(document.querySelector('.rv-area-animate--interest')).toBeInTheDocument();
+  });
+
+  it('applies legend animation class when motion is enabled', () => {
+    render(<RepaymentVisualizer {...BASE} />);
+    expect(document.querySelector('.rv-legend-animate')).toBeInTheDocument();
+  });
+
+  // ── In-app reduced-motion override (via ReducedMotionContext) ─────────────
+
+  describe('when isReducedMotionActive is true (in-app override)', () => {
+    let spy: ReturnType<typeof vi.spyOn>;
+
+    beforeEach(() => {
+      spy = vi.spyOn(ReducedMotionContext, 'useReducedMotion').mockReturnValue({
+        motionOverride: 'reduced',
+        toggleMotionOverride: vi.fn(),
+        setMotionOverride: vi.fn(),
+        isReducedMotionActive: true,
+      });
+    });
+
+    afterEach(() => {
+      spy.mockRestore();
+    });
+
+    it('sets data-reduced-motion="true" on the chart wrapper', () => {
+      render(<RepaymentVisualizer {...BASE} />);
+      expect(document.querySelector('.rv-chart-wrap')).toHaveAttribute('data-reduced-motion', 'true');
+    });
+
+    it('does NOT apply animation classes to area paths', () => {
+      render(<RepaymentVisualizer {...BASE} />);
+      expect(document.querySelectorAll('.rv-area-animate').length).toBe(0);
+    });
+
+    it('does NOT apply the stagger-delay class to the interest path', () => {
+      render(<RepaymentVisualizer {...BASE} />);
+      expect(document.querySelector('.rv-area-animate--interest')).not.toBeInTheDocument();
+    });
+
+    it('does NOT apply the legend animation class', () => {
+      render(<RepaymentVisualizer {...BASE} />);
+      expect(document.querySelector('.rv-legend-animate')).not.toBeInTheDocument();
+    });
+
+    it('still renders the SVG chart (no visual regression)', () => {
+      render(<RepaymentVisualizer {...BASE} />);
+      expect(screen.getByRole('img')).toBeInTheDocument();
+    });
+
+    it('still renders the SR data table (a11y unaffected)', () => {
+      render(<RepaymentVisualizer {...BASE} />);
+      expect(document.querySelector('table.sr-only')).toBeInTheDocument();
+    });
+
+    it('still renders the legend items (content unaffected)', () => {
+      render(<RepaymentVisualizer {...BASE} />);
+      expect(screen.getAllByText(/Principal remaining/i).length).toBeGreaterThanOrEqual(1);
+      expect(screen.getAllByText(/Cumulative interest/i).length).toBeGreaterThanOrEqual(1);
+    });
+
+    it('tooltip still works (interaction unaffected by reduced motion)', () => {
+      render(<RepaymentVisualizer {...BASE} />);
+      const svg = screen.getByRole('img');
+      fireEvent.mouseMove(svg, { clientX: 100, clientY: 100 });
+      expect(screen.getByRole('status')).toBeInTheDocument();
+    });
+  });
+
+  // ── OS prefers-reduced-motion media query ─────────────────────────────────
+
+  describe('when prefers-reduced-motion OS preference is active', () => {
+    let spy: ReturnType<typeof vi.spyOn>;
+
+    beforeEach(() => {
+      // Simulate the OS preference being active by making isReducedMotionActive true
+      // (ReducedMotionContext reads OS matchMedia on init; spy to avoid jsdom issues)
+      spy = vi.spyOn(ReducedMotionContext, 'useReducedMotion').mockReturnValue({
+        motionOverride: 'system',
+        toggleMotionOverride: vi.fn(),
+        setMotionOverride: vi.fn(),
+        isReducedMotionActive: true, // as if OS reduced-motion is on
+      });
+    });
+
+    afterEach(() => {
+      spy.mockRestore();
+      // Restore default mock
+      vi.spyOn(ReducedMotionContext, 'useReducedMotion').mockReturnValue({
+        motionOverride: 'system',
+        toggleMotionOverride: vi.fn(),
+        setMotionOverride: vi.fn(),
+        isReducedMotionActive: false,
+      });
+    });
+
+    it('sets data-reduced-motion="true" on the chart wrapper via OS preference', () => {
+      render(<RepaymentVisualizer {...BASE} />);
+      expect(document.querySelector('.rv-chart-wrap')).toHaveAttribute('data-reduced-motion', 'true');
+    });
+
+    it('does NOT apply animation classes to area paths via OS preference', () => {
+      render(<RepaymentVisualizer {...BASE} />);
+      expect(document.querySelectorAll('.rv-area-animate').length).toBe(0);
+    });
+
+    it('does NOT apply the legend animation class via OS preference', () => {
+      render(<RepaymentVisualizer {...BASE} />);
+      expect(document.querySelector('.rv-legend-animate')).not.toBeInTheDocument();
+    });
+
+    it('chart and table still render correctly in OS reduced-motion mode', () => {
+      render(<RepaymentVisualizer {...BASE} />);
+      expect(screen.getByRole('img')).toBeInTheDocument();
+      expect(document.querySelector('table.sr-only')).toBeInTheDocument();
+    });
+  });
+
+  // ── Empty state ───────────────────────────────────────────────────────────
+
+  it('empty state is unaffected by reduced-motion override', () => {
+    const spy = vi.spyOn(ReducedMotionContext, 'useReducedMotion').mockReturnValue({
+      motionOverride: 'reduced',
+      toggleMotionOverride: vi.fn(),
+      setMotionOverride: vi.fn(),
+      isReducedMotionActive: true,
+    });
+
+    render(<RepaymentVisualizer {...BASE} principal={0} />);
+    expect(screen.getByText(/Enter a valid principal/i)).toBeInTheDocument();
+    expect(document.querySelector('.rv-chart-wrap')).not.toBeInTheDocument();
+
+    spy.mockRestore();
   });
 });

@@ -1,6 +1,68 @@
-/* src/styles/typography.css */
+/*
+  typography.css — Shared typography utilities
+  ─────────────────────────────────────────────
+  Imported once globally in index.css.
 
-/* Add tabular-nums to amount displays for stability */
-.tabular-nums {
+  Tabular numerals (font-variant-numeric: tabular-nums)
+  ──────────────────────────────────────────────────────
+  Applied to every numeric display — credit totals, utilization percentages,
+  transaction amounts, AmountInput — so digit columns stay visually stable
+  as values change (no horizontal "jitter" when $1,000 becomes $10,000).
+
+  Usage
+  ─────
+  Add `num-tabular`, `tabular-nums`, `amount`, or `data-amount` to any
+  element that renders a number:
+
+    <p className="value num-tabular">{fmt(totalLimit)}</p>
+    <span className="amount tabular-nums" data-amount>$1,234.56</span>
+
+  Dark-mode / High-contrast
+  ─────────────────────────
+  This property is purely typographic — it does not affect colour, so no
+  [data-contrast="high"] override is needed.
+
+  Reduced-motion
+  ──────────────
+  font-variant-numeric is not an animated property; no @media block is needed.
+*/
+
+/* ── Tabular numerals ────────────────────────────────────────────────────── */
+
+/**
+ * .num-tabular / .tabular-nums / .amount / [data-amount]
+ * Prevent digit-width wobble in money, percentage, and score columns.
+ */
+.num-tabular,
+.tabular-nums,
+.amount,
+[data-amount] {
   font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+/**
+ * .num-display
+ * Large hero/display number — used for the primary value in summary cards.
+ */
+.num-display {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+/**
+ * .num-mono
+ * Combines tabular-nums with a monospace stack for wallet addresses,
+ * transaction IDs, or any string where character-level alignment matters.
+ */
+.num-mono {
+  font-variant-numeric: tabular-nums;
+  font-family:
+    ui-monospace,
+    "SFMono-Regular",
+    "SF Mono",
+    Menlo,
+    Consolas,
+    "Liberation Mono",
+    monospace;
 }

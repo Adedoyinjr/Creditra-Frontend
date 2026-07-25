@@ -4,6 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { LoginFormData, AuthError } from "../types/auth.types";
 import { PendingButton } from "../components/PendingButton";
 import { FormField } from "../components/FormField";
+import { TrustBadges } from "../components/TrustBadges";
 
 export function LoginPage() {
   const navigate = useNavigate();
@@ -80,11 +81,19 @@ export function LoginPage() {
               }}
             />
 
+            {/*
+              helpText provides a persistent <p id="password-help"> element so that
+              aria-describedby="password-help" is always present on the input — not
+              only when a field-level error fires. This satisfies WCAG 2.1 SC 1.3.1
+              (Info and Relationships) and SC 4.1.3 (Status Messages) by giving
+              screen readers programmatic context for the password field at all times.
+            */}
             <FormField
               id="password"
               label="Password"
               type="password"
               required
+              helpText="Enter the password for your account"
               error={error?.field === 'password' ? error.message : undefined}
               inputProps={{
                 value: formData.password,
@@ -137,6 +146,8 @@ export function LoginPage() {
             </p>
           </div>
         </div>
+
+        <TrustBadges />
       </div>
     </div>
   );

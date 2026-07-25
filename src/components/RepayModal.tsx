@@ -2,12 +2,18 @@ import React, { useEffect, useRef, useState } from 'react';
 import { AlertCircle, AlertTriangle, CheckCircle, Info } from 'lucide-react';
 import { useFocusTrap } from '../hooks/useFocusTrap';
 import { formatMoney, getRepayAmountValidation, requiresRepayConfirmation } from '../utils/amountValidation';
+import {
+  computeFullPayoffAmount,
+  computeMonthlyAccruedInterest,
+  formatAmountInputValue,
+} from '../utils/currency';
 import { InlineHelpOverlay } from './InlineHelpOverlay';
 import { PendingButton } from './PendingButton';
 import {
   TypedAmountConfirmField,
   isTypedAmountMatch,
 } from './TypedAmountConfirm';
+import './RepayModal.css';
 
 interface RepaymentCreditLine {
   id: string;
@@ -103,6 +109,9 @@ export function RepayModal({
   });
   const [amountStr, setAmountStr] = useState('');
   const [confirmAmountStr, setConfirmAmountStr] = useState('');
+  const [isRepayAllLocked, setIsRepayAllLocked] = useState(false);
+  const [repayAllLockAnnouncement, setRepayAllLockAnnouncement] = useState('');
+  const amountInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (step === 'review') {
@@ -110,9 +119,13 @@ export function RepayModal({
     }
   }, [step]);
 
-  const totalDue = creditLine.utilized;
-  const accruedInterestEstimate = (creditLine.utilized * (creditLine.apr / 100)) / 12;
-  const validation = getRepayAmountValidation(amountStr, totalDue, walletBalance);
+  const principalBalance = creditLine.utilized;
+  const accruedInterest = computeMonthlyAccruedInterest(
+    principalBalance,
+    creditLine.apr,
+  );
+  const fullPayoff = computeFullPayoffAmount(principalBalance, creditLine.apr);
+  const validation = getRepayAmountValidation(amountStr, fullPayoff, walletBalance);
   const amount = validation.amount;
   const isInvalid = !validation.isValid;
   const repayAmountHintId = 'repay-amount-hint';
@@ -137,9 +150,36 @@ export function RepayModal({
   const isConfirmDisabled = needsConfirm && !isConfirmMatch;
 
   const handlePercent = (pct: number) => {
+    setIsRepayAllLocked(false);
+    setRepayAllLockAnnouncement('');
     let target = (validation.maxRepayAmount * pct) / 100;
     if (target > walletBalance) target = walletBalance;
     setAmountStr(target.toFixed(2));
+  };
+
+  const handleRepayAll = () => {
+    const payoffValue = formatAmountInputValue(fullPayoff);
+    setAmountStr(payoffValue);
+    setIsRepayAllLocked(true);
+    setRepayAllLockAnnouncement(
+      `Repay all selected. Amount locked at ${fmt(fullPayoff)} including accrued interest. Press Edit to change.`,
+    );
+  };
+
+  const handleUnlockRepayAll = () => {
+    setIsRepayAllLocked(false);
+    setRepayAllLockAnnouncement(
+      'Amount unlocked. You can edit the repayment amount.',
+    );
+    requestAnimationFrame(() => {
+      amountInputRef.current?.focus();
+    });
+  };
+
+  const handleAmountChange = (value: string) => {
+    setIsRepayAllLocked(false);
+    setRepayAllLockAnnouncement('');
+    setAmountStr(value);
   };
 
   const handleReview = () => {
@@ -149,10 +189,34 @@ export function RepayModal({
   };
 
   const handleConfirm = () => {
+    const completedHash = `0x${Math.random().toString(16).slice(2, 18).padEnd(16, '0')}`;
+    const completedTimestamp = new Date().toISOString();
+    setTxHash(completedHash);
+    setTxTimestamp(completedTimestamp);
     setStep('pending');
     setTimeout(() => {
       setStep('success');
     }, 2500);
+  };
+
+  const handleCopySummary = async () => {
+    if (!txHash) return;
+
+    const summaryText = [
+      `Amount: ${fmt(amount)}`,
+      `Line: ${creditLine.name}`,
+      `Transaction Hash: ${txHash}`,
+      `Timestamp: ${new Date(txTimestamp).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' })}`,
+    ].join('\n');
+
+    try {
+      await navigator.clipboard.writeText(summaryText);
+      setCopyMessage('Transaction summary copied to clipboard.');
+    } catch {
+      setCopyMessage('Unable to copy summary. Please try again.');
+    } finally {
+      copyButtonRef.current?.focus();
+    }
   };
 
   const handleCloseComplete = () => {
@@ -211,11 +275,11 @@ export function RepayModal({
               </p>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
                 <p style={{ margin: 0, fontSize: '2rem', fontWeight: 700, color: COLOR.danger, lineHeight: 1 }}>
-                  {fmt(totalDue)}
+                  <span className="tabular-nums">{fmt(totalDue)}</span>
                 </p>
                 <div style={{ textAlign: 'right' }}>
                   <p style={{ margin: 0, fontSize: '0.75rem', color: COLOR.muted }}>
-                    Includes {fmt(accruedInterestEstimate)}
+                    Includes <span className="tabular-nums">{fmt(accruedInterestEstimate)}</span>
                   </p>
                   <p style={{ margin: 0, fontSize: '0.75rem', color: COLOR.muted }}>
                     accrued interest est.
@@ -226,8 +290,8 @@ export function RepayModal({
 
             <div style={{ marginBottom: '1.5rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                <label htmlFor="repay-amount-input" style={{ fontSize: '0.9rem', color: COLOR.text, fontWeight: 500 }}>Repayment amount</label>
-                <span style={{ fontSize: '0.8rem', color: validation.feedback.severity === 'danger' ? COLOR.danger : COLOR.muted }}>Wallet: {fmt(walletBalance)}</span>
+                <label htmlFor="repay-amount-input" style={{ fontSize: '0.9rem', color: COLOR.text, fontWeight: 500 }}>Amount to Repay</label>
+                <span style={{ fontSize: '0.8rem', color: validation.feedback.severity === 'danger' ? COLOR.danger : COLOR.muted }}>Wallet: <span className="tabular-nums">{fmt(walletBalance)}</span></span>
               </div>
               <p id={repayAmountHintId} style={{ margin: '0 0 0.75rem', fontSize: '0.82rem', color: COLOR.muted }}>
                 Enter the dollar amount you wish to repay. We'll show minimum and maximum guidance.
@@ -243,43 +307,81 @@ export function RepayModal({
                 ))}
               </div>
 
-              <div style={{ position: 'relative' }}>
-                <span style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', fontSize: '1.25rem', color: COLOR.muted }} aria-hidden="true">$</span>
-                <input
-                  id="repay-amount-input"
-                  type="number"
-                  value={amountStr}
-                  onChange={(e) => setAmountStr(e.target.value)}
-                  placeholder="0.00"
-                  aria-invalid={validation.feedback.severity === 'danger'}
-                  aria-describedby={describedBy}
-                  className="repay-modal-input"
-                  style={{
-                    width: '100%',
-                    background: COLOR.bg,
-                    border: `1px solid ${validation.feedback.severity === 'danger' ? COLOR.danger : validation.feedback.severity === 'warning' ? COLOR.warning : amount > 0 ? COLOR.accent : COLOR.border}`,
-                    borderRadius: 8,
-                    padding: '0.75rem 1rem 0.75rem 2rem',
-                    color: COLOR.text,
-                    fontSize: '1.25rem',
-                    fontWeight: 500,
-                    boxShadow: amount > 0 && validation.feedback.severity !== 'danger' ? '0 0 0 2px rgba(88,166,255,0.1)' : 'none',
-                    transition: 'all 0.2s',
-                  }}
-                />
+              <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'stretch' }}>
+                <div style={{ position: 'relative', flex: 1 }}>
+                  <span style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', fontSize: '1.25rem', color: COLOR.muted }} aria-hidden="true">$</span>
+                  <input
+                    ref={amountInputRef}
+                    id="repay-amount-input"
+                    data-testid="repay-amount-input"
+                    type="number"
+                    value={amountStr}
+                    onChange={(e) => handleAmountChange(e.target.value)}
+                    readOnly={isRepayAllLocked}
+                    aria-readonly={isRepayAllLocked}
+                    placeholder="0.00"
+                    aria-invalid={validation.feedback.severity === 'danger'}
+                    aria-describedby={`${describedBy}${isRepayAllLocked ? ' repay-all-lock-status' : ''}`}
+                    className={`repay-modal-input${isRepayAllLocked ? ' repay-modal-input--locked' : ''}`}
+                    style={{
+                      width: '100%',
+                      background: COLOR.bg,
+                      border: `1px solid ${isRepayAllLocked ? COLOR.accent : validation.feedback.severity === 'danger' ? COLOR.danger : validation.feedback.severity === 'warning' ? COLOR.warning : amount > 0 ? COLOR.accent : COLOR.border}`,
+                      borderRadius: 8,
+                      padding: '0.75rem 1rem 0.75rem 2rem',
+                      color: COLOR.text,
+                      fontSize: '1.25rem',
+                      fontWeight: 500,
+                      boxShadow: amount > 0 && validation.feedback.severity !== 'danger' && !isRepayAllLocked ? '0 0 0 2px rgba(88,166,255,0.1)' : 'none',
+                      transition: 'all 0.2s',
+                    }}
+                  />
+                </div>
+                {isRepayAllLocked ? (
+                  <button
+                    type="button"
+                    className="repay-modal-edit-btn"
+                    onClick={handleUnlockRepayAll}
+                    aria-label="Unlock and edit amount"
+                    data-testid="repay-all-edit"
+                  >
+                    Edit
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    className="repay-modal-repay-all-btn"
+                    onClick={handleRepayAll}
+                    disabled={fullPayoff <= 0}
+                    aria-label={`Repay all ${fmt(fullPayoff)} including accrued interest`}
+                    data-testid="repay-all-shortcut"
+                  >
+                    Repay all
+                  </button>
+                )}
               </div>
+              <span
+                id="repay-all-lock-status"
+                className="sr-only"
+                role="status"
+                aria-live="polite"
+                aria-atomic="true"
+                data-testid="repay-all-lock-announcement"
+              >
+                {repayAllLockAnnouncement}
+              </span>
               <div id={repayAmountConstraintsId} style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: '0.5rem', marginBottom: '0.75rem' }}>
                 <div style={{ background: COLOR.bg, border: `1px solid ${COLOR.border}`, borderRadius: 8, padding: '0.65rem 0.75rem' }}>
-                  <p style={{ margin: '0 0 0.2rem', fontSize: '0.68rem', color: COLOR.muted, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Minimum repayment</p>
-                  <p style={{ margin: 0, fontSize: '0.85rem', color: COLOR.text, fontWeight: 600 }}>{formatMoney(validation.minAmount)}</p>
+                  <p style={{ margin: '0 0 0.2rem', fontSize: '0.68rem', color: COLOR.muted, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Minimum</p>
+                  <p style={{ margin: 0, fontSize: '0.85rem', color: COLOR.text, fontWeight: 600 }}><span className="tabular-nums">{formatMoney(validation.minAmount)}</span></p>
                 </div>
                 <div style={{ background: COLOR.bg, border: `1px solid ${COLOR.border}`, borderRadius: 8, padding: '0.65rem 0.75rem' }}>
-                  <p style={{ margin: '0 0 0.2rem', fontSize: '0.68rem', color: COLOR.muted, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Maximum repayment</p>
-                  <p style={{ margin: 0, fontSize: '0.85rem', color: COLOR.text, fontWeight: 600 }}>{formatMoney(validation.maxRepayAmount)}</p>
+                  <p style={{ margin: '0 0 0.2rem', fontSize: '0.68rem', color: COLOR.muted, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Safe maximum</p>
+                  <p style={{ margin: 0, fontSize: '0.85rem', color: COLOR.text, fontWeight: 600 }}><span className="tabular-nums">{formatMoney(validation.maxRepayAmount)}</span></p>
                 </div>
                 <div style={{ background: COLOR.bg, border: `1px solid ${COLOR.border}`, borderRadius: 8, padding: '0.65rem 0.75rem' }}>
-                  <p style={{ margin: '0 0 0.2rem', fontSize: '0.68rem', color: COLOR.muted, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Wallet reserve</p>
-                  <p style={{ margin: 0, fontSize: '0.85rem', color: COLOR.text, fontWeight: 600 }}>{formatMoney(validation.recommendedWalletReserve)}</p>
+                  <p style={{ margin: '0 0 0.2rem', fontSize: '0.68rem', color: COLOR.muted, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Reserve target</p>
+                  <p style={{ margin: 0, fontSize: '0.85rem', color: COLOR.text, fontWeight: 600 }}><span className="tabular-nums">{formatMoney(validation.recommendedWalletReserve)}</span></p>
                 </div>
               </div>
               <div
@@ -327,16 +429,16 @@ export function RepayModal({
                     color: amount > 0 && remainingDebt === 0 ? COLOR.success : COLOR.text,
                   }}
                 >
-                  {fmt(remainingDebt)}
+                  <span className="tabular-nums">{fmt(remainingDebt)}</span>
                 </span>
               </div>
 
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
                 <span style={{ fontSize: '0.8rem', color: COLOR.muted }}>Utilization after repayment</span>
                 <span style={{ fontSize: '0.8rem', color: amount > 0 ? COLOR.success : COLOR.text }}>
-                  {newPct}%{' '}
+                  <span className="tabular-nums">{newPct}%</span>{' '}
                   <span style={{ textDecoration: 'line-through', color: COLOR.muted, marginLeft: 4 }}>
-                    {oldPct}%
+                    <span className="tabular-nums">{oldPct}%</span>
                   </span>
                 </span>
               </div>
@@ -400,7 +502,7 @@ export function RepayModal({
                 textAlign: 'center',
               }}
             >
-              {fmt(amount)}
+              <span className="tabular-nums">{fmt(amount)}</span>
             </p>
 
             <div
@@ -423,7 +525,7 @@ export function RepayModal({
               >
                 <span style={{ color: COLOR.muted, fontSize: '0.9rem' }}>Remaining debt after repayment</span>
                 <span style={{ fontWeight: 600, color: remainingDebt === 0 ? COLOR.success : COLOR.text }}>
-                  {fmt(remainingDebt)}
+                  <span className="tabular-nums">{fmt(remainingDebt)}</span>
                 </span>
               </div>
               <div>
@@ -456,18 +558,44 @@ export function RepayModal({
                   >
                     ✓
                   </span>
-                  Sufficient Balance ({fmt(walletBalance)} available)
+                  Sufficient Balance (<span className="tabular-nums">{fmt(walletBalance)}</span> available)
                 </span>
               </div>
             </div>
 
             {needsConfirm && (
-              <TypedAmountConfirmField
-                amount={amount}
-                value={confirmAmountStr}
-                onChange={setConfirmAmountStr}
-                idPrefix="confirm-repay"
-              />
+              <div style={{ marginBottom: '1.5rem' }}>
+                <label htmlFor="confirm-repay-amount" style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', color: COLOR.text, fontWeight: 500 }}>
+                  Type the amount to confirm
+                </label>
+                <div style={{ position: 'relative' }}>
+                  <span style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', fontSize: '1.25rem', color: COLOR.muted }} aria-hidden="true">$</span>
+                  <input
+                    id="confirm-repay-amount"
+                    type="number"
+                    value={confirmAmountStr}
+                    onChange={(e) => setConfirmAmountStr(e.target.value)}
+                    placeholder={fmt(amount)}
+                    aria-describedby="confirm-repay-description"
+                    autoComplete="off"
+                    style={{
+                      width: '100%',
+                      background: COLOR.bg,
+                      border: `1px solid ${!isConfirmMatch && confirmAmountStr !== '' ? COLOR.danger : isConfirmMatch && confirmAmountStr !== '' ? COLOR.success : COLOR.border}`,
+                      borderRadius: 8,
+                      padding: '0.75rem 1rem 0.75rem 2rem',
+                      color: COLOR.text,
+                      fontSize: '1.25rem',
+                      fontWeight: 500,
+                      outline: 'none',
+                      transition: 'all 0.2s',
+                    }}
+                  />
+                </div>
+                <p id="confirm-repay-description" style={{ margin: '0.5rem 0 0', fontSize: '0.82rem', color: COLOR.muted }}>
+                  Type the repayment amount (<span className="tabular-nums">{fmt(amount)}</span>) to enable the Confirm Repayment button.
+                </p>
+              </div>
             )}
 
             <div style={{ display: 'flex', gap: '1rem' }}>
@@ -545,7 +673,7 @@ export function RepayModal({
             </div>
 
             <h3 style={{ margin: '0 0 0.25rem', fontSize: '1.5rem', color: COLOR.text }}>
-              You repaid {fmt(amount)}!
+              You repaid <span className="tabular-nums">{fmt(amount)}</span>!
             </h3>
             <p style={{ margin: '0 0 1.5rem', fontSize: '0.9rem', color: COLOR.muted }}>
               Your transaction was successful.
@@ -570,8 +698,8 @@ export function RepayModal({
                   justifyContent: 'space-between',
                 }}
               >
-                <span style={{ color: COLOR.muted }}>Remaining debt:</span>
-                <span style={{ fontWeight: 600 }}>{fmt(remainingDebt)}</span>
+                <span style={{ color: COLOR.muted }}>Remaining Debt:</span>
+                <span style={{ fontWeight: 600 }}><span className="tabular-nums">{fmt(remainingDebt)}</span></span>
               </p>
               <p
                 style={{
@@ -584,7 +712,7 @@ export function RepayModal({
               >
                 <span>Credit utilization:</span>
                 <span style={{ color: remainingDebt === 0 ? COLOR.success : COLOR.text }}>
-                  Reduced to {newPct}%
+                  Reduced to <span className="tabular-nums">{newPct}%</span>
                 </span>
               </p>
             </div>
