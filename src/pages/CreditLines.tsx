@@ -2,6 +2,11 @@ import { useState, useMemo, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { StatusBadge } from '../components/StatusBadge';
 import { RepaymentPlanChart } from '../components/RepaymentPlanChart';
+import {
+  HealthFactorChart,
+  buildHealthHistory,
+  deriveHealthFactor,
+} from '../components/HealthFactorChart';
 import { MOCK_CREDIT_LINES } from '../data/mockData';
 import type { CreditLineStatus, SortField, SortDirection } from '../types/creditLine';
 import {
@@ -158,6 +163,17 @@ function CreditLineCard({
             <NextAccrualChip target={line.nextInterestAccrualDate} />
           </div>
         )}
+
+        {(() => {
+          const hf = deriveHealthFactor(line.limit, line.utilized);
+          return (
+            <HealthFactorChart
+              lineName={line.name}
+              current={hf}
+              data={buildHealthHistory(hf)}
+            />
+          );
+        })()}
       </div>
 
       <div className="cl-card-detail">
