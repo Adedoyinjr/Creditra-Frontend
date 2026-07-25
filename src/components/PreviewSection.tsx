@@ -1,140 +1,122 @@
+/**
+ * PreviewSection
+ *
+ * Live draw summary rendered alongside the AmountInput step. Shows the
+ * draw amount, projected new utilization, and two progress bars for
+ * current vs. post-draw utilization.
+ *
+ * Design-token classes used (all from `src/index.css` `.dc-*` block):
+ *   dc-section-label, dc-stat-grid, dc-stat-card, dc-stat-card--accent,
+ *   dc-stat-card--success, dc-stat-card__header, dc-stat-card__label,
+ *   dc-stat-card__value, dc-stat-card__icon, dc-util-section, dc-util-row,
+ *   dc-util-row__label, dc-util-row__value, dc-util-row__value--warning,
+ *   dc-progress-track, dc-progress-track--lg, dc-progress-bar,
+ *   dc-progress-bar--warning
+ *
+ * Accessibility:
+ *   - Each progress bar is a <div role="progressbar"> with aria-valuenow.
+ *   - Stat card values have visually-clear colour associations backed by tokens.
+ */
+
 import { CreditLine } from "@/types/draw-credit.types";
 import { DollarSign, TrendingUp } from "lucide-react";
-import { formatMoney } from "@/utils/amountValidation";
 
 interface PreviewSectionProps {
-  /** The credit line the draw is from. */
   creditLine: CreditLine;
-  /** Draw amount the user entered in step 2 (whole number, in USD). */
   amount: number;
 }
 
-/**
- * Step 3 of the draw-credit wizard: a preview of the projected outcome.
- *
- * Shows four numbers side by side: draw amount, fee, post-draw balance,
- * and the new utilization percentage. The fee, APR, and projected monthly
- * interest are mocked here (1 % flat fee, 12.5 % APR) so the UX is
- * exercised before the backend exposes a real quote endpoint. Replace
- * the constants with a fetched quote when the API lands.
- *
- * The component is purely presentational — it does not mutate the
- * wizard's amount or selected line.
- *
- * Why this exists as a dedicated step: see UX_RATIONALE.md "Show APR
- * and total cost, not just APR". A user about to confirm an irreversible
- * action should see what they will actually pay, not just the rate.
- */
 export function PreviewSection({ creditLine, amount }: PreviewSectionProps) {
-  const utilizedBalance = creditLine.limit - creditLine.available;
-  const safeAmount = Math.max(amount, 0);
-  // Mock pricing keeps the UX explicit until backend quote fields are available.
-  const fee = safeAmount > 0 ? Math.round(safeAmount * 0.01 * 100) / 100 : 0;
-  const apr = 12.5;
-  const estimatedMonthlyInterest =
-    safeAmount > 0 ? Math.round(((safeAmount * apr) / 100 / 12) * 100) / 100 : 0;
-  const newBalance = utilizedBalance + safeAmount + fee;
   const newUtilization = Math.round(
-    (newBalance / creditLine.limit) * 100,
+    ((creditLine.limit - creditLine.available + amount) / creditLine.limit) *
+      100,
   );
-  const remainingAvailable = Math.max(creditLine.limit - newBalance, 0);
+  const isHighAfterDraw = newUtilization > 80;
 
   return (
-    <div className="space-y-6">
-      <header>
-        <p className="text-xs font-semibold uppercase text-muted">Step 3</p>
-        <h2 className="mt-1 text-lg font-semibold text-foreground">
-          Preview draw
-        </h2>
-        <p className="mt-1 text-sm text-muted">
-          Review estimated costs and projected balance before confirming.
-        </p>
-      </header>
+    <div className="dc-step">
+      <h3 className="dc-section-label">Summary</h3>
 
-      <div className="grid gap-3 sm:grid-cols-2">
-        <div className="rounded-lg border border-blue-500/30 bg-blue-500/10 p-4 shadow-lg shadow-blue-500/5">
-          <div className="flex items-start justify-between">
+      {/* Stat cards: draw amount + projected utilization */}
+      <div className="dc-stat-grid">
+        {/* Draw amount card — accent colour (var(--accent)) */}
+        <div className="dc-stat-card dc-stat-card--accent">
+          <div className="dc-stat-card__header">
             <div>
-              <p className="text-xs text-muted font-medium mb-2">Draw Amount</p>
-              <p className="text-2xl font-bold text-blue-400">
-                {formatMoney(safeAmount)}
+              <p className="dc-stat-card__label">Draw Amount</p>
+              <p className="dc-stat-card__value">
+                ${amount.toLocaleString()}
               </p>
             </div>
-            <DollarSign className="w-5 h-5 text-blue-500 shrink-0" />
+            <DollarSign
+              className="dc-stat-card__icon dc-stat-card--accent dc-stat-card__icon"
+              aria-hidden="true"
+            />
           </div>
         </div>
 
-        <div className="rounded-lg border border-green-500/30 bg-green-500/10 p-4 shadow-lg shadow-green-500/5">
-          <div className="flex items-start justify-between">
+        {/* New utilization card — success colour (var(--success)) */}
+        <div className="dc-stat-card dc-stat-card--success">
+          <div className="dc-stat-card__header">
             <div>
-              <p className="text-xs text-muted font-medium mb-2">
-                New Utilization
-              </p>
-              <p className="text-2xl font-bold text-green-400">
+              <p className="dc-stat-card__label">New Utilization</p>
+              <p className="dc-stat-card__value">
                 {newUtilization}%
               </p>
             </div>
-            <TrendingUp className="w-5 h-5 text-green-500 shrink-0" />
+            <TrendingUp
+              className="dc-stat-card__icon dc-stat-card--success dc-stat-card__icon"
+              aria-hidden="true"
+            />
           </div>
         </div>
       </div>
 
-      <dl className="grid gap-3 text-sm sm:grid-cols-2">
-        <div className="rounded-lg border border-border bg-background/60 p-3">
-          <dt className="text-muted">Estimated fee</dt>
-          <dd className="mt-1 font-semibold text-foreground">
-            {formatMoney(fee)}
-          </dd>
+      {/* Current utilization progress bar */}
+      <div className="dc-util-section">
+        <div className="dc-util-row">
+          <span className="dc-util-row__label">Current utilization</span>
+          <span className="dc-util-row__value">{creditLine.utilization}%</span>
         </div>
-        <div className="rounded-lg border border-border bg-background/60 p-3">
-          <dt className="text-muted">Estimated monthly interest</dt>
-          <dd className="mt-1 font-semibold text-foreground">
-            {formatMoney(estimatedMonthlyInterest)}
-          </dd>
-        </div>
-        <div className="rounded-lg border border-border bg-background/60 p-3">
-          <dt className="text-muted">New balance</dt>
-          <dd className="mt-1 font-semibold text-foreground">
-            {formatMoney(newBalance)}
-          </dd>
-        </div>
-        <div className="rounded-lg border border-border bg-background/60 p-3">
-          <dt className="text-muted">Available after draw</dt>
-          <dd className="mt-1 font-semibold text-foreground">
-            {formatMoney(remainingAvailable)}
-          </dd>
-        </div>
-      </dl>
-
-      <div className="space-y-2">
-        <div className="flex justify-between text-sm">
-          <span className="text-muted">Current utilization</span>
-          <span className="font-semibold text-foreground">
-            {creditLine.utilization}%
-          </span>
-        </div>
-        <div className="w-full bg-border rounded-full h-2.5">
+        <div
+          className="dc-progress-track dc-progress-track--lg"
+          role="progressbar"
+          aria-valuenow={creditLine.utilization}
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-label={`Current utilization: ${creditLine.utilization}%`}
+        >
           <div
-            className="bg-blue-500 h-2.5 rounded-full"
+            className="dc-progress-bar"
             style={{ width: `${creditLine.utilization}%` }}
           />
         </div>
       </div>
 
-      <div className="space-y-2">
-        <div className="flex justify-between text-sm">
-          <span className="text-muted">After draw</span>
+      {/* Post-draw utilization progress bar */}
+      <div className="dc-util-section">
+        <div className="dc-util-row">
+          <span className="dc-util-row__label">After draw</span>
           <span
-            className={`font-semibold ${newUtilization > 80 ? "text-yellow-500" : "text-foreground"}`}
+            className={
+              isHighAfterDraw
+                ? "dc-util-row__value--warning"
+                : "dc-util-row__value"
+            }
           >
             {newUtilization}%
           </span>
         </div>
-        <div className="w-full bg-border rounded-full h-2.5">
+        <div
+          className="dc-progress-track dc-progress-track--lg"
+          role="progressbar"
+          aria-valuenow={newUtilization}
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-label={`Utilization after draw: ${newUtilization}%`}
+        >
           <div
-            className={`h-2.5 rounded-full transition-all ${
-              newUtilization > 80 ? "bg-yellow-500" : "bg-blue-500"
-            }`}
+            className={`dc-progress-bar${isHighAfterDraw ? " dc-progress-bar--warning" : ""}`}
             style={{ width: `${newUtilization}%` }}
           />
         </div>
