@@ -114,6 +114,25 @@
   border-radius: var(--focus-ring-radius);
 }
 
+/**
+ * .repay-focus-ring
+ * High-visibility focus indicator for RepayPage interactive controls:
+ * - Navigation back buttons
+ * - Credit line selection cards
+ * - Preset percentage chips & Smart Pay button
+ * - Repay amount input field
+ * - Action buttons (Review Repayment, Help, Cancel, Confirm)
+ */
+.repay-focus-ring {
+  outline: none;
+}
+
+.repay-focus-ring:focus-visible {
+  outline: var(--focus-ring-width, 2px) solid var(--focus-ring-color, var(--accent, #58a6ff));
+  outline-offset: var(--focus-ring-offset, 2px);
+  border-radius: var(--focus-ring-radius, 6px);
+}
+
 /* ── Reduced-motion ──────────────────────────────────────────────────────── */
 /*
   Focus indicators must remain visible even under prefers-reduced-motion;

@@ -5,22 +5,27 @@ import { RepaymentPlanChart } from '../components/RepaymentPlanChart';
 import { MOCK_CREDIT_LINES } from '../data/mockData';
 import type { CreditLineStatus, SortField, SortDirection } from '../types/creditLine';
 import {
-  COLOR, UTIL_COLOR,
-  fmt, fmtDate, getUtilizationLevel, utilizationPct,
-} from '../utils/tokens';
-import { formatCountdown, getCountdownAriaLabel } from '../utils/dates';
-import { useFocusTrap } from '../hooks/useFocusTrap';
-import { useInertBackdrop } from '../hooks/useInertBackdrop';
-import { useBodyScrollLock } from '../hooks/useBodyScrollLock';
-import { CompareLinesPanel } from '../components/CompareLinesPanel';
-import { CreditLineRowMenu } from '../components/CreditLineRowMenu';
-import { NextAccrualChip } from '../components/NextAccrualChip';
-import { CollateralSubstitutionModal } from '../components/CollateralSubstitutionModal';
-import { NoLines } from '../components/icons/NoLines';
-import { KbdHint } from '../components/KbdHint';
-import type { CollateralAsset } from '../types/collateral';
-import './CreditLines.css';
-import '../styles/patterns.css';
+  COLOR,
+  UTIL_COLOR,
+  fmt,
+  fmtDate,
+  fmtDateTime,
+  relativeTime,
+  getUtilizationLevel,
+  utilizationPct,
+} from "../utils/tokens";
+import "./CreditLines.css";
+import { AccessibleTooltip } from "../components/AccessibleTooltip";
+import { useFocusTrap } from "../hooks/useFocusTrap";
+import { useInertBackdrop } from "../hooks/useInertBackdrop";
+import { useBodyScrollLock } from "../hooks/useBodyScrollLock";
+import CompareLinesPanel from "../components/CompareLinesPanel";
+import { CollateralSubstitutionModal } from "../components/CollateralSubstitutionModal";
+import { NoLines } from "../components/illustrations";
+import {
+  RepaymentSchedule,
+  buildRepaymentScheduleFromLines,
+} from "../components/RepaymentSchedule";
 
 // ─── Credit Line Card ────────────────────────────────────────────────────────
 
@@ -557,6 +562,31 @@ export default function CreditLines() {
             />
           ))}
         </div>
+      )}
+
+      {/* ── Repayment Schedule (Issue #428) ───────────────────────────────
+       * Aggregate, chronological timeline of every past installment AND
+       * forward-looking payment across the user's credit lines. Renders
+       * only when at least one credit line has schedule-relevant data
+       * (transactions or a configured next payment). Built from the
+       * existing mock data via the pure `buildRepaymentScheduleFromLines`
+       * helper so the timeline updates as the upstream state changes. */}
+      {filteredAndSorted.length > 0 && (
+        <section
+          className="cl-repayment-schedule"
+          aria-labelledby="cl-repayment-schedule-heading"
+        >
+          <h2 id="cl-repayment-schedule-heading" className="cl-section-title">
+            Repayment Schedule
+          </h2>
+          <p className="cl-section-subtitle">
+            Past installments and upcoming payments across your credit lines.
+          </p>
+          <RepaymentSchedule
+            schedule={buildRepaymentScheduleFromLines(filteredAndSorted)}
+            title="All scheduled repayments"
+          />
+        </section>
       )}
 
       {/* Collateral substitution modal — mounted at page level so it overlays everything */}

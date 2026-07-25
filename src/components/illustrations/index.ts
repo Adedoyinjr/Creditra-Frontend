@@ -1,1 +1,1 @@
-export { NoActivity, NoDataGraph, NoLines } from './EmptyStateIllustrations';
+export { NoActivity, NoDataGraph, NoLines, NoOutstandingDebt } from './EmptyStateIllustrations';
