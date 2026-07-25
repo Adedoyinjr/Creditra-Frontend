@@ -392,6 +392,16 @@
     min-width: 4.5rem;
 }
 
+/* ─── Last-activity stamp ───────────────────────────────────────────────── */
+
+.cl-last-activity {
+    display: flex;
+    align-items: center;
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--border);
+}
+
 .cl-card-footer {
     display: flex;
     gap: 0.75rem;

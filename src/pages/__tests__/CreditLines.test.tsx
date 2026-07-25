@@ -20,9 +20,10 @@ describe('CreditLines page', () => {
 
   it('renders credit line cards from mock data', () => {
     renderPage();
-    expect(screen.getByText('Primary Business Line')).toBeInTheDocument();
-    expect(screen.getByText('Expansion Capital Line')).toBeInTheDocument();
-    expect(screen.getByText('Working Capital Facility')).toBeInTheDocument();
+    // Use getAllByText since the RepaymentSchedule section also repeats line names
+    expect(screen.getAllByText('Primary Business Line').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText('Expansion Capital Line').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText('Working Capital Facility').length).toBeGreaterThanOrEqual(1);
   });
 
   it('renders filter controls', () => {
@@ -32,39 +33,46 @@ describe('CreditLines page', () => {
     expect(screen.getByText('All Statuses')).toBeInTheDocument();
   });
 
-  it('shows Last Activity timestamp on each credit line card', () => {
+  it('shows "Last activity:" label on each credit line card', () => {
     renderPage();
-    const lastActivityLabels = screen.getAllByText('Last Activity');
+    // LastActivityStamp renders "Last activity: <relative>" in every card
+    const lastActivityLabels = screen.getAllByText(/Last activity:/i);
     expect(lastActivityLabels.length).toBeGreaterThanOrEqual(3);
   });
 
-  it('shows relative time for updatedAt on each card', () => {
+  it('renders a <time> element with a dateTime attribute on each card', () => {
     renderPage();
-    const timeElements = document.querySelectorAll('.cl-last-activity__time');
+    const timeElements = document.querySelectorAll('time[datetime]');
     expect(timeElements.length).toBeGreaterThanOrEqual(3);
     timeElements.forEach(el => {
-      expect(el.textContent).toMatch(/(m|h|d ago|[A-Z][a-z]{2} \d{1,2}, \d{4})/);
+      const dt = el.getAttribute('datetime');
+      // Must be a parseable ISO 8601 string
+      expect(new Date(dt!).getTime()).not.toBeNaN();
     });
   });
 
-  it('renders AccessibleTooltip with absolute timestamp for each card', () => {
+  it('renders an info tooltip trigger for each last-activity stamp', () => {
     renderPage();
-    const tooltips = document.querySelectorAll('.accessible-tooltip');
-    expect(tooltips.length).toBeGreaterThanOrEqual(3);
+    // Each card has an "i" trigger for the absolute datetime tooltip
+    const triggers = document.querySelectorAll('.last-activity-stamp__trigger');
+    expect(triggers.length).toBeGreaterThanOrEqual(3);
   });
 
-  it('renders tooltip content with "Last updated:" prefix', () => {
+  it('renders tooltip with role="tooltip" containing the absolute datetime', () => {
     renderPage();
-    const tooltipContents = document.querySelectorAll('.accessible-tooltip__content');
-    expect(tooltipContents.length).toBeGreaterThanOrEqual(3);
-    tooltipContents.forEach(el => {
-      expect(el.textContent).toMatch(/^Last updated: /);
+    const tooltips = document.querySelectorAll('[role="tooltip"]');
+    expect(tooltips.length).toBeGreaterThanOrEqual(3);
+    // Every tooltip should include a year (absolute datetime)
+    tooltips.forEach(el => {
+      expect(el.textContent).toMatch(/\d{4}/);
     });
   });
 
   it('displays APR, Risk Score, and Opened date for each card', () => {
     renderPage();
-    const card = screen.getByText('Primary Business Line').closest('.cl-card');
+    // Scope to the card heading (h3) to avoid ambiguity with the RepaymentSchedule section
+    const cardHeading = screen.getAllByRole('heading', { name: 'Primary Business Line' })[0];
+    const card = cardHeading.closest('.cl-card');
     expect(card).toBeInTheDocument();
     expect(card?.textContent).toMatch(/APR/);
     expect(card?.textContent).toMatch(/Risk Score/);
