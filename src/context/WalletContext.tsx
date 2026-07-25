@@ -148,6 +148,11 @@ interface WalletContextType {
    */
   isRemembered: boolean;
   /**
+   * Becomes `true` SESSION_WARN_BEFORE_MS before the session expires.
+   * Consumed by SessionTimeoutBanner. Cleared by stayConnected() / disconnect().
+   */
+  sessionTimeoutWarning: boolean;
+  /**
    * Open a connection to the given wallet. Updates `status` to
    * `connecting`, then either `connected` (on success) or `error`.
    *
@@ -222,6 +227,7 @@ export const WalletProvider = ({
   const [status, setStatus] = useState<ConnectionStatus>('disconnected');
   const [error, setError] = useState<WalletError | null>(null);
   const [reconnectTimedOut, setReconnectTimedOut] = useState(false);
+  const [sessionTimeoutWarning, setSessionTimeoutWarning] = useState(false);
   // Initialised from `localStorage` via the safe wrapper so the very first
   // render reflects whether the user opted in on a previous session.
   const [isRemembered, setIsRemembered] = useState<boolean>(() => isWalletRemembered());
@@ -317,10 +323,12 @@ export const WalletProvider = ({
         // we are running this reconnect.
         recordRecentWallet(type);
         setIsRemembered(true);
+        startSessionTimers();
       } catch (err) {
         clearReconnectTimeout();
         setReconnectTimedOut(false);
         clearSessionTimers();
+        setSessionTimeoutWarning(false);
         setError(err as WalletError);
         setStatus('error');
         setWallet(null);
@@ -369,10 +377,13 @@ export const WalletProvider = ({
       recordRecentWallet(type);
       setWalletRemembered(shouldRemember);
       setIsRemembered(shouldRemember);
+      startSessionTimers();
     } catch (err) {
       setError(err as WalletError);
       setStatus('error');
       setWallet(null);
+      clearSessionTimers();
+      setSessionTimeoutWarning(false);
       // Don't write any remembered state on failure: leaving stale
       // persistence around has confused earlier releases.
     }
@@ -388,10 +399,12 @@ export const WalletProvider = ({
     // next visit will not auto-connect and will not pre-order the
     // modal for the user.
     disconnectWallet();
+    clearSessionTimers();
     setWallet(null);
     setStatus('disconnected');
     setError(null);
     setReconnectTimedOut(false);
+    setSessionTimeoutWarning(false);
     setIsRemembered(false);
   };
 
@@ -507,6 +520,7 @@ export const WalletProvider = ({
         error,
         reconnectTimedOut,
         isRemembered,
+        sessionTimeoutWarning,
         connect,
         disconnect,
         forgetRememberedChoice,
