@@ -276,6 +276,7 @@ function StackedAreaChart({ schedule, tooltipId, onTooltip, tooltip, chartAriaLa
             textAnchor="end"
             fontSize="10"
             fill={COLOR.muted}
+            style={{ fontVariantNumeric: 'tabular-nums' }}
           >
             {fmtK(value)}
           </text>
@@ -315,7 +316,7 @@ function StackedAreaChart({ schedule, tooltipId, onTooltip, tooltip, chartAriaLa
 
       {/* X-axis ticks */}
       {xTicks.map(({ month, x }) => (
-        <text key={month} x={x} y={H - 6} textAnchor="middle" fontSize="10" fill={COLOR.muted}>
+        <text key={month} x={x} y={H - 6} textAnchor="middle" fontSize="10" fill={COLOR.muted} style={{ fontVariantNumeric: 'tabular-nums' }}>
           mo {month}
         </text>
       ))}
@@ -374,6 +375,7 @@ function TooltipBubble({ data }: { data: TooltipData }) {
         color: `var(--text, ${COLOR.text})`,
         pointerEvents: 'none',
         boxShadow: '0 4px 16px rgba(0,0,0,0.4)',
+        fontVariantNumeric: 'tabular-nums',
       }}
     >
       <p style={{ fontWeight: 600, marginBottom: 4 }}>Month {data.month}</p>
@@ -418,7 +420,7 @@ function SRTable({ schedule, caption }: SRTableProps) {
   // Limit visible rows; full table always in SR tree
   return (
     <table
-      className="sr-only"
+      className="sr-only tabular-nums"
       aria-label="Repayment schedule data table"
       style={{ borderCollapse: 'collapse', width: '100%', fontSize: '0.75rem' }}
     >
@@ -495,12 +497,14 @@ function VisibleTable({ schedule, limit = 12 }: VisibleTableProps) {
     padding: '5px 8px',
     fontSize: '0.75rem',
     color: `var(--text, ${COLOR.text})`,
+    fontVariantNumeric: 'tabular-nums',
   };
 
   return (
     <div className="overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
       <table
         aria-label="Repayment schedule"
+        className="tabular-nums"
         style={{ borderCollapse: 'collapse', width: '100%', minWidth: 460 }}
       >
         <thead>
@@ -656,7 +660,7 @@ export function RepaymentVisualizer({
           Repayment Plan
         </h2>
         {schedule.length > 0 && (
-          <p style={{ fontSize: '0.8rem', color: `var(--muted, ${COLOR.muted})`, margin: 0 }}>
+          <p style={{ fontSize: '0.8rem', color: `var(--muted, ${COLOR.muted})`, margin: 0, fontVariantNumeric: 'tabular-nums' }}>
             {termMonths} month{termMonths !== 1 ? 's' : ''} ·{' '}
             {new Intl.NumberFormat('en-US', {
               style: 'currency',
