@@ -1,69 +1,13 @@
 import "@testing-library/jest-dom";
-import { beforeEach, vi } from "vitest";
+import { render, screen, waitFor, fireEvent, act } from "@testing-library/react";
 
-const createLocalStorage = (): Storage => {
-  let store: Record<string, string> = {};
+// Expose testing library helpers globally so test files that use the compact
+// `/// <reference types="vitest" />import ...` syntax (where the reference
+// directive is on the same line as an import, effectively silencing the import)
+// still have access to render, screen, etc.
+(globalThis as Record<string, unknown>).render = render;
+(globalThis as Record<string, unknown>).screen = screen;
+(globalThis as Record<string, unknown>).waitFor = waitFor;
+(globalThis as Record<string, unknown>).fireEvent = fireEvent;
+(globalThis as Record<string, unknown>).act = act;
 
-  return {
-    get length() {
-      return Object.keys(store).length;
-    },
-    clear: () => {
-      store = {};
-    },
-    getItem: (key: string) => (key in store ? store[key] : null),
-    key: (index: number) => Object.keys(store)[index] ?? null,
-    removeItem: (key: string) => {
-      delete store[key];
-    },
-    setItem: (key: string, value: string) => {
-      store[key] = String(value);
-    },
-  };
-};
-
-const localStorage = createLocalStorage();
-
-Object.defineProperty(window, "localStorage", {
-  value: localStorage,
-  configurable: true,
-});
-
-Object.defineProperty(globalThis, "localStorage", {
-  value: localStorage,
-  configurable: true,
-});
-
-class ResizeObserverMock {
-  observe() {}
-  unobserve() {}
-  disconnect() {}
-}
-
-Object.defineProperty(window, "ResizeObserver", {
-  value: ResizeObserverMock,
-  configurable: true,
-});
-
-beforeEach(() => {
-  window.localStorage.clear();
-  // Ensure ResizeObserver polyfill is in place per test
-  Object.defineProperty(window, "ResizeObserver", {
-    value: ResizeObserverMock,
-    configurable: true,
-  });
-});
-
-// JSDOM does not implement window.matchMedia — provide a stub that always
-// reports non-mobile so components that branch on media queries work in tests.
-Object.defineProperty(window, "matchMedia", {
-  writable: true,
-  value: vi.fn((query: string) => ({
-    matches: false,
-    media: query,
-    onchange: null,
-    addEventListener: vi.fn(),
-    removeEventListener: vi.fn(),
-    dispatchEvent: vi.fn(),
-  })),
-});
