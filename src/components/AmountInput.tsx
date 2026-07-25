@@ -13,6 +13,7 @@ import {
   getDrawAmountValidation,
 } from "../utils/amountValidation";
 import { FormMessage } from "./FormMessage";
+import { LiveRegion } from "./LiveRegion";
 import { Skeleton } from "./Skeleton";
 
 const STEP_AMOUNT = 100;
@@ -126,6 +127,8 @@ export function AmountInput({
 }: AmountInputProps) {
   const [amount, setAmount] = useState("");
   const [pasteAnnouncement, setPasteAnnouncement] = useState("");
+  const [validationAnnouncement, setValidationAnnouncement] = useState("");
+  const prevSeverity = useRef<string | undefined>(undefined);
   const inputRef = useRef<HTMLInputElement>(null);
   const inputId = "draw-amount-input";
   const helperId = "draw-amount-helper";
@@ -139,6 +142,39 @@ export function AmountInput({
     const numAmount = parseFloat(amount) || 0;
     onAmountChange?.(numAmount);
   }, [amount, onAmountChange, isLoading, creditLine]);
+
+  // Announce validation-state changes via aria-live for screen-reader users.
+  // Must be called unconditionally (Rules of Hooks); guards inside the effect.
+  const numAmount = parseFloat(amount) || 0;
+  const validation = creditLine
+    ? getDrawAmountValidation(amount, creditLine)
+    : null;
+  useEffect(() => {
+    if (!creditLine || !validation) return;
+    const current = validation.feedback.severity;
+    const previous = prevSeverity.current;
+    if (current === previous) return;
+    prevSeverity.current = current;
+
+    if (!amount) {
+      setValidationAnnouncement("Enter an amount to begin.");
+      return;
+    }
+
+    switch (current) {
+      case "success":
+        setValidationAnnouncement(`Amount is valid. ${validation.feedback.title}.`);
+        break;
+      case "warning":
+        setValidationAnnouncement(`Warning: ${validation.feedback.title}. ${validation.feedback.message}`);
+        break;
+      case "danger":
+        setValidationAnnouncement(`Error: ${validation.feedback.title}. ${validation.feedback.message}`);
+        break;
+      default:
+        setValidationAnnouncement(`${validation.feedback.title}. ${validation.feedback.message}`);
+    }
+  }, [validation, amount, creditLine]);
 
   const handleStep = useCallback(
     (direction: "up" | "down") => {
@@ -203,8 +239,6 @@ export function AmountInput({
     return <AmountInputSkeleton />;
   }
 
-  const numAmount = parseFloat(amount) || 0;
-  const validation = getDrawAmountValidation(amount, creditLine);
   const toneBySeverity = {
     info: {
       bg: "bg-accent/10",
@@ -373,6 +407,9 @@ export function AmountInput({
           minHeight={60}
         />
       </div>
+
+      {/* Polite live region for validation status announcements */}
+      <LiveRegion message={validationAnnouncement} politeness="polite" />
 
       {/* Polite live region for paste announcements */}
       <div
