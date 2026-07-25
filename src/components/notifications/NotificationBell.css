@@ -24,6 +24,12 @@
   border-radius: 9999px; /* keeps the ring circular on the button */
 }
 
+/* ── Unread badge ───────────────────────────────────────────────────────── */
+
+.notif-bell-badge {
+  pointer-events: none;
+}
+
 /* ── Reduced-motion override ────────────────────────────────────────────── */
 
 @media (prefers-reduced-motion: reduce) {

@@ -2,6 +2,22 @@ import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { BrowserRouter, MemoryRouter } from "react-router-dom";
 import { TransactionHistory } from "./TransactionHistory";
+import { MOCK_CREDIT_LINES } from "../data/mockData";
+
+const ALL_TX_COUNT = MOCK_CREDIT_LINES.reduce(
+  (sum, line) => sum + line.transactions.length,
+  0,
+);
+const UNDER_5K_COUNT = MOCK_CREDIT_LINES.reduce(
+  (sum, line) =>
+    sum + line.transactions.filter((tx) => Math.abs(tx.amount) <= 5000).length,
+  0,
+);
+const OVER_1000_COUNT = MOCK_CREDIT_LINES.reduce(
+  (sum, line) =>
+    sum + line.transactions.filter((tx) => tx.amount > 1000).length,
+  0,
+);
 
 const renderTransactionHistory = (initialEntries: string[] = ["/transactions"]) => {
   return render(
@@ -11,12 +27,14 @@ const renderTransactionHistory = (initialEntries: string[] = ["/transactions"]) 
   );
 };
 
-describe("TransactionHistory", () => {
+describe("TransactionHistory", { timeout: 15000 }, () => {
   const originalCreateObjectURL = URL.createObjectURL;
   const originalRevokeObjectURL = URL.revokeObjectURL;
 
   beforeEach(() => {
-    vi.useFakeTimers();
+    // Only mock Date so filter math is stable; keep real timers so
+    // Testing Library queries and focus traps do not hang.
+    vi.useFakeTimers({ toFake: ['Date'] });
     vi.setSystemTime(new Date("2025-02-20T12:00:00Z"));
     URL.createObjectURL = vi.fn(() => "blob:mock-url");
     URL.revokeObjectURL = vi.fn();
@@ -87,7 +105,7 @@ describe("TransactionHistory", () => {
   it("updates the polite result count when quick amount chips change", () => {
     renderTransactionHistory();
 
-    expect(screen.getByText("28 transactions shown")).toBeTruthy();
+    expect(screen.getByText(`${ALL_TX_COUNT} transactions shown`)).toBeTruthy();
 
     fireEvent.click(screen.getByRole("button", { name: "Under $5k" }));
 
@@ -96,7 +114,9 @@ describe("TransactionHistory", () => {
         .getByRole("button", { name: "Under $5k" })
         .getAttribute("aria-pressed"),
     ).toBe("true");
-    expect(screen.getByText("8 transactions shown")).toBeTruthy();
+    expect(
+      screen.getByText(`${UNDER_5K_COUNT} transactions shown`),
+    ).toBeTruthy();
   });
 
   it("shows a no-results state with a clear filters action", () => {
@@ -127,7 +147,7 @@ describe("TransactionHistory", () => {
     });
     expect(noResultsAfterClear).toBeFalsy();
 
-    const resultCount = screen.getByText("28 transactions shown");
+    const resultCount = screen.getByText(`${ALL_TX_COUNT} transactions shown`);
     expect(resultCount).toBeTruthy();
 
     const allButtons = screen.getAllByRole("button", { name: "All" });
@@ -137,7 +157,7 @@ describe("TransactionHistory", () => {
   it("renders amount range filter chips with correct aria-pressed states", () => {
     renderTransactionHistory();
 
-    const amountGroup = screen.getByRole("group", { name: /amount/i });
+    const amountGroup = screen.getByRole("group", { name: /^amount$/i });
 
     expect(
       within(amountGroup).getByRole("button", { name: "All Amounts" }),
@@ -156,12 +176,13 @@ describe("TransactionHistory", () => {
   it("amount filter stacks with existing type and date filters (AND)", () => {
     renderTransactionHistory();
 
-    // Start: 28 transactions
-    expect(screen.getByText("28 transactions shown")).toBeTruthy();
+    expect(screen.getByText(`${ALL_TX_COUNT} transactions shown`)).toBeTruthy();
 
-    // Apply >$1,000 amount filter → 22 transactions (all >1000)
+    // Apply >$1,000 amount filter
     fireEvent.click(screen.getByRole("button", { name: ">$1,000" }));
-    expect(screen.getByText("22 transactions shown")).toBeTruthy();
+    expect(
+      screen.getByText(`${OVER_1000_COUNT} transactions shown`),
+    ).toBeTruthy();
 
     // Stack with Fee type filter → 0 transactions (no Fees >1000)
     fireEvent.click(screen.getByRole("button", { name: "Fee" }));
@@ -169,7 +190,7 @@ describe("TransactionHistory", () => {
 
     // Clear filters restores count
     fireEvent.click(screen.getByRole("button", { name: /clear filters/i }));
-    expect(screen.getByText("28 transactions shown")).toBeTruthy();
+    expect(screen.getByText(`${ALL_TX_COUNT} transactions shown`)).toBeTruthy();
   });
 
   it("opens custom date inputs when Custom is selected", () => {

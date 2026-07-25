@@ -177,8 +177,7 @@ describe("AmountInput", () => {
 
     const input = screen.getByLabelText(/draw amount/i) as HTMLInputElement;
     
-    // Mock clipboard event
-    const pasteEvent = new ClipboardEvent("paste", {
+    fireEvent.paste(input, {
       clipboardData: {
         getData: (type: string) => {
           if (type === "text") return "$1,500.00";
@@ -186,8 +185,6 @@ describe("AmountInput", () => {
         },
       },
     });
-    
-    fireEvent.paste(input, pasteEvent);
     
     expect(input.value).toBe("1500.00");
     expect(screen.getByText("Pasted value sanitized to $1,500.00")).toBeInTheDocument();
@@ -205,7 +202,7 @@ describe("AmountInput", () => {
 
     const input = screen.getByLabelText(/draw amount/i) as HTMLInputElement;
     
-    const pasteEvent = new ClipboardEvent("paste", {
+    fireEvent.paste(input, {
       clipboardData: {
         getData: (type: string) => {
           if (type === "text") return "invalid-amount";
@@ -214,12 +211,9 @@ describe("AmountInput", () => {
       },
     });
     
-    fireEvent.paste(input, pasteEvent);
-    
     expect(input.value).not.toBe("invalid-amount");
     expect(screen.getByText("Invalid amount pasted. Please enter a numeric value.")).toBeInTheDocument();
   });
-});
 
   it("renders decrease stepper button with accessible label", () => {
     render(
@@ -268,7 +262,7 @@ describe("AmountInput", () => {
     const incButton = screen.getByRole("button", {
       name: /increase amount/i,
     });
-    const input = screen.getByLabelText(/amount to draw/i) as HTMLInputElement;
+    const input = screen.getByLabelText(/draw amount/i) as HTMLInputElement;
 
     fireEvent.click(incButton);
     expect(input.value).toBe("100");
@@ -284,7 +278,7 @@ describe("AmountInput", () => {
       />,
     );
 
-    const input = screen.getByLabelText(/amount to draw/i) as HTMLInputElement;
+    const input = screen.getByLabelText(/draw amount/i) as HTMLInputElement;
     fireEvent.change(input, { target: { value: "500" } });
 
     const decButton = screen.getByRole("button", {
@@ -320,7 +314,7 @@ describe("AmountInput", () => {
       />,
     );
 
-    const input = screen.getByLabelText(/amount to draw/i) as HTMLInputElement;
+    const input = screen.getByLabelText(/draw amount/i) as HTMLInputElement;
     fireEvent.change(input, { target: { value: creditLine.available.toString() } });
 
     const incButton = screen.getByRole("button", {
@@ -339,7 +333,7 @@ describe("AmountInput", () => {
       />,
     );
 
-    const input = screen.getByLabelText(/amount to draw/i) as HTMLInputElement;
+    const input = screen.getByLabelText(/draw amount/i) as HTMLInputElement;
     fireEvent.change(input, { target: { value: "34900" } });
 
     const incButton = screen.getByRole("button", {
@@ -359,7 +353,7 @@ describe("AmountInput", () => {
       />,
     );
 
-    const input = screen.getByLabelText(/amount to draw/i) as HTMLInputElement;
+    const input = screen.getByLabelText(/draw amount/i) as HTMLInputElement;
     // A small amount less than STEP_AMOUNT should floor to 0
     fireEvent.change(input, { target: { value: "50" } });
     const decButton = screen.getByRole("button", {
@@ -379,7 +373,7 @@ describe("AmountInput", () => {
       />,
     );
 
-    const input = screen.getByLabelText(/amount to draw/i) as HTMLInputElement;
+    const input = screen.getByLabelText(/draw amount/i) as HTMLInputElement;
     fireEvent.change(input, { target: { value: "500" } });
     fireEvent.keyDown(input, { key: "ArrowUp" });
     expect(input.value).toBe("600");
@@ -395,7 +389,7 @@ describe("AmountInput", () => {
       />,
     );
 
-    const input = screen.getByLabelText(/amount to draw/i) as HTMLInputElement;
+    const input = screen.getByLabelText(/draw amount/i) as HTMLInputElement;
     fireEvent.change(input, { target: { value: "500" } });
     fireEvent.keyDown(input, { key: "ArrowDown" });
     expect(input.value).toBe("400");
@@ -411,7 +405,7 @@ describe("AmountInput", () => {
       />,
     );
 
-    const input = screen.getByLabelText(/amount to draw/i) as HTMLInputElement;
+    const input = screen.getByLabelText(/draw amount/i) as HTMLInputElement;
     expect(input).toHaveAttribute("step", "100");
   });
 

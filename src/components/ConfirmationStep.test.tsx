@@ -2,6 +2,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { ConfirmationStep } from "./ConfirmationStep";
+import { WalletProvider } from "../context/WalletContext";
 
 const creditLine = {
   id: "cl-001",
@@ -18,13 +19,15 @@ describe("ConfirmationStep", () => {
     const user = userEvent.setup();
 
     render(
-      <ConfirmationStep
-        creditLine={creditLine}
-        amount={10000}
-        onConfirm={vi.fn()}
-        onBack={vi.fn()}
-        onCancel={vi.fn()}
-      />,
+      <WalletProvider>
+        <ConfirmationStep
+          creditLine={creditLine}
+          amount={10000}
+          onConfirm={vi.fn()}
+          onBack={vi.fn()}
+          onCancel={vi.fn()}
+        />
+      </WalletProvider>,
     );
 
     const toggle = screen.getByRole("button", { name: /why this apr\?/i });

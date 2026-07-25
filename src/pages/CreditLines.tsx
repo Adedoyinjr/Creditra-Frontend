@@ -3,6 +3,12 @@ import { Link, useNavigate } from "react-router-dom";
 import { StatusBadge } from "../components/StatusBadge";
 import { CreditLineRowMenu } from "../components/CreditLineRowMenu";
 import { MOCK_CREDIT_LINES } from "../data/mockData";
+import { useFocusTrap } from "../hooks/useFocusTrap";
+import { useInertBackdrop } from "../hooks/useInertBackdrop";
+import { useBodyScrollLock } from "../hooks/useBodyScrollLock";
+import CompareLinesPanel from "../components/CompareLinesPanel";
+import { CollateralSubstitutionModal } from "../components/CollateralSubstitutionModal";
+import { NoLines } from "../components/illustrations";
 import type {
   CreditLineStatus,
   SortField,
@@ -11,10 +17,27 @@ import type {
 import type { CollateralAsset } from "../types/collateral";
 import {
   COLOR, UTIL_COLOR,
-  fmt, fmtDate, getUtilizationLevel, utilizationPct,
+  fmt, fmtDate, fmtDateTime, getUtilizationLevel, relativeTime, utilizationPct,
 } from '../utils/tokens';
 import { formatCountdown, getCountdownAriaLabel } from '../utils/dates';
+import { AccessibleTooltip } from '../components/AccessibleTooltip';
 import './CreditLines.css';
+
+// ─── Next Accrual Chip ───────────────────────────────────────────────────────
+
+function NextAccrualChip({ target }: { target: string }) {
+  return (
+    <>
+      <span className="cl-accrual-label">Next interest accrual</span>
+      <span
+        className="cl-accrual-chip"
+        aria-label={getCountdownAriaLabel(target)}
+      >
+        {formatCountdown(target)}
+      </span>
+    </>
+  );
+}
 
 // ─── Credit Line Card ────────────────────────────────────────────────────────
 
@@ -128,6 +151,13 @@ function CreditLineCard({
             <span className="label">Opened</span>
             <span className="value">{fmtDate(line.openedAt)}</span>
           </div>
+        </div>
+
+        <div className="cl-last-activity">
+          <span className="label">Last Activity</span>
+          <AccessibleTooltip label={`Last updated: ${fmtDateTime(line.updatedAt)}`}>
+            <span className="cl-last-activity__time">{relativeTime(line.updatedAt)}</span>
+          </AccessibleTooltip>
         </div>
 
         {line.nextInterestAccrualDate && (

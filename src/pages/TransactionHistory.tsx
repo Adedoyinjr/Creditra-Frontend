@@ -1,9 +1,8 @@
-import React, { useState, useMemo } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import React, { useState, useMemo, useEffect } from "react";
+import { Link, useSearchParams, useLocation, useNavigate } from "react-router-dom";
 import { CopyToClipboard } from "../components/CopyToClipboard";
-import { AmountRangeChips } from "../components/AmountRangeChips";
-import { DateRangeChips, type DatePreset } from "../components/DateRangeChips";
 import { AmountRangeChips, type AmountRangePreset } from "../components/AmountRangeChips";
+import { DateRangeChips, type DatePreset } from "../components/DateRangeChips";
 import { MOCK_CREDIT_LINES } from "../data/mockData";
 import type {
   CreditLineStatus,
@@ -14,6 +13,8 @@ import { startOfDay, startOfMonth, startOfWeek } from "../utils/dates";
 import { COLOR, fmt, fmtDate, fmtDateTime } from "../utils/tokens";
 import "./TransactionHistory.css";
 import { NoActivity, NoDataGraph, NoLines } from "../components/illustrations";
+
+const CSV_EXPORT_EMPTY_REASON_ID = "th-csv-export-empty-reason";
 
 /**
  * TransactionHistory Page Component

@@ -40,8 +40,30 @@ class ResizeObserverMock {
   disconnect() {}
 }
 
+class IntersectionObserverMock {
+  readonly root = null;
+  readonly rootMargin = "";
+  readonly thresholds = [];
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+  takeRecords() {
+    return [];
+  }
+}
+
 Object.defineProperty(window, "ResizeObserver", {
   value: ResizeObserverMock,
+  configurable: true,
+});
+
+Object.defineProperty(window, "IntersectionObserver", {
+  value: IntersectionObserverMock,
+  configurable: true,
+});
+
+Object.defineProperty(globalThis, "IntersectionObserver", {
+  value: IntersectionObserverMock,
   configurable: true,
 });
 
@@ -66,4 +88,11 @@ Object.defineProperty(window, "matchMedia", {
     removeEventListener: vi.fn(),
     dispatchEvent: vi.fn(),
   })),
+});
+
+// jsdom does not implement scrollTo; body-scroll-lock and similar hooks call it.
+Object.defineProperty(window, "scrollTo", {
+  value: vi.fn(),
+  writable: true,
+  configurable: true,
 });

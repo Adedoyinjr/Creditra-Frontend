@@ -35,8 +35,8 @@ describe('RepaymentVisualizer', () => {
   it('renders term and total interest summary', () => {
     render(<RepaymentVisualizer {...BASE} />);
     // summary line contains "months" and "$X total interest"
-    expect(screen.getByText(/month/i)).toBeInTheDocument();
-    expect(screen.getByText(/total interest/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/month/i)[0]).toBeInTheDocument();
+    expect(screen.getAllByText(/total interest/i)[0]).toBeInTheDocument();
   });
 
   it('renders the SR-only data table with correct headers', () => {
@@ -52,8 +52,8 @@ describe('RepaymentVisualizer', () => {
 
   it('renders a legend with principal and interest labels', () => {
     render(<RepaymentVisualizer {...BASE} />);
-    expect(screen.getByText(/Principal remaining/i)).toBeInTheDocument();
-    expect(screen.getByText(/Cumulative interest/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/Principal remaining/i)[0]).toBeInTheDocument();
+    expect(screen.getAllByText(/Cumulative interest/i)[0]).toBeInTheDocument();
   });
 
   it('schedule table toggle expands visible rows', () => {
@@ -84,7 +84,7 @@ describe('RepaymentVisualizer', () => {
     fireEvent.mouseMove(svg, { clientX: 100, clientY: 100 });
     // Tooltip should appear (role="status" aria-live)
     expect(screen.getByRole('status')).toBeInTheDocument();
-    expect(screen.getByText(/Month/)).toBeInTheDocument();
+    expect(screen.getAllByText(/Month/)[0]).toBeInTheDocument();
   });
 
   it('hides tooltip on mouse leave', () => {

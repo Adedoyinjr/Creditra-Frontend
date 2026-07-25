@@ -202,6 +202,7 @@ export function AmountInput({
              value={amount}
              onChange={(e) => setAmount(e.target.value)}
              onPaste={handlePaste}
+             onKeyDown={handleKeyDown}
              ref={inputRef}
              className="text-2xl font-bold bg-transparent outline-none flex-1 text-foreground placeholder:text-muted/50 min-w-0 tabular-nums"
              min={validation.minAmount}

@@ -6,6 +6,7 @@ import { CreditLineSummaryBlock } from "@/components/CreditLineSummaryBlock";
 import { PendingButton } from "@/components/PendingButton";
 import { formatMoney } from "@/utils/amountValidation";
 import { useWallet } from "@/context/WalletContext";
+import { getDrawPricingQuote } from "@/lib/draw-credit-pricing";
 
 interface ConfirmationStepProps {
   /** The credit line the user is drawing from. */
@@ -54,11 +55,19 @@ export function ConfirmationStep({
   isLoading = false,
 }: ConfirmationStepProps) {
   const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [showAprDrawer, setShowAprDrawer] = useState(false);
   const { status } = useWallet();
   const utilizedBalance = creditLine.limit - creditLine.available;
   const safeAmount = Math.max(amount, 0);
-  const { fee, apr, estimatedMonthlyInterest, riskBand, termMonths } =
-    getDrawPricingQuote(creditLine, safeAmount);
+  const {
+    fee,
+    apr,
+    estimatedMonthlyInterest,
+    riskBand,
+    termMonths,
+    utilizationAdjustmentLabel,
+    termAdjustmentLabel,
+  } = getDrawPricingQuote(creditLine, safeAmount);
   const newBalance = utilizedBalance + safeAmount + fee;
   const remainingAvailable = Math.max(creditLine.limit - newBalance, 0);
   const newUtilization = Math.round((newBalance / creditLine.limit) * 100);
@@ -98,6 +107,34 @@ export function ConfirmationStep({
               <p className="mt-1 font-semibold text-foreground tabular-nums">
                 {formatMoney(fee)}
               </p>
+            </div>
+            <div className="rounded-lg border border-border bg-background/60 p-3">
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-sm text-muted font-medium">APR</p>
+                <button
+                  type="button"
+                  onClick={() => setShowAprDrawer((open) => !open)}
+                  aria-expanded={showAprDrawer}
+                  aria-controls="apr-explanation-drawer"
+                  className="text-xs font-semibold text-accent underline-offset-2 hover:underline"
+                >
+                  Why this APR?
+                </button>
+              </div>
+              <p className="mt-1 font-semibold text-foreground tabular-nums">
+                {apr}%
+              </p>
+              {showAprDrawer && (
+                <div
+                  id="apr-explanation-drawer"
+                  aria-label="APR explanation"
+                  className="mt-3 space-y-1 rounded-md border border-border bg-surface p-3 text-xs text-muted"
+                >
+                  <p>Risk band sets your base rate. Current value: {riskBand}.</p>
+                  <p>{utilizationAdjustmentLabel}. Current value: {creditLine.utilization}%.</p>
+                  <p>{termAdjustmentLabel}. Current value: {termMonths} months.</p>
+                </div>
+              )}
             </div>
             <div className="rounded-lg border border-border bg-background/60 p-3">
               <p className="text-sm text-muted font-medium">
