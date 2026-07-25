@@ -1,3 +1,24 @@
+/**
+ * patterns.css
+ *
+ * Background-pattern fills used across the app to encode status/state without
+ * relying on color alone, satisfying WCAG 2.1 SC 1.4.1 (Use of Color).
+ *
+ * Sections
+ * ────────
+ * 1. Credit-line lifecycle status patterns  (.status-{active|suspended|…})
+ * 2. Transaction-status icon-bg patterns    (.dc-status-icon-bg--pattern-{pending|success|error})
+ * 3. RepaymentVisualizer legend swatches    (.rv-legend-swatch{--principal|--interest})
+ * 4. forced-colors overrides               (@media forced-colors: active)
+ *
+ * Design-token contract
+ * ─────────────────────
+ * All opaque colours are derived from the CSS custom properties declared in
+ * src/index.css :root so they automatically pick up dark-mode and theme
+ * changes.  No raw hex literals appear in this file.
+ */
+
+/* ─── 1. Credit-line lifecycle status patterns ──────────────────────────── */
 /* Patterns for Credit Line statuses to support color-blind accessibility */
 
 .status-active {
@@ -63,6 +84,74 @@
   );
 }
 
+/* ─── 2. Transaction-status icon-bg patterns ────────────────────────────── */
+/*
+ * These modifier classes are applied alongside the colour-tint classes
+ * (.dc-status-icon-bg--accent/success/error) so each outcome is identifiable
+ * by *both* hue *and* fill geometry.  Pattern opacity is kept low (0.18–0.22)
+ * so it doesn't obscure the icon rendered on top.
+ *
+ * Pattern vocabulary:
+ *   pending  → concentric circles  (clockwise "processing" motion cue)
+ *   success  → diagonal stripes /  (upward sweep, positive direction)
+ *   error    → crosshatch × ×      (dense warning texture)
+ *
+ * The background-size values are chosen so that at the 4 rem circle used by
+ * .dc-status-icon-bg the pattern has 2–4 visible repeats — enough to read
+ * the texture without visual noise.
+ */
+
+/**
+ * Pending — concentric dot ring pattern.
+ * Uses var(--accent) = #58a6ff (blue) — matches --dc-status-icon-bg--accent.
+ */
+.dc-status-icon-bg--pattern-pending {
+  background-image: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--accent, #58a6ff) 22%, transparent) 1.5px,
+    transparent 1.5px
+  );
+  background-size: 10px 10px;
+}
+
+/**
+ * Success — diagonal stripes (bottom-left → top-right, 45°).
+ * Uses var(--success) = #3fb950 (green) — matches dc-status-icon-bg--success.
+ */
+.dc-status-icon-bg--pattern-success {
+  background-image: repeating-linear-gradient(
+    45deg,
+    color-mix(in srgb, var(--success, #3fb950) 20%, transparent) 0,
+    color-mix(in srgb, var(--success, #3fb950) 20%, transparent) 1.5px,
+    transparent 1.5px,
+    transparent 8px
+  );
+}
+
+/**
+ * Error — crosshatch (45° + 135°).
+ * Uses var(--error) = #f85149 (red) — matches dc-status-icon-bg--error.
+ */
+.dc-status-icon-bg--pattern-error {
+  background-image:
+    repeating-linear-gradient(
+      45deg,
+      color-mix(in srgb, var(--error, #f85149) 18%, transparent) 0,
+      color-mix(in srgb, var(--error, #f85149) 18%, transparent) 1.5px,
+      transparent 1.5px,
+      transparent 7px
+    ),
+    repeating-linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--error, #f85149) 18%, transparent) 0,
+      color-mix(in srgb, var(--error, #f85149) 18%, transparent) 1.5px,
+      transparent 1.5px,
+      transparent 7px
+    );
+}
+
+/* ─── 3. RepaymentVisualizer legend swatches ────────────────────────────── */
+
 @media (forced-colors: active) {
   .rv-legend-swatch {
     background-color: Canvas;
@@ -93,6 +182,62 @@
         CanvasText 1px,
         transparent 1px,
         transparent 4px
+      );
+  }
+}
+
+/* ─── 4. forced-colors overrides for transaction-status patterns ──────────── */
+/*
+ * In Windows High Contrast / forced-colors mode the browser replaces all
+ * colour values with system palette entries, making CSS color-mix()
+ * transparent — the patterns would disappear.  We restore them using the
+ * CanvasText system keyword so they remain visible and distinct.
+ *
+ * Each status gets a *different* geometry so they stay distinguishable even
+ * when both the icon tint and the pattern colour collapse to CanvasText.
+ *
+ *   pending  → dots
+ *   success  → 45° stripes
+ *   error    → crosshatch (45° + 135°)
+ */
+@media (forced-colors: active) {
+  .dc-status-icon-bg--pattern-pending {
+    forced-color-adjust: none;
+    background-image: radial-gradient(
+      circle,
+      CanvasText 1.5px,
+      transparent 1.5px
+    );
+    background-size: 10px 10px;
+  }
+
+  .dc-status-icon-bg--pattern-success {
+    forced-color-adjust: none;
+    background-image: repeating-linear-gradient(
+      45deg,
+      CanvasText 0,
+      CanvasText 1.5px,
+      transparent 1.5px,
+      transparent 8px
+    );
+  }
+
+  .dc-status-icon-bg--pattern-error {
+    forced-color-adjust: none;
+    background-image:
+      repeating-linear-gradient(
+        45deg,
+        CanvasText 0,
+        CanvasText 1.5px,
+        transparent 1.5px,
+        transparent 7px
+      ),
+      repeating-linear-gradient(
+        135deg,
+        CanvasText 0,
+        CanvasText 1.5px,
+        transparent 1.5px,
+        transparent 7px
       );
   }
 }
