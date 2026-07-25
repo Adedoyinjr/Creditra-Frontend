@@ -118,4 +118,38 @@ describe('RepayPage', () => {
     fireEvent.click(smartPayBtn);
     expect(reviewBtn).not.toBeDisabled();
   });
+
+  it('has an auto-schedule toggle', () => {
+    renderPage(['/repay?line=CL-2024-001']);
+    expect(screen.getByText('Auto-schedule')).toBeInTheDocument();
+    expect(screen.getByRole('switch')).toBeInTheDocument();
+  });
+
+  it('can toggle auto-schedule on and off', () => {
+    renderPage(['/repay?line=CL-2024-001']);
+    const toggle = screen.getByRole('switch');
+    expect(toggle).toHaveAttribute('aria-checked', 'false');
+    
+    fireEvent.click(toggle);
+    expect(toggle).toHaveAttribute('aria-checked', 'true');
+    
+    fireEvent.click(toggle);
+    expect(toggle).toHaveAttribute('aria-checked', 'false');
+  });
+
+  it('shows auto-schedule status in review step when active', () => {
+    renderPage(['/repay?line=CL-2024-001']);
+    
+    // Fill amount and review
+    fireEvent.click(screen.getByRole('button', { name: /smart pay/i }));
+    
+    // Toggle auto schedule
+    fireEvent.click(screen.getByRole('switch'));
+    
+    fireEvent.click(screen.getByText('Review Repayment'));
+    
+    // Should see Monthly in review
+    expect(screen.getByText('Auto-schedule')).toBeInTheDocument();
+    expect(screen.getByText('Monthly')).toBeInTheDocument();
+  });
 });
