@@ -2,16 +2,17 @@
  * RepaymentVisualizer
  *
  * Renders a stacked area chart (principal vs interest) for a repayment schedule,
- * with an accessible SR-fallback data table and hover/long-press tooltip.
+ * with an accessible SR-fallback data table, hover/long-press tooltip, and keyboard navigation.
  *
  * Approach:
  *  - Pure SVG — no third-party charting library.
  *  - Theme tokens from CSS custom properties; colours from src/utils/tokens.ts.
- *  - WCAG 2.1 AA: focus ring, aria-label, role="img", table fallback, reduced-motion.
+ *  - WCAG 2.1 AA: focus ring, aria-label, role="img", table fallback, keyboard navigation (Arrow keys / Home / End / Esc), KbdHint hints.
  */
 
-import { useState, useRef, useCallback, useId } from 'react';
+import React, { useState, useRef, useCallback, useId } from 'react';
 import { COLOR } from '@/utils/tokens';
+import { KbdHint } from './KbdHint';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -138,8 +139,8 @@ function StackedAreaChart({ schedule, tooltipId, onTooltip, tooltip, chartAriaLa
   const initPrincipal = schedule[0].principal + schedule[0].principalPaid;
   const maxStack = initPrincipal + (schedule[schedule.length - 1]?.cumulativeInterest ?? 0);
 
-  const xScale = (i: number) => PAD.left + (i / (schedule.length - 1 || 1)) * CHART_W;
-  const yScale = (v: number) => PAD.top + CHART_H - (v / maxStack) * CHART_H;
+  const xScale = useCallback((i: number) => PAD.left + (i / (schedule.length - 1 || 1)) * CHART_W, [schedule.length]);
+  const yScale = useCallback((v: number) => PAD.top + CHART_H - (v / maxStack) * CHART_H, [maxStack]);
 
   // Area 1: principal remaining (bottom area)
   const principalTop: [number, number][] = schedule.map((r, i) => [xScale(i), yScale(r.principal)]);
@@ -189,19 +190,68 @@ function StackedAreaChart({ schedule, tooltipId, onTooltip, tooltip, chartAriaLa
     [schedule, xScale, yScale, onTooltip],
   );
 
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent<SVGSVGElement>) => {
+      if (schedule.length === 0) return;
+      const currentIdx = tooltip ? schedule.findIndex((r) => r.month === tooltip.month) : -1;
+
+      let nextIdx = -1;
+      if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+        e.preventDefault();
+        nextIdx = currentIdx < 0 ? 0 : Math.min(schedule.length - 1, currentIdx + 1);
+      } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        nextIdx = currentIdx < 0 ? 0 : Math.max(0, currentIdx - 1);
+      } else if (e.key === 'Home') {
+        e.preventDefault();
+        nextIdx = 0;
+      } else if (e.key === 'End') {
+        e.preventDefault();
+        nextIdx = schedule.length - 1;
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        onTooltip(null);
+        return;
+      }
+
+      if (nextIdx >= 0 && nextIdx < schedule.length) {
+        const row = schedule[nextIdx];
+        onTooltip({
+          month: row.month,
+          principal: row.principal,
+          cumulativeInterest: row.cumulativeInterest,
+          x: xScale(nextIdx),
+          y: yScale(row.principal + row.cumulativeInterest),
+        });
+      }
+    },
+    [schedule, tooltip, xScale, yScale, onTooltip],
+  );
+
   return (
     <svg
       viewBox={`0 0 ${W} ${H}`}
       role="img"
+      tabIndex={0}
       aria-label={
         chartAriaLabel ??
         'Stacked area chart showing principal and cumulative interest over repayment months'
       }
       aria-describedby={tooltipId}
-      style={{ width: '100%', height: 'auto', overflow: 'visible' }}
+      aria-valuenow={tooltip ? tooltip.month : undefined}
+      aria-valuemin={schedule.length > 0 ? 1 : undefined}
+      aria-valuemax={schedule.length > 0 ? schedule[schedule.length - 1].month : undefined}
+      aria-valuetext={
+        tooltip
+          ? `Month ${tooltip.month}: Principal remaining $${Math.round(tooltip.principal)}, cumulative interest $${Math.round(tooltip.cumulativeInterest)}`
+          : undefined
+      }
+      style={{ width: '100%', height: 'auto', overflow: 'visible', outline: 'none' }}
+      className="focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
       onMouseMove={handleMouseMove}
       onMouseLeave={() => onTooltip(null)}
       onTouchEnd={() => onTooltip(null)}
+      onKeyDown={handleKeyDown}
     >
       <defs>
         <linearGradient id="grad-principal" x1="0" y1="0" x2="0" y2="1">
@@ -370,7 +420,7 @@ function SRTable({ schedule, caption }: SRTableProps) {
 function Legend() {
   return (
     <div
-      className="flex flex-wrap gap-3 sm:gap-4 mt-3 sm:mt-4 text-xs"
+      className="flex flex-wrap items-center gap-3 sm:gap-4 text-xs"
       style={{ color: `var(--muted, ${COLOR.muted})` }}
       aria-hidden="true"
     >
@@ -498,7 +548,7 @@ function EmptyState() {
 
 /**
  * RepaymentVisualizer displays a stacked area chart (principal vs cumulative
- * interest) over the life of a loan, plus an accessible data table.
+ * interest) over the life of a loan, plus an accessible data table and keyboard shortcut hints.
  *
  * Accessibility props
  * ───────────────────
@@ -566,17 +616,27 @@ export function RepaymentVisualizer({
         borderRadius: 10,
       }}
     >
-      <header className="mb-4 sm:mb-6 flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-1 sm:gap-4">
-        <h2
-          style={{
-            fontSize: '1rem',
-            fontWeight: 700,
-            color: `var(--text, ${COLOR.text})`,
-            margin: 0,
-          }}
-        >
-          Repayment Plan
-        </h2>
+      <header className="mb-4 sm:mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4">
+        <div className="flex flex-wrap items-center gap-3">
+          <h2
+            style={{
+              fontSize: '1rem',
+              fontWeight: 700,
+              color: `var(--text, ${COLOR.text})`,
+              margin: 0,
+            }}
+          >
+            Repayment Plan
+          </h2>
+          {schedule.length > 0 && (
+            <KbdHint
+              keys={['←', '→']}
+              label="Inspect month"
+              variant="badge"
+              aria-label="Keyboard shortcut: Left and Right arrow keys to inspect month"
+            />
+          )}
+        </div>
         {schedule.length > 0 && (
           <p style={{ fontSize: '0.8rem', color: `var(--muted, ${COLOR.muted})`, margin: 0 }}>
             {termMonths} month{termMonths !== 1 ? 's' : ''} ·{' '}
@@ -623,7 +683,13 @@ export function RepaymentVisualizer({
             )}
           </div>
 
-          <Legend />
+          <div className="flex flex-wrap items-center justify-between gap-3 mt-3 sm:mt-4">
+            <Legend />
+            <div className="flex items-center gap-2 text-xs">
+              <KbdHint keys={['←', '→']} label="Inspect" />
+              <KbdHint keys="Esc" label="Clear" />
+            </div>
+          </div>
 
           {/* SR-only full data table (always present for assistive tech) */}
           <SRTable schedule={schedule} caption={caption} />
@@ -653,3 +719,5 @@ export function RepaymentVisualizer({
     </section>
   );
 }
+
+export default RepaymentVisualizer;

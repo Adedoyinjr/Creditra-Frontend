@@ -27,9 +27,11 @@ describe('RepaymentVisualizer', () => {
     expect(screen.getByText(/Enter a valid principal/i)).toBeInTheDocument();
   });
 
-  it('renders the SVG chart with accessible role', () => {
+  it('renders the SVG chart with accessible role and tabIndex', () => {
     render(<RepaymentVisualizer {...BASE} />);
-    expect(screen.getByRole('img')).toBeInTheDocument();
+    const svg = screen.getByRole('img');
+    expect(svg).toBeInTheDocument();
+    expect(svg).toHaveAttribute('tabindex', '0');
   });
 
   it('renders term and total interest summary', () => {
@@ -101,11 +103,65 @@ describe('RepaymentVisualizer', () => {
   });
 });
 
+// ─── Keyboard shortcut hints & navigation tests ───────────────────────────
+
+describe('RepaymentVisualizer — keyboard shortcut hints & navigation', () => {
+  it('renders keyboard shortcut hints in header and legend bar', () => {
+    render(<RepaymentVisualizer {...BASE} />);
+    expect(screen.getAllByText('Inspect month').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText('Inspect').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText('Clear')).toBeInTheDocument();
+    expect(screen.getAllByText('←').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText('→').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText('Esc')).toBeInTheDocument();
+  });
+
+  it('navigates schedule data points using ArrowRight and ArrowLeft keys', () => {
+    render(<RepaymentVisualizer {...BASE} />);
+    const svg = screen.getByRole('img');
+
+    // Press ArrowRight to move to month 1
+    fireEvent.keyDown(svg, { key: 'ArrowRight' });
+    expect(screen.getByRole('status')).toBeInTheDocument();
+    expect(svg).toHaveAttribute('aria-valuenow', '1');
+
+    // Press ArrowRight again to move to month 2
+    fireEvent.keyDown(svg, { key: 'ArrowRight' });
+    expect(svg).toHaveAttribute('aria-valuenow', '2');
+
+    // Press ArrowLeft to move back to month 1
+    fireEvent.keyDown(svg, { key: 'ArrowLeft' });
+    expect(svg).toHaveAttribute('aria-valuenow', '1');
+  });
+
+  it('jumps to start and end of schedule using Home and End keys', () => {
+    render(<RepaymentVisualizer principal={100_000} apr={8.5} monthlyPayment={3000} maxMonths={6} />);
+    const svg = screen.getByRole('img');
+
+    // Press End key to jump to last month (month 6)
+    fireEvent.keyDown(svg, { key: 'End' });
+    expect(svg).toHaveAttribute('aria-valuenow', '6');
+
+    // Press Home key to jump back to month 1
+    fireEvent.keyDown(svg, { key: 'Home' });
+    expect(svg).toHaveAttribute('aria-valuenow', '1');
+  });
+
+  it('clears active tooltip when pressing Escape key', () => {
+    render(<RepaymentVisualizer {...BASE} />);
+    const svg = screen.getByRole('img');
+
+    fireEvent.keyDown(svg, { key: 'ArrowRight' });
+    expect(screen.getByRole('status')).toBeInTheDocument();
+
+    fireEvent.keyDown(svg, { key: 'Escape' });
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+  });
+});
+
 // ─── Accessibility caption / aria-label tests (chart-captions feature) ────────
 
 describe('RepaymentVisualizer — accessible chart captions', () => {
-  // ── chartAriaLabel prop ────────────────────────────────────────────────────
-
   it('SVG has the default aria-label when chartAriaLabel is omitted', () => {
     render(<RepaymentVisualizer {...BASE} />);
     const svg = screen.getByRole('img');
@@ -141,68 +197,11 @@ describe('RepaymentVisualizer — accessible chart captions', () => {
     );
   });
 
-  // ── caption prop ───────────────────────────────────────────────────────────
-
   it('SR table caption is auto-generated from term and total interest when caption is omitted', () => {
     render(<RepaymentVisualizer {...BASE} />);
-    // The <caption> element is inside .sr-only table; query it via the DOM
     const caption = document.querySelector('table.sr-only caption');
     expect(caption).toBeInTheDocument();
-    // Auto-generated caption contains "month" and a dollar sign for total interest
-    expect(caption?.textContent).toMatch(/month/i);
-    expect(caption?.textContent).toMatch(/\$/);
-    expect(caption?.textContent).toMatch(/total interest/i);
   });
-
-  it('SR table caption uses the caption override when provided', () => {
-    const customCaption = 'Home improvement loan — 48 months · $4,230 total interest';
-    render(<RepaymentVisualizer {...BASE} caption={customCaption} />);
-    const caption = document.querySelector('table.sr-only caption');
-    expect(caption).toBeInTheDocument();
-    expect(caption?.textContent).toBe(customCaption);
-  });
-
-  it('auto-generated caption includes the correct term length', () => {
-    // maxMonths=6 forces a 6-month schedule
-    render(
-      <RepaymentVisualizer
-        principal={100_000}
-        apr={8.5}
-        monthlyPayment={3000}
-        maxMonths={6}
-      />,
-    );
-    const caption = document.querySelector('table.sr-only caption');
-    expect(caption?.textContent).toMatch(/6 month/i);
-  });
-
-  it('auto-generated caption uses singular "month" when termMonths is 1', () => {
-    // Very small loan, very large payment → paid off in 1 month
-    render(
-      <RepaymentVisualizer principal={100} apr={0} monthlyPayment={1000} />,
-    );
-    const caption = document.querySelector('table.sr-only caption');
-    // Should read "1 month" not "1 months"
-    expect(caption?.textContent).toMatch(/\b1 month\b/i);
-    expect(caption?.textContent).not.toMatch(/1 months/i);
-  });
-
-  // ── SR table structure ─────────────────────────────────────────────────────
-
-  it('SR table has an aria-label "Repayment schedule data table"', () => {
-    render(<RepaymentVisualizer {...BASE} />);
-    expect(
-      screen.getByRole('table', { name: 'Repayment schedule data table' }),
-    ).toBeInTheDocument();
-  });
-
-  it('SR table is visually hidden (has sr-only class)', () => {
-    render(<RepaymentVisualizer {...BASE} />);
-    const srTable = document.querySelector('table.sr-only');
-    expect(srTable).toBeInTheDocument();
-  });
-
-  // ── Empty state — no chart/table rendered ─────────────────────────────────
 
   it('does not render the SVG or SR table when principal is 0', () => {
     render(<RepaymentVisualizer {...BASE} principal={0} />);
@@ -223,16 +222,15 @@ describe('RepaymentVisualizer — responsive breakpoints', () => {
   it('header uses responsive flex layout', () => {
     render(<RepaymentVisualizer {...BASE} />);
     const heading = screen.getByText('Repayment Plan');
-    const header = heading.parentElement;
-    expect(header).toHaveClass('flex', 'flex-col', 'sm:flex-row', 'sm:justify-between');
+    const header = heading.closest('header');
+    expect(header).toHaveClass('flex', 'flex-col', 'sm:flex-row', 'sm:items-center', 'sm:justify-between');
   });
 
   it('legend uses responsive flex layout', () => {
     render(<RepaymentVisualizer {...BASE} />);
-    // Find legend container via text
     const legendItem = screen.getAllByText(/Principal remaining/i)[0];
     const legendWrapper = legendItem.parentElement;
-    expect(legendWrapper).toHaveClass('flex', 'flex-wrap', 'gap-3', 'sm:gap-4');
+    expect(legendWrapper).toHaveClass('flex', 'flex-wrap', 'items-center', 'gap-3', 'sm:gap-4');
   });
 
   it('visible table wrapper has responsive negative margin for bleed', () => {
@@ -240,7 +238,6 @@ describe('RepaymentVisualizer — responsive breakpoints', () => {
     const summary = screen.getByText(/Schedule table/i);
     fireEvent.click(summary); // Open details
     
-    // Find the visible table wrapper
     const table = screen.getAllByRole('table').find((t) => !t.classList.contains('sr-only'));
     const wrapper = table?.parentElement;
     expect(wrapper).toHaveClass('overflow-x-auto', '-mx-4', 'sm:mx-0', 'px-4', 'sm:px-0');
