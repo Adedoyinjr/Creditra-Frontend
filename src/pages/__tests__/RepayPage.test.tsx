@@ -118,4 +118,54 @@ describe('RepayPage', () => {
     fireEvent.click(smartPayBtn);
     expect(reviewBtn).not.toBeDisabled();
   });
+
+  describe('Focus-visible outline accessibility', () => {
+    it('applies focus-visible classes on selection view back button and credit line options', () => {
+      renderPage(['/repay']);
+      const backBtn = screen.getByRole('button', { name: /back/i });
+      expect(backBtn).toHaveClass('focus-visible:outline');
+
+      const clOption = screen.getByRole('button', { name: /primary business line/i });
+      expect(clOption).toHaveClass('focus-visible:outline');
+    });
+
+    it('applies focus-visible classes on input view back, preset, input, and review buttons', () => {
+      renderPage(['/repay?line=CL-2024-001']);
+      const backBtn = screen.getByRole('button', { name: /back to credit lines/i });
+      expect(backBtn).toHaveClass('focus-visible:outline');
+
+      const preset25 = screen.getByRole('button', { name: /25 percent/i });
+      expect(preset25).toHaveClass('focus-visible:outline');
+
+      const smartPayBtn = screen.getByRole('button', { name: /smart pay/i });
+      expect(smartPayBtn).toHaveClass('focus-visible:outline');
+
+      const input = screen.getByRole('spinbutton', { name: /amount to repay/i });
+      expect(input).toHaveClass('focus-visible:outline');
+
+      const reviewBtn = screen.getByRole('button', { name: /review repayment/i });
+      expect(reviewBtn).toHaveClass('focus-visible:outline');
+    });
+
+    it('applies focus-visible classes on help and cancel buttons', () => {
+      renderPage(['/repay?line=CL-2024-001']);
+      const helpBtn = screen.getByRole('button', { name: /i need help/i });
+      expect(helpBtn).toHaveClass('focus-visible:outline');
+
+      const cancelBtn = screen.getByRole('button', { name: /cancel/i });
+      expect(cancelBtn).toHaveClass('focus-visible:outline');
+    });
+
+    it('applies focus-visible classes on review step buttons', () => {
+      renderPage(['/repay?line=CL-2024-001']);
+      fireEvent.click(screen.getByRole('button', { name: /smart pay/i }));
+      fireEvent.click(screen.getByRole('button', { name: /review repayment/i }));
+
+      const backBtn = screen.getByRole('button', { name: /back/i });
+      expect(backBtn).toHaveClass('focus-visible:outline');
+
+      const confirmBtn = screen.getByRole('button', { name: /confirm repayment/i });
+      expect(confirmBtn).toHaveClass('focus-visible:outline');
+    });
+  });
 });
