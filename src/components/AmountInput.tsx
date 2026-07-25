@@ -207,32 +207,32 @@ export function AmountInput({
   const validation = getDrawAmountValidation(amount, creditLine);
   const toneBySeverity = {
     info: {
-      bg: "bg-blue-500/10",
-      border: "border-blue-400/30",
-      text: "text-blue-100",
-      icon: <Info className="mt-0.5 h-4 w-4 flex-shrink-0" aria-hidden="true" />,
-      input: "border-border focus-within:border-blue-400",
+      bg: "bg-accent/10",
+      border: "border-accent/30",
+      text: "text-foreground",
+      icon: <Info className="mt-0.5 h-4 w-4 flex-shrink-0 text-accent" aria-hidden="true" />,
+      input: "border-border focus-within:border-accent",
     },
     success: {
-      bg: "bg-emerald-500/10",
-      border: "border-emerald-400/30",
-      text: "text-emerald-100",
-      icon: <CheckCircle className="mt-0.5 h-4 w-4 flex-shrink-0" aria-hidden="true" />,
-      input: "border-emerald-400/60",
+      bg: "bg-success/10",
+      border: "border-success/30",
+      text: "text-foreground",
+      icon: <CheckCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-success" aria-hidden="true" />,
+      input: "border-success/60 focus-within:border-success",
     },
     warning: {
-      bg: "bg-amber-500/10",
-      border: "border-amber-400/30",
-      text: "text-amber-100",
-      icon: <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0" aria-hidden="true" />,
-      input: "border-amber-400/60",
+      bg: "bg-warning/10",
+      border: "border-warning/30",
+      text: "text-foreground",
+      icon: <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0 text-warning" aria-hidden="true" />,
+      input: "border-warning/60 focus-within:border-warning",
     },
     danger: {
-      bg: "bg-red-500/10",
-      border: "border-red-400/30",
-      text: "text-red-100",
-      icon: <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0" aria-hidden="true" />,
-      input: "border-red-400/70",
+      bg: "bg-error/10",
+      border: "border-error/30",
+      text: "text-foreground",
+      icon: <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-error" aria-hidden="true" />,
+      input: "border-error/70 focus-within:border-error",
     },
   };
   const currentTone = toneBySeverity[validation.feedback.severity];
@@ -244,16 +244,20 @@ export function AmountInput({
   const describedBy = `${helperId} ${constraintsId} ${statusId}${hasError ? ` ${errorId}` : ""}`;
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8">
       <div>
-        <h2 className="text-3xl font-bold text-foreground">Enter Amount</h2>
-        <p className="text-muted mt-2">{creditLine.name}</p>
+        <h2 className="text-2xl sm:text-3xl font-bold text-foreground leading-[var(--lh-heading)] tracking-tight">
+          Enter Amount
+        </h2>
+        <p className="text-sm text-muted leading-[var(--lh-body)] mt-1.5 sm:mt-2">
+          {creditLine.name}
+        </p>
       </div>
 
       <div className="space-y-3">
         <label
           htmlFor={inputId}
-          className="block text-sm font-medium text-foreground"
+          className="block text-sm font-medium text-foreground leading-[var(--lh-body)]"
         >
           Draw amount
           <span className="text-error ml-1" aria-label="required">
@@ -262,7 +266,7 @@ export function AmountInput({
         </label>
 
         {/* Helper text explaining the input */}
-        <p id={helperId} className="text-sm text-muted">
+        <p id={helperId} className="text-sm text-muted leading-[var(--lh-body)]">
           Enter the amount you wish to draw from your available credit.
           Available limit:{" "}
           <span className="font-semibold text-foreground tabular-nums">
@@ -272,7 +276,7 @@ export function AmountInput({
 
         {/* Input field with border styling based on validation state */}
         <div
-          className={`flex items-center gap-2 bg-surface p-4 rounded-xl border-2 overflow-hidden transition-colors ${inputStateClassName}`}
+          className={`flex items-center gap-2 sm:gap-3 bg-surface p-3.5 sm:p-4 rounded-xl border-2 overflow-hidden transition-colors ${inputStateClassName}`}
         >
           <button
             onClick={() => handleStep("down")}
@@ -285,29 +289,29 @@ export function AmountInput({
             <Minus className={STEP_ICON_CLASS} aria-hidden="true" />
           </button>
           <span
-            className="text-3xl font-bold text-foreground flex-shrink-0"
+            className="text-2xl sm:text-3xl font-bold text-foreground leading-[var(--lh-display)] flex-shrink-0"
             aria-hidden="true"
           >
             $
           </span>
-           <input
-             id={inputId}
-             type="number"
-             placeholder="0"
-             value={amount}
-             onChange={(e) => setAmount(e.target.value)}
-             onPaste={handlePaste}
-             onKeyDown={handleKeyDown}
-             ref={inputRef}
-             className="text-2xl font-bold bg-transparent outline-none flex-1 text-foreground placeholder:text-muted/50 min-w-0 tabular-nums"
-             min={validation.minAmount}
-             max={creditLine.available}
-             step={STEP_AMOUNT}
-             required
-             aria-invalid={hasError}
-             aria-describedby={describedBy}
-             aria-required="true"
-           />
+          <input
+            id={inputId}
+            type="number"
+            placeholder="0"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            onPaste={handlePaste}
+            onKeyDown={handleKeyDown}
+            ref={inputRef}
+            className="text-xl sm:text-2xl font-bold bg-transparent outline-none flex-1 text-foreground placeholder:text-muted/50 min-w-0 tabular-nums leading-[var(--lh-display)]"
+            min={validation.minAmount}
+            max={creditLine.available}
+            step={STEP_AMOUNT}
+            required
+            aria-invalid={hasError}
+            aria-describedby={describedBy}
+            aria-required="true"
+          />
 
           <button
             onClick={() => handleStep("up")}
@@ -322,7 +326,7 @@ export function AmountInput({
           {/* Max button for quick-fill with accessible label */}
           <button
             onClick={handleMaxClick}
-            className="px-3 py-2 text-sm font-semibold text-accent hover:bg-accent/10 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-surface flex-shrink-0"
+            className="px-3 py-2 text-sm font-semibold text-accent hover:bg-accent/10 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-surface flex-shrink-0 min-h-[44px]"
             aria-label="Set amount to maximum available credit"
             type="button"
           >
@@ -332,27 +336,27 @@ export function AmountInput({
 
         {/* Constraint boxes showing min, available, and reserve */}
         <div id={constraintsId} className="grid gap-2 sm:grid-cols-3">
-          <div className="rounded-lg border border-border bg-background/60 px-3 py-2">
-            <p className="text-[11px] uppercase tracking-wide text-muted">
+          <div className="rounded-lg border border-border bg-background/60 px-3 py-2.5 space-y-0.5">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-muted leading-[var(--lh-small)]">
               Minimum draw
             </p>
-            <p className="text-sm font-semibold text-foreground tabular-nums">
+            <p className="text-sm font-semibold text-foreground tabular-nums leading-[var(--lh-body)]">
               {formatMoney(validation.minAmount)}
             </p>
           </div>
-          <div className="rounded-lg border border-border bg-background/60 px-3 py-2">
-            <p className="text-[11px] uppercase tracking-wide text-muted">
+          <div className="rounded-lg border border-border bg-background/60 px-3 py-2.5 space-y-0.5">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-muted leading-[var(--lh-small)]">
               Available credit
             </p>
-            <p className="text-sm font-semibold text-foreground tabular-nums">
+            <p className="text-sm font-semibold text-foreground tabular-nums leading-[var(--lh-body)]">
               {formatMoney(validation.maxAmount)}
             </p>
           </div>
-          <div className="rounded-lg border border-border bg-background/60 px-3 py-2">
-            <p className="text-[11px] uppercase tracking-wide text-muted">
+          <div className="rounded-lg border border-border bg-background/60 px-3 py-2.5 space-y-0.5">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-muted leading-[var(--lh-small)]">
               Reserve
             </p>
-            <p className="text-sm font-semibold text-foreground tabular-nums">
+            <p className="text-sm font-semibold text-foreground tabular-nums leading-[var(--lh-body)]">
               {formatMoney(validation.recommendedReserve)}
             </p>
           </div>
@@ -368,22 +372,21 @@ export function AmountInput({
           reserveSpace={true}
           minHeight={60}
         />
-       </div>
- 
-       {/* Polite live region for paste announcements */}
-       <div 
-         id={announcementId} 
-         className="sr-only" 
-         role="status" 
-         aria-live="polite"
-       >
-         {pasteAnnouncement}
-       </div>
- 
-       {/* Quick presets for percentage-based amounts */}
-       <div>
+      </div>
 
-        <p className="text-sm font-semibold text-foreground mb-3">
+      {/* Polite live region for paste announcements */}
+      <div
+        id={announcementId}
+        className="sr-only"
+        role="status"
+        aria-live="polite"
+      >
+        {pasteAnnouncement}
+      </div>
+
+      {/* Quick presets for percentage-based amounts */}
+      <div>
+        <p className="text-sm font-semibold text-foreground mb-3 leading-[var(--lh-body)]">
           Quick amount
         </p>
         <div className="grid grid-cols-4 gap-2">
@@ -395,7 +398,7 @@ export function AmountInput({
                   Math.floor((creditLine.available * percent) / 100).toString(),
                 )
               }
-              className="py-2 px-3 border-2 border-border rounded-lg hover:border-blue-400 hover:bg-surface hover:shadow-md hover:shadow-blue-500/20 transition-all text-foreground font-medium text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+              className="py-2.5 px-3 border-2 border-border rounded-lg hover:border-accent hover:bg-surface transition-all text-foreground font-medium text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background min-h-[44px] flex items-center justify-center"
               aria-label={`Set amount to ${percent} percent of available credit`}
               type="button"
             >
@@ -406,23 +409,23 @@ export function AmountInput({
       </div>
 
       {/* Summary display showing available, requested, and remaining */}
-      <div className="bg-surface p-5 rounded-xl border border-border space-y-3 shadow-lg shadow-blue-500/5">
-        <div className="flex justify-between text-sm">
+      <div className="bg-surface p-4 sm:p-5 rounded-xl border border-border space-y-3">
+        <div className="flex justify-between text-sm leading-[var(--lh-body)]">
           <span className="text-muted">Available:</span>
           <span className="font-semibold text-foreground tabular-nums">
             {formatMoney(creditLine.available)}
           </span>
         </div>
-        <div className="flex justify-between text-sm border-t border-border pt-3">
+        <div className="flex justify-between text-sm leading-[var(--lh-body)] border-t border-border pt-3">
           <span className="text-muted">Requested:</span>
           <span className="font-semibold text-foreground tabular-nums">
             {formatMoney(numAmount)}
           </span>
         </div>
-        <div className="flex justify-between text-sm border-t border-border pt-3">
+        <div className="flex justify-between text-sm leading-[var(--lh-body)] border-t border-border pt-3">
           <span className="text-muted">Remaining credit:</span>
           <span
-            className={`font-semibold tabular-nums ${validation.remainingCredit < validation.recommendedReserve && numAmount > 0 ? "text-amber-400" : "text-foreground"}`}
+            className={`font-semibold tabular-nums ${validation.remainingCredit < validation.recommendedReserve && numAmount > 0 ? "text-warning" : "text-foreground"}`}
           >
             {formatMoney(validation.remainingCredit)}
           </span>
@@ -433,7 +436,7 @@ export function AmountInput({
       <div className="flex gap-3 pt-4">
         <button
           onClick={onBack}
-          className="flex-1 py-3 px-4 border-2 border-border text-foreground rounded-lg hover:bg-surface transition-colors font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          className="flex-1 py-3 px-4 border-2 border-border text-foreground rounded-lg hover:bg-surface transition-colors font-semibold text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background min-h-[44px]"
           type="button"
         >
           Back
@@ -441,7 +444,7 @@ export function AmountInput({
         <button
           onClick={() => onNext(numAmount)}
           disabled={!isValid}
-          className="flex-1 py-3 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-500 hover:shadow-lg hover:shadow-blue-500/40 transition-all font-semibold disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          className="flex-1 py-3 px-4 bg-accent text-background rounded-lg hover:bg-accent/90 transition-all font-semibold text-sm disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background min-h-[44px]"
           type="button"
         >
           Continue
