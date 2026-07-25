@@ -7,12 +7,29 @@
  * Approach:
  *  - Pure SVG — no third-party charting library.
  *  - Theme tokens from CSS custom properties; colours from src/utils/tokens.ts.
- *  - WCAG 2.1 AA: focus ring, aria-label, role="img", table fallback, keyboard navigation (Arrow keys / Home / End / Esc), KbdHint hints.
+ *  - WCAG 2.1 AA: focus ring, aria-label, role="img", table fallback,
+ *    keyboard navigation (Arrow keys / Home / End / Esc), KbdHint hints,
+ *    reduced-motion support.
+ *
+ * Animation & reduced-motion
+ * ──────────────────────────
+ * By default the chart area paths animate in with a "grow upward" effect
+ * (see RepaymentVisualizer.css). When either of the following is true the
+ * animation is suppressed and areas are displayed statically:
+ *
+ *   1. The OS/browser `prefers-reduced-motion: reduce` media query is active.
+ *   2. The in-app reduced-motion override is enabled via `ReducedMotionContext`
+ *      (Settings → Accessibility → Reduced Motion Preview).
+ *
+ * The chart wrapper receives `data-reduced-motion="true"` so the CSS can target
+ * it without needing JS class manipulation on every child element.
  */
 
 import React, { useState, useRef, useCallback, useId } from 'react';
 import { COLOR } from '@/utils/tokens';
 import { KbdHint } from './KbdHint';
+import { useReducedMotion } from '@/context/ReducedMotionContext';
+import './RepaymentVisualizer.css';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -131,9 +148,15 @@ interface ChartProps {
   tooltip: TooltipData | null;
   /** Optional override for the SVG aria-label (from RepaymentVisualizerProps). */
   chartAriaLabel?: string;
+  /**
+   * When true the chart area paths are rendered statically — no CSS animation
+   * is applied. Set by the parent based on `isReducedMotionActive` from
+   * `ReducedMotionContext` (which also responds to the OS media query).
+   */
+  reducedMotion?: boolean;
 }
 
-function StackedAreaChart({ schedule, tooltipId, onTooltip, tooltip, chartAriaLabel }: ChartProps) {
+function StackedAreaChart({ schedule, tooltipId, onTooltip, tooltip, chartAriaLabel, reducedMotion = false }: ChartProps) {
   const chartPatternUid = useId().replace(/:/g, '');
   const gradPrincipalId = `rv-grad-principal-${chartPatternUid}`;
   const gradInterestId = `rv-grad-interest-${chartPatternUid}`;
@@ -276,15 +299,7 @@ function StackedAreaChart({ schedule, tooltipId, onTooltip, tooltip, chartAriaLa
           patternTransform="rotate(45)"
         >
           <rect width="6" height="6" fill="transparent" />
-          <line
-            x1="0"
-            y1="0"
-            x2="0"
-            y2="6"
-            stroke={COLOR.accent}
-            strokeWidth="1.25"
-            strokeOpacity="0.75"
-          />
+          <line x1="0" y1="0" x2="0" y2="6" stroke={COLOR.accent} strokeWidth="1.25" strokeOpacity="0.75" />
         </pattern>
         <pattern
           id={hatchInterestId}
@@ -294,15 +309,7 @@ function StackedAreaChart({ schedule, tooltipId, onTooltip, tooltip, chartAriaLa
           patternTransform="rotate(135)"
         >
           <rect width="6" height="6" fill="transparent" />
-          <line
-            x1="0"
-            y1="0"
-            x2="0"
-            y2="6"
-            stroke={COLOR.warning}
-            strokeWidth="1.25"
-            strokeOpacity="0.75"
-          />
+          <line x1="0" y1="0" x2="0" y2="6" stroke={COLOR.warning} strokeWidth="1.25" strokeOpacity="0.75" />
         </pattern>
       </defs>
 
@@ -310,20 +317,11 @@ function StackedAreaChart({ schedule, tooltipId, onTooltip, tooltip, chartAriaLa
       {yTicks.map(({ y, value }) => (
         <g key={value}>
           <line
-            x1={PAD.left}
-            y1={y}
-            x2={W - PAD.right}
-            y2={y}
-            stroke={COLOR.border}
-            strokeWidth="0.5"
-            strokeDasharray="4 4"
+            x1={PAD.left} y1={y} x2={W - PAD.right} y2={y}
+            stroke={COLOR.border} strokeWidth="0.5" strokeDasharray="4 4"
           />
           <text
-            x={PAD.left - 6}
-            y={y + 4}
-            textAnchor="end"
-            fontSize="10"
-            fill={COLOR.muted}
+            x={PAD.left - 6} y={y + 4} textAnchor="end" fontSize="10" fill={COLOR.muted}
             style={{ fontVariantNumeric: 'tabular-nums' }}
           >
             {fmtK(value)}
@@ -331,12 +329,12 @@ function StackedAreaChart({ schedule, tooltipId, onTooltip, tooltip, chartAriaLa
         </g>
       ))}
 
-      {/* Interest area (painted first — sits below principal visually in stacking) */}
+      {/* Interest area — painted first (sits below principal visually) */}
       <path
         d={interestPath}
         fill={`url(#${gradInterestId})`}
         data-series="interest"
-        className="rv-area rv-area--interest"
+        className={`rv-area rv-area--interest${reducedMotion ? '' : ' rv-area-animate rv-area-animate--interest'}`}
       />
       <path
         d={interestPath}
@@ -351,7 +349,7 @@ function StackedAreaChart({ schedule, tooltipId, onTooltip, tooltip, chartAriaLa
         d={principalPath}
         fill={`url(#${gradPrincipalId})`}
         data-series="principal"
-        className="rv-area rv-area--principal"
+        className={`rv-area rv-area--principal${reducedMotion ? '' : ' rv-area-animate'}`}
       />
       <path
         d={principalPath}
@@ -364,7 +362,8 @@ function StackedAreaChart({ schedule, tooltipId, onTooltip, tooltip, chartAriaLa
 
       {/* X-axis ticks */}
       {xTicks.map(({ month, x }) => (
-        <text key={month} x={x} y={H - 6} textAnchor="middle" fontSize="10" fill={COLOR.muted} style={{ fontVariantNumeric: 'tabular-nums' }}>
+        <text key={month} x={x} y={H - 6} textAnchor="middle" fontSize="10" fill={COLOR.muted}
+          style={{ fontVariantNumeric: 'tabular-nums' }}>
           mo {month}
         </text>
       ))}
@@ -372,33 +371,13 @@ function StackedAreaChart({ schedule, tooltipId, onTooltip, tooltip, chartAriaLa
       {/* Tooltip crosshair */}
       {tooltip && (
         <g>
-          <line
-            x1={tooltip.x}
-            y1={PAD.top}
-            x2={tooltip.x}
-            y2={PAD.top + CHART_H}
-            stroke={COLOR.border}
-            strokeWidth="1"
-          />
-          <circle
-            cx={tooltip.x}
-            cy={yScale(tooltip.principal)}
-            r="4"
-            fill={COLOR.accent}
-            stroke={COLOR.accent}
-            strokeWidth="1.5"
-            data-series="principal"
-          />
-          <circle
-            cx={tooltip.x}
-            cy={yScale(tooltip.principal + tooltip.cumulativeInterest)}
-            r="4"
-            fill={COLOR.warning}
-            stroke={COLOR.warning}
-            strokeWidth="1.5"
-            strokeDasharray="2 2"
-            data-series="interest"
-          />
+          <line x1={tooltip.x} y1={PAD.top} x2={tooltip.x} y2={PAD.top + CHART_H}
+            stroke={COLOR.border} strokeWidth="1" />
+          <circle cx={tooltip.x} cy={yScale(tooltip.principal)} r="4"
+            fill={COLOR.accent} stroke={COLOR.accent} strokeWidth="1.5" data-series="principal" />
+          <circle cx={tooltip.x} cy={yScale(tooltip.principal + tooltip.cumulativeInterest)} r="4"
+            fill={COLOR.warning} stroke={COLOR.warning} strokeWidth="1.5" strokeDasharray="2 2"
+            data-series="interest" />
         </g>
       )}
     </svg>
@@ -441,13 +420,6 @@ function TooltipBubble({ data }: { data: TooltipData }) {
 
 interface SRTableProps {
   schedule: ScheduleRow[];
-  /**
-   * Text for the table's `<caption>` element.
-   *
-   * When provided this value is used verbatim.  When omitted a summary is
-   * auto-generated from the schedule: "Monthly repayment schedule: N months,
-   * $X total interest".
-   */
   caption?: string;
 }
 
@@ -458,14 +430,12 @@ function SRTable({ schedule, caption }: SRTableProps) {
   const fmtShort = (n: number) =>
     new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(n);
 
-  // Auto-generate a meaningful summary when no caption is supplied.
   const termMonths = schedule.length;
   const totalInterest = schedule[schedule.length - 1]?.cumulativeInterest ?? 0;
   const resolvedCaption =
     caption ??
     `Monthly repayment schedule: ${termMonths} month${termMonths !== 1 ? 's' : ''}, ${fmtShort(totalInterest)} total interest`;
 
-  // Limit visible rows; full table always in SR tree
   return (
     <table
       className="sr-only tabular-nums"
@@ -499,10 +469,10 @@ function SRTable({ schedule, caption }: SRTableProps) {
 
 // ─── Legend ────────────────────────────────────────────────────────────────────
 
-function Legend() {
+function Legend({ reducedMotion = false }: { reducedMotion?: boolean }) {
   return (
     <div
-      className="flex flex-wrap items-center gap-3 sm:gap-4 text-xs"
+      className={`flex flex-wrap items-center gap-3 sm:gap-4 text-xs${reducedMotion ? '' : ' rv-legend-animate'}`}
       style={{ color: `var(--muted, ${COLOR.muted})` }}
       aria-hidden="true"
     >
@@ -614,10 +584,7 @@ function EmptyState() {
   return (
     <p
       className="text-center p-4 sm:p-8"
-      style={{
-        color: `var(--muted, ${COLOR.muted})`,
-        fontSize: '0.875rem',
-      }}
+      style={{ color: `var(--muted, ${COLOR.muted})`, fontSize: '0.875rem' }}
     >
       Enter a valid principal, APR, and monthly payment to see the repayment plan.
     </p>
@@ -628,17 +595,19 @@ function EmptyState() {
 
 /**
  * RepaymentVisualizer displays a stacked area chart (principal vs cumulative
- * interest) over the life of a loan, plus an accessible data table and keyboard shortcut hints.
+ * interest) over the life of a loan, plus an accessible data table and
+ * keyboard shortcut hints.
  *
  * Accessibility props
  * ───────────────────
  * `chartAriaLabel` — overrides the default `aria-label` on the SVG element.
- *   Use this when embedding the chart in a context that needs a more specific
- *   description (e.g. including the loan product name or exact figures).
+ * `caption` — overrides the auto-generated `<caption>` in the SR-only table.
  *
- * `caption` — overrides the auto-generated `<caption>` text in the SR-only
- *   data table.  Defaults to "Monthly repayment schedule: N months, $X total
- *   interest" — you only need to supply this if you want custom wording.
+ * Reduced-motion
+ * ──────────────
+ * Reads `isReducedMotionActive` from `ReducedMotionContext`. When true, CSS
+ * animation classes are omitted and `data-reduced-motion="true"` is set on
+ * the chart wrapper so the CSS fallback rules take effect.
  */
 export function RepaymentVisualizer({
   principal,
@@ -652,6 +621,10 @@ export function RepaymentVisualizer({
   const tooltipId = useId();
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Detect reduced-motion preference from OS or in-app override.
+  // When true, the chart renders statically (no CSS animations).
+  const { isReducedMotionActive } = useReducedMotion();
+
   const schedule = buildSchedule(principal, apr, monthlyPayment, maxMonths);
 
   // Long-press for mobile tooltip
@@ -659,7 +632,6 @@ export function RepaymentVisualizer({
     (e: React.TouchEvent<HTMLDivElement>) => {
       const touch = e.touches[0];
       longPressTimer.current = setTimeout(() => {
-        // approximate index from touch position
         const rect = (e.currentTarget as HTMLDivElement).getBoundingClientRect();
         const relX = touch.clientX - rect.left;
         const idx = Math.round((relX / rect.width) * (schedule.length - 1));
@@ -699,12 +671,7 @@ export function RepaymentVisualizer({
       <header className="mb-4 sm:mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4">
         <div className="flex flex-wrap items-center gap-3">
           <h2
-            style={{
-              fontSize: '1rem',
-              fontWeight: 700,
-              color: `var(--text, ${COLOR.text})`,
-              margin: 0,
-            }}
+            style={{ fontSize: '1rem', fontWeight: 700, color: `var(--text, ${COLOR.text})`, margin: 0 }}
           >
             Repayment Plan
           </h2>
@@ -734,9 +701,11 @@ export function RepaymentVisualizer({
         <EmptyState />
       ) : (
         <>
-          {/* Chart */}
+          {/* Chart wrapper — carries data-reduced-motion for CSS targeting */}
           <div
+            className="rv-chart-wrap"
             style={{ position: 'relative' }}
+            data-reduced-motion={isReducedMotionActive ? 'true' : undefined}
             onTouchStart={handleTouchStart}
             onTouchEnd={handleTouchEnd}
           >
@@ -746,25 +715,20 @@ export function RepaymentVisualizer({
               onTooltip={setTooltip}
               tooltip={tooltip}
               chartAriaLabel={chartAriaLabel}
+              reducedMotion={isReducedMotionActive}
             />
 
             {/* Tooltip bubble — positioned absolutely over chart */}
             {tooltip && (
-              <div
-                id={tooltipId}
-                style={{
-                  position: 'absolute',
-                  top: 8,
-                  right: 8,
-                }}
-              >
+              <div id={tooltipId} style={{ position: 'absolute', top: 8, right: 8 }}>
                 <TooltipBubble data={tooltip} />
               </div>
             )}
           </div>
 
+          {/* Legend row with keyboard shortcut hints */}
           <div className="flex flex-wrap items-center justify-between gap-3 mt-3 sm:mt-4">
-            <Legend />
+            <Legend reducedMotion={isReducedMotionActive} />
             <div className="flex items-center gap-2 text-xs">
               <KbdHint keys={['←', '→']} label="Inspect" />
               <KbdHint keys="Esc" label="Clear" />
@@ -785,7 +749,6 @@ export function RepaymentVisualizer({
                 padding: '4px 0',
                 outline: 'none',
               }}
-              // Focus ring via global focus.css
               className="focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
             >
               Schedule table
