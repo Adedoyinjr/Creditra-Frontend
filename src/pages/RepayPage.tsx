@@ -6,10 +6,19 @@ import { RepaymentVisualizer } from '@/components/RepaymentVisualizer';
 import { InlineHelpOverlay } from '@/components/InlineHelpOverlay';
 import { EmptyState } from '@/components/EmptyState';
 import { NoOutstandingDebt } from '@/components/illustrations';
-import { formatMoney, getRepayAmountValidation } from '@/utils/amountValidation';
-import type { CreditLine } from '@/types/creditLine';
+import {
+  formatMoney,
+  getRepayAmountValidation,
+  requiresRepayConfirmation,
+} from '@/utils/amountValidation';
+import { suggestRepayAmount } from '@/utils/suggestRepay';
+import {
+  isTypedAmountMatch,
+  TypedAmountConfirmField,
+} from '@/components/TypedAmountConfirm';
+import { KbdHint } from '@/components/KbdHint';
 import { MOCK_CREDIT_LINES } from '@/data/mockData';
-import { useReducedMotion } from '@/context/ReducedMotionContext';
+import { motionClasses, useReducedMotion } from '@/context/ReducedMotionContext';
 import './RepayPage.css';
 
 type RepayStep = 'input' | 'review' | 'success';
@@ -46,10 +55,10 @@ const SEVERITY_CONFIG = {
  *
  * All CSS transitions are neutralised globally by the
  * `prefers-reduced-motion: reduce` reset in src/index.css (animation/transition
- * durations collapsed to 0.01 ms on `*`).  The `motion-reduce:transition-none`
- * and `motion-reduce:duration-0` Tailwind classes on the toggle switch and
- * progress-bar fills below are defence-in-depth: they make the intent
- * self-documenting and ensure correctness even if the global reset is removed.
+ * durations collapsed to 0.01 ms on `*`).  On top of that, transition utility
+ * classes are only applied through `motionClasses(...)`, so they drop out of
+ * the DOM entirely whenever reduced motion is active (OS-level or via the
+ * in-app override).
  */
 export default function RepayPage() {
   const navigate = useNavigate();
@@ -184,6 +193,7 @@ export default function RepayPage() {
       <div className="repay-page mx-auto max-w-2xl space-y-6 px-4 py-8">
         <button
           type="button"
+          aria-label="Back"
           onClick={() => navigate(-1)}
           className={`inline-flex items-center gap-1.5 rounded-md text-sm text-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${motionClasses(isReducedMotionActive, 'transition-colors hover:text-foreground')}`}
         >
@@ -270,6 +280,7 @@ export default function RepayPage() {
     <div className="repay-page mx-auto max-w-4xl px-4 py-6 sm:py-8">
       <button
         type="button"
+        aria-label={step === 'input' ? 'Back to credit lines' : 'Back to input'}
         onClick={handleBack}
         className={`mb-4 inline-flex items-center gap-1.5 rounded-md text-sm text-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${motionClasses(isReducedMotionActive, 'transition-colors hover:text-foreground')}`}
       >
@@ -483,13 +494,13 @@ export default function RepayPage() {
                       role="switch"
                       aria-checked={isAutoSchedule}
                       onClick={() => setIsAutoSchedule(!isAutoSchedule)}
-                      className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out motion-reduce:transition-none motion-reduce:duration-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
+                      className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent focus:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
                         isAutoSchedule ? 'bg-accent' : 'bg-border'
                       } ${motionClasses(isReducedMotionActive, 'transition-colors duration-200 ease-in-out')}`}
                     >
                       <span
                         aria-hidden="true"
-                        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out motion-reduce:transition-none motion-reduce:duration-0 ${
+                        className={`repay-page__toggle-thumb pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 ${
                           isAutoSchedule ? 'translate-x-5' : 'translate-x-0'
                         } ${motionClasses(isReducedMotionActive, 'transition duration-200 ease-in-out')}`}
                       />

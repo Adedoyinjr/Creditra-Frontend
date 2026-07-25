@@ -78,8 +78,22 @@ export function useReducedMotion(): ReducedMotionContextValue {
       motionOverride: 'system',
       toggleMotionOverride: () => {},
       setMotionOverride: () => {},
-      isReducedMotionActive: typeof window !== 'undefined' ? window.matchMedia('(prefers-reduced-motion: reduce)').matches : false,
+      isReducedMotionActive:
+        typeof window !== 'undefined' && typeof window.matchMedia === 'function'
+          ? window.matchMedia('(prefers-reduced-motion: reduce)').matches
+          : false,
     };
   }
   return ctx;
+}
+
+/**
+ * Returns `classes` unless reduced motion is active, in which case the
+ * animation/transition utility classes are dropped entirely.
+ */
+export function motionClasses(
+  isReducedMotionActive: boolean,
+  classes: string,
+): string {
+  return isReducedMotionActive ? '' : classes;
 }
