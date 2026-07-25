@@ -343,7 +343,7 @@ describe('linkedAccounts service', () => {
       const result = await promise;
 
       expect(result.status).toBe('connected');
-      expect(result.lastVerified).not.toBe(mockAccount.lastVerified);
+      expect(new Date(result.lastVerified).getTime()).not.toBe(new Date(mockAccount.lastVerified).getTime());
       expect(storage.writeJson).toHaveBeenCalled();
     });
 

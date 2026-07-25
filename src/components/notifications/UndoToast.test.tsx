@@ -39,7 +39,7 @@ function renderWithUndo() {
     <NotificationProvider>
       <ToastContainer />
       <div>
-        <button type="button">Dummy opener</button>
+        <button type="button" aria-label="Open panel">Dummy opener</button>
         <NotificationCenter />
       </div>
     </NotificationProvider>,
@@ -76,7 +76,7 @@ describe('UndoToast integration', () => {
     const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
     renderWithUndo();
 
-    await user.click(screen.getByRole('button', { name: /mark all read|Open panel/i }));
+    await user.click(screen.getByRole('button', { name: /open panel/i }));
     act(() => { vi.advanceTimersByTime(100); });
 
     const panel = screen.getByRole('dialog', { name: 'Notification center' });
@@ -96,7 +96,7 @@ describe('UndoToast integration', () => {
     const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
     renderWithUndo();
 
-    await user.click(screen.getByRole('button', { name: /mark all read|Open panel/i }));
+    await user.click(screen.getByRole('button', { name: /open panel/i }));
     act(() => { vi.advanceTimersByTime(100); });
 
     const panel = screen.getByRole('dialog', { name: 'Notification center' });
@@ -117,7 +117,7 @@ describe('UndoToast integration', () => {
     const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
     renderWithUndo();
 
-    await user.click(screen.getByRole('button', { name: /mark all read|Open panel/i }));
+    await user.click(screen.getByRole('button', { name: /open panel/i }));
     act(() => { vi.advanceTimersByTime(100); });
 
     const panel = screen.getByRole('dialog', { name: 'Notification center' });
@@ -136,7 +136,7 @@ describe('UndoToast integration', () => {
     const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
     renderWithUndo();
 
-    await user.click(screen.getByRole('button', { name: /mark all read|Open panel/i }));
+    await user.click(screen.getByRole('button', { name: /open panel/i }));
     act(() => { vi.advanceTimersByTime(100); });
 
     const panel = screen.getByRole('dialog', { name: 'Notification center' });
@@ -154,7 +154,7 @@ describe('UndoToast integration', () => {
     const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
     renderWithUndo();
 
-    await user.click(screen.getByRole('button', { name: /mark all read|Open panel/i }));
+    await user.click(screen.getByRole('button', { name: /open panel/i }));
     act(() => { vi.advanceTimersByTime(100); });
 
     const panel = screen.getByRole('dialog', { name: 'Notification center' });
@@ -173,7 +173,7 @@ describe('UndoToast integration', () => {
     const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
     renderWithUndo();
 
-    await user.click(screen.getByRole('button', { name: /mark all read|Open panel/i }));
+    await user.click(screen.getByRole('button', { name: /open panel/i }));
     act(() => { vi.advanceTimersByTime(100); });
 
     const panel = screen.getByRole('dialog', { name: 'Notification center' });
@@ -216,7 +216,7 @@ describe('UndoToast integration', () => {
     const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
     renderWithUndo();
 
-    await user.click(screen.getByRole('button', { name: /mark all read|Open panel/i }));
+    await user.click(screen.getByRole('button', { name: /open panel/i }));
     act(() => { vi.advanceTimersByTime(100); });
 
     const panel = screen.getByRole('dialog', { name: 'Notification center' });
@@ -231,7 +231,7 @@ describe('UndoToast integration', () => {
     const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
     renderWithUndo();
 
-    await user.click(screen.getByRole('button', { name: /mark all read|Open panel/i }));
+    await user.click(screen.getByRole('button', { name: /open panel/i }));
     act(() => { vi.advanceTimersByTime(100); });
 
     const panel = screen.getByRole('dialog', { name: 'Notification center' });
@@ -251,7 +251,7 @@ describe('UndoToast integration', () => {
     const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
     renderWithUndo();
 
-    await user.click(screen.getByRole('button', { name: /mark all read|Open panel/i }));
+    await user.click(screen.getByRole('button', { name: /open panel/i }));
     act(() => { vi.advanceTimersByTime(100); });
 
     const panel = screen.getByRole('dialog', { name: 'Notification center' });
@@ -271,7 +271,7 @@ describe('UndoToast integration', () => {
     const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
     renderWithUndo();
 
-    await user.click(screen.getByRole('button', { name: /mark all read|Open panel/i }));
+    await user.click(screen.getByRole('button', { name: /open panel/i }));
     act(() => { vi.advanceTimersByTime(100); });
 
     const panel = screen.getByRole('dialog', { name: 'Notification center' });
@@ -288,7 +288,7 @@ describe('UndoToast integration', () => {
     const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
     renderWithUndo();
 
-    await user.click(screen.getByRole('button', { name: /mark all read|Open panel/i }));
+    await user.click(screen.getByRole('button', { name: /open panel/i }));
     act(() => { vi.advanceTimersByTime(100); });
 
     const panel = screen.getByRole('dialog', { name: 'Notification center' });
