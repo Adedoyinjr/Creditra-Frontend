@@ -34,6 +34,8 @@ import { WhatChanged } from "../components/WhatChanged";
 import { HealthTipsPanel } from "../components/HealthTipsPanel";
 import { RiskGauge } from "./RiskGauge";
 
+export { RiskGauge };
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const relativeTime = (iso: string): string => {
