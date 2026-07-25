@@ -26,6 +26,7 @@ import { SessionTimeoutBanner } from "./components/SessionTimeoutBanner";
 import { NetworkMismatchBanner } from "./components/notifications/NetworkMismatchBanner";
 import DataPrivacySettings from "./pages/settings/Data";
 import SessionsSettings from "./pages/settings/Sessions";
+import SettingsAccount from "./pages/SettingsAccount";
 import { Header } from "./layouts/Header";
 import CreditLineCompare from "./pages/CreditLineCompare";
 
@@ -228,6 +229,7 @@ function App() {
                     />
                     <Route path="/open-credit" element={<RequestEvaluation />} />
                     <Route path="/dutch-auctions" element={<DutchAuctions />} />
+                    <Route path="/settings/account" element={<SettingsAccount />} />
                     <Route path="/linked-accounts" element={<LinkedAccounts />} />
                     {/* Issue #581: Repay flow (now reachable from header /
                         the "Repay" action on Credit Lines). */}
