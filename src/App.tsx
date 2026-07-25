@@ -1,15 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 import { BrowserRouter, Route, Routes, Link, NavLink } from "react-router-dom";
-import { CommandPalette } from "./components/CommandPalette";
 import { Dashboard } from "./pages/Dashboard";
 import { WalletProvider } from "./context/WalletContext";
-import { ThemeProvider } from "./context/ThemeContext";
 import { KycProvider } from "./context/KycContext";
 import { NotificationProvider } from "./context/NotificationContext";
 import { WalletButton } from "./components/WalletButton";
 import { QuickRepayTrigger } from "./components/QuickRepayTrigger";
 import { KycDrawer, KycTriggerButton } from "./components/KycDrawer";
-import { NotificationWidget } from "./components/notifications/NotificationWidget";
+import { NetworkMismatchBanner } from "./components/NetworkMismatchBanner";
+import { WalletReconnectBanner } from "./components/WalletReconnectBanner";
 import DrawCreditPage from "./pages/DrawCreditPage";
 import CreditLines from "./pages/CreditLines";
 import { TransactionHistory } from "./pages/TransactionHistory";
@@ -18,11 +17,8 @@ import { ErrorBoundary } from "./components/ErrorBoundary";
 import { NotFound } from "./pages/NotFound";
 import HelpCenter from "./pages/HelpCenter";
 import { ShortcutHelpOverlay } from "./components/ShortcutHelpOverlay";
-import { SupportWidget } from "./components/SupportWidget";
 import { DutchAuctions } from "./pages/DutchAuctions";
 import RepayPage from "./pages/RepayPage";
-import LandingPage from "./components/LandingPage";
-import { RouteAnnouncer } from "./components/RouteAnnouncer";
 import { LinkedAccounts } from "./pages/LinkedAccounts";
 
 const isEditableTarget = (target: EventTarget | null) => {
@@ -97,138 +93,128 @@ function App() {
     <ErrorBoundary>
       <WalletProvider>
         <KycProvider>
-        <NotificationProvider>
-        <BrowserRouter>
-          <div className="app">
-            <header className="header">
-              <Link to="/" className="logo">
-                Creditra
-              </Link>
-              <nav className="header-nav">
-                {/* 
-                  NavLink with render function allows us to:
-                  1. Apply active class for styling (accent + underline + weight)
-                  2. Set aria-current="page" on active links for accessibility
+          <NotificationProvider>
+            <BrowserRouter>
+              <div className="app">
+                <header className="header">
+                  <Link to="/" className="logo">
+                    Creditra
+                  </Link>
+                  <nav className="header-nav">
+                    {/*
+                      NavLink with render function allows us to:
+                      1. Apply active class for styling (accent + underline + weight)
+                      2. Set aria-current="page" on active links for accessibility
 
-                  This satisfies WCAG 2.1 AA requirements:
-                  - 1.4.1: Use of Color - active state uses color + other visual indicators
-                  - 2.4.7: Focus Visible - outline differs from active underline
-                  - 2.4.8: Location - aria-current="page" indicates current page
-                */}
-                  <NavLink
-                    to="/"
-                    end
-                    className={({ isActive }) =>
-                      isActive ? "header-nav-link active" : "header-nav-link"
-                    }
+                      This satisfies WCAG 2.1 AA requirements:
+                      - 1.4.1: Use of Color - active state uses color + other visual indicators
+                      - 2.4.7: Focus Visible - outline differs from active underline
+                      - 2.4.8: Location - aria-current="page" indicates current page
+                    */}
+                    <NavLink
+                      to="/"
+                      end
+                      className={({ isActive }) =>
+                        isActive ? "header-nav-link active" : "header-nav-link"
+                      }
+                    >
+                      Dashboard
+                    </NavLink>
+                    <NavLink
+                      to="/transactions"
+                      className={({ isActive }) =>
+                        isActive ? "header-nav-link active" : "header-nav-link"
+                      }
+                    >
+                      Transactions
+                    </NavLink>
+                    <NavLink
+                      to="/credit-lines"
+                      className={({ isActive }) =>
+                        isActive ? "header-nav-link active" : "header-nav-link"
+                      }
+                    >
+                      Credit Lines
+                    </NavLink>
+                    <NavLink
+                      to="/open-credit"
+                      className={({ isActive }) =>
+                        isActive ? "header-nav-link active" : "header-nav-link"
+                      }
+                    >
+                      Open Credit Line
+                    </NavLink>
+                    <NavLink
+                      to="/dutch-auctions"
+                      className={({ isActive }) =>
+                        isActive ? "header-nav-link active" : "header-nav-link"
+                      }
+                    >
+                      Dutch Auctions
+                    </NavLink>
+                  </nav>
+                  <button
+                    ref={settingsTriggerRef}
+                    type="button"
+                    className="header-nav-link"
+                    onClick={() => {
+                      setOpenedFromSettingsLink(true);
+                      setIsShortcutHelpOpen(true);
+                    }}
                   >
-                    Dashboard
-                  </NavLink>
-                  <NavLink
-                    to="/transactions"
-                    className={({ isActive }) =>
-                      isActive ? "header-nav-link active" : "header-nav-link"
-                    }
-                  >
-                    Transactions
-                  </NavLink>
-                  <NavLink
-                    to="/credit-lines"
-                    className={({ isActive }) =>
-                      isActive ? "header-nav-link active" : "header-nav-link"
-                    }
-                  >
-                    Credit Lines
-                  </NavLink>
-                  <NavLink
-                    to="/open-credit"
-                    className={({ isActive }) =>
-                      isActive ? "header-nav-link active" : "header-nav-link"
-                    }
-                  >
-                    Open Credit Line
-                  </NavLink>
-                  <NavLink
-                    to="/dutch-auctions"
-                    className={({ isActive }) =>
-                      isActive ? "header-nav-link active" : "header-nav-link"
-                    }
-                  >
-                    Dutch Auctions
-                  </NavLink>
-                </nav>
-                <button
-                  ref={settingsTriggerRef}
-                  type="button"
-                  className="header-nav-link"
-                  onClick={() => {
-                    setOpenedFromSettingsLink(true);
-                    setIsShortcutHelpOpen(true);
-                  }}
-                >
-                  Dutch Auctions
-                </NavLink>
-              </nav>
-              <button
-                ref={settingsTriggerRef}
-                type="button"
-                className="header-nav-link"
-                onClick={() => {
-                  setOpenedFromSettingsLink(true);
-                  setIsShortcutHelpOpen(true);
-                }}
-              >
-                Settings
-              </button>
-               <KycTriggerButton
-                 triggerRef={kycTriggerRef}
-                 onClick={() => setIsKycDrawerOpen(true)}
-               />
-               <QuickRepayTrigger />
-               <WalletButton />
-             </header>
+                    Settings
+                  </button>
+                  <KycTriggerButton
+                    triggerRef={kycTriggerRef}
+                    onClick={() => setIsKycDrawerOpen(true)}
+                  />
+                  <QuickRepayTrigger />
+                  <WalletButton />
+                </header>
 
-            {/* Wallet auto-reconnect timeout banner — self-dismissing,
-                non-blocking; only visible when reconnect takes > 8 s. */}
-            <WalletReconnectBanner />
-            <main className="main">
-              <NetworkMismatchBanner />
-              <Routes>
-                <Route path="/" element={<Dashboard />} />
-                <Route path="/transactions" element={<TransactionHistory />} />
-                <Route path="/credit-lines" element={<CreditLines />} />
-                <Route path="/help" element={<HelpCenter />} />
-                <Route path="/draw-credit" element={<DrawCreditPage />} />
-                <Route
-                  path="/draw-credit/success"
-                  element={<DrawCreditPage />}
+                {/* Wallet auto-reconnect timeout banner — self-dismissing,
+                    non-blocking; only visible when reconnect takes > 8 s. */}
+                <WalletReconnectBanner />
+                <main className="main">
+                  <NetworkMismatchBanner />
+                  <Routes>
+                    <Route path="/" element={<Dashboard />} />
+                    <Route path="/transactions" element={<TransactionHistory />} />
+                    <Route path="/credit-lines" element={<CreditLines />} />
+                    <Route path="/help" element={<HelpCenter />} />
+                    <Route path="/draw-credit" element={<DrawCreditPage />} />
+                    <Route
+                      path="/draw-credit/success"
+                      element={<DrawCreditPage />}
+                    />
+                    <Route path="/open-credit" element={<RequestEvaluation />} />
+                    <Route path="/dutch-auctions" element={<DutchAuctions />} />
+                    <Route path="/linked-accounts" element={<LinkedAccounts />} />
+                    {/* Issue #581: Repay flow (now reachable from header /
+                        the "Repay" action on Credit Lines). */}
+                    <Route path="/repay" element={<RepayPage />} />
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </main>
+                <ShortcutHelpOverlay
+                  isOpen={isShortcutHelpOpen}
+                  onClose={() => setIsShortcutHelpOpen(false)}
+                  triggerRef={openedFromSettingsLink ? settingsTriggerRef : undefined}
                 />
-                <Route path="/open-credit" element={<RequestEvaluation />} />
-                <Route path="/dutch-auctions" element={<DutchAuctions />} />
-                <Route path="/linked-accounts" element={<LinkedAccounts />} />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </main>
-            <ShortcutHelpOverlay
-              isOpen={isShortcutHelpOpen}
-              onClose={() => setIsShortcutHelpOpen(false)}
-              triggerRef={openedFromSettingsLink ? settingsTriggerRef : undefined}
-            />
-             <KycDrawer
-               isOpen={isKycDrawerOpen}
-               onClose={() => setIsKycDrawerOpen(false)}
-               onResume={(stepId) => {
-                 // Navigate to the KYC page with the step pre-selected.
-                 // Replace with router.push('/kyc?step=' + stepId) when the
-                 // full KYC page exists.
-                 console.info('[KYC] Resume at step:', stepId);
-               }}
-               triggerRef={kycTriggerRef}
-             />
-           </div>
-         </BrowserRouter>
-
-        </ReducedMotionProvider>
+                <KycDrawer
+                  isOpen={isKycDrawerOpen}
+                  onClose={() => setIsKycDrawerOpen(false)}
+                  onResume={(stepId) => {
+                    // Navigate to the KYC page with the step pre-selected.
+                    // Replace with router.push('/kyc?step=' + stepId) when the
+                    // full KYC page exists.
+                    console.info('[KYC] Resume at step:', stepId);
+                  }}
+                  triggerRef={kycTriggerRef}
+                />
+              </div>
+            </BrowserRouter>
+          </NotificationProvider>
         </KycProvider>
       </WalletProvider>
     </ErrorBoundary>

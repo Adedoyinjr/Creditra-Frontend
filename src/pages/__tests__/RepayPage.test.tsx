@@ -91,3 +91,11 @@ describe('RepayPage', () => {
     expect(screen.getByText('Cancel')).toBeInTheDocument();
   });
 });
+
+/**
+ * NOTE: empty-state render tests for `/repay` live in the sibling file
+ * `RepayPage.empty.test.tsx`. Mocking `MOCK_CREDIT_LINES = []` inside the
+ * same file as the populated-suite risks cross-test mock leakage because
+ * top-level `vi.mock(...)` is hoisted and `vi.doMock(...)` is not. Splitting
+ * the suites keeps the mocks isolated.
+ */

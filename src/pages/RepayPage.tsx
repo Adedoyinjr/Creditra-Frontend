@@ -3,6 +3,8 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { AlertCircle, AlertTriangle, CheckCircle, Info, ArrowLeft } from 'lucide-react';
 import { PayoffProjection } from '@/components/PayoffProjection';
 import { InlineHelpOverlay } from '@/components/InlineHelpOverlay';
+import { EmptyState } from '@/components/EmptyState';
+import { NoOutstandingDebt } from '@/components/illustrations';
 import { formatMoney, getRepayAmountValidation } from '@/utils/amountValidation';
 import type { CreditLine } from '@/types/creditLine';
 import { MOCK_CREDIT_LINES } from '@/data/mockData';
@@ -124,49 +126,67 @@ export default function RepayPage() {
           </h1>
         </header>
 
-        <div className="space-y-3">
-          {creditLines.map((cl) => {
-            const utilization = Math.round((cl.utilized / cl.limit) * 100);
-            return (
-              <button
-                key={cl.id}
-                type="button"
-                onClick={() => setSelectedId(cl.id)}
-                className="w-full rounded-lg border border-border bg-surface p-4 text-left transition-all hover:border-accent hover:bg-accent/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
-              >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-semibold text-foreground">{cl.name}</p>
-                    <p className="mt-0.5 text-sm text-muted">{cl.id}</p>
+        {creditLines.length === 0 ? (
+          // Themed empty state (issue #581): no repayable balances yet.
+          // The illustration + headline announce the situation; CTAs nudge
+          // the user toward either opening a new line or returning home.
+          <EmptyState
+            data-testid="repay-empty-state"
+            tone="success"
+            eyebrow="All caught up"
+            illustration={
+              <NoOutstandingDebt className="empty-state-illustration--muted" />
+            }
+            title="Nothing to repay right now"
+            description="You don\u2019t have any active credit lines with an outstanding balance. Make a new draw or come back later when a repayment is scheduled."
+            primaryAction={{
+              label: 'Request a credit line',
+              to: '/open-credit',
+            }}
+            secondaryAction={{
+              label: 'Back to dashboard',
+              to: '/',
+            }}
+          />
+        ) : (
+          <div className="space-y-3">
+            {creditLines.map((cl) => {
+              const utilization = Math.round((cl.utilized / cl.limit) * 100);
+              return (
+                <button
+                  key={cl.id}
+                  type="button"
+                  onClick={() => setSelectedId(cl.id)}
+                  className="w-full rounded-lg border border-border bg-surface p-4 text-left transition-all hover:border-accent hover:bg-accent/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-semibold text-foreground">{cl.name}</p>
+                      <p className="mt-0.5 text-sm text-muted">{cl.id}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-semibold text-foreground">
+                        {formatMoney(cl.utilized)}
+                      </p>
+                      <p className="text-sm text-muted">{utilization}% utilized</p>
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <p className="font-semibold text-foreground">
-                      {formatMoney(cl.utilized)}
-                    </p>
-                    <p className="text-sm text-muted">{utilization}% utilized</p>
+                  <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-border">
+                    <div
+                      className={`h-full rounded-full ${
+                        utilization > 80
+                          ? 'bg-red-500'
+                          : utilization > 50
+                            ? 'bg-yellow-500'
+                            : 'bg-green-500'
+                      }`}
+                      style={{ width: `${utilization}%` }}
+                    />
                   </div>
-                </div>
-                <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-border">
-                  <div
-                    className={`h-full rounded-full ${
-                      utilization > 80
-                        ? 'bg-red-500'
-                        : utilization > 50
-                          ? 'bg-yellow-500'
-                          : 'bg-green-500'
-                    }`}
-                    style={{ width: `${utilization}%` }}
-                  />
-                </div>
-              </button>
-            );
-          })}
-        </div>
-
-        {creditLines.length === 0 && (
-          <p className="text-center text-muted">
-            No active credit lines with outstanding debt to repay.
-          </p>
+                </button>
+              );
+            })}
+          </div>
         )}
       </div>
     );

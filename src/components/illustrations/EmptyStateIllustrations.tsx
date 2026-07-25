@@ -77,3 +77,51 @@ export function NoActivity(props: IllustrationProps) {
     </IllustrationFrame>
   );
 }
+
+/**
+ * NoOutstandingDebt — illustrated empty state for the Repay flow.
+ *
+ * Composition: a stylised receipt/invoice with a $0 amount, paired with a
+ * checkmark badge in the corner. Reinforces the "nothing to repay" message
+ * without leaning on colour alone (the receipt shape + checkmark glyph are
+ * widely understood).
+ *
+ * Inherits `--accent` (or any other surrounding foreground) via `currentColor`
+ * so it stays consistent with light, dark, and high-contrast themes.
+ */
+export function NoOutstandingDebt(props: IllustrationProps) {
+  return (
+    <IllustrationFrame {...props}>
+      <svg viewBox="0 0 180 140" fill="none" focusable="false">
+        {/* receipt outline */}
+        <path
+          d="M48 18h84a6 6 0 0 1 6 6v92l-8-6-8 6-8-6-8 6-8-6-8 6-8-6-8 6-8-6-8 6-8-6V24a6 6 0 0 1 6-6Z"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinejoin="round"
+          opacity="0.42"
+        />
+        {/* receipt header rule */}
+        <path d="M62 36H118" stroke="currentColor" strokeWidth="3" strokeLinecap="round" opacity="0.38" />
+        {/* $0 amount line */}
+        <text
+          x="90"
+          y="74"
+          textAnchor="middle"
+          fontFamily="system-ui, -apple-system, sans-serif"
+          fontSize="28"
+          fontWeight="700"
+          fill="currentColor"
+          opacity="0.85"
+        >
+          $0
+        </text>
+        {/* lower receipt rule */}
+        <path d="M62 92H118" stroke="currentColor" strokeWidth="3" strokeLinecap="round" opacity="0.28" />
+        {/* paid stamp / checkmark badge */}
+        <circle cx="128" cy="38" r="20" stroke="currentColor" strokeWidth="2" opacity="0.85" />
+        <path d="M120 38L126 44L137 32" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    </IllustrationFrame>
+  );
+}
