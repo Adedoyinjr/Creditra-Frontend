@@ -275,8 +275,8 @@ function StackedAreaChart({ schedule, tooltipId, onTooltip, tooltip, chartAriaLa
           ? `Month ${tooltip.month}: Principal remaining $${Math.round(tooltip.principal)}, cumulative interest $${Math.round(tooltip.cumulativeInterest)}`
           : undefined
       }
-      style={{ width: '100%', height: 'auto', overflow: 'visible', outline: 'none' }}
-      className="focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+      style={{ width: '100%', height: 'auto', overflow: 'visible' }}
+      className="repayment-visualizer-focus"
       onMouseMove={handleMouseMove}
       onMouseLeave={() => onTooltip(null)}
       onTouchEnd={() => onTooltip(null)}
@@ -560,6 +560,7 @@ function VisibleTable({ schedule, limit = 12 }: VisibleTableProps) {
         <button
           type="button"
           onClick={() => setShowAll((s) => !s)}
+          className="repayment-visualizer-focus"
           style={{
             marginTop: '0.5rem',
             fontSize: '0.75rem',
@@ -747,9 +748,8 @@ export function RepaymentVisualizer({
                 color: `var(--accent, ${COLOR.accent})`,
                 userSelect: 'none',
                 padding: '4px 0',
-                outline: 'none',
               }}
-              className="focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+              className="repayment-visualizer-focus"
             >
               Schedule table
             </summary>
