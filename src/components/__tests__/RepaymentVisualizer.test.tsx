@@ -103,14 +103,18 @@ describe('RepaymentVisualizer', () => {
 
   it('has no tooltip by default', () => {
     render(<RepaymentVisualizer {...BASE} />);
-    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+    // Only the LiveRegion (sr-only) status element exists, no visible tooltip status
+    const statusElements = screen.getAllByRole('status');
+    expect(statusElements).toHaveLength(1);
+    expect(statusElements[0]).toHaveClass('sr-only');
   });
 
   it('shows tooltip on mouse move over SVG', () => {
     render(<RepaymentVisualizer {...BASE} />);
     const svg = screen.getByRole('img');
     fireEvent.mouseMove(svg, { clientX: 100, clientY: 100 });
-    expect(screen.getByRole('status')).toBeInTheDocument();
+    // Two status elements: LiveRegion (sr-only) + tooltip (visible)
+    expect(screen.getAllByRole('status')).toHaveLength(2);
     expect(screen.getAllByText(/Month/).length).toBeGreaterThanOrEqual(1);
   });
 
@@ -118,9 +122,12 @@ describe('RepaymentVisualizer', () => {
     render(<RepaymentVisualizer {...BASE} />);
     const svg = screen.getByRole('img');
     fireEvent.mouseMove(svg, { clientX: 100, clientY: 100 });
-    expect(screen.getByRole('status')).toBeInTheDocument();
+    expect(screen.getAllByRole('status')).toHaveLength(2);
     fireEvent.mouseLeave(svg);
-    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+    // After mouse leave, only the LiveRegion remains
+    const statusElements = screen.getAllByRole('status');
+    expect(statusElements).toHaveLength(1);
+    expect(statusElements[0]).toHaveClass('sr-only');
   });
 });
 
@@ -142,7 +149,8 @@ describe('RepaymentVisualizer — keyboard shortcut hints & navigation', () => {
     const svg = screen.getByRole('img');
 
     fireEvent.keyDown(svg, { key: 'ArrowRight' });
-    expect(screen.getByRole('status')).toBeInTheDocument();
+    // Two status elements: LiveRegion + tooltip
+    expect(screen.getAllByRole('status')).toHaveLength(2);
     expect(svg).toHaveAttribute('aria-valuenow', '1');
 
     fireEvent.keyDown(svg, { key: 'ArrowRight' });
@@ -168,10 +176,13 @@ describe('RepaymentVisualizer — keyboard shortcut hints & navigation', () => {
     const svg = screen.getByRole('img');
 
     fireEvent.keyDown(svg, { key: 'ArrowRight' });
-    expect(screen.getByRole('status')).toBeInTheDocument();
+    expect(screen.getAllByRole('status')).toHaveLength(2);
 
     fireEvent.keyDown(svg, { key: 'Escape' });
-    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+    // After escape, only the LiveRegion remains
+    const statusElements = screen.getAllByRole('status');
+    expect(statusElements).toHaveLength(1);
+    expect(statusElements[0]).toHaveClass('sr-only');
   });
 });
 
@@ -283,7 +294,10 @@ describe('RepaymentVisualizer — tabular-nums on numeric displays', () => {
     render(<RepaymentVisualizer {...BASE} />);
     const svg = screen.getByRole('img');
     fireEvent.mouseMove(svg, { clientX: 100, clientY: 100 });
-    const tooltip = screen.getByRole('status');
+    // Find the visible (non-sr-only) status element — that's the tooltip
+    const statuses = screen.getAllByRole('status');
+    const tooltip = statuses.find((el) => !el.classList.contains('sr-only'));
+    expect(tooltip).toBeDefined();
     expect(tooltip).toHaveStyle({ fontVariantNumeric: 'tabular-nums' });
   });
 
@@ -408,7 +422,8 @@ describe('RepaymentVisualizer — reduced-motion fallback', () => {
       render(<RepaymentVisualizer {...BASE} />);
       const svg = screen.getByRole('img');
       fireEvent.mouseMove(svg, { clientX: 100, clientY: 100 });
-      expect(screen.getByRole('status')).toBeInTheDocument();
+      // Two status elements: LiveRegion + tooltip
+      expect(screen.getAllByRole('status')).toHaveLength(2);
     });
   });
 
