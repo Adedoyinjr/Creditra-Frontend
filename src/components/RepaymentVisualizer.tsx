@@ -398,14 +398,14 @@ function TooltipBubble({ data }: { data: TooltipData }) {
       style={{
         background: 'var(--surface-raised, #1c2230)',
         border: `1px solid var(--border, ${COLOR.border})`,
-        borderRadius: 8,
+        borderRadius: 'var(--radius-md)',
         color: `var(--text, ${COLOR.text})`,
         pointerEvents: 'none',
         boxShadow: '0 4px 16px rgba(0,0,0,0.4)',
         fontVariantNumeric: 'tabular-nums',
       }}
     >
-      <p style={{ fontWeight: 600, marginBottom: 4 }}>Month {data.month}</p>
+      <p style={{ fontWeight: 'var(--font-semibold)', marginBottom: 'var(--space-1)' }}>Month {data.month}</p>
       <p style={{ color: `var(--accent, ${COLOR.accent})` }}>
         Principal remaining: {fmt(data.principal)}
       </p>
@@ -440,7 +440,7 @@ function SRTable({ schedule, caption }: SRTableProps) {
     <table
       className="sr-only tabular-nums"
       aria-label="Repayment schedule data table"
-      style={{ borderCollapse: 'collapse', width: '100%', fontSize: '0.75rem' }}
+      style={{ borderCollapse: 'collapse', width: '100%', fontSize: 'var(--text-xs)' }}
     >
       <caption className="sr-only">{resolvedCaption}</caption>
       <thead>
@@ -503,17 +503,17 @@ function VisibleTable({ schedule, limit = 12 }: VisibleTableProps) {
 
   const thStyle: React.CSSProperties = {
     textAlign: 'right',
-    padding: '6px 8px',
-    fontWeight: 600,
-    fontSize: '0.7rem',
+    padding: 'var(--space-2)',
+    fontWeight: 'var(--font-semibold)',
+    fontSize: 'var(--text-xs)',
     color: `var(--muted, ${COLOR.muted})`,
     borderBottom: `1px solid var(--border, ${COLOR.border})`,
     whiteSpace: 'nowrap',
   };
   const tdStyle: React.CSSProperties = {
     textAlign: 'right',
-    padding: '5px 8px',
-    fontSize: '0.75rem',
+    padding: 'var(--space-1) var(--space-2)',
+    fontSize: 'var(--text-xs)',
     color: `var(--text, ${COLOR.text})`,
     fontVariantNumeric: 'tabular-nums',
   };
@@ -562,13 +562,13 @@ function VisibleTable({ schedule, limit = 12 }: VisibleTableProps) {
           onClick={() => setShowAll((s) => !s)}
           className="repayment-visualizer-focus"
           style={{
-            marginTop: '0.5rem',
-            fontSize: '0.75rem',
+            marginTop: 'var(--space-2)',
+            fontSize: 'var(--text-xs)',
             color: `var(--accent, ${COLOR.accent})`,
             background: 'none',
             border: 'none',
             cursor: 'pointer',
-            padding: '4px 0',
+            padding: 'var(--space-1) 0',
           }}
           aria-expanded={showAll}
         >
@@ -585,7 +585,7 @@ function EmptyState() {
   return (
     <p
       className="text-center p-4 sm:p-8"
-      style={{ color: `var(--muted, ${COLOR.muted})`, fontSize: '0.875rem' }}
+      style={{ color: `var(--muted, ${COLOR.muted})`, fontSize: 'var(--text-sm)' }}
     >
       Enter a valid principal, APR, and monthly payment to see the repayment plan.
     </p>
@@ -666,13 +666,13 @@ export function RepaymentVisualizer({
       style={{
         background: `var(--surface, ${COLOR.surface})`,
         border: `1px solid var(--border, ${COLOR.border})`,
-        borderRadius: 10,
+        borderRadius: 'var(--radius-lg)',
       }}
     >
       <header className="mb-4 sm:mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4">
         <div className="flex flex-wrap items-center gap-3">
           <h2
-            style={{ fontSize: '1rem', fontWeight: 700, color: `var(--text, ${COLOR.text})`, margin: 0 }}
+            style={{ fontSize: 'var(--text-base)', fontWeight: 'var(--font-bold)', color: `var(--text, ${COLOR.text})`, margin: 0 }}
           >
             Repayment Plan
           </h2>
@@ -686,7 +686,7 @@ export function RepaymentVisualizer({
           )}
         </div>
         {schedule.length > 0 && (
-          <p style={{ fontSize: '0.8rem', color: `var(--muted, ${COLOR.muted})`, margin: 0, fontVariantNumeric: 'tabular-nums' }}>
+          <p style={{ fontSize: 'var(--text-xs)', color: `var(--muted, ${COLOR.muted})`, margin: 0, fontVariantNumeric: 'tabular-nums' }}>
             {termMonths} month{termMonths !== 1 ? 's' : ''} ·{' '}
             {new Intl.NumberFormat('en-US', {
               style: 'currency',
@@ -721,7 +721,7 @@ export function RepaymentVisualizer({
 
             {/* Tooltip bubble — positioned absolutely over chart */}
             {tooltip && (
-              <div id={tooltipId} style={{ position: 'absolute', top: 8, right: 8 }}>
+              <div id={tooltipId} style={{ position: 'absolute', top: 'var(--space-2)', right: 'var(--space-2)' }}>
                 <TooltipBubble data={tooltip} />
               </div>
             )}
@@ -740,20 +740,20 @@ export function RepaymentVisualizer({
           <SRTable schedule={schedule} caption={caption} />
 
           {/* Visible table */}
-          <details style={{ marginTop: '1rem' }}>
+          <details style={{ marginTop: 'var(--space-4)' }}>
             <summary
               style={{
                 cursor: 'pointer',
-                fontSize: '0.8rem',
+                fontSize: 'var(--text-xs)',
                 color: `var(--accent, ${COLOR.accent})`,
                 userSelect: 'none',
-                padding: '4px 0',
+                padding: 'var(--space-1) 0',
               }}
               className="repayment-visualizer-focus"
             >
               Schedule table
             </summary>
-            <div style={{ marginTop: '0.5rem' }}>
+            <div style={{ marginTop: 'var(--space-2)' }}>
               <VisibleTable schedule={schedule} />
             </div>
           </details>
