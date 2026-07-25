@@ -4,13 +4,9 @@ import { AlertCircle, AlertTriangle, CheckCircle, Info, ArrowLeft } from 'lucide
 import { PayoffProjection } from '@/components/PayoffProjection';
 import { RepaymentVisualizer } from '@/components/RepaymentVisualizer';
 import { InlineHelpOverlay } from '@/components/InlineHelpOverlay';
-import { formatMoney, getRepayAmountValidation, requiresRepayConfirmation } from '@/utils/amountValidation';
-import { suggestRepayAmount } from '@/utils/suggestRepay';
-import {
-  TypedAmountConfirmField,
-  isTypedAmountMatch,
-} from '@/components/TypedAmountConfirm';
-import { KbdHint } from '@/components/KbdHint';
+import { EmptyState } from '@/components/EmptyState';
+import { NoOutstandingDebt } from '@/components/illustrations';
+import { formatMoney, getRepayAmountValidation } from '@/utils/amountValidation';
 import type { CreditLine } from '@/types/creditLine';
 import { MOCK_CREDIT_LINES } from '@/data/mockData';
 
@@ -52,6 +48,7 @@ export default function RepayPage() {
   const [selectedId, setSelectedId] = useState<string>(preselectedId ?? '');
   const [amountStr, setAmountStr] = useState('');
   const [confirmAmountStr, setConfirmAmountStr] = useState('');
+  const [isAutoSchedule, setIsAutoSchedule] = useState(false);
   const [isHelpOpen, setIsHelpOpen] = useState(false);
   const helpTriggerRef = useRef<HTMLButtonElement>(null);
 
@@ -123,6 +120,7 @@ export default function RepayPage() {
 
   const handleNewRepay = () => {
     setAmountStr('');
+    setIsAutoSchedule(false);
     setStep('input');
   };
 
@@ -174,7 +172,7 @@ export default function RepayPage() {
         <button
           type="button"
           onClick={() => navigate(-1)}
-          className="inline-flex items-center gap-1.5 text-sm text-muted transition-colors hover:text-foreground"
+          className="inline-flex items-center gap-1.5 rounded-md text-sm text-muted transition-colors hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
         >
           <ArrowLeft className="h-4 w-4" aria-hidden="true" />
           Back
@@ -188,49 +186,67 @@ export default function RepayPage() {
           </h1>
         </header>
 
-        <div className="space-y-3">
-          {creditLines.map((cl) => {
-            const utilization = Math.round((cl.utilized / cl.limit) * 100);
-            return (
-              <button
-                key={cl.id}
-                type="button"
-                onClick={() => setSelectedId(cl.id)}
-                className="w-full rounded-lg border border-border bg-surface p-4 text-left transition-all hover:border-accent hover:bg-accent/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
-              >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-semibold text-foreground">{cl.name}</p>
-                    <p className="mt-0.5 text-sm text-muted">{cl.id}</p>
+        {creditLines.length === 0 ? (
+          // Themed empty state (issue #581): no repayable balances yet.
+          // The illustration + headline announce the situation; CTAs nudge
+          // the user toward either opening a new line or returning home.
+          <EmptyState
+            data-testid="repay-empty-state"
+            tone="success"
+            eyebrow="All caught up"
+            illustration={
+              <NoOutstandingDebt className="empty-state-illustration--muted" />
+            }
+            title="Nothing to repay right now"
+            description="You don\u2019t have any active credit lines with an outstanding balance. Make a new draw or come back later when a repayment is scheduled."
+            primaryAction={{
+              label: 'Request a credit line',
+              to: '/open-credit',
+            }}
+            secondaryAction={{
+              label: 'Back to dashboard',
+              to: '/',
+            }}
+          />
+        ) : (
+          <div className="space-y-3">
+            {creditLines.map((cl) => {
+              const utilization = Math.round((cl.utilized / cl.limit) * 100);
+              return (
+                <button
+                  key={cl.id}
+                  type="button"
+                  onClick={() => setSelectedId(cl.id)}
+                  className="w-full rounded-lg border border-border bg-surface p-4 text-left transition-all hover:border-accent hover:bg-accent/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-semibold text-foreground">{cl.name}</p>
+                      <p className="mt-0.5 text-sm text-muted">{cl.id}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-semibold text-foreground">
+                        {formatMoney(cl.utilized)}
+                      </p>
+                      <p className="text-sm text-muted">{utilization}% utilized</p>
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <p className="font-semibold text-foreground">
-                      {formatMoney(cl.utilized)}
-                    </p>
-                    <p className="text-sm text-muted">{utilization}% utilized</p>
+                  <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-border">
+                    <div
+                      className={`h-full rounded-full ${
+                        utilization > 80
+                          ? 'bg-red-500'
+                          : utilization > 50
+                            ? 'bg-yellow-500'
+                            : 'bg-green-500'
+                      }`}
+                      style={{ width: `${utilization}%` }}
+                    />
                   </div>
-                </div>
-                <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-border">
-                  <div
-                    className={`h-full rounded-full ${
-                      utilization > 80
-                        ? 'bg-red-500'
-                        : utilization > 50
-                          ? 'bg-yellow-500'
-                          : 'bg-green-500'
-                    }`}
-                    style={{ width: `${utilization}%` }}
-                  />
-                </div>
-              </button>
-            );
-          })}
-        </div>
-
-        {creditLines.length === 0 && (
-          <p className="text-center text-muted">
-            No active credit lines with outstanding debt to repay.
-          </p>
+                </button>
+              );
+            })}
+          </div>
         )}
       </div>
     );
@@ -245,7 +261,7 @@ export default function RepayPage() {
       <button
         type="button"
         onClick={handleBack}
-        className="mb-4 inline-flex items-center gap-1.5 text-sm text-muted transition-colors hover:text-foreground"
+        className="mb-4 inline-flex items-center gap-1.5 rounded-md text-sm text-muted transition-colors hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
       >
         <ArrowLeft className="h-4 w-4" aria-hidden="true" />
         <span className="flex items-center gap-1.5">
@@ -360,7 +376,7 @@ export default function RepayPage() {
                       min={1}
                       step={0.01}
                       aria-invalid={validation?.feedback.severity === 'danger' || undefined}
-                      className="w-full rounded-lg border bg-background px-3 py-3 pl-8 text-lg font-semibold text-foreground outline-none transition-colors focus:ring-2 focus:ring-accent"
+                      className="w-full rounded-lg border bg-background px-3 py-3 pl-8 text-lg font-semibold text-foreground outline-none transition-colors focus:ring-2 focus:ring-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
                       style={{
                         borderColor:
                           validation?.feedback.severity === 'danger'
@@ -440,11 +456,41 @@ export default function RepayPage() {
                     </div>
                   </div>
 
+                  <div className="mt-6 flex items-center justify-between border-t border-border pt-4">
+                    <div>
+                      <label
+                        htmlFor="auto-schedule-toggle"
+                        className="text-sm font-medium text-foreground cursor-pointer"
+                        onClick={() => setIsAutoSchedule(!isAutoSchedule)}
+                      >
+                        Auto-schedule
+                      </label>
+                      <p className="text-xs text-muted">Repeat this payment monthly</p>
+                    </div>
+                    <button
+                      id="auto-schedule-toggle"
+                      type="button"
+                      role="switch"
+                      aria-checked={isAutoSchedule}
+                      onClick={() => setIsAutoSchedule(!isAutoSchedule)}
+                      className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
+                        isAutoSchedule ? 'bg-accent' : 'bg-border'
+                      }`}
+                    >
+                      <span
+                        aria-hidden="true"
+                        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                          isAutoSchedule ? 'translate-x-5' : 'translate-x-0'
+                        }`}
+                      />
+                    </button>
+                  </div>
+
                   <button
                     type="button"
                     onClick={handleReview}
                     disabled={isInvalid || amount <= 0}
-                    className="mt-4 w-full rounded-lg bg-accent px-4 py-3 text-sm font-semibold text-background transition-all hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="mt-4 w-full rounded-lg bg-accent px-4 py-3 text-sm font-semibold text-background transition-all hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     <span className="flex items-center justify-center gap-2">
                       Review Repayment <KbdHint keys={['Enter']} />
@@ -481,14 +527,14 @@ export default function RepayPage() {
                 ref={helpTriggerRef}
                 type="button"
                 onClick={() => setIsHelpOpen(true)}
-                className="text-sm font-semibold text-blue-300 underline-offset-4 transition-colors hover:text-blue-200 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-400"
+                className="rounded-md text-sm font-semibold text-blue-300 underline-offset-4 transition-colors hover:text-blue-200 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-400"
               >
                 I need help
               </button>
               <button
                 type="button"
                 onClick={() => navigate('/')}
-                className="text-sm font-semibold text-foreground underline-offset-4 hover:text-accent hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+                className="rounded-md text-sm font-semibold text-foreground underline-offset-4 hover:text-accent hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
               >
                 Cancel
               </button>
@@ -523,6 +569,12 @@ export default function RepayPage() {
                     {formatMoney(walletBalance)}
                   </span>
                 </div>
+                {isAutoSchedule && (
+                  <div className="flex items-center justify-between text-sm border-t border-border pt-3">
+                    <span className="text-muted">Auto-schedule</span>
+                    <span className="font-semibold text-accent">Monthly</span>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -596,6 +648,12 @@ export default function RepayPage() {
                   Reduced to {newPct}%
                 </span>
               </div>
+              {isAutoSchedule && (
+                <div className="mt-2 flex items-center justify-between text-sm">
+                  <span className="text-muted">Auto-schedule</span>
+                  <span className="font-semibold text-accent">Active</span>
+                </div>
+              )}
             </div>
 
             <PayoffProjection

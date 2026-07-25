@@ -4,6 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { LoginFormData, AuthError } from "../types/auth.types";
 import { PendingButton } from "../components/PendingButton";
 import { FormField } from "../components/FormField";
+import { TrustBadges } from "../components/TrustBadges";
 
 export function LoginPage() {
   const navigate = useNavigate();
@@ -145,6 +146,8 @@ export function LoginPage() {
             </p>
           </div>
         </div>
+
+        <TrustBadges />
       </div>
     </div>
   );

@@ -861,7 +861,7 @@ The standardized pattern has been applied to:
    - `ResetPasswordPage.tsx`: New password and confirm password fields
 
 2. **Functional Components**
-   - `AmountInput.tsx`: Amount to draw field with custom styling
+   - `AmountInput.tsx`: Amount to draw field with custom styling, pinned to design system v7 tokens (`--space-*`, `--lh-*`, `--radius-*`, semantic status tokens)
    - `RequestEvaluation.tsx`: File upload and checkbox fields
 
 ### Validation Guidelines

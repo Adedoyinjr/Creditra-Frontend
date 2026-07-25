@@ -1,43 +1,74 @@
+/**
+ * KbdHint
+ *
+ * Renders styled keyboard shortcut hints (<kbd> tags) with screen reader support,
+ * dark mode / high contrast token consistency, and responsive layouts.
+ *
+ * WCAG 2.1 AA Conformance:
+ *   - Screen reader fallback via .sr-only element explaining the shortcut.
+ *   - Uses design tokens for colors, borders, and dark/high-contrast mode support.
+ */
+
 import React from 'react';
 import './KbdHint.css';
 
 export interface KbdHintProps {
-  /**
-   * Array of keys to display in the hint (e.g., ['⌘', 'K'] or ['Shift', 'C'])
-   */
-  keys: string[];
-  /**
-   * Optional description of what the shortcut does, used for tooltip and aria-label
-   */
+  /** Key or sequence of keys to display (e.g. "Esc", ["←", "→"], ["Ctrl", "K"]) */
+  keys: string | string[];
+  /** Optional descriptive label shown next to the shortcut keys */
+  label?: string;
+  /** Optional detailed description for screen readers or tooltips */
   description?: string;
-  /**
-   * Optional additional class name
-   */
+  /** Visual variant: 'inline' (default) or 'badge' (boxed container) */
+  variant?: 'inline' | 'badge';
+  /** Additional CSS class names */
   className?: string;
+  /** Optional override for root container aria-label */
+  'aria-label'?: string;
 }
 
-/**
- * KbdHint Component
- * Displays a keyboard shortcut visually using HTML <kbd> elements.
- * 
- * @example
- * <KbdHint keys={['⌘', 'K']} description="Open Command Palette" />
- */
-export function KbdHint({ keys, description, className = '' }: KbdHintProps) {
-  if (!keys || keys.length === 0) return null;
+export function KbdHint({
+  keys,
+  label,
+  description,
+  variant = 'inline',
+  className = '',
+  'aria-label': ariaLabel,
+}: KbdHintProps) {
+  const keyList = Array.isArray(keys) ? keys : [keys];
+  const keysText = keyList.join(' ');
+  const srText = description ?? (label ? `${label} (${keysText})` : `Keyboard shortcut: ${keysText}`);
+
+  const containerClasses = [
+    'kbd-hint-container',
+    variant === 'badge' ? 'kbd-hint-badge' : '',
+    className,
+  ]
+    .filter(Boolean)
+    .join(' ');
 
   return (
-    <span 
-      className={`kbd-hint-wrapper ${className}`.trim()}
-      title={description}
-      aria-label={description ? `${description}: ${keys.join(' then ')}` : keys.join(' then ')}
+    <span
+      className={containerClasses}
+      aria-label={ariaLabel ?? srText}
+      role="group"
     >
-      {keys.map((k, i) => (
-        <span key={i} className="kbd-hint-group">
-          <kbd className="kbd-hint-key">{k}</kbd>
-          {i < keys.length - 1 && <span className="kbd-hint-sep" aria-hidden="true">+</span>}
+      <span className="sr-only">{srText}</span>
+      <span className="kbd-hint-group" aria-hidden="true">
+        {keyList.map((key, index) => (
+          <React.Fragment key={`${key}-${index}`}>
+            {index > 0 && <span className="kbd-hint-separator">/</span>}
+            <kbd className="kbd-hint-key">{key}</kbd>
+          </React.Fragment>
+        ))}
+      </span>
+      {label && (
+        <span className="kbd-hint-label" aria-hidden="true">
+          {label}
         </span>
-      ))}
+      )}
     </span>
   );
 }
+
+export default KbdHint;

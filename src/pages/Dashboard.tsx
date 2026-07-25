@@ -17,17 +17,16 @@ import {
   fmtDate,
   utilizationPct,
   RISK_COLOR,
+  getUtilizationLevel,
 } from "../utils/tokens";
 import { readJson, writeJson } from "../utils/storage";
-import "./Dashboard.css";
-import { Skeleton } from "../components/Skeleton";
+import "./Dashboard.css";  import { Skeleton } from "../components/Skeleton";
 import { NoDataGraph } from "../components/illustrations";
 import CompareLinesPanel from "../components/CompareLinesPanel";
-import { WhatsChangedPanel } from "../components/WhatsChangedPanel";
 import { useFocusTrap } from "../hooks/useFocusTrap";
 import { useInertBackdrop } from "../hooks/useInertBackdrop";
 import { useBodyScrollLock } from "../hooks/useBodyScrollLock";
-import { getUtilizationLevel } from "../utils/tokens";
+import { useReducedMotion } from "../context/ReducedMotionContext";
 import { TipJar } from "../components/TipJar";
 import { NextSteps } from "../components/NextSteps";
 import { WhatChanged } from "../components/WhatChanged";
