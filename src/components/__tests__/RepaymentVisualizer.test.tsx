@@ -1,4 +1,6 @@
 import { describe, it, expect } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { RepaymentVisualizer } from '../RepaymentVisualizer';
 
@@ -244,5 +246,38 @@ describe('RepaymentVisualizer — responsive breakpoints', () => {
     const table = screen.getAllByRole('table').find((t) => !t.classList.contains('sr-only'));
     const wrapper = table?.parentElement;
     expect(wrapper).toHaveClass('overflow-x-auto', '-mx-4', 'sm:mx-0', 'px-4', 'sm:px-0');
+  });
+});
+
+describe('RepaymentVisualizer — color-blind safe series patterns', () => {
+  it('legend swatches use pattern classes from patterns.css', () => {
+    render(<RepaymentVisualizer {...BASE} />);
+    expect(document.querySelector('.rv-legend-swatch--principal')).toBeInTheDocument();
+    expect(document.querySelector('.rv-legend-swatch--interest')).toBeInTheDocument();
+  });
+
+  it('SVG defines distinct hatch patterns for principal and interest areas', () => {
+    render(<RepaymentVisualizer {...BASE} />);
+    const svg = screen.getByRole('img');
+    const patterns = svg.querySelectorAll('pattern');
+    expect(patterns.length).toBeGreaterThanOrEqual(2);
+    const ids = Array.from(patterns).map((p) => p.getAttribute('id') ?? '');
+    expect(ids.some((id) => id.includes('principal-hatch'))).toBe(true);
+    expect(ids.some((id) => id.includes('interest-hatch'))).toBe(true);
+  });
+
+  it('each chart series has a gradient base fill and a hatch overlay path', () => {
+    render(<RepaymentVisualizer {...BASE} />);
+    const svg = screen.getByRole('img');
+    expect(svg.querySelectorAll('[data-series="principal"]').length).toBeGreaterThanOrEqual(2);
+    expect(svg.querySelectorAll('[data-series="interest"]').length).toBeGreaterThanOrEqual(2);
+    expect(svg.querySelector('.rv-area-hatch--principal')).toBeInTheDocument();
+    expect(svg.querySelector('.rv-area-hatch--interest')).toBeInTheDocument();
+  });
+
+  it('documents repayment series pattern tokens in patterns.css', () => {
+    const css = readFileSync(join(process.cwd(), 'src/styles/patterns.css'), 'utf-8');
+    expect(css).toMatch(/\.rv-legend-swatch--principal/);
+    expect(css).toMatch(/\.rv-legend-swatch--interest/);
   });
 });
