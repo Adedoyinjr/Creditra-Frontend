@@ -50,7 +50,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 0.5rem 0 1rem;
+  padding: var(--space-2, 0.5rem) 0 var(--space-4, 1rem);
 }
 
 .risk-gauge-svg {
@@ -58,7 +58,7 @@
   max-width: 160px;
   height: auto;
   aspect-ratio: 160 / 100;
-  margin-bottom: 0.75rem;
+  margin-bottom: var(--space-3, 0.75rem);
   /*
     overflow: visible is required so that:
     a) the box-shadow focus ring is not clipped at the SVG viewport edge.
@@ -265,15 +265,15 @@
 /* ── Typography ──────────────────────────────────────────────────────────── */
 
 .risk-gauge-score {
-  font-size: 2rem;
-  font-weight: 700;
+  font-size: var(--text-5xl, 2rem);
+  font-weight: var(--font-bold, 700);
   fill: var(--text);
   text-anchor: middle;
   dominant-baseline: middle;
 }
 
 .risk-gauge-label {
-  font-size: 0.65rem;
+  font-size: var(--text-xs, 0.65rem);
   fill: var(--muted);
   text-anchor: middle;
   text-transform: uppercase;
@@ -284,7 +284,7 @@
 
 .risk-meta {
   display: flex;
-  gap: 1.5rem;
+  gap: var(--space-6, 1.5rem);
   justify-content: center;
 }
 
@@ -294,7 +294,7 @@
 
 .risk-meta-item .rm-label {
   display: block;
-  font-size: 0.65rem;
+  font-size: var(--text-xs, 0.65rem);
   color: var(--muted);
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -303,8 +303,8 @@
 }
 
 .risk-meta-item .rm-value {
-  font-size: 0.85rem;
-  font-weight: 600;
+  font-size: var(--text-sm, 0.85rem);
+  font-weight: var(--font-semibold, 600);
   line-height: var(--lh-body, 1.6);
 }
 
@@ -313,7 +313,7 @@
 @media (max-width: 768px) {
   .risk-meta {
     flex-direction: column;
-    gap: 0.5rem;
+    gap: var(--space-2, 0.5rem);
   }
 }
 
