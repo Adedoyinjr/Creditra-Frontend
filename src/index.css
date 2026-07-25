@@ -60,6 +60,11 @@
   outline-offset: 2px;
 }
 
+/* Typography Utilities */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
 * {
   box-sizing: border-box;
 }

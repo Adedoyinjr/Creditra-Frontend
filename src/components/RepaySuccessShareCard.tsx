@@ -77,9 +77,9 @@ export const RepaySuccessShareCard: React.FC<RepaySuccessShareCardProps> = ({
       </div>
 
       <div className="repay-share-content">
-        <div className="repay-info-row">
+<div className="repay-info-row">
           <span className="repay-label">Amount</span>
-          <span className="repay-value">{fmt(amount)}</span>
+          <span className="repay-value tabular-nums">{fmt(amount)}</span>
         </div>
         <div className="repay-info-row">
           <span className="repay-label">Credit Line</span>

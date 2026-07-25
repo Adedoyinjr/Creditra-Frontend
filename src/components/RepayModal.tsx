@@ -204,11 +204,11 @@ export function RepayModal({
               </p>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
                 <p style={{ margin: 0, fontSize: '2rem', fontWeight: 700, color: COLOR.danger, lineHeight: 1 }}>
-                  {fmt(totalDue)}
+                  <span className="tabular-nums">{fmt(totalDue)}</span>
                 </p>
                 <div style={{ textAlign: 'right' }}>
                   <p style={{ margin: 0, fontSize: '0.75rem', color: COLOR.muted }}>
-                    Includes {fmt(accruedInterestEstimate)}
+                    Includes <span className="tabular-nums">{fmt(accruedInterestEstimate)}</span>
                   </p>
                   <p style={{ margin: 0, fontSize: '0.75rem', color: COLOR.muted }}>
                     accrued interest est.
@@ -220,7 +220,7 @@ export function RepayModal({
             <div style={{ marginBottom: '1.5rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
                 <label htmlFor="repay-amount-input" style={{ fontSize: '0.9rem', color: COLOR.text, fontWeight: 500 }}>Amount to Repay</label>
-                <span style={{ fontSize: '0.8rem', color: validation.feedback.severity === 'danger' ? COLOR.danger : COLOR.muted }}>Wallet: {fmt(walletBalance)}</span>
+                <span style={{ fontSize: '0.8rem', color: validation.feedback.severity === 'danger' ? COLOR.danger : COLOR.muted }}>Wallet: <span className="tabular-nums">{fmt(walletBalance)}</span></span>
               </div>
               <p id={repayAmountHintId} style={{ margin: '0 0 0.75rem', fontSize: '0.82rem', color: COLOR.muted }}>
                 Enter a repayment amount and we will show the minimum, safe maximum, and reserve guidance inline.
@@ -264,15 +264,15 @@ export function RepayModal({
               <div id={repayAmountConstraintsId} style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: '0.5rem', marginBottom: '0.75rem' }}>
                 <div style={{ background: COLOR.bg, border: `1px solid ${COLOR.border}`, borderRadius: 8, padding: '0.65rem 0.75rem' }}>
                   <p style={{ margin: '0 0 0.2rem', fontSize: '0.68rem', color: COLOR.muted, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Minimum</p>
-                  <p style={{ margin: 0, fontSize: '0.85rem', color: COLOR.text, fontWeight: 600 }}>{formatMoney(validation.minAmount)}</p>
+                  <p style={{ margin: 0, fontSize: '0.85rem', color: COLOR.text, fontWeight: 600 }}><span className="tabular-nums">{formatMoney(validation.minAmount)}</span></p>
                 </div>
                 <div style={{ background: COLOR.bg, border: `1px solid ${COLOR.border}`, borderRadius: 8, padding: '0.65rem 0.75rem' }}>
                   <p style={{ margin: '0 0 0.2rem', fontSize: '0.68rem', color: COLOR.muted, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Safe maximum</p>
-                  <p style={{ margin: 0, fontSize: '0.85rem', color: COLOR.text, fontWeight: 600 }}>{formatMoney(validation.maxRepayAmount)}</p>
+                  <p style={{ margin: 0, fontSize: '0.85rem', color: COLOR.text, fontWeight: 600 }}><span className="tabular-nums">{formatMoney(validation.maxRepayAmount)}</span></p>
                 </div>
                 <div style={{ background: COLOR.bg, border: `1px solid ${COLOR.border}`, borderRadius: 8, padding: '0.65rem 0.75rem' }}>
                   <p style={{ margin: '0 0 0.2rem', fontSize: '0.68rem', color: COLOR.muted, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Reserve target</p>
-                  <p style={{ margin: 0, fontSize: '0.85rem', color: COLOR.text, fontWeight: 600 }}>{formatMoney(validation.recommendedWalletReserve)}</p>
+                  <p style={{ margin: 0, fontSize: '0.85rem', color: COLOR.text, fontWeight: 600 }}><span className="tabular-nums">{formatMoney(validation.recommendedWalletReserve)}</span></p>
                 </div>
               </div>
               <div
@@ -320,16 +320,16 @@ export function RepayModal({
                     color: amount > 0 && remainingDebt === 0 ? COLOR.success : COLOR.text,
                   }}
                 >
-                  {fmt(remainingDebt)}
+                  <span className="tabular-nums">{fmt(remainingDebt)}</span>
                 </span>
               </div>
 
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
                 <span style={{ fontSize: '0.8rem', color: COLOR.muted }}>New Utilization</span>
                 <span style={{ fontSize: '0.8rem', color: amount > 0 ? COLOR.success : COLOR.text }}>
-                  {newPct}%{' '}
+                  <span className="tabular-nums">{newPct}%</span>{' '}
                   <span style={{ textDecoration: 'line-through', color: COLOR.muted, marginLeft: 4 }}>
-                    {oldPct}%
+                    <span className="tabular-nums">{oldPct}%</span>
                   </span>
                 </span>
               </div>
@@ -393,7 +393,7 @@ export function RepayModal({
                 textAlign: 'center',
               }}
             >
-              {fmt(amount)}
+              <span className="tabular-nums">{fmt(amount)}</span>
             </p>
 
             <div
@@ -416,7 +416,7 @@ export function RepayModal({
               >
                 <span style={{ color: COLOR.muted, fontSize: '0.9rem' }}>Remaining Debt After</span>
                 <span style={{ fontWeight: 600, color: remainingDebt === 0 ? COLOR.success : COLOR.text }}>
-                  {fmt(remainingDebt)}
+                  <span className="tabular-nums">{fmt(remainingDebt)}</span>
                 </span>
               </div>
               <div>
@@ -449,7 +449,7 @@ export function RepayModal({
                   >
                     ✓
                   </span>
-                  Sufficient Balance ({fmt(walletBalance)} available)
+                  Sufficient Balance (<span className="tabular-nums">{fmt(walletBalance)}</span> available)
                 </span>
               </div>
             </div>
@@ -484,7 +484,7 @@ export function RepayModal({
                   />
                 </div>
                 <p id="confirm-repay-description" style={{ margin: '0.5rem 0 0', fontSize: '0.82rem', color: COLOR.muted }}>
-                  Type the repayment amount ({fmt(amount)}) to enable the Confirm Repayment button.
+                  Type the repayment amount (<span className="tabular-nums">{fmt(amount)}</span>) to enable the Confirm Repayment button.
                 </p>
               </div>
             )}
@@ -574,7 +574,7 @@ export function RepayModal({
             </div>
 
             <h3 style={{ margin: '0 0 0.25rem', fontSize: '1.5rem', color: COLOR.text }}>
-              You repaid {fmt(amount)}!
+              You repaid <span className="tabular-nums">{fmt(amount)}</span>!
             </h3>
             <p style={{ margin: '0 0 1.5rem', fontSize: '0.9rem', color: COLOR.muted }}>
               Your transaction was successful.
@@ -600,7 +600,7 @@ export function RepayModal({
                 }}
               >
                 <span style={{ color: COLOR.muted }}>Remaining Debt:</span>
-                <span style={{ fontWeight: 600 }}>{fmt(remainingDebt)}</span>
+                <span style={{ fontWeight: 600 }}><span className="tabular-nums">{fmt(remainingDebt)}</span></span>
               </p>
               <p
                 style={{
@@ -613,7 +613,7 @@ export function RepayModal({
               >
                 <span>Credit Line Utilization:</span>
                 <span style={{ color: remainingDebt === 0 ? COLOR.success : COLOR.text }}>
-                  Reduced to {newPct}%
+                  Reduced to <span className="tabular-nums">{newPct}%</span>
                 </span>
               </p>
             </div>
