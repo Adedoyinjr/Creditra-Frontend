@@ -54,8 +54,10 @@
 }
 
 .risk-gauge-svg {
-  width: 160px;
-  height: 100px;
+  width: 100%;
+  max-width: 160px;
+  height: auto;
+  aspect-ratio: 160 / 100;
   margin-bottom: 0.75rem;
   /*
     overflow: visible is required so that:
