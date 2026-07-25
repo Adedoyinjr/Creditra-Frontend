@@ -674,6 +674,139 @@
     }
 }
 
+/*
+ * ─── Static Fallbacks: prefers-reduced-motion ───────────────────────────────
+ *
+ * The global rule in index.css already covers all * elements via
+ *   animation-duration: 0.01ms !important; transition-duration: 0.01ms !important;
+ *
+ * The rules below are belt-and-suspenders: they make the intent explicit and
+ * readable at the component level, and ensure correctness even if the global
+ * rule is ever narrowed.
+ *
+ * Pattern:
+ *  - @media (prefers-reduced-motion: reduce)  — OS/browser signal
+ *  - [data-motion="reduced"]                  — in-app toggle override
+ *    (set on <html> by ReducedMotionContext when the user picks "reduced" in
+ *    Settings regardless of OS preference)
+ *
+ * WCAG 2.1 SC 2.3.3 (Animation from Interactions, AAA) and the stricter
+ * interpretation of SC 1.4.3 (visual signal must not rely on motion alone)
+ * both motivate zeroing these out.
+ */
+@media (prefers-reduced-motion: reduce) {
+    /* Summary cards: disable entrance animation and hover lift */
+    .summary-card {
+        animation: none;
+        transition: none;
+    }
+    .summary-card:hover {
+        transform: none;
+    }
+
+    /* Generic cards: same treatment */
+    .card {
+        animation: none;
+        transition: none;
+    }
+    .card:hover {
+        transform: none;
+    }
+
+    /* Utilization bar: snap to final width immediately */
+    .util-bar-fill {
+        transition: none;
+    }
+
+    /* Quick-action buttons: no hover lift or box-shadow transition */
+    .qa-btn {
+        transition: none;
+    }
+    .qa-btn:hover {
+        transform: none;
+        box-shadow: none;
+    }
+    .qa-btn .qa-arrow {
+        transition: none;
+    }
+    .qa-btn:hover .qa-arrow {
+        transform: none;
+    }
+
+    /* View-all link: no background-color fade */
+    .view-all-link {
+        transition: none;
+    }
+
+    /* Empty-state CTA: no hover lift */
+    .empty-state-btn {
+        transition: none;
+    }
+    .empty-state-btn:hover {
+        transform: none;
+        box-shadow: none;
+    }
+
+    /* Risk-explainer banner: no entrance slide */
+    .risk-explainer {
+        animation: none;
+    }
+}
+
+/*
+ * In-app reduced-motion toggle — applied via [data-motion="reduced"] on <html>
+ * by ReducedMotionContext when the user explicitly enables "Reduce motion" in
+ * Settings.  Mirrors the @media rules above so both signal paths are covered.
+ */
+[data-motion="reduced"] .summary-card,
+[data-motion="reduced"] .card {
+    animation: none !important;
+    transition: none !important;
+}
+
+[data-motion="reduced"] .summary-card:hover,
+[data-motion="reduced"] .card:hover {
+    transform: none !important;
+}
+
+[data-motion="reduced"] .util-bar-fill {
+    transition: none !important;
+}
+
+[data-motion="reduced"] .qa-btn {
+    transition: none !important;
+}
+
+[data-motion="reduced"] .qa-btn:hover {
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+[data-motion="reduced"] .qa-btn .qa-arrow {
+    transition: none !important;
+}
+
+[data-motion="reduced"] .qa-btn:hover .qa-arrow {
+    transform: none !important;
+}
+
+[data-motion="reduced"] .view-all-link {
+    transition: none !important;
+}
+
+[data-motion="reduced"] .empty-state-btn {
+    transition: none !important;
+}
+
+[data-motion="reduced"] .empty-state-btn:hover {
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+[data-motion="reduced"] .risk-explainer {
+    animation: none !important;
+}
+
 /* ─── Responsive ────────────────────────────────────────────────────────────── */
 
 @media (max-width: 1024px) {
@@ -752,9 +885,4 @@
 .activity-item {
     min-height: 48px;
 }
-
-/* Reduced Motion Override */
-[data-motion="reduced"] .risk-explainer {
-    animation: none;
-  }
 

@@ -17,17 +17,17 @@ import {
   fmtDate,
   utilizationPct,
   RISK_COLOR,
+  getUtilizationLevel,
 } from "../utils/tokens";
 import { readJson, writeJson } from "../utils/storage";
 import "./Dashboard.css";
 import { Skeleton } from "../components/Skeleton";
 import { NoDataGraph } from "../components/illustrations";
 import CompareLinesPanel from "../components/CompareLinesPanel";
-import { WhatsChangedPanel } from "../components/WhatsChangedPanel";
 import { useFocusTrap } from "../hooks/useFocusTrap";
 import { useInertBackdrop } from "../hooks/useInertBackdrop";
 import { useBodyScrollLock } from "../hooks/useBodyScrollLock";
-import { getUtilizationLevel } from "../utils/tokens";
+import { useReducedMotion } from "../context/ReducedMotionContext";
 import { TipJar } from "../components/TipJar";
 import { NextSteps } from "../components/NextSteps";
 import { WhatChanged } from "../components/WhatChanged";
@@ -151,9 +151,30 @@ export function RiskGauge({
 
   const scoreFormatter = useMemo(() => new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 }), []);
 
+  // Accessible description for the gauge used by the SVG title + sr-only paragraph.
+  const scoreLabel = scoreFormatter.format(normalizedScore);
+  const gaugeTitle = `Risk score ${scoreLabel}, trend ${trend}`;
+
   return (
     <div className="risk-gauge-container">
-      <svg className="risk-gauge-svg" viewBox="0 0 160 100">
+      {/*
+       * data-reduced-motion mirrors the active state so CSS selectors can
+       * provide belt-and-suspenders static fallbacks when JS is unavailable
+       * or slow to hydrate.  The JS tween is already skipped via the
+       * isReducedMotionActive flag above; this attribute lets CSS rules in
+       * Dashboard.css match directly on the element rather than relying
+       * solely on the global [data-motion="reduced"] override or the OS
+       * @media (prefers-reduced-motion: reduce) rule.
+       */}
+      <svg
+        className="risk-gauge-svg"
+        viewBox="0 0 160 100"
+        role="img"
+        aria-label={gaugeTitle}
+        data-reduced-motion={isReducedMotionActive ? "true" : "false"}
+        data-testid="risk-gauge-svg"
+      >
+        <title>{gaugeTitle}</title>
         <path
           className="risk-gauge-bg"
           d={`M ${cx - radius} ${cy} A ${radius} ${radius} 0 0 1 ${cx + radius} ${cy}`}
@@ -172,6 +193,9 @@ export function RiskGauge({
           Risk Score
         </text>
       </svg>
+      {/* Screen-reader paragraph: provides an accessible description outside the SVG,
+          keeps VoiceOver / NVDA from reading raw path data. */}
+      <p className="sr-only" aria-live="polite">{gaugeTitle}</p>
 
       <div className="risk-meta">
         <div className="risk-meta-item">
@@ -489,7 +513,7 @@ export function Dashboard() {
             Request Credit Evaluation
           </Link>
         </div>
-      </div>
+      </>
     );
   }
 
