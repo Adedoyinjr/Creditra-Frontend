@@ -382,6 +382,30 @@
   }
 }
 
+/* ─── Repayment Schedule section (host for <RepaymentSchedule />) ─────────── */
+
+.cl-repayment-schedule {
+  margin-top: 2.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.cl-section-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text);
+  margin: 0;
+  line-height: var(--lh-heading);
+}
+
+.cl-section-subtitle {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--muted);
+  line-height: var(--lh-body);
+}
+
 /* ─── Responsive ─────────────────────────────────────────────────────────────── */
 
 @media (max-width: 768px) {

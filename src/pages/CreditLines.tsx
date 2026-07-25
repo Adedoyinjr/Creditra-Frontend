@@ -26,6 +26,10 @@ import { useBodyScrollLock } from "../hooks/useBodyScrollLock";
 import CompareLinesPanel from "../components/CompareLinesPanel";
 import { CollateralSubstitutionModal } from "../components/CollateralSubstitutionModal";
 import { NoLines } from "../components/illustrations";
+import {
+  RepaymentSchedule,
+  buildRepaymentScheduleFromLines,
+} from "../components/RepaymentSchedule";
 
 // ─── Credit Line Card ────────────────────────────────────────────────────────
 
@@ -411,6 +415,31 @@ export default function CreditLines() {
             />
           ))}
         </div>
+      )}
+
+      {/* ── Repayment Schedule (Issue #428) ───────────────────────────────
+       * Aggregate, chronological timeline of every past installment AND
+       * forward-looking payment across the user's credit lines. Renders
+       * only when at least one credit line has schedule-relevant data
+       * (transactions or a configured next payment). Built from the
+       * existing mock data via the pure `buildRepaymentScheduleFromLines`
+       * helper so the timeline updates as the upstream state changes. */}
+      {filteredAndSorted.length > 0 && (
+        <section
+          className="cl-repayment-schedule"
+          aria-labelledby="cl-repayment-schedule-heading"
+        >
+          <h2 id="cl-repayment-schedule-heading" className="cl-section-title">
+            Repayment Schedule
+          </h2>
+          <p className="cl-section-subtitle">
+            Past installments and upcoming payments across your credit lines.
+          </p>
+          <RepaymentSchedule
+            schedule={buildRepaymentScheduleFromLines(filteredAndSorted)}
+            title="All scheduled repayments"
+          />
+        </section>
       )}
 
       {/* Collateral substitution modal — mounted at page level so it overlays everything */}
