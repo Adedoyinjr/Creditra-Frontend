@@ -1,40 +1,31 @@
 /**
  * react-router-dom stub for the test environment.
  *
- * Creditra-Frontend does not have react-router-dom installed in the test
- * node_modules (the CI/offline environment uses a shared node_modules symlink
- * from another project that lacks this package). This stub provides the
- * minimum surface needed by the existing tests (ErrorBoundary.test.tsx,
- * NotFound.test.tsx) so the full suite can run.
- *
- * DrawCreditPage itself has no router dependency — its tests require nothing
- * from this module.
+ * Provides the minimum surface needed by suite tests when the real package
+ * is unavailable or aliased away in vitest.config.ts.
  */
 
-import { createElement, Fragment } from "react";
+import { createElement, Fragment } from 'react';
 
 /*
- * Module-level "current location", set by BrowserRouter/MemoryRouter when they
- * render and read back by useLocation/useSearchParams. Tests render
- * synchronously and read immediately after, so a shared variable is sufficient
- * for this stub (no reactive updates needed).
+ * Module-level "current location", set by MemoryRouter when it renders and
+ * read back by useLocation/useSearchParams. Tests render synchronously and
+ * read immediately after, so a shared variable is sufficient for this stub.
  */
-let currentPathname = "/";
-let currentSearch = "";
+let currentPathname = '/';
+let currentSearch = '';
 
 function applyEntry(entry: string) {
-  const qIndex = entry.indexOf("?");
+  const qIndex = entry.indexOf('?');
   currentPathname = qIndex >= 0 ? entry.slice(0, qIndex) : entry;
-  currentSearch = qIndex >= 0 ? entry.slice(qIndex) : "";
+  currentSearch = qIndex >= 0 ? entry.slice(qIndex) : '';
 }
 
-// BrowserRouter — renders children directly
 export function BrowserRouter({ children }: { children: React.ReactNode }) {
   return createElement(Fragment, null, children);
 }
 
-// MemoryRouter — parses initialEntries[0] into the current location, then
-// renders children. Supports the `initialEntries={['/path?query']}` pattern.
+/** Parses initialEntries[0] into the current location, then renders children. */
 export function MemoryRouter({
   children,
   initialEntries,
@@ -42,11 +33,10 @@ export function MemoryRouter({
   children: React.ReactNode;
   initialEntries?: string[];
 }) {
-  applyEntry(initialEntries?.[0] ?? "/");
+  applyEntry(initialEntries?.[0] ?? '/');
   return createElement(Fragment, null, children);
 }
 
-// Link — renders a plain <a>
 export function Link({
   to,
   children,
@@ -56,10 +46,28 @@ export function Link({
   children: React.ReactNode;
   [key: string]: unknown;
 }) {
-  return createElement("a", { href: to, ...props }, children);
+  return createElement('a', { href: to, ...props }, children);
 }
 
-// Route / Routes / Navigate — pass-through stubs
+export function NavLink({
+  to,
+  children,
+  className,
+  end: _end,
+  ...props
+}: {
+  to: string;
+  children: React.ReactNode | ((args: { isActive: boolean }) => React.ReactNode);
+  className?: string | ((args: { isActive: boolean }) => string);
+  end?: boolean;
+  [key: string]: unknown;
+}) {
+  const isActive = false;
+  const cls = typeof className === 'function' ? className({ isActive }) : className;
+  const content = typeof children === 'function' ? children({ isActive }) : children;
+  return createElement('a', { href: to, className: cls, ...props }, content);
+}
+
 export function Routes({ children }: { children: React.ReactNode }) {
   return createElement(Fragment, null, children);
 }
@@ -72,19 +80,22 @@ export function Navigate(_props: Record<string, unknown>) {
   return null;
 }
 
-// useSearchParams — parses currentSearch into a URLSearchParams-like object
 export function useSearchParams() {
   const params = new URLSearchParams(currentSearch);
   return [params, (_: URLSearchParams) => {}] as const;
 }
 
-// Hooks
 export function useNavigate() {
   return () => {};
 }
 
 export function useLocation() {
-  return { pathname: currentPathname, search: currentSearch, hash: "", state: null };
+  return {
+    pathname: currentPathname,
+    search: currentSearch,
+    hash: '',
+    state: null,
+  };
 }
 
 export function useParams() {
