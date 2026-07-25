@@ -21,28 +21,6 @@ const easeCubicBezier = (x: number): number => {
   return 3 * t * (1 - t) + t * t * t;
 };
 
-type RiskGaugeBaseProps = {
-  history?: number[];
-  /** When true, an empty-state illustration is shown instead of the gauge. */
-  isEmpty?: boolean;
-  /** Fired when the user clicks the "Check again" CTA on the empty state. */
-  onRefresh?: () => void;
-};
-
-type RiskGaugeProps =
-  | (RiskGaugeBaseProps & {
-      isEmpty: true;
-      score?: number;
-      trend?: "improving" | "declining" | "stable";
-      lastUpdated?: string;
-    })
-  | (RiskGaugeBaseProps & {
-      isEmpty?: false;
-      score: number;
-      trend: "improving" | "declining" | "stable";
-      lastUpdated: string;
-    });
-
 export function RiskGauge({
   score = 0,
   trend = "stable",
@@ -50,7 +28,16 @@ export function RiskGauge({
   history,
   isEmpty = false,
   onRefresh,
-}: RiskGaugeProps) {
+}: {
+  score?: number;
+  trend?: "improving" | "declining" | "stable";
+  lastUpdated?: string;
+  history?: number[];
+  /** When true, an empty-state illustration is shown instead of the gauge. */
+  isEmpty?: boolean;
+  /** Fired when the user clicks the "Check again" CTA on the empty state. */
+  onRefresh?: () => void;
+}) {
   const radius = 55;
   const cx = 80;
   const cy = 75;
