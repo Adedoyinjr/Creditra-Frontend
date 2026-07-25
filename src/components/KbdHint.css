@@ -1,0 +1,47 @@
+.kbd-hint-wrapper {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-family: inherit;
+  vertical-align: middle;
+}
+
+.kbd-hint-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.kbd-hint-key {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.5rem;
+  height: 1.5rem;
+  padding: 0 0.35rem;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text, #ffffff);
+  font-size: 0.75rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-weight: 600;
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
+}
+
+.kbd-hint-sep {
+  color: var(--muted, #8b949e);
+  font-size: 0.75rem;
+  font-weight: 500;
+  user-select: none;
+}
+
+/* Light mode support if vars exist */
+@media (prefers-color-scheme: light) {
+  .kbd-hint-key {
+    background: rgba(0, 0, 0, 0.04);
+    border-color: rgba(0, 0, 0, 0.1);
+    color: var(--text, #24292f);
+    box-shadow: 0 1px 1px rgba(255, 255, 255, 0.5);
+  }
+}
