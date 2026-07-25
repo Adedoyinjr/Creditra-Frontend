@@ -78,7 +78,7 @@ describe('RepayPage', () => {
 
   it('Review Repayment button is disabled with no amount', () => {
     renderPage(['/repay?line=CL-2024-001']);
-    expect(screen.getByText('Review Repayment')).toBeDisabled();
+    expect(screen.getByRole('button', { name: /review repayment/i })).toBeDisabled();
   });
 
   it('has I need help button', () => {
@@ -112,11 +112,37 @@ describe('RepayPage', () => {
 
   it('Smart Pay enables Review Repayment when clicked', () => {
     renderPage(['/repay?line=CL-2024-001']);
-    const reviewBtn = screen.getByText('Review Repayment');
+    const reviewBtn = screen.getByRole('button', { name: /review repayment/i });
     expect(reviewBtn).toBeDisabled();
     const smartPayBtn = screen.getByRole('button', { name: /smart pay/i });
     fireEvent.click(smartPayBtn);
     expect(reviewBtn).not.toBeDisabled();
+  });
+
+  describe('Reduced motion', () => {
+    it('toggle track has motion-reduce:transition-none and motion-reduce:duration-0', () => {
+      renderPage(['/repay?line=CL-2024-001']);
+      const toggle = screen.getByRole('switch', { name: /auto-schedule/i });
+      expect(toggle).toHaveClass('motion-reduce:transition-none');
+      expect(toggle).toHaveClass('motion-reduce:duration-0');
+    });
+
+    it('toggle knob has motion-reduce:transition-none and motion-reduce:duration-0', () => {
+      renderPage(['/repay?line=CL-2024-001']);
+      const toggle = screen.getByRole('switch', { name: /auto-schedule/i });
+      const knob = toggle.querySelector('span[aria-hidden="true"]');
+      expect(knob).toHaveClass('motion-reduce:transition-none');
+      expect(knob).toHaveClass('motion-reduce:duration-0');
+    });
+
+    it('progress bar fills have motion-reduce:transition-none', () => {
+      renderPage(['/repay?line=CL-2024-001']);
+      // Both preview progress bars carry transition-all + motion-reduce:transition-none
+      const fills = document
+        .querySelectorAll('.motion-reduce\\:transition-none');
+      // toggle track, toggle knob, old bar fill, new bar fill = at least 4
+      expect(fills.length).toBeGreaterThanOrEqual(4);
+    });
   });
 
   describe('Focus-visible outline accessibility', () => {

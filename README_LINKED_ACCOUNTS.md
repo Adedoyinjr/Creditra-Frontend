@@ -11,6 +11,7 @@ This PR implements the **Manage Linked Accounts** page as specified in issue #29
 1. **LinkedAccounts Page** (`src/pages/LinkedAccounts.tsx`)
    - Full-featured account management interface
    - Provider cards with real-time status updates
+   - Per-account color-stripe identity via `colorFromId` (stable left-edge stripe + swatch)
    - Connect/disconnect/reconnect flows
    - Success/error messaging with auto-dismiss
    - Loading states with skeleton placeholders
