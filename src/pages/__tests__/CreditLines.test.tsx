@@ -70,4 +70,12 @@ describe('CreditLines page', () => {
     expect(card?.textContent).toMatch(/Risk Score/);
     expect(card?.textContent).toMatch(/Opened/);
   });
+
+  it('renders card metrics for layout', () => {
+    renderPage();
+    const metrics = document.querySelectorAll('.cl-metrics');
+    expect(metrics.length).toBeGreaterThanOrEqual(3);
+    const details = document.querySelectorAll('.cl-details');
+    expect(details.length).toBeGreaterThanOrEqual(3);
+  });
 });

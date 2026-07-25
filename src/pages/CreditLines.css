@@ -487,16 +487,18 @@
 /* ─── Responsive ─────────────────────────────────────────────────────────────── */
 
 @media (max-width: 480px) {
-    .cl-card-header,
-    .cl-card-footer,
-    .cl-page-header,
-    .cl-filters {
-        flex-direction: column;
+    .credit-lines-page {
+        padding: 0 1rem 1.5rem;
     }
 
-    .cl-card-footer {
+    .cl-page-header,
+    .cl-card-header,
+    .cl-card-footer,
+    .cl-filters {
+        flex-direction: column;
         align-items: stretch;
     }
+
     .cl-grid {
         grid-template-columns: 1fr;
     }
@@ -504,29 +506,5 @@
     .cl-metrics,
     .cl-details {
         grid-template-columns: 1fr;
-    }
-    .credit-lines-page {
-        padding: 0 1rem 1.5rem;
-    }
-
-    .cl-page-header {
-        flex-direction: column;
-        align-items: stretch;
-    }
-
-    .cl-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .cl-metrics {
-        grid-template-columns: 1fr;
-    }
-
-    .cl-details {
-        grid-template-columns: 1fr;
-    }
-
-    .cl-card-footer {
-        flex-direction: column;
     }
 }
