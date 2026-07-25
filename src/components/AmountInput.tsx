@@ -398,7 +398,7 @@ export function AmountInput({
                   Math.floor((creditLine.available * percent) / 100).toString(),
                 )
               }
-              className="py-2.5 px-3 border-2 border-border rounded-lg hover:border-accent hover:bg-surface transition-all text-foreground font-medium text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background min-h-[44px] flex items-center justify-center"
+              className="py-2.5 px-3 border-2 border-border rounded-lg hover:border-accent hover:bg-surface transition-all text-foreground font-medium text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background min-h-[44px] flex items-center justify-center tabular-nums"
               aria-label={`Set amount to ${percent} percent of available credit`}
               type="button"
             >
