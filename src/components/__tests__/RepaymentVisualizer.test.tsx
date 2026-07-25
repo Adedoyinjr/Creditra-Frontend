@@ -478,3 +478,64 @@ describe('RepaymentVisualizer — reduced-motion fallback', () => {
     spy.mockRestore();
   });
 });
+
+// ─── ARIA live-region announcement tests ─────────────────────────────────
+
+describe('RepaymentVisualizer — aria-live status announcements', () => {
+  it('renders a LiveRegion component with sr-only class', () => {
+    render(<RepaymentVisualizer {...BASE} />);
+    // The LiveRegion renders a div with role="status", aria-live="polite", and sr-only class
+    const liveRegion = document.querySelector('[aria-live="polite"].sr-only');
+    expect(liveRegion).toBeInTheDocument();
+    expect(liveRegion).toHaveAttribute('role', 'status');
+  });
+
+  it('LiveRegion announces the repayment plan summary when schedule is calculated', () => {
+    render(<RepaymentVisualizer {...BASE} />);
+    const liveRegion = document.querySelector('[aria-live="polite"].sr-only');
+    expect(liveRegion?.textContent).toMatch(/repayment plan/i);
+    expect(liveRegion?.textContent).toMatch(/month/i);
+    expect(liveRegion?.textContent).toMatch(/total interest/i);
+  });
+
+  it('LiveRegion announces tooltip data when inspecting a month via keyboard', () => {
+    render(<RepaymentVisualizer {...BASE} />);
+    const svg = screen.getByRole('img');
+
+    // Navigate to month 1 via keyboard
+    fireEvent.keyDown(svg, { key: 'ArrowRight' });
+
+    const liveRegion = document.querySelector('[aria-live="polite"].sr-only');
+    expect(liveRegion?.textContent).toMatch(/month 1/i);
+    expect(liveRegion?.textContent).toMatch(/principal remaining/i);
+    expect(liveRegion?.textContent).toMatch(/cumulative interest/i);
+  });
+
+  it('LiveRegion reverts to plan summary when tooltip is cleared', () => {
+    render(<RepaymentVisualizer {...BASE} />);
+    const svg = screen.getByRole('img');
+
+    // Show tooltip first
+    fireEvent.keyDown(svg, { key: 'ArrowRight' });
+
+    // Clear tooltip
+    fireEvent.keyDown(svg, { key: 'Escape' });
+
+    const liveRegion = document.querySelector('[aria-live="polite"].sr-only');
+    expect(liveRegion?.textContent).toMatch(/repayment plan/i);
+    expect(liveRegion?.textContent).not.toMatch(/month \d/i);
+  });
+
+  it('LiveRegion is empty when schedule has no data (empty state)', () => {
+    render(<RepaymentVisualizer {...BASE} principal={0} />);
+    const liveRegion = document.querySelector('[aria-live="polite"].sr-only');
+    // LiveRegion should have empty content when no schedule data
+    expect(liveRegion?.textContent).toBe('');
+  });
+
+  it('LiveRegion uses polite politeness to avoid interrupting the user', () => {
+    render(<RepaymentVisualizer {...BASE} />);
+    const liveRegion = document.querySelector('[aria-live="polite"].sr-only');
+    expect(liveRegion).toHaveAttribute('aria-live', 'polite');
+  });
+});
