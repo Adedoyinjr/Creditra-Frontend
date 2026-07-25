@@ -295,6 +295,10 @@ describe("DrawCreditPage — step navigation & token audit", () => {
 // ─── Reduced-motion fallback tests ────────────────────────────────────
 
 describe("DrawCreditPage — reduced-motion fallback", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it("does NOT set data-reduced-motion when motion is enabled (default)", () => {
     vi.spyOn(ReducedMotionContext, "useReducedMotion").mockReturnValue({
       motionOverride: "system",
