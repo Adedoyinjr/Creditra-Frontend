@@ -133,6 +133,21 @@
   border-radius: var(--focus-ring-radius, 6px);
 }
 
+/**
+ * RepaymentVisualizer keyboard targets.
+ *
+ * Applied to the interactive SVG chart, schedule disclosure, and table
+ * expansion button. `:focus-visible` keeps pointer interactions unchanged,
+ * while the shared tokens preserve contrast across default, dark, and
+ * high-contrast themes.
+ */
+.repayment-visualizer-focus:focus-visible {
+  outline: var(--focus-ring-width, 2px) solid
+    var(--focus-ring-color, var(--accent, #58a6ff));
+  outline-offset: var(--focus-ring-offset, 3px);
+  border-radius: var(--focus-ring-radius, 6px);
+}
+
 /* ── Reduced-motion ──────────────────────────────────────────────────────── */
 /*
   Focus indicators must remain visible even under prefers-reduced-motion;

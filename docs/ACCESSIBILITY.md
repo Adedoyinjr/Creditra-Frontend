@@ -186,6 +186,10 @@ The `KbdHint` component (`src/components/KbdHint.tsx`) provides standardized vis
 ### Focus management
 
 - Global `:focus-visible` rule in `src/index.css` is `outline: 2px solid var(--accent); outline-offset: 2px`.
+- `RepaymentVisualizer` applies `.repayment-visualizer-focus` to its interactive
+  chart, schedule disclosure, and row-expansion control. The class uses shared
+  focus tokens and `:focus-visible`, so keyboard users receive a consistent
+  outline without adding a focus ring on pointer clicks.
 - Active nav links keep focus styling distinct from active styling (see the comment block
   around `.header-nav-link.active` in `src/index.css`).
 - Modal close returns focus to the trigger via `useFocusTrap`'s `triggerRef`.
