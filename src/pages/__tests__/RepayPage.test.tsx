@@ -78,7 +78,7 @@ describe('RepayPage', () => {
 
   it('Review Repayment button is disabled with no amount', () => {
     renderPage(['/repay?line=CL-2024-001']);
-    expect(screen.getByText('Review Repayment')).toBeDisabled();
+    expect(screen.getByRole('button', { name: /review repayment/i })).toBeDisabled();
   });
 
   it('has I need help button', () => {
@@ -112,10 +112,26 @@ describe('RepayPage', () => {
 
   it('Smart Pay enables Review Repayment when clicked', () => {
     renderPage(['/repay?line=CL-2024-001']);
-    const reviewBtn = screen.getByText('Review Repayment');
+    const reviewBtn = screen.getByRole('button', { name: /review repayment/i });
     expect(reviewBtn).toBeDisabled();
     const smartPayBtn = screen.getByRole('button', { name: /smart pay/i });
     fireEvent.click(smartPayBtn);
     expect(reviewBtn).not.toBeDisabled();
+  });
+
+  it('triggers Smart Pay via "s" keyboard shortcut', () => {
+    renderPage(['/repay?line=CL-2024-001']);
+    const input = screen.getByRole('spinbutton', { name: /amount to repay/i });
+    expect(input).toHaveValue(null);
+    fireEvent.keyDown(window, { key: 's' });
+    expect(input).toHaveValue(3200);
+  });
+
+  it('triggers MAX via "m" keyboard shortcut', () => {
+    renderPage(['/repay?line=CL-2024-001']);
+    const input = screen.getByRole('spinbutton', { name: /amount to repay/i });
+    fireEvent.keyDown(window, { key: 'm' });
+    // walletBalance is 50000 in the component, which is the limit it can repay
+    expect(input).toHaveValue(50000); 
   });
 });
