@@ -273,7 +273,7 @@
 }
 
 .risk-gauge-label {
-  font-size: var(--text-xs, 0.65rem);
+  font-size: var(--text-xs, 0.75rem);
   fill: var(--muted);
   text-anchor: middle;
   text-transform: uppercase;
@@ -294,7 +294,7 @@
 
 .risk-meta-item .rm-label {
   display: block;
-  font-size: var(--text-xs, 0.65rem);
+  font-size: var(--text-xs, 0.75rem);
   color: var(--muted);
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -303,7 +303,7 @@
 }
 
 .risk-meta-item .rm-value {
-  font-size: var(--text-sm, 0.85rem);
+  font-size: var(--text-sm, 0.875rem);
   font-weight: var(--font-semibold, 600);
   line-height: var(--lh-body, 1.6);
 }
