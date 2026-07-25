@@ -161,7 +161,7 @@ describe('RepayPage', () => {
       fireEvent.click(screen.getByRole('button', { name: /smart pay/i }));
       fireEvent.click(screen.getByRole('button', { name: /review repayment/i }));
 
-      const backBtn = screen.getByRole('button', { name: /back/i });
+      const backBtn = screen.getByRole('button', { name: /^back$/i });
       expect(backBtn).toHaveClass('focus-visible:outline');
 
       const confirmBtn = screen.getByRole('button', { name: /confirm repayment/i });
