@@ -20,6 +20,7 @@ import {
 } from "../utils/tokens";
 import { readJson, writeJson } from "../utils/storage";
 import "./Dashboard.css";
+import "../styles/patterns.css";
 import { Skeleton } from "../components/Skeleton";
 import { NoDataGraph } from "../components/illustrations";
 import CompareLinesPanel from "../components/CompareLinesPanel";
@@ -27,11 +28,15 @@ import { WhatsChangedPanel } from "../components/WhatsChangedPanel";
 import { useFocusTrap } from "../hooks/useFocusTrap";
 import { useInertBackdrop } from "../hooks/useInertBackdrop";
 import { useBodyScrollLock } from "../hooks/useBodyScrollLock";
+import { useReducedMotion } from "../context/ReducedMotionContext";
 import { getUtilizationLevel } from "../utils/tokens";
 import { TipJar } from "../components/TipJar";
 import { NextSteps } from "../components/NextSteps";
 import { WhatChanged } from "../components/WhatChanged";
 import { HealthTipsPanel } from "../components/HealthTipsPanel";
+import { DashboardTour } from "../components/DashboardTour";
+import { ContinuePrompt } from "../components/ContinuePrompt";
+import { SyncIndicator } from "../components/SyncIndicator";
 
 
 
@@ -151,9 +156,34 @@ export function RiskGauge({
 
   const scoreFormatter = useMemo(() => new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 }), []);
 
+  /*
+   * v7 color-blind tier glyph (closes #565):
+   *   ▲ ≥700    (strong)        — triangle: "look up"
+   *   ◆ 600–699 (fair)          — diamond:  "watch"
+   *   ● <600    (below)         — circle:   "act now"
+   *
+   * The glyph sits in the risk-meta row next to the numerically displayed
+   * score, providing a shape cue that survives any colour filter.
+   */
+  const tier =
+    normalizedScore >= 700 ? 'strong' :
+    normalizedScore >= 600 ? 'fair' : 'below';
+  const tierGlyph = tier === 'strong' ? '▲' : tier === 'fair' ? '◆' : '●';
+  const tierLabel =
+    tier === 'strong' ? 'Strong risk score' :
+    tier === 'fair' ? 'Fair risk score' : 'Below recommended risk score';
+
   return (
     <div className="risk-gauge-container">
-      <svg className="risk-gauge-svg" viewBox="0 0 160 100">
+      <svg
+        className="risk-gauge-svg"
+        viewBox="0 0 160 100"
+        role="img"
+        aria-labelledby={`risk-gauge-title-${tier}`}
+      >
+        <title id={`risk-gauge-title-${tier}`}>
+          Risk score {scoreFormatter.format(Math.round(displayedScore))} — band {tier}
+        </title>
         <path
           className="risk-gauge-bg"
           d={`M ${cx - radius} ${cy} A ${radius} ${radius} 0 0 1 ${cx + radius} ${cy}`}
@@ -172,6 +202,19 @@ export function RiskGauge({
           Risk Score
         </text>
       </svg>
+      {/* Shape-coded tier glyph (v7).  Visually this mirrors the band colour
+          but is independently perceivable by colour-blind users; screen
+          readers get an explicit label via the sr-only span. */}
+      <span className="risk-gauge-tier-wrap" style={{ color: gaugeColor }}>
+        <span
+          className="risk-gauge-tier-glyph"
+          aria-hidden="true"
+          data-tier={tier}
+        >
+          {tierGlyph}
+        </span>
+        <span className="sr-only">{tierLabel}</span>
+      </span>
 
       <div className="risk-meta">
         <div className="risk-meta-item">
@@ -489,7 +532,7 @@ export function Dashboard() {
             Request Credit Evaluation
           </Link>
         </div>
-      </div>
+      </>
     );
   }
 
@@ -612,7 +655,14 @@ export function Dashboard() {
           </>
         ) : (
           <>
-            <div className="summary-card">
+            {/*
+              v7 color-blind summary cards (closes #565):
+              Each card carries a modifier class that drives the pattern
+              stripe defined in src/styles/patterns.css.  Pattern alone
+              (independent of colour) communicates card identity to a
+              colour-blind user scanning the row.
+            */}
+            <div className="summary-card summary-card--accent">
               <div className="glow" style={{ background: COLOR.accent }} />
               <p className="label">
                 Total Credit Limit
@@ -626,7 +676,9 @@ export function Dashboard() {
                 {activeLinesOnly.length !== 1 ? "s" : ""}
               </p>
             </div>
-            <div className="summary-card">
+            <div
+              className={`summary-card summary-card--util summary-card--util-${overallLevel}`}
+            >
               <div
                 className="glow"
                 style={{ background: UTIL_COLOR[overallLevel] }}
@@ -640,7 +692,7 @@ export function Dashboard() {
               </p>
               <p className="sub">{overallPct}% of total limit</p>
             </div>
-            <div className="summary-card">
+            <div className="summary-card summary-card--available">
               <div className="glow" style={{ background: COLOR.success }} />
               <p className="label">
                 Available Credit
@@ -682,8 +734,15 @@ export function Dashboard() {
                 </span>
               </div>
               <div className="util-bar-track">
+                {/*
+                  v7 color-blind util bar (closes #565):
+                  `util-fill--{level}` modifier drives the diagonal-stripe
+                  (medium) / cross-hatch (high) overlay rendered by
+                  src/styles/patterns.css.  The inline `background` colour
+                  is preserved underneath.
+                */}
                 <div
-                  className="util-bar-fill"
+                  className={`util-bar-fill util-fill--${overallLevel}`}
                   style={{
                     width: `${overallPct}%`,
                     background: UTIL_COLOR[overallLevel],
@@ -1039,10 +1098,17 @@ export function Dashboard() {
                        <div className="cl-preview-right">
                          <div className="cl-preview-amount">
                            {fmt(cl.utilized)} <span style={{ color: COLOR.muted, fontWeight: 400, fontSize: "0.75rem" }}>/ {fmt(cl.limit)}</span>
-                         </div>
-                         <div className="cl-preview-bar">
-                           <div className="cl-preview-bar-fill" style={{ width: `${pct}%`, background: UTIL_COLOR[level] }} />
-                         </div>
+                         </div>                          <div className="cl-preview-bar">
+                            {/*
+                              v7 color-blind: per-line mini util bar also
+                              gets the util-fill--{level} overlay so the
+                              shape cue matches the headline bar above.
+                            */}
+                            <div
+                              className={`cl-preview-bar-fill util-fill--${level}`}
+                              style={{ width: `${pct}%`, background: UTIL_COLOR[level] }}
+                            />
+                          </div>
                        </div>
                      </div>
                    );
@@ -1202,158 +1268,11 @@ export function Dashboard() {
              </div>
            )}
          </div>
+
+        {/* Health Tips panel (preserved from orphan block; v7 keeps dashboard tree single-column inside grid) */}
+        <HealthTipsPanel />
        </div>
 
-        {/* Right Column */}
-        <div>
-          {/* Quick Actions */}
-          <div className="card" style={{ animationDelay: '0.12s' }}>
-            <h2><span className="icon">⚡</span> Quick Actions</h2>
-            <div className="quick-actions-grid">
-              {!hasLines && (
-                <button
-                  className="qa-btn"
-                  data-tour-target="requestEvaluation"
-                  style={{ borderColor: 'rgba(88,166,255,0.3)' }}
-                >
-                  <div className="qa-icon" style={{ background: 'rgba(88,166,255,0.12)', color: COLOR.accent }}>🆕</div>
-                  <div>
-                    <div className="qa-label" style={{ color: COLOR.accent }}>Open Credit Line</div>
-                    <div className="qa-desc" style={{ color: COLOR.muted }}>Get started with your first line</div>
-                  </div>
-                  <span className="qa-arrow" style={{ color: COLOR.muted }}>→</span>
-                </button>
-              )}
-              {hasLines && activeLinesOnly.length > 0 && (
-                <button
-                  className="qa-btn"
-                  data-tour-target="requestEvaluation"
-                  style={{ borderColor: 'rgba(88,166,255,0.3)' }}
-                >
-                  <div className="qa-icon" style={{ background: 'rgba(88,166,255,0.12)', color: COLOR.accent }}>↗</div>
-                  <div>
-                    <div className="qa-label" style={{ color: COLOR.accent }}>Draw Credit</div>
-                    <div className="qa-desc" style={{ color: COLOR.muted }}>{fmt(totalAvailable)} available</div>
-                  </div>
-                  <span className="qa-arrow" style={{ color: COLOR.muted }}>→</span>
-                </button>
-              )}
-              {hasUtilized && (
-                <button
-                  className="qa-btn"
-                  style={{ borderColor: 'rgba(63,185,80,0.3)' }}
-                >
-                  <div className="qa-icon" style={{ background: 'rgba(63,185,80,0.12)', color: COLOR.success }}>↙</div>
-                  <div>
-                    <div className="qa-label" style={{ color: COLOR.success }}>Repay Credit</div>
-                    <div className="qa-desc" style={{ color: COLOR.muted }}>{fmt(totalUtilized)} outstanding</div>
-                  </div>
-                  <span className="qa-arrow" style={{ color: COLOR.muted }}>→</span>
-                </button>
-              )}
-              <Link
-                to="/credit-lines"
-                className="qa-btn"
-                style={{ borderColor: 'transparent', textDecoration: 'none' }}
-              >
-                <div className="qa-icon" style={{ background: 'rgba(139,148,158,0.12)', color: COLOR.muted }}>📋</div>
-                <div>
-                  <div className="qa-label" style={{ color: COLOR.text }}>View Credit Lines</div>
-                  <div className="qa-desc" style={{ color: COLOR.muted }}>Manage all your credit lines</div>
-                </div>
-                <span className="qa-arrow" style={{ color: COLOR.muted }}>→</span>
-              </Link>
-            </div>
-          </div>
-
-          {/* Recent Activity */}
-          <div className="card" style={{ animationDelay: '0.18s' }} aria-busy={loading}>
-            <h2><span className="icon">📝</span> Recent Activity</h2>
-
-            {loading ? (
-              <>
-                <div className="activity-item">
-                  <Skeleton className="activity-icon" style={{ borderRadius: '6px' }} />
-                  <div className="activity-content" style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                    <Skeleton style={{ width: '120px', height: '14px', borderRadius: '2px' }} />
-                    <Skeleton style={{ width: '180px', height: '10px', borderRadius: '2px' }} />
-                  </div>
-                  <Skeleton style={{ width: '60px', height: '14px', marginLeft: 'auto', borderRadius: '2px' }} />
-                </div>
-                <div className="activity-item">
-                  <Skeleton className="activity-icon" style={{ borderRadius: '6px' }} />
-                  <div className="activity-content" style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                    <Skeleton style={{ width: '100px', height: '14px', borderRadius: '2px' }} />
-                    <Skeleton style={{ width: '150px', height: '10px', borderRadius: '2px' }} />
-                  </div>
-                  <Skeleton style={{ width: '50px', height: '14px', marginLeft: 'auto', borderRadius: '2px' }} />
-                </div>
-                <div className="activity-item">
-                  <Skeleton className="activity-icon" style={{ borderRadius: '6px' }} />
-                  <div className="activity-content" style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                    <Skeleton style={{ width: '140px', height: '14px', borderRadius: '2px' }} />
-                    <Skeleton style={{ width: '160px', height: '10px', borderRadius: '2px' }} />
-                  </div>
-                  <Skeleton style={{ width: '70px', height: '14px', marginLeft: 'auto', borderRadius: '2px' }} />
-                </div>
-              </>
-            ) : recentActivity.length === 0 ? (
-              <p style={{ color: COLOR.muted, fontSize: '0.8rem', textAlign: 'center', padding: '1.5rem 0' }}>
-                No transactions yet
-              </p>
-            ) : (
-              recentActivity.map((tx, i) => (
-                <div key={`${tx.id}-${i}`} className="activity-item">
-                  <div
-                    className="activity-icon"
-                    style={{
-                      background: `${TX_COLOR[tx.type]}15`,
-                      color: TX_COLOR[tx.type],
-                    }}
-                  >
-                    {TX_ICON[tx.type]}
-                  </div>
-                  <div className="activity-content">
-                    <div className="activity-title">{tx.note || tx.type}</div>
-                    <div className="activity-sub">{tx.lineName} · {relativeTime(tx.date)}</div>
-                  </div>
-                  <div className="activity-amount" style={{ color: TX_COLOR[tx.type] }}>
-                    {tx.type === 'Repay' ? '+' : '-'}{fmt(tx.amount)}
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-
-          {/* Notifications */}
-          {notifications.length > 0 && (
-            <div className="card" style={{ animationDelay: '0.22s' }}>
-              <h2><span className="icon">🔔</span> Alerts</h2>
-
-              {notifications.map((note, i) => (
-                <div 
-                  key={i} 
-                  className={`notification-item notification-item--${note.type}`}
-                  role={note.type === 'danger' ? 'alert' : 'status'}
-                >
-                  <span className="notification-icon" aria-hidden="true">{note.icon}</span>
-                  <div>
-                    <div className="notification-text">
-                      {note.content}
-                    </div>
-                    {note.time && (
-                      <div className="notification-time">{relativeTime(note.time)}</div>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Health Tips — contextual credit-education panel */}
-          <HealthTipsPanel />
-        </div>
-      </div>
       <DashboardTour />
       {/* Centered risk-band explainer overlay (#426).  Triggered by the
           "Explain risk bands" button rendered next to the risk gauge

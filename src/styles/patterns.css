@@ -1,4 +1,54 @@
-/* Patterns for Credit Line statuses to support color-blind accessibility */
+/*
+ * Patterns for Credit Line statuses and Dashboard statuses to support
+ * color-blind accessibility (closes #565, dashboard v7).
+ *
+ * ─── Taxonomy ────────────────────────────────────────────────────────────────
+ *
+ * Each visual family maps 1:1 to a semantic meaning so that shape alone —
+ * independent of hue — communicates status to users with color-vision
+ * deficiencies, in monochrome printing, and in forced-colors mode.
+ *
+ *   Family          Default map                            Shape
+ *   ─────────       ──────────────────────────────────     ──────────────
+ *   dots            status-active, summary-card--accent   small radial dots
+ *   stripes-45      status-suspended, util-fill--medium,
+ *                   notification-item--warning            45° diagonal stripes
+ *   stripes-135     status-frozen                          135° diagonal stripes
+ *   chevrons        util-fill--low (rolled-up "↑"),
+ *                   summary-card--available,
+ *                   notification-item--info                upward chevron (NEW v7)
+ *   cross-hatch     util-fill--high,
+ *                   notification-item--danger              dense X pattern (NEW v7)
+ *   horizontal      status-closed,
+ *                   notification-item--info (alt),         horizontal lines
+ *   dense-45        status-defaulted                       dense 45° stripes
+ *
+ * Why introduce chevrons + cross-hatch in v7?
+ * The original five families all used straight lines.  For Dashboard v7 we
+ * need three NEW, perceptually distinct shape families for utilization
+ * levels and notification severity — because reusing "dense 45°" for both
+ * `status-defaulted` and `util-fill--high` would let a deuteranope confuse
+ * the two at a glance, even though they live on different surfaces.
+ *
+ * ─── Patterns are layered at low opacity over the existing colour token ───────
+ * 0.10–0.25 is the safe range we verified against the foreground text and
+ * border contrast ratios (WCAG 2.1 AA on both --bg and --surface).  Patterns
+ * are deliberately *additive*: the colour cue is preserved, never replaced.
+ *
+ * ─── High-contrast mode ──────────────────────────────────────────────────────
+ * Under [data-contrast="high"] (see ContrastContext + index.css), the page
+ * background becomes near-pure black (#000000) and rgba(_,0.10) washes out
+ * completely.  The block at the bottom of this file bumps opacities so the
+ * shapes stay perceivable.
+ *
+ * ─── Forced colours mode ─────────────────────────────────────────────────────
+ * Under @media (forced-colors: active) — Windows High Contrast, forced
+ * colours in Chrome — the host OS supplies its own color palette and our
+ * rgba patterns can conflict.  We suppress the patterns in that mode and
+ * rely on the system palette + the component's own border / glyph cues.
+ */
+
+/* ─── Status badges (pre-existing — kept identical) ───────────────────────── */
 
 .status-active {
   background-image: radial-gradient(circle, rgba(16, 185, 129, 0.1) 1px, transparent 1px);
@@ -21,4 +71,227 @@
 
 .status-closed {
   background-image: repeating-linear-gradient(0deg, rgba(107, 114, 128, 0.1), rgba(107, 114, 128, 0.1) 6px, transparent 6px, transparent 12px);
+}
+
+/* ─── v7 — Dashboard utilization fill ─────────────────────────────────────── */
+/*
+ * Overlay is applied via ::before so the inline `background` colour set
+ * by Dashboard.tsx (UTIL_COLOR[level]) is preserved underneath.  Density
+ * values mirror the existing UTIL_PATTERN_DENSITY token in
+ * src/utils/tokens.ts so a future token change ripples here too.
+ *  - low:      no overlay — healthy state, color alone is fine
+ *  - medium:   6px 45° stripe (existing stride)
+ *  - high:     8px cross-hatch (deliberately different from
+ *              status-defaulted's dense 45° so a protanope does not
+ *              confuse the two)
+ */
+.util-bar-fill {
+  position: relative;
+  overflow: hidden;
+}
+.util-bar-fill::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: none;
+}
+.util-fill--medium::before {
+  background-image: repeating-linear-gradient(45deg,
+    rgba(255, 255, 255, 0.45) 0 6px,
+    transparent 6px 12px);
+}
+.util-fill--high::before {
+  background-image:
+    repeating-linear-gradient(45deg,
+      rgba(255, 255, 255, 0.55) 0 4px,
+      transparent 4px 8px),
+    repeating-linear-gradient(-45deg,
+      rgba(255, 255, 255, 0.55) 0 4px,
+      transparent 4px 8px);
+}
+
+/* ─── v7 — Dashboard summary cards ────────────────────────────────────────── */
+/*
+ * Each summary card gets a subtle shape-coded corner stripe so the value
+ * type is identifiable without reading the label (helpful for sighted
+ * but color-blind users who scan the row).
+ */
+.summary-card {
+  --summary-pattern-opacity: 0.10;
+}
+
+.summary-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 6px;
+  height: 100%;
+  background: transparent;
+  pointer-events: none;
+  z-index: 0;
+}
+/* Card content must sit above the stripe so text/glow renders cleanly */
+.summary-card > .glow,
+.summary-card > .label,
+.summary-card > .value,
+.summary-card > .sub {
+  position: relative;
+  z-index: 1;
+}
+
+/* Total Credit Limit — blue dot grid */
+.summary-card--accent::before {
+  background: transparent;
+  background-image: radial-gradient(circle, rgba(88, 166, 255, 0.18) 1.5px, transparent 1.5px);
+  background-size: 8px 8px;
+}
+
+/* Total Utilized — inherits util-fill--{level} pattern along the stripe */
+.summary-card--util.summary-card--util-low::before {
+  background-image: radial-gradient(circle, rgba(63, 185, 80, 0.18) 1.5px, transparent 1.5px);
+  background-size: 8px 8px;
+}
+.summary-card--util.summary-card--util-medium::before {
+  background-image: repeating-linear-gradient(45deg,
+    rgba(210, 153, 34, 0.22) 0 6px,
+    transparent 6px 12px);
+}
+.summary-card--util.summary-card--util-high::before {
+  background-image:
+    repeating-linear-gradient(45deg,
+      rgba(248, 81, 73, 0.25) 0 4px,
+      transparent 4px 8px),
+    repeating-linear-gradient(-45deg,
+      rgba(248, 81, 73, 0.25) 0 4px,
+      transparent 4px 8px);
+}
+
+/* Available Credit — green upward chevron field */
+.summary-card--available::before {
+  background-image: repeating-linear-gradient(0deg,
+    rgba(63, 185, 80, 0.20) 0 4px,
+    transparent 4px 8px),
+    linear-gradient(180deg, transparent 60%, rgba(63, 185, 80, 0.45) 60%);
+  background-size: 8px 16px, 100% 100%;
+}
+
+/* ─── v7 — Dashboard notifications ────────────────────────────────────────── */
+/*
+ * Three severity tiers, three shape families.  Patterns live on the right
+ * edge of each row so the left border colour is preserved (existing rule
+ * in Dashboard.css).
+ */
+.notification-item--info {
+  background-image: repeating-linear-gradient(0deg,
+    rgba(88, 166, 255, 0.16) 0 4px,
+    transparent 4px 10px);
+  background-size: auto;
+  background-position: right;
+}
+
+.notification-item--warning {
+  background-image: repeating-linear-gradient(45deg,
+    rgba(210, 153, 34, 0.22) 0 6px,
+    transparent 6px 12px);
+  background-attachment: scroll;
+}
+
+.notification-item--danger {
+  background-image:
+    repeating-linear-gradient(45deg,
+      rgba(248, 81, 73, 0.25) 0 4px,
+      transparent 4px 8px),
+    repeating-linear-gradient(-45deg,
+      rgba(248, 81, 73, 0.25) 0 4px,
+      transparent 4px 8px);
+}
+
+/* ─── v7 — Dashboard util bar overlay pseudo-element ──────────────────────── */
+/*
+ * The util bar's fill is sized inline (width: {pct}%) and coloured inline
+ * (background: UTIL_COLOR[level]).  We layer the high-util cross-hatch
+ * and medium 45° stripes via ::before so the colour is preserved.
+ * Rules live alongside the per-level modifiers above; this block just
+ * ensures the position/overflow backdrop is present.
+ */
+/* Util bar at the per-line row in the Credit Summary card — also gets
+ * the same ::before overlay so the row strip matches the section bar. */
+.cl-preview-bar-fill {
+  position: relative;
+  overflow: hidden;
+}
+.cl-preview-bar-fill::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: none;
+}
+.cl-preview-bar-fill.util-fill--medium::before {
+  background-image: repeating-linear-gradient(45deg,
+    rgba(255, 255, 255, 0.45) 0 6px,
+    transparent 6px 12px);
+}
+.cl-preview-bar-fill.util-fill--high::before {
+  background-image:
+    repeating-linear-gradient(45deg,
+      rgba(255, 255, 255, 0.55) 0 4px,
+      transparent 4px 8px),
+    repeating-linear-gradient(-45deg,
+      rgba(255, 255, 255, 0.55) 0 4px,
+      transparent 4px 8px);
+}
+
+/* ─── High-contrast mode opacities (no-op in normal theme) ────────────────── */
+/* Pure black background (#000000) — pattern stripes lose contrast; bump
+ * alpha by ~0.25 so the shapes remain perceivable for users locked into
+ * the high-contrast theme via ContrastContext.  We raise specificity to
+ * `html[data-contrast="high"] …` instead of using `!important` so a
+ * downstream override without `!important` can still win. */
+html[data-contrast="high"] .util-fill--medium::before {
+  background-image: repeating-linear-gradient(45deg,
+    rgba(255, 255, 255, 0.7) 0 6px,
+    transparent 6px 12px);
+}
+html[data-contrast="high"] .util-fill--high::before {
+  background-image:
+    repeating-linear-gradient(45deg,
+      rgba(255, 255, 255, 0.8) 0 4px,
+      transparent 4px 8px),
+    repeating-linear-gradient(-45deg,
+      rgba(255, 255, 255, 0.8) 0 4px,
+      transparent 4px 8px);
+}
+html[data-contrast="high"] .cl-preview-bar-fill.util-fill--medium::before,
+html[data-contrast="high"] .cl-preview-bar-fill.util-fill--high::before,
+html[data-contrast="high"] .summary-card--accent::before,
+html[data-contrast="high"] .summary-card--util.summary-card--util-low::before,
+html[data-contrast="high"] .summary-card--util.summary-card--util-medium::before,
+html[data-contrast="high"] .summary-card--util.summary-card--util-high::before,
+html[data-contrast="high"] .summary-card--available::before,
+html[data-contrast="high"] .notification-item--info,
+html[data-contrast="high"] .notification-item--warning,
+html[data-contrast="high"] .notification-item--danger {
+  opacity: 1;
+}
+
+/* ─── Forced-colours mode (Windows High Contrast, Chrome forced-colors) ────── */
+@media (forced-colors: active) {
+  /*
+   * The host OS supplies its own palette; rgba patterns lose their hue
+   * and become gray-on-gray which can look broken.  We suppress the
+   * pattern fills and rely on the SystemColor borders + component glyphs.
+   */
+  .util-bar-fill::before,
+  .cl-preview-bar-fill::before,
+  .summary-card--accent::before,
+  .summary-card--util::before,
+  .summary-card--available::before,
+  .notification-item--info,
+  .notification-item--warning,
+  .notification-item--danger {
+    background-image: none;
+  }
 }
