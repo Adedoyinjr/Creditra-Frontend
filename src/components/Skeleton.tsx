@@ -24,10 +24,12 @@ type SkeletonProps = React.HTMLAttributes<HTMLDivElement> & {
  * @example
  *   <Skeleton width="100%" height={48} aria-label="Loading credit lines" />
  */
-export const Skeleton: React.FC<SkeletonProps> = ({ width, height, shape = 'rectangular', style, className, ...rest }) => (
+export const Skeleton: React.FC<SkeletonProps> = ({ width, height, shape = 'rectangular', style, className, 'aria-hidden': ariaHidden = true, ...rest }) => (
   <div
     className={`skeleton skeleton--${shape} ${className ?? ''}`.trim()}
     style={{ width, height, ...style }}
+    aria-hidden={ariaHidden}
     {...rest}
   />
 );
+
