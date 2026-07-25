@@ -20,6 +20,7 @@
 import { useRef, useState, useEffect } from "react";
 import { Skeleton } from "@/components/Skeleton";
 import { useLocation, useNavigate } from "react-router-dom";
+import { useReducedMotion } from "@/context/ReducedMotionContext";
 import { loadDraft, saveDraft, clearDraft } from "@/state/wizardDraft";
 import { CreditLineSelector } from "@/components/CreditLineSelector";
 import { AmountInput } from "@/components/AmountInput";
@@ -75,6 +76,8 @@ export default function DrawCreditPage() {
   );
   const [confirmationAcknowledged, setConfirmationAcknowledged] =
     useState(false);
+
+  const { isReducedMotionActive } = useReducedMotion();
 
   const { steps: microProgressSteps, debouncedAnnouncement: microProgressAnnouncement } =
     useDrawWizardMicroProgress({
@@ -159,7 +162,11 @@ export default function DrawCreditPage() {
      * `dc-page` sets min-height:100vh + flex centering via tokens.
      * aria-label exposes this landmark to screen readers as "Draw credit".
      */
-    <main className="dc-page" aria-label="Draw credit">
+    <main
+      className="dc-page"
+      aria-label="Draw credit"
+      data-reduced-motion={isReducedMotionActive ? "true" : undefined}
+    >
       <div className="dc-page__inner">
         {/* Card uses dc-page__card (token-backed padding + radius) — no inline style override */}
         <div className="dc-page__card">
