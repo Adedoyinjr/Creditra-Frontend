@@ -14,6 +14,8 @@ import {
 } from "../utils/amountValidation";
 import { FormMessage } from "./FormMessage";
 import { Skeleton } from "./Skeleton";
+import { EmptyState } from "./EmptyState";
+import { NoDataGraph } from "./illustrations";
 
 const STEP_AMOUNT = 100;
 
@@ -199,8 +201,21 @@ export function AmountInput({
     setAmount(preset.toString());
   };
 
-  if (isLoading || !creditLine) {
+  if (isLoading) {
     return <AmountInputSkeleton />;
+  }
+
+  if (!creditLine) {
+    return (
+      <EmptyState
+        data-testid="amount-input-empty"
+        illustration={<NoDataGraph />}
+        eyebrow="Draw Credit"
+        title="No credit line selected"
+        description="Select a credit line from the dashboard to get started. Once a line is available, you can set the draw amount and submit your request."
+        primaryAction={onBack ? { label: "Go back", onClick: onBack } : undefined}
+      />
+    );
   }
 
   const numAmount = parseFloat(amount) || 0;
