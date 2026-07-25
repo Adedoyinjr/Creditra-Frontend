@@ -157,6 +157,7 @@ Every component below lives in `src/components/`.
 | `FormField` | Labelled input/textarea/custom child with help and error slots | `htmlFor` linkage, `aria-describedby`, `aria-invalid`, `aria-required` set automatically; required indicator announced |
 | `FormMessage` | Tone-coded helper/error text | `role="alert"` for `danger`; live region wrapping for transient feedback |
 | `AmountInput` | Currency input with preset chips (25/50/75/100%) and per-severity feedback | `aria-describedby` aggregates helper + constraint + status + error IDs |
+| `HealthFactorChart` | Per-credit-line health-factor trend (SVG + SR table) | `role="img"` + labelledby; band label pairs colour with text |
 | `PendingButton` | Submit button with inline spinner | `aria-busy="true"` while loading; spinner `aria-hidden` so label-change communicates state |
 
 ### Status, feedback, success
