@@ -28,6 +28,7 @@
 import React, { useState, useRef, useCallback, useId } from 'react';
 import { COLOR } from '@/utils/tokens';
 import { KbdHint } from './KbdHint';
+import { LiveRegion } from './LiveRegion';
 import { useReducedMotion } from '@/context/ReducedMotionContext';
 import './RepaymentVisualizer.css';
 
@@ -659,6 +660,33 @@ export function RepaymentVisualizer({
   const totalInterest = schedule[schedule.length - 1]?.cumulativeInterest ?? 0;
   const termMonths = schedule.length;
 
+  // ── ARIA live-region announcement ──
+  const liveMessage = (() => {
+    if (schedule.length === 0) return '';
+
+    const interestFmt = new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      maximumFractionDigits: 0,
+    }).format(totalInterest);
+
+    if (tooltip) {
+      const principalFmt = new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+        maximumFractionDigits: 0,
+      }).format(tooltip.principal);
+      const cumIntFmt = new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+        maximumFractionDigits: 0,
+      }).format(tooltip.cumulativeInterest);
+      return `Month ${tooltip.month}: principal remaining ${principalFmt}, cumulative interest ${cumIntFmt}.`;
+    }
+
+    return `Repayment plan: ${termMonths} month${termMonths !== 1 ? 's' : ''}, ${interestFmt} total interest.`;
+  })();
+
   return (
     <section
       aria-label="Repayment plan visualizer"
@@ -669,6 +697,9 @@ export function RepaymentVisualizer({
         borderRadius: 'var(--radius-lg)',
       }}
     >
+      {/* Announce state changes (schedule calc, month inspection) to screen readers */}
+      <LiveRegion message={liveMessage} politeness="polite" />
+
       <header className="mb-4 sm:mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4">
         <div className="flex flex-wrap items-center gap-3">
           <h2
