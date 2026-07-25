@@ -484,7 +484,8 @@ export function Dashboard() {
                 Total Credit Limit
                 <WhatChanged metricId="total-limit" currentValue={totalLimit} format="currency" label="Total Credit Limit" />
               </p>
-              <p className="value" style={{ color: COLOR.accent }}>
+              {/* num-tabular: prevents digit-width jitter as credit values change (FWC26) */}
+              <p className="value num-tabular" style={{ color: COLOR.accent }}>
                 {fmt(totalLimit)}
               </p>
               <p className="sub">
@@ -501,7 +502,7 @@ export function Dashboard() {
                 Total Utilized
                 <WhatChanged metricId="total-utilized" currentValue={totalUtilized} format="currency" label="Total Utilized" />
               </p>
-              <p className="value" style={{ color: UTIL_COLOR[overallLevel] }}>
+              <p className="value num-tabular" style={{ color: UTIL_COLOR[overallLevel] }}>
                 {fmt(totalUtilized)}
               </p>
               <p className="sub">{overallPct}% of total limit</p>
@@ -512,7 +513,7 @@ export function Dashboard() {
                 Available Credit
                 <WhatChanged metricId="available-credit" currentValue={totalAvailable} format="currency" label="Available Credit" />
               </p>
-              <p className="value" style={{ color: COLOR.success }}>
+              <p className="value num-tabular" style={{ color: COLOR.success }}>
                 {fmt(totalAvailable)}
               </p>
               <p className="sub">Ready to draw</p>
@@ -541,7 +542,9 @@ export function Dashboard() {
             <div className="util-bar-container">
               <div className="util-bar-header">
                 <span style={{ color: COLOR.muted }}>Utilization</span>
+                {/* num-tabular: stable percentage display (FWC26) */}
                 <span
+                  className="num-tabular"
                   style={{ fontWeight: 600, color: UTIL_COLOR[overallLevel] }}
                 >
                   {overallPct}%
@@ -560,14 +563,15 @@ export function Dashboard() {
             <div className="credit-breakdown">
               <div className="credit-breakdown-item">
                 <p className="cb-label">Total Limit</p>
-                <p className="cb-value" style={{ color: COLOR.accent }}>
+                {/* num-tabular: stable breakdown amounts (FWC26) */}
+                <p className="cb-value num-tabular" style={{ color: COLOR.accent }}>
                   {fmt(totalLimit)}
                 </p>
               </div>
               <div className="credit-breakdown-item">
                 <p className="cb-label">Utilized</p>
                 <p
-                  className="cb-value"
+                  className="cb-value num-tabular"
                   style={{ color: UTIL_COLOR[overallLevel] }}
                 >
                   {fmt(totalUtilized)}
@@ -575,7 +579,7 @@ export function Dashboard() {
               </div>
               <div className="credit-breakdown-item">
                 <p className="cb-label">Available</p>
-                <p className="cb-value" style={{ color: COLOR.success }}>
+                <p className="cb-value num-tabular" style={{ color: COLOR.success }}>
                   {fmt(totalAvailable)}
                 </p>
               </div>
@@ -594,7 +598,7 @@ export function Dashboard() {
                   aria-haspopup="dialog"
                   aria-expanded={isExplainOpen}
                   aria-label="Explain risk bands"
-                  className="risk-explainer-trigger"
+                  className="risk-explainer-trigger focus-ring"
                   data-testid="risk-explainer-trigger"
                   style={{
                     marginLeft: "auto",
@@ -653,6 +657,7 @@ export function Dashboard() {
                        type="button"
                        onClick={handleOpenCompare}
                        disabled={selectedCompareLines.length !== 2}
+                       className="focus-ring"
                        style={{
                          padding: "0.35rem 0.75rem",
                          fontSize: "0.75rem",
@@ -903,7 +908,8 @@ export function Dashboard() {
                          <p className="cl-preview-id">{cl.id}</p>
                        </div>
                        <div className="cl-preview-right">
-                         <div className="cl-preview-amount">
+                         {/* num-tabular: stable utilized/limit amounts (FWC26) */}
+                         <div className="cl-preview-amount num-tabular">
                            {fmt(cl.utilized)} <span style={{ color: COLOR.muted, fontWeight: 400, fontSize: "0.75rem" }}>/ {fmt(cl.limit)}</span>
                          </div>
                          <div className="cl-preview-bar">
@@ -1037,7 +1043,8 @@ export function Dashboard() {
                      <div className="activity-title">{tx.note || tx.type}</div>
                      <div className="activity-sub">{tx.lineName} · {relativeTime(tx.date)}</div>
                    </div>
-                   <div className="activity-amount" style={{ color: TX_COLOR[tx.type] }}>
+                   {/* num-tabular: stable transaction amounts (FWC26) */}
+                   <div className="activity-amount num-tabular" style={{ color: TX_COLOR[tx.type] }}>
                      {tx.type === "Repay" ? "+" : "-"}{fmt(tx.amount)}
                    </div>
                  </div>
@@ -1069,157 +1076,6 @@ export function Dashboard() {
            )}
          </div>
        </div>
-
-        {/* Right Column */}
-        <div>
-          {/* Quick Actions */}
-          <div className="card" style={{ animationDelay: '0.12s' }}>
-            <h2><span className="icon">⚡</span> Quick Actions</h2>
-            <div className="quick-actions-grid">
-              {!hasLines && (
-                <button
-                  className="qa-btn"
-                  data-tour-target="requestEvaluation"
-                  style={{ borderColor: 'rgba(88,166,255,0.3)' }}
-                >
-                  <div className="qa-icon" style={{ background: 'rgba(88,166,255,0.12)', color: COLOR.accent }}>🆕</div>
-                  <div>
-                    <div className="qa-label" style={{ color: COLOR.accent }}>Open Credit Line</div>
-                    <div className="qa-desc" style={{ color: COLOR.muted }}>Get started with your first line</div>
-                  </div>
-                  <span className="qa-arrow" style={{ color: COLOR.muted }}>→</span>
-                </button>
-              )}
-              {hasLines && activeLinesOnly.length > 0 && (
-                <button
-                  className="qa-btn"
-                  data-tour-target="requestEvaluation"
-                  style={{ borderColor: 'rgba(88,166,255,0.3)' }}
-                >
-                  <div className="qa-icon" style={{ background: 'rgba(88,166,255,0.12)', color: COLOR.accent }}>↗</div>
-                  <div>
-                    <div className="qa-label" style={{ color: COLOR.accent }}>Draw Credit</div>
-                    <div className="qa-desc" style={{ color: COLOR.muted }}>{fmt(totalAvailable)} available</div>
-                  </div>
-                  <span className="qa-arrow" style={{ color: COLOR.muted }}>→</span>
-                </button>
-              )}
-              {hasUtilized && (
-                <button
-                  className="qa-btn"
-                  style={{ borderColor: 'rgba(63,185,80,0.3)' }}
-                >
-                  <div className="qa-icon" style={{ background: 'rgba(63,185,80,0.12)', color: COLOR.success }}>↙</div>
-                  <div>
-                    <div className="qa-label" style={{ color: COLOR.success }}>Repay Credit</div>
-                    <div className="qa-desc" style={{ color: COLOR.muted }}>{fmt(totalUtilized)} outstanding</div>
-                  </div>
-                  <span className="qa-arrow" style={{ color: COLOR.muted }}>→</span>
-                </button>
-              )}
-              <Link
-                to="/credit-lines"
-                className="qa-btn"
-                style={{ borderColor: 'transparent', textDecoration: 'none' }}
-              >
-                <div className="qa-icon" style={{ background: 'rgba(139,148,158,0.12)', color: COLOR.muted }}>📋</div>
-                <div>
-                  <div className="qa-label" style={{ color: COLOR.text }}>View Credit Lines</div>
-                  <div className="qa-desc" style={{ color: COLOR.muted }}>Manage all your credit lines</div>
-                </div>
-                <span className="qa-arrow" style={{ color: COLOR.muted }}>→</span>
-              </Link>
-            </div>
-          </div>
-
-          {/* Recent Activity */}
-          <div className="card" style={{ animationDelay: '0.18s' }} aria-busy={loading}>
-            <h2><span className="icon">📝</span> Recent Activity</h2>
-
-            {loading ? (
-              <>
-                <div className="activity-item">
-                  <Skeleton className="activity-icon" style={{ borderRadius: '6px' }} />
-                  <div className="activity-content" style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                    <Skeleton style={{ width: '120px', height: '14px', borderRadius: '2px' }} />
-                    <Skeleton style={{ width: '180px', height: '10px', borderRadius: '2px' }} />
-                  </div>
-                  <Skeleton style={{ width: '60px', height: '14px', marginLeft: 'auto', borderRadius: '2px' }} />
-                </div>
-                <div className="activity-item">
-                  <Skeleton className="activity-icon" style={{ borderRadius: '6px' }} />
-                  <div className="activity-content" style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                    <Skeleton style={{ width: '100px', height: '14px', borderRadius: '2px' }} />
-                    <Skeleton style={{ width: '150px', height: '10px', borderRadius: '2px' }} />
-                  </div>
-                  <Skeleton style={{ width: '50px', height: '14px', marginLeft: 'auto', borderRadius: '2px' }} />
-                </div>
-                <div className="activity-item">
-                  <Skeleton className="activity-icon" style={{ borderRadius: '6px' }} />
-                  <div className="activity-content" style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                    <Skeleton style={{ width: '140px', height: '14px', borderRadius: '2px' }} />
-                    <Skeleton style={{ width: '160px', height: '10px', borderRadius: '2px' }} />
-                  </div>
-                  <Skeleton style={{ width: '70px', height: '14px', marginLeft: 'auto', borderRadius: '2px' }} />
-                </div>
-              </>
-            ) : recentActivity.length === 0 ? (
-              <p style={{ color: COLOR.muted, fontSize: '0.8rem', textAlign: 'center', padding: '1.5rem 0' }}>
-                No transactions yet
-              </p>
-            ) : (
-              recentActivity.map((tx, i) => (
-                <div key={`${tx.id}-${i}`} className="activity-item">
-                  <div
-                    className="activity-icon"
-                    style={{
-                      background: `${TX_COLOR[tx.type]}15`,
-                      color: TX_COLOR[tx.type],
-                    }}
-                  >
-                    {TX_ICON[tx.type]}
-                  </div>
-                  <div className="activity-content">
-                    <div className="activity-title">{tx.note || tx.type}</div>
-                    <div className="activity-sub">{tx.lineName} · {relativeTime(tx.date)}</div>
-                  </div>
-                  <div className="activity-amount" style={{ color: TX_COLOR[tx.type] }}>
-                    {tx.type === 'Repay' ? '+' : '-'}{fmt(tx.amount)}
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-
-          {/* Notifications */}
-          {notifications.length > 0 && (
-            <div className="card" style={{ animationDelay: '0.22s' }}>
-              <h2><span className="icon">🔔</span> Alerts</h2>
-
-              {notifications.map((note, i) => (
-                <div 
-                  key={i} 
-                  className={`notification-item notification-item--${note.type}`}
-                  role={note.type === 'danger' ? 'alert' : 'status'}
-                >
-                  <span className="notification-icon" aria-hidden="true">{note.icon}</span>
-                  <div>
-                    <div className="notification-text">
-                      {note.content}
-                    </div>
-                    {note.time && (
-                      <div className="notification-time">{relativeTime(note.time)}</div>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Health Tips — contextual credit-education panel */}
-          <HealthTipsPanel />
-        </div>
-      </div>
       <DashboardTour />
       {/* Centered risk-band explainer overlay (#426).  Triggered by the
           "Explain risk bands" button rendered next to the risk gauge

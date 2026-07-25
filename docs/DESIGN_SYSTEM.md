@@ -100,8 +100,8 @@ loaded; this keeps CLS at zero and removes a third-party request.
 #### Utility: tabular numerals
 
 ```css
-.tabular-nums,
 .num-tabular,
+.tabular-nums,
 .amount,
 [data-amount] {
   font-variant-numeric: tabular-nums;
@@ -116,14 +116,14 @@ used on:
 - `TransactionHistory` — `tx-amount` / `th-stat-value` via `.num-tabular`
 - `CreditLines` — Limit / Utilized / Available metric values
 - `ConfirmationStep`, `RepayModal`, `RepaySuccessShareCard` — amount summaries
+- Dashboard summary cards via `.num-display` / `.num-tabular`
 
-Apply to any cell that displays money, percentages, or APR so digit widths are fixed and
-columns stay visually stable as values change. Currently used on:
+#### Utility: per-account color stripe
 
-- `TransactionHistory` — `tx-amount` column cells, `th-stat-value` summary cards, and the
-  Amount row in the expanded detail panel.
-- `CreditLines` — `cl-metric-value` (Limit / Utilized / Available), utilization percentage,
-  APR, and Risk Score cells.
+`src/utils/colorFromId.ts` maps a stable account id to a palette color via a djb2 hash.
+Use `colorFromId(id)` for the hex token and `accountStripeStyle(id)` for a 3 px absolute
+left-edge stripe. LinkedAccounts provider cards render the stripe + an inline swatch so
+identity survives monochrome / forced-colors viewing (WCAG 1.4.1).
 
 ### Motion
 
