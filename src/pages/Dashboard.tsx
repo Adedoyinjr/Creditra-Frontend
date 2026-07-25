@@ -20,8 +20,7 @@ import {
   getUtilizationLevel,
 } from "../utils/tokens";
 import { readJson, writeJson } from "../utils/storage";
-import "./Dashboard.css";
-import { Skeleton } from "../components/Skeleton";
+import "./Dashboard.css";  import { Skeleton } from "../components/Skeleton";
 import { NoDataGraph } from "../components/illustrations";
 import CompareLinesPanel from "../components/CompareLinesPanel";
 import { useFocusTrap } from "../hooks/useFocusTrap";
