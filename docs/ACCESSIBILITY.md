@@ -142,11 +142,23 @@ interacting with SVG arcs:
 
 | Component | SR table contents | Key attributes |
 | --- | --- | --- |
-| `RepaymentVisualizer` | Month-by-month principal/interest breakdown | `<caption>` auto-generated from term length + total interest; overridable via `caption` prop |
+| `RepaymentVisualizer` | Month-by-month principal/interest breakdown | `<caption>` auto-generated from term length + total interest; overridable via `caption` prop; `KbdHint` keyboard navigation (`←`/`→`/`Home`/`End`/`Esc`) |
 | `RiskGauge` | Three risk bands (High/Medium/Low) with score ranges | `aria-current="true"` on the row for the active band; rendered before the SVG so it appears first in reading order |
 
 These tables are always present in the accessibility tree (no `aria-hidden`) and follow
 the standard `<caption>` + `<th scope="col">` + `<td>` pattern.
+
+### Keyboard shortcut hints (`KbdHint`)
+
+The `KbdHint` component (`src/components/KbdHint.tsx`) provides standardized visual and screen-reader accessible keyboard shortcut hints.
+
+- Renders semantic `<kbd>` elements styled with design tokens (`var(--surface-raised)`, `var(--border)`, `var(--text)`).
+- Provides screen-reader accessible text via `.sr-only` element describing the shortcut action.
+- `RepaymentVisualizer` embeds `KbdHint` to indicate keyboard controls for chart inspection:
+  - `←` / `→`: Step backward / forward through schedule months
+  - `Home` / `End`: Jump to first / last repayment month
+  - `Esc`: Clear active data point inspection
+
 
 ### Live regions
 
