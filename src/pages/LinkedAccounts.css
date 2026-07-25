@@ -55,7 +55,21 @@
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   padding: var(--space-lg);
+  padding-left: calc(var(--space-lg) + 2px); /* room beside identity stripe */
   transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Inline swatch mirroring the left identity stripe (WCAG 1.4.1 redundancy) */
+.provider-card__swatch {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 0.4rem;
+  vertical-align: middle;
+  flex-shrink: 0;
 }
 
 .provider-card:hover {
@@ -109,6 +123,8 @@
 }
 
 .provider-card__name {
+  display: flex;
+  align-items: center;
   margin: 0 0 var(--space-xs) 0;
   font-size: 1.125rem;
   font-weight: 600;

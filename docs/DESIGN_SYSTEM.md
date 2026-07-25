@@ -101,6 +101,7 @@ loaded; this keeps CLS at zero and removes a third-party request.
 
 ```css
 .num-tabular { font-variant-numeric: tabular-nums; }
+.tabular-nums { font-variant-numeric: tabular-nums; }
 ```
 
 Apply to any cell that displays money, percentages, or APR so digit widths are fixed and
@@ -110,6 +111,13 @@ columns stay visually stable as values change. Currently used on:
   Amount row in the expanded detail panel.
 - `CreditLines` — `cl-metric-value` (Limit / Utilized / Available), utilization percentage,
   APR, and Risk Score cells.
+
+#### Utility: per-account color stripe
+
+`src/utils/colorFromId.ts` maps a stable account id to a palette color via a djb2 hash.
+Use `colorFromId(id)` for the hex token and `accountStripeStyle(id)` for a 3 px absolute
+left-edge stripe. LinkedAccounts provider cards render the stripe + an inline swatch so
+identity survives monochrome / forced-colors viewing (WCAG 1.4.1).
 
 ### Motion
 

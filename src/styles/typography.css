@@ -1,6 +1,79 @@
-/* src/styles/typography.css */
+/*
+  typography.css — Shared typography utilities
+  ─────────────────────────────────────────────
+  Imported once globally in index.css.
 
-/* Add tabular-nums to amount displays for stability */
+  Tabular numerals (font-variant-numeric: tabular-nums)
+  ──────────────────────────────────────────────────────
+  Applied to every numeric display on the Dashboard — credit totals, utilization
+  percentages, transaction amounts — so that digit columns stay visually stable
+  as values change (no horizontal "jitter" when a $1,000 becomes $10,000).
+
+  This is a GrantFox FWC26 (Stellar Wave) requirement:
+  "Apply font-variant-numeric: tabular-nums to numeric displays on Dashboard."
+
+  Usage
+  ─────
+  Add `num-tabular` (or `tabular-nums`) to any element that renders a number:
+
+    <p className="value num-tabular">{fmt(totalLimit)}</p>
+
+  Both class names are intentionally aliases so existing code using either
+  name does not need to be changed.
+
+  Dark-mode / High-contrast
+  ─────────────────────────
+  This property is purely typographic — it does not affect colour, so no
+  [data-contrast="high"] override is needed.
+
+  Reduced-motion
+  ──────────────
+  font-variant-numeric is not an animated property; no @media block is needed.
+*/
+
+/* ── Tabular numerals ────────────────────────────────────────────────────── */
+
+/**
+ * .num-tabular / .tabular-nums
+ * Prevent digit-width wobble in money, percentage, and score columns.
+ *
+ * font-variant-numeric: tabular-nums instructs the font engine to use
+ * fixed-width (tabular) glyph forms for digits 0–9 so that a column of
+ * numbers lines up vertically and individual digits do not shift
+ * horizontally when the displayed value changes.
+ *
+ * Both class names resolve to the same declaration so callers can use
+ * whichever reads more naturally in context.
+ */
+.num-tabular,
 .tabular-nums {
   font-variant-numeric: tabular-nums;
+}
+
+/**
+ * .num-display
+ * Large hero/display number — used for the primary value in summary cards.
+ * Inherits tabular-nums and adds a slightly-tightened tracking so wide
+ * currency strings don't overflow the card on narrow viewports.
+ */
+.num-display {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+/**
+ * .num-mono
+ * Combines tabular-nums with a monospace stack for wallet addresses,
+ * transaction IDs, or any string where character-level alignment matters.
+ */
+.num-mono {
+  font-variant-numeric: tabular-nums;
+  font-family:
+    ui-monospace,
+    "SFMono-Regular",
+    "SF Mono",
+    Menlo,
+    Consolas,
+    "Liberation Mono",
+    monospace;
 }

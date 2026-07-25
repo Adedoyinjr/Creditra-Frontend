@@ -108,7 +108,7 @@ function renderProvider(timeoutMs = 200) {
 // ─── Setup / Teardown ─────────────────────────────────────────────────────────
 
 beforeEach(() => {
-  vi.useFakeTimers();
+  vi.useFakeTimers({ shouldAdvanceTime: true });
   vi.spyOn(walletUtils, 'getStoredWallet').mockReturnValue(null);
   vi.spyOn(walletUtils, 'connectWallet').mockResolvedValue(STORED_WALLET);
   vi.spyOn(walletUtils, 'saveWalletPreference').mockImplementation(() => {});
@@ -133,7 +133,7 @@ describe('WalletContext — auto-reconnect gating with remember flag', () => {
   // kick off a reconnect, even if `wallet_info` is present (legacy users).
   it('does NOT auto-reconnect when remembered flag is false', async () => {
     vi.spyOn(walletUtils, 'getStoredWallet').mockReturnValue(STORED_WALLET);
-    vi.spyOn(walletUtils, 'isWalletRemembered').mockReturnValue(true);
+    vi.spyOn(walletUtils, 'isWalletRemembered').mockReturnValue(false);
 
     renderProvider();
     await act(async () => { vi.runAllTimers(); });
