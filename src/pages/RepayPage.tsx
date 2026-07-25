@@ -39,6 +39,16 @@ const SEVERITY_CONFIG = {
   },
 } as const;
 
+/**
+ * RepayPage — reduced-motion strategy
+ *
+ * All CSS transitions are neutralised globally by the
+ * `prefers-reduced-motion: reduce` reset in src/index.css (animation/transition
+ * durations collapsed to 0.01 ms on `*`).  The `motion-reduce:transition-none`
+ * and `motion-reduce:duration-0` Tailwind classes on the toggle switch and
+ * progress-bar fills below are defence-in-depth: they make the intent
+ * self-documenting and ensure correctness even if the global reset is removed.
+ */
 export default function RepayPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -442,13 +452,13 @@ export default function RepayPage() {
                     </div>
                     <div className="h-2 w-full overflow-hidden rounded-full bg-border">
                       <div
-                        className="h-full rounded-full bg-red-500/30 transition-all"
+                        className="h-full rounded-full bg-red-500/30 transition-all motion-reduce:transition-none"
                         style={{ width: `${oldPct}%` }}
                       />
                     </div>
                     <div className="h-2 w-full overflow-hidden rounded-full bg-border">
                       <div
-                        className={`h-full rounded-full transition-all ${
+                        className={`h-full rounded-full transition-all motion-reduce:transition-none ${
                           remainingDebt === 0 ? 'bg-green-500' : 'bg-yellow-500'
                         }`}
                         style={{ width: `${newPct}%` }}
@@ -473,13 +483,13 @@ export default function RepayPage() {
                       role="switch"
                       aria-checked={isAutoSchedule}
                       onClick={() => setIsAutoSchedule(!isAutoSchedule)}
-                      className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
+                      className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out motion-reduce:transition-none motion-reduce:duration-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
                         isAutoSchedule ? 'bg-accent' : 'bg-border'
                       }`}
                     >
                       <span
                         aria-hidden="true"
-                        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out motion-reduce:transition-none motion-reduce:duration-0 ${
                           isAutoSchedule ? 'translate-x-5' : 'translate-x-0'
                         }`}
                       />
