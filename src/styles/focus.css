@@ -229,3 +229,41 @@
   outline-offset: var(--focus-ring-offset, 3px);
   border-radius: var(--focus-ring-radius, 6px);
 }
+
+/* -- DrawCreditPage interactive elements ---------------------------------- */
+/*
+  GrantFox FWC26 (Stellar Wave) — "Visible focus outline on keyboard-only
+  nav for DrawCreditPage" requirement.
+*/
+
+.dc-page .dc-credit-line-item:focus-visible,
+.dc-page .dc-btn:focus-visible,
+.dc-page .dc-preset-btn:focus-visible,
+.dc-page .dc-terms-label__checkbox:focus-visible,
+.dc-page .draw-summary-bar:focus-visible,
+.dc-page button[aria-label="Decrease amount"]:focus-visible,
+.dc-page button[aria-label="Increase amount"]:focus-visible,
+.dc-page button[aria-label="Set amount to maximum available credit"]:focus-visible,
+.dc-page button[aria-label^="Set amount to"]:focus-visible {
+  outline: var(--focus-ring-width, 2px) solid var(--focus-ring-color, var(--accent, #58a6ff)) !important;
+  outline-offset: var(--focus-ring-offset, 3px) !important;
+  box-shadow: none !important;
+}
+
+.dc-page .dc-credit-line-item:focus-visible,
+.dc-page .dc-preset-btn:focus-visible,
+.dc-page .dc-btn:focus-visible {
+  border-radius: var(--radius-lg, 12px);
+}
+
+.dc-page button[aria-label="Decrease amount"]:focus-visible,
+.dc-page button[aria-label="Increase amount"]:focus-visible,
+.dc-page button[aria-label="Set amount to maximum available credit"]:focus-visible,
+.dc-page button[aria-label^="Set amount to"]:focus-visible {
+  border-radius: 8px;
+}
+
+.dc-page .dc-terms-label__checkbox:focus-visible {
+  border-radius: var(--radius-sm, 4px);
+}
+

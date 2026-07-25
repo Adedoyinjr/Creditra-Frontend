@@ -35,6 +35,7 @@ import { DrawSummaryBar } from "@/components/DrawSummaryBar";
 import { DrawWizardMicroIndicator } from "@/components/DrawWizardMicroIndicator";
 import { useDrawWizardMicroProgress } from "@/hooks/useDrawWizardMicroProgress";
 import "@/components/DrawWizardMicroProgress.css";
+import "@/styles/focus.css";
 
 const drawSteps = [
   { id: "select", label: "Select line" },
@@ -243,7 +244,16 @@ export default function DrawCreditPage() {
         </div>
 
         <p className="dc-page__footer">
-          Need help? Contact support at 1-800-CREDIT-1
+          Need help?{" "}
+          <button
+            ref={helpTriggerRef}
+            type="button"
+            className="focus-ring hover:text-foreground transition-colors underline underline-offset-4"
+            onClick={() => setIsHelpOpen(true)}
+          >
+            Contact support
+          </button>{" "}
+          at 1-800-CREDIT-1
         </p>
       </div>
       <InlineHelpOverlay
