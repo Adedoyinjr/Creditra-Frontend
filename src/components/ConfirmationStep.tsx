@@ -1,4 +1,25 @@
-import { AccessibleTooltip } from "@/components/AccessibleTooltip";
+/**
+ * ConfirmationStep
+ *
+ * Step 3 of the draw-credit flow. Displays a full summary of the draw
+ * (credit line, amounts, projected utilization) and requires the user to
+ * accept the terms before submitting.
+ *
+ * Design-token classes used (all from `src/index.css` `.dc-*` block):
+ *   dc-step, dc-step__title, dc-step__subtitle,
+ *   dc-balance-card, dc-balance-row, dc-balance-row__label, dc-balance-row__value,
+ *   dc-banner, dc-banner--warning, dc-banner__icon, dc-banner__body, dc-banner__title,
+ *   dc-terms-label, dc-terms-label__checkbox, dc-terms-label__text,
+ *   dc-actions, dc-actions--stacked, dc-actions__slot,
+ *   dc-btn, dc-btn--secondary, dc-btn--primary, dc-btn--full,
+ *   dc-hint, dc-hint--right
+ *
+ * Accessibility:
+ *   - High-utilization warning banner has role="alert" so it is announced.
+ *   - Confirm button is `disabled` (not hidden) when terms are not accepted.
+ *   - aria-disabled mirrors the disabled prop for redundant AT signals.
+ */
+
 import { CreditLine } from "@/types/draw-credit.types";
 import { AlertCircle, Info } from "lucide-react";
 import { useState } from "react";
@@ -60,204 +81,123 @@ export function ConfirmationStep({
   agreedToTerms: agreedToTermsProp,
   onAgreedToTermsChange,
 }: ConfirmationStepProps) {
-  const [agreedToTermsInternal, setAgreedToTermsInternal] = useState(false);
-  const agreedToTerms = agreedToTermsProp ?? agreedToTermsInternal;
-  const setAgreedToTerms = (value: boolean) => {
-    onAgreedToTermsChange?.(value);
-    if (agreedToTermsProp === undefined) {
-      setAgreedToTermsInternal(value);
-    }
-  };
-  const { status } = useWallet();
-  const utilizedBalance = creditLine.limit - creditLine.available;
-  const safeAmount = Math.max(amount, 0);
-  const { fee, apr, estimatedMonthlyInterest, riskBand, termMonths } =
-    getDrawPricingQuote(creditLine, safeAmount);
-  const newBalance = utilizedBalance + safeAmount + fee;
-  const remainingAvailable = Math.max(creditLine.limit - newBalance, 0);
-  const newUtilization = Math.round((newBalance / creditLine.limit) * 100);
-  const isDrawDisabled = !agreedToTerms || isLoading;
-  const disabledHelperText = !agreedToTerms
-    ? "Accept the authorization terms to enable the Draw button."
-    : "Submitting your draw request. Please wait.";
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
+
+  const newUtilization = Math.round(
+    ((creditLine.limit - creditLine.available + amount) / creditLine.limit) *
+      100,
+  );
+  const isHighUtilization = newUtilization > 80;
+  const canConfirm = agreedToTerms && !isLoading;
 
   return (
-    <div className="space-y-8">
+    <div className="dc-step">
+      {/* Step header */}
       <div>
-        <p className="text-sm font-semibold uppercase text-muted">Step 4</p>
-        <h2
-          id="confirm-draw-heading"
-          className="mt-1 text-2xl font-bold text-foreground sm:text-3xl"
-        >
-          Review and confirm
-        </h2>
-        <p className="text-muted mt-2">
+        <h2 className="dc-step__title">Review &amp; Confirm</h2>
+        <p className="dc-step__subtitle">
           Confirm your draw details before submitting.
         </p>
       </div>
 
+      {/* Credit-line summary block (limit / utilized / available) */}
       <CreditLineSummaryBlock creditLine={creditLine} amount={amount} />
 
-      <div className="space-y-4">
-        <div className="rounded-lg border border-border bg-surface p-5">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="sm:col-span-2">
-              <p className="text-sm text-muted font-medium">Draw amount</p>
-              <p className="mt-1 text-3xl font-bold text-foreground tabular-nums">
-                {formatMoney(safeAmount)}
-              </p>
-            </div>
-            <div className="rounded-lg border border-border bg-background/60 p-3">
-              <p className="text-sm text-muted font-medium">Estimated fee</p>
-              <p className="mt-1 font-semibold text-foreground tabular-nums">
-                {formatMoney(fee)}
-              </p>
-            </div>
-            <div className="rounded-lg border border-border bg-background/60 p-3">
-              <p className="text-sm text-muted font-medium">
-                Estimated monthly interest
-              </p>
-              <p className="mt-1 font-semibold text-foreground tabular-nums">
-                {formatMoney(estimatedMonthlyInterest)}
-              </p>
-            </div>
-            <div className="rounded-lg border border-border bg-background/60 p-3">
-              <p className="text-sm text-muted font-medium">New balance</p>
-              <p className="mt-1 font-semibold text-foreground tabular-nums">
-                {formatMoney(newBalance)}
-              </p>
-            </div>
-            <div className="rounded-lg border border-border bg-background/60 p-3">
-              <p className="text-sm text-muted font-medium">
-                Available after draw
-              </p>
-              <p className="mt-1 font-semibold text-foreground tabular-nums">
-                {formatMoney(remainingAvailable)}
-              </p>
-            </div>
-          </div>
-          <div className="mt-4 grid gap-3 border-t border-border pt-4 sm:grid-cols-2">
-            <div className="flex justify-between gap-4 text-sm">
-              <span className="text-muted font-medium">
-                {/* MICROCOPY.md: Utilization */}
-                <AccessibleTooltip label="Utilization is the percentage of your available credit that is currently being used.">
-                  <span>Current utilization</span>
-                </AccessibleTooltip>
-              </span>
-              <span className="font-semibold text-foreground tabular-nums">
-                {creditLine.utilization}%
-              </span>
-            </div>
-            <div className="flex justify-between gap-4 text-sm">
-              <span className="text-muted font-medium">After draw</span>
-              <span
-                className={`font-semibold tabular-nums ${newUtilization > 80 ? "text-yellow-500" : "text-foreground"}`}
-              >
-                {newUtilization}%
-              </span>
-            </div>
-          </div>
-          {newUtilization > 80 && (
-            <div className="flex items-start gap-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-3 mt-4">
-              <AlertCircle className="w-5 h-5 text-yellow-500 mt-0.5 shrink-0" />
-              <div>
-                <p className="text-sm font-semibold text-yellow-500">
-                  High Utilization Warning
-                </p>
-                <p className="text-sm text-yellow-500 mt-1">
-                  Your credit utilization will exceed 80%. This may impact your
-                  credit terms.
-                </p>
-              </div>
-            </div>
-          )}
+      {/* Draw details card */}
+      <div className="dc-balance-card">
+        {/* Draw amount */}
+        <div className="dc-balance-row" style={{ alignItems: "center" }}>
+          <span className="dc-balance-row__label" style={{ fontSize: "var(--text-sm)", fontWeight: "var(--font-medium)" }}>
+            Draw Amount
+          </span>
+          <span style={{ fontSize: "var(--text-2xl)", fontWeight: "var(--font-bold)", color: "var(--text)" }}>
+            ${amount.toLocaleString()}
+          </span>
         </div>
+
+        {/* Current utilization */}
+        <div className="dc-balance-row" style={{ alignItems: "center" }}>
+          <span className="dc-balance-row__label" style={{ fontSize: "var(--text-sm)", fontWeight: "var(--font-medium)" }}>
+            Current Utilization
+          </span>
+          <span className="dc-balance-row__value">
+            {creditLine.utilization}%
+          </span>
+        </div>
+
+        {/* After-draw utilization */}
+        <div className="dc-balance-row" style={{ alignItems: "center" }}>
+          <span className="dc-balance-row__label" style={{ fontSize: "var(--text-sm)", fontWeight: "var(--font-medium)" }}>
+            After Draw
+          </span>
+          <span
+            className={isHighUtilization ? "dc-util-row__value--warning" : "dc-balance-row__value"}
+          >
+            {newUtilization}%
+          </span>
+        </div>
+
+        {/* High-utilization warning — role="alert" ensures immediate announcement */}
+        {isHighUtilization && (
+          <div
+            className="dc-banner dc-banner--warning"
+            role="alert"
+            style={{ marginTop: "var(--space-4)" }}
+          >
+            <AlertCircle
+              className="dc-banner__icon"
+              aria-hidden="true"
+            />
+            <div className="dc-banner__body">
+              <p className="dc-banner__title">High Utilization Warning</p>
+              <p>
+                Your credit utilization will exceed 80%. This may impact your
+                credit terms.
+              </p>
+            </div>
+          </div>
+        )}
       </div>
 
-      <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-border bg-surface p-4 transition-colors hover:bg-border">
+      {/* Terms & conditions checkbox */}
+      <label className="dc-terms-label">
         <input
           type="checkbox"
           checked={agreedToTerms}
           onChange={(e) => setAgreedToTerms(e.target.checked)}
-          className="mt-1 w-5 h-5 rounded accent-accent"
+          className="dc-terms-label__checkbox"
+          aria-label="I agree to the terms and conditions and authorise this draw"
         />
-        <span className="text-sm text-foreground">
-          I agree to the
-          {' '}
-          {/* MICROCOPY.md: Term */}
-          <AccessibleTooltip label="A term is a defined period or condition of your credit agreement.">
-            <span>terms</span>
-          </AccessibleTooltip>
-          {' '}
-          and conditions and authorize this draw. The funds will be deposited
-          within 1-2 business days.
+        <span className="dc-terms-label__text">
+          I agree to the terms and conditions and authorize this draw. The funds
+          will be deposited within 1-2 business days.
         </span>
       </label>
 
-      {status === 'connected' && !isLoading && (
-        <div 
-          className="flex items-start gap-3 rounded-lg border p-4"
-          style={{
-            backgroundColor: 'rgba(88,166,255,0.08)',
-            borderColor: 'rgba(88,166,255,0.3)',
-          }}
-          role="status"
+      {/* Back / Confirm actions */}
+      <div className="dc-actions dc-actions--stacked">
+        <button
+          onClick={onBack}
+          disabled={isLoading}
+          className="dc-btn dc-btn--secondary dc-actions__slot"
         >
-          <Info className="w-5 h-5 shrink-0 mt-0.5" style={{ color: '#58a6ff' }} aria-hidden="true" />
-          <span className="text-sm font-medium" style={{ color: '#e6edf3' }}>
-            Your wallet will ask you to sign next
-          </span>
-        </div>
-      )}
-
-      <div className="sticky bottom-0 z-10 -mx-6 border-t border-border bg-surface/95 px-6 py-4 backdrop-blur sm:-mx-8 sm:px-8">
-        {/* Button order rule (docs/BUTTON_ORDER.md):
-            Cancel (exit flow) — Back (previous step) — Draw (primary/confirm)
-            flex-col-reverse reverses this on mobile so the primary stacks on top. */}
-        <div className="flex flex-col-reverse gap-3 sm:flex-row">
-          {/* Cancel: leftmost — exits the wizard entirely */}
+          Back
+        </button>
+        <div className="dc-actions__slot">
           <button
-            type="button"
-            onClick={onCancel}
-            disabled={isLoading}
-            className="rounded-lg border-2 border-border px-4 py-3 font-semibold text-foreground transition-colors hover:bg-background disabled:opacity-50 sm:w-auto"
+            onClick={onConfirm}
+            disabled={!canConfirm}
+            aria-disabled={!canConfirm}
+            className="dc-btn dc-btn--primary dc-btn--full"
           >
-            Cancel
+            {isLoading ? "Processing…" : "Confirm draw"}
           </button>
-          {/* Back: adjacent to primary — returns to the previous step */}
-          <button
-            type="button"
-            onClick={onBack}
-            disabled={isLoading}
-            className="rounded-lg border-2 border-border px-4 py-3 font-semibold text-foreground transition-colors hover:bg-background disabled:opacity-50 sm:w-auto"
-          >
-            Back
-          </button>
-          {/* Primary: rightmost — the forward/confirm action */}
-          <div className="space-y-2 sm:ml-auto sm:min-w-64">
-            <PendingButton
-              type="button"
-              onClick={onConfirm}
-              pending={isLoading}
-              pendingLabel="Processing draw..."
-              disabled={isDrawDisabled}
-              className="w-full rounded-lg bg-blue-600 px-4 py-3 font-semibold text-white transition-all hover:bg-blue-500 hover:shadow-lg hover:shadow-blue-500/40 disabled:cursor-not-allowed disabled:opacity-50"
-              aria-describedby={
-                isDrawDisabled ? "draw-disabled-helper" : undefined
-              }
-            >
-              Draw
-            </PendingButton>
-            {isDrawDisabled && (
-              <p
-                id="draw-disabled-helper"
-                className="text-center text-xs text-muted sm:text-right"
-                role="status"
-              >
-                {disabledHelperText}
-              </p>
-            )}
-          </div>
+          {/* Hint shown only when terms not yet accepted */}
+          {!agreedToTerms && !isLoading && (
+            <p className="dc-hint dc-hint--right">
+              Accept terms to enable confirmation.
+            </p>
+          )}
         </div>
       </div>
     </div>

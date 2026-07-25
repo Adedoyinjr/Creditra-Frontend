@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { AmountInput } from "./AmountInput";
+import { AmountInput, AmountInputSkeleton } from "./AmountInput";
 
 describe("AmountInput", () => {
   const creditLine = {
@@ -356,5 +356,117 @@ describe("AmountInput", () => {
     });
 
     expect(input).toHaveAttribute("aria-invalid", "true");
+  });
+
+  describe("Skeleton Loading State (v7)", () => {
+    it("renders loading skeleton on first paint when isLoading is true", () => {
+      render(
+        <AmountInput
+          creditLine={creditLine}
+          isLoading={true}
+        />,
+      );
+
+      const skeletonRegion = screen.getByTestId("amount-input-skeleton");
+      expect(skeletonRegion).toBeInTheDocument();
+      expect(skeletonRegion).toHaveAttribute("aria-busy", "true");
+      expect(skeletonRegion).toHaveAttribute("aria-label", "Loading amount input");
+      expect(screen.queryByLabelText(/draw amount/i)).not.toBeInTheDocument();
+    });
+
+    it("renders skeleton when creditLine is not yet provided", () => {
+      render(<AmountInput isLoading={false} />);
+
+      const skeletonRegion = screen.getByTestId("amount-input-skeleton");
+      expect(skeletonRegion).toBeInTheDocument();
+      expect(skeletonRegion).toHaveAttribute("aria-busy", "true");
+    });
+
+    it("renders standalone AmountInputSkeleton correctly with accessibility attributes", () => {
+      render(<AmountInputSkeleton />);
+
+      const skeletonRegion = screen.getByTestId("amount-input-skeleton");
+      expect(skeletonRegion).toBeInTheDocument();
+      expect(skeletonRegion).toHaveAttribute("role", "region");
+      expect(skeletonRegion).toHaveAttribute("aria-busy", "true");
+      expect(skeletonRegion).toHaveAttribute("aria-label", "Loading amount input");
+    });
+  });
+
+  describe("Design Tokens & Typography Spacing (v7)", () => {
+    it("pins root container spacing and header typography to design tokens", () => {
+      render(
+        <AmountInput
+          creditLine={creditLine}
+          onAmountChange={vi.fn()}
+        />,
+      );
+
+      const heading = screen.getByRole("heading", { name: /enter amount/i });
+      expect(heading).toHaveClass("text-2xl", "sm:text-3xl", "font-bold", "text-foreground", "leading-[var(--lh-heading)]", "tracking-tight");
+    });
+
+    it("applies design token classes to input box, dollar prefix, and stepper controls", () => {
+      render(
+        <AmountInput
+          creditLine={creditLine}
+          onAmountChange={vi.fn()}
+        />,
+      );
+
+      const input = screen.getByLabelText(/draw amount/i);
+      expect(input).toHaveClass("tabular-nums", "leading-[var(--lh-display)]");
+
+      const maxButton = screen.getByRole("button", { name: /set amount to maximum/i });
+      expect(maxButton).toHaveClass("text-accent", "focus-visible:ring-accent", "min-h-[44px]");
+    });
+
+    it("maps severity validation tones to semantic status color tokens", () => {
+      render(
+        <AmountInput
+          creditLine={creditLine}
+          onAmountChange={vi.fn()}
+        />,
+      );
+
+      const input = screen.getByLabelText(/draw amount/i);
+
+      // Exceed availability -> danger tone mapped to error token
+      fireEvent.change(input, { target: { value: "40000" } });
+      const wrapper = input.closest(".border-2");
+      expect(wrapper).toHaveClass("border-error/70");
+    });
+
+    it("pins quick preset chips and main action buttons to semantic design tokens", () => {
+      render(
+        <AmountInput
+          creditLine={creditLine}
+          onAmountChange={vi.fn()}
+          onNext={vi.fn()}
+          onBack={vi.fn()}
+        />,
+      );
+
+      const presetButton = screen.getByRole("button", { name: /25 percent/i });
+      expect(presetButton).toHaveClass("border-border", "hover:border-accent", "focus-visible:ring-accent", "min-h-[44px]");
+
+      const continueButton = screen.getByRole("button", { name: /continue/i });
+      expect(continueButton).toHaveClass("bg-accent", "focus-visible:ring-accent", "min-h-[44px]");
+
+      const backButton = screen.getByRole("button", { name: /back/i });
+      expect(backButton).toHaveClass("border-border", "text-foreground", "focus-visible:ring-accent", "min-h-[44px]");
+    });
+
+    it("renders constraint boxes with typography rhythm tokens and tabular numerals", () => {
+      render(
+        <AmountInput
+          creditLine={creditLine}
+          onAmountChange={vi.fn()}
+        />,
+      );
+
+      const minLabel = screen.getByText("Minimum draw");
+      expect(minLabel).toHaveClass("text-[11px]", "font-semibold", "uppercase", "tracking-wider", "text-muted", "leading-[var(--lh-small)]");
+    });
   });
 });
