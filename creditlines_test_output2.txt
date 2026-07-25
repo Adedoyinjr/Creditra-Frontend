@@ -1,0 +1,513 @@
+﻿node.exe : npm warn Unknown env config "devdir". This will stop working in the next major version of npm. See `npm 
+help npmrc` for supported config options.
+At line:1 char:1
++ & "C:\Program Files\nodejs/node.exe" "C:\Program Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (npm warn Unknow...config options.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+ RUN  v3.2.4 C:/Users/HP-USER/Creditra-Frontend
+
+stderr | src/pages/CreditLines.test.tsx > CreditLines ΓÇö Defaulted row visual treatment (issue #223) > card view > 
+applies cl-row--defaulted class to the Defaulted card
+ΓÜá∩╕Å React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in 
+v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see 
+https://reactrouter.com/v6/upgrading/future#v7_starttransition.
+ΓÜá∩╕Å React Router Future Flag Warning: Relative route resolution within Splat routes is changing in v7. You can use 
+the `v7_relativeSplatPath` future flag to opt-in early. For more information, see 
+https://reactrouter.com/v6/upgrading/future#v7_relativesplatpath.
+
+stderr | src/pages/__tests__/CreditLines.emptyState.test.tsx > CreditLines ΓÇö empty state (issue #313) > no filter 
+results > shows no-matches guidance when filter excludes all lines
+ΓÜá∩╕Å React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in 
+v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see 
+https://reactrouter.com/v6/upgrading/future#v7_starttransition.
+ΓÜá∩╕Å React Router Future Flag Warning: Relative route resolution within Splat routes is changing in v7. You can use 
+the `v7_relativeSplatPath` future flag to opt-in early. For more information, see 
+https://reactrouter.com/v6/upgrading/future#v7_relativesplatpath.
+
+stderr | src/pages/__tests__/CreditLines.test.tsx > CreditLines page > renders the page header
+ΓÜá∩╕Å React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in 
+v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see 
+https://reactrouter.com/v6/upgrading/future#v7_starttransition.
+ΓÜá∩╕Å React Router Future Flag Warning: Relative route resolution within Splat routes is changing in v7. You can use 
+the `v7_relativeSplatPath` future flag to opt-in early. For more information, see 
+https://reactrouter.com/v6/upgrading/future#v7_relativesplatpath.
+
+ Γ£ô src/pages/__tests__/CreditLines.emptyState.test.tsx > CreditLines ΓÇö empty state (issue #313) > no filter results > shows no-matches guidance when filter excludes all lines 1159ms
+ Γ£ô src/pages/__tests__/CreditLines.test.tsx > CreditLines page > renders the page header 1080ms
+ Γ£ô src/pages/CreditLines.test.tsx > CreditLines ΓÇö Defaulted row visual treatment (issue #223) > card view > applies cl-row--defaulted class to the Defaulted card 669ms
+ Γ£ô src/pages/__tests__/CreditLines.emptyState.test.tsx > CreditLines ΓÇö empty state (issue #313) > no filter results > renders the Clear Filters button when no matches 688ms
+ Γ£ô src/pages/CreditLines.test.tsx > CreditLines ΓÇö Defaulted row visual treatment (issue #223) > card view > does NOT apply cl-row--defaulted class to non-defaulted cards 1301ms
+ Γ£ô src/pages/__tests__/CreditLines.test.tsx > CreditLines page > renders credit line cards from mock data 665ms
+ Γ£ô src/pages/__tests__/CreditLines.test.tsx > CreditLines page > renders filter controls 609ms
+ ├ù src/pages/__tests__/CreditLines.test.tsx > CreditLines page > shows Last Activity timestamp on each credit line card 515ms
+   ΓåÆ Unable to find an element with the text: Last Activity. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"credit-lines-page"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"cl-page-header"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<h1>[39m
+            [0mCredit Lines[0m
+          [36m</h1>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"subtitle"[39m
+          [36m>[39m
+            [0mManage your credit facilities[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mstyle[39m=[32m"display: flex; gap: 0.75rem;"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"cl-primary-btn"[39m
+            [33mdisabled[39m=[32m""[39m
+            [33mstyle[39m=[32m"opacity: 0.6;"[39m
+          [36m>[39m
+            [0mCompare Selected ([0m
+            [0m0[0m
+            [0m/2)[0m
+          [36m</button>[39m
+          [36m<a[39m
+            [33mclass[39m=[32m"cl-primary-btn"[39m
+            [33mhref[39m=[32m"/open-credit"[39m
+          [36m>[39m
+            [0m+ Open New Line[0m
+          [36m</a>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"cl-filters"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"cl-filter-group"[39m
+        [36m>[39m
+          [36m<label>[39m
+            [0mStatus[0m
+          [36m</label>[39m
+          [36m<select>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"all"[39m
+            [36m>[39m
+              [0mAll Statuses[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"Active"[39m
+            [36m>[39m
+              [0mActive[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"Suspended"[39m
+            [36m>[39m
+              [0mSuspended[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"Defaulted"[39m
+            [36m>[39m
+              [0mDefaulted[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"Closed"[39m
+            [36m>[39m
+              [0mClosed[0m
+            [36m</option>[39m
+          [36m</select>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"cl-filter-group"[39m
+        [36m>[39m
+          [36m<label>[39m
+            [0mSort By[0m
+          [36m</label>[39m
+          [36m<select>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"updatedAt"[39m
+            [36m>[39m
+              [0mLast Updated[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"status"[39m
+            [36m>[39m
+              [0mStatus[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"limit"[39m
+            [36m>[39m
+              [0mCredit Limit[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"utilization"[39m
+            [36m>[39m
+              [0mUtilization[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"apr"[39m
+            [36m>[39m
+              [0mAPR[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"riskScore"[39m
+            [36m>[39m
+              [0mRisk Score[0m
+            [36m</option>[39m
+          [36m</select>[39m
+        [36m</div>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"cl-sort-dir"[39m
+        [36m>[39m
+          [0mΓåô[0m
+        [36m</button>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"cl-grid"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"cl-card"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"cl-card-header"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"cl-card-title-row"[39m
+            [36m>[39m
+              [36m<label[39m
+                [33mclass[39m=[32m"cl-row-select"[39m
+              [36m>[39m
+                [36m<input[39m
+                  [33maria-label[39m=[32m"Select Primary Business Line for comparison"[39m
+                  [33mtype[39m=[32m"checkbox"[39m
+                [36m/>[39m
+                [36m<span>[39m
+                  [0mCompare[0m
+                [36m</span>[39m
+              [36m</label>[39m
+              [36m<div>[39m
+                [36m<h3[39m
+                  [33mclass[39m=[32m"cl-name"[39m
+                [36m>[39m
+                  [0mPrimary Business Line[0m
+                [36m</h3>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"cl-id"[39m
+                [36m>[39m
+                  [0mCL-2024-001[0m
+                [36m</p>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex items-center gap-2"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33maria-label[39m=[32m"Credit line status: Active"[39m
+                [33mclass[39m=[32m"status-badge"[39m
+                [33mstyle[39m=[32m"background: rgba(63, 185, 80, 0.16); color: rgb(142, 233, 157); border-color: rgba(63, 185, 80, 0.44);"[39m
+                [33mtitle[39m=[32m"Status: Active"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"status-badge__cue"[39m
+                [36m>[39m
+                  [0mA[0m
+                [36m</span>[39m
+                [36m<span>[39m
+                  [0mActive[0m
+                [36m</span>[39m
+              [36m</span>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"relative"[39m
+              [36m>[39m
+                [36m<button[39m
+                  [33maria-expanded[39m=[32m"false"[39m
+                  [33maria-haspopup[39m=[32m"true"[39m
+                  [33maria-label[39m=[32m"Menu for Primary Business Line"[39m
+                  [33mclass[39m=[32m"p-2 text-muted hover:text-foreground hover:bg-surface rounded-full transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"lucide lucide-ellipsis w-5 h-5"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mheight[39m=[32m"24"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-...
+ Γ£ô src/pages/__tests__/CreditLines.emptyState.test.tsx > CreditLines ΓÇö empty state (issue #313) > no filter results > clears filters when Clear Filters is clicked 1011ms
+ Γ£ô src/pages/CreditLines.test.tsx > CreditLines ΓÇö Defaulted row visual treatment (issue #223) > card view > sets aria-label on the Defaulted card 263ms
+ ├ù src/pages/__tests__/CreditLines.test.tsx > CreditLines page > shows relative time for updatedAt on each card 144ms
+   ΓåÆ expected 0 to be greater than or equal to 3
+ Γ£ô src/pages/CreditLines.test.tsx > CreditLines ΓÇö Defaulted row visual treatment (issue #223) > card view > does NOT set aria-label on non-defaulted cards 874ms
+ ├ù src/pages/__tests__/CreditLines.test.tsx > CreditLines page > renders AccessibleTooltip with absolute timestamp for each card 138ms
+   ΓåÆ expected 0 to be greater than or equal to 3
+ Γ£ô src/pages/__tests__/CreditLines.emptyState.test.tsx > CreditLines ΓÇö empty state (issue #313) > no filter results > sets the region aria-label for accessibility 441ms
+ ├ù src/pages/__tests__/CreditLines.test.tsx > CreditLines page > renders tooltip content with "Last updated:" prefix 121ms
+   ΓåÆ expected 0 to be greater than or equal to 3
+ Γ£ô src/pages/CreditLines.test.tsx > CreditLines ΓÇö Defaulted row visual treatment (issue #223) > only Defaulted status gets the treatment > exactly one card has cl-row--defaulted when all statuses are shown 160ms
+ Γ£ô src/pages/CreditLines.test.tsx > CreditLines ΓÇö Defaulted row visual treatment (issue #223) > only Defaulted status gets the treatment > cl-row--defaulted card contains the correct credit line name 525ms
+ Γ£ô src/pages/__tests__/CreditLines.test.tsx > CreditLines page > displays APR, Risk Score, and Opened date for each card 586ms
+
+ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ» Failed Tests 4 ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»
+
+ FAIL  src/pages/__tests__/CreditLines.test.tsx > CreditLines page > shows Last Activity timestamp on each credit line 
+card
+TestingLibraryElementError: Unable to find an element with the text: Last Activity. This could be because the text is 
+broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher 
+more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"credit-lines-page"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"cl-page-header"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<h1>[39m
+            [0mCredit Lines[0m
+          [36m</h1>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"subtitle"[39m
+          [36m>[39m
+            [0mManage your credit facilities[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mstyle[39m=[32m"display: flex; gap: 0.75rem;"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"cl-primary-btn"[39m
+            [33mdisabled[39m=[32m""[39m
+            [33mstyle[39m=[32m"opacity: 0.6;"[39m
+          [36m>[39m
+            [0mCompare Selected ([0m
+            [0m0[0m
+            [0m/2)[0m
+          [36m</button>[39m
+          [36m<a[39m
+            [33mclass[39m=[32m"cl-primary-btn"[39m
+            [33mhref[39m=[32m"/open-credit"[39m
+          [36m>[39m
+            [0m+ Open New Line[0m
+          [36m</a>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"cl-filters"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"cl-filter-group"[39m
+        [36m>[39m
+          [36m<label>[39m
+            [0mStatus[0m
+          [36m</label>[39m
+          [36m<select>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"all"[39m
+            [36m>[39m
+              [0mAll Statuses[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"Active"[39m
+            [36m>[39m
+              [0mActive[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"Suspended"[39m
+            [36m>[39m
+              [0mSuspended[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"Defaulted"[39m
+            [36m>[39m
+              [0mDefaulted[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"Closed"[39m
+            [36m>[39m
+              [0mClosed[0m
+            [36m</option>[39m
+          [36m</select>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"cl-filter-group"[39m
+        [36m>[39m
+          [36m<label>[39m
+            [0mSort By[0m
+          [36m</label>[39m
+          [36m<select>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"updatedAt"[39m
+            [36m>[39m
+              [0mLast Updated[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"status"[39m
+            [36m>[39m
+              [0mStatus[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"limit"[39m
+            [36m>[39m
+              [0mCredit Limit[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"utilization"[39m
+            [36m>[39m
+              [0mUtilization[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"apr"[39m
+            [36m>[39m
+              [0mAPR[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"riskScore"[39m
+            [36m>[39m
+              [0mRisk Score[0m
+            [36m</option>[39m
+          [36m</select>[39m
+        [36m</div>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"cl-sort-dir"[39m
+        [36m>[39m
+          [0mΓåô[0m
+        [36m</button>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"cl-grid"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"cl-card"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"cl-card-header"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"cl-card-title-row"[39m
+            [36m>[39m
+              [36m<label[39m
+                [33mclass[39m=[32m"cl-row-select"[39m
+              [36m>[39m
+                [36m<input[39m
+                  [33maria-label[39m=[32m"Select Primary Business Line for comparison"[39m
+                  [33mtype[39m=[32m"checkbox"[39m
+
+                [36m/>[39m
+                [36m<span>[39m
+                  [0mCompare[0m
+                [36m</span>[39m
+              [36m</label>[39m
+              [36m<div>[39m
+                [36m<h3[39m
+                  [33mclass[39m=[32m"cl-name"[39m
+                [36m>[39m
+                  [0mPrimary Business Line[0m
+                [36m</h3>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"cl-id"[39m
+                [36m>[39m
+                  [0mCL-2024-001[0m
+                [36m</p>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex items-center gap-2"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33maria-label[39m=[32m"Credit line status: Active"[39m
+                [33mclass[39m=[32m"status-badge"[39m
+                [33mstyle[39m=[32m"background: rgba(63, 185, 80, 0.16); color: rgb(142, 233, 157); border-color: 
+rgba(63, 185, 80, 0.44);"[39m
+                [33mtitle[39m=[32m"Status: Active"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"status-badge__cue"[39m
+                [36m>[39m
+                  [0mA[0m
+                [36m</span>[39m
+                [36m<span>[39m
+                  [0mActive[0m
+                [36m</span>[39m
+              [36m</span>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"relative"[39m
+              [36m>[39m
+                [36m<button[39m
+                  [33maria-expanded[39m=[32m"false"[39m
+                  [33maria-haspopup[39m=[32m"true"[39m
+                  [33maria-label[39m=[32m"Menu for Primary Business Line"[39m
+                  [33mclass[39m=[32m"p-2 text-muted hover:text-foreground hover:bg-surface rounded-full 
+transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 
+focus-visible:outline-accent"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"lucide lucide-ellipsis w-5 h-5"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mheight[39m=[32m"24"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-...
+ Γ¥» Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ Γ¥» node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ Γ¥» node_modules/@testing-library/dom/dist/query-helpers.js:109:15
+ Γ¥» src/pages/__tests__/CreditLines.test.tsx:37:39
+     35|   it('shows Last Activity timestamp on each credit line card', () => {
+     36|     renderPage();
+     37|     const lastActivityLabels = screen.getAllByText('Last Activity');
+       |                                       ^
+     38|     expect(lastActivityLabels.length).toBeGreaterThanOrEqual(3);
+     39|   });
+
+ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[1/4]ΓÄ»
+
+ FAIL  src/pages/__tests__/CreditLines.test.tsx > CreditLines page > shows relative time for updatedAt on each card
+AssertionError: expected 0 to be greater than or equal to 3
+ Γ¥» src/pages/__tests__/CreditLines.test.tsx:44:33
+     42|     renderPage();
+     43|     const timeElements = document.querySelectorAll('.cl-last-activity_ΓÇª
+     44|     expect(timeElements.length).toBeGreaterThanOrEqual(3);
+       |                                 ^
+     45|     timeElements.forEach(el => {
+     46|       expect(el.textContent).toMatch(/(m|h|d ago|[A-Z][a-z]{2} \d{1,2}ΓÇª
+
+ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[2/4]ΓÄ»
+
+ FAIL  src/pages/__tests__/CreditLines.test.tsx > CreditLines page > renders AccessibleTooltip with absolute timestamp 
+for each card
+AssertionError: expected 0 to be greater than or equal to 3
+ Γ¥» src/pages/__tests__/CreditLines.test.tsx:53:29
+     51|     renderPage();
+     52|     const tooltips = document.querySelectorAll('.accessible-tooltip');
+     53|     expect(tooltips.length).toBeGreaterThanOrEqual(3);
+       |                             ^
+     54|   });
+     55| 
+
+ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[3/4]ΓÄ»
+
+ FAIL  src/pages/__tests__/CreditLines.test.tsx > CreditLines page > renders tooltip content with "Last updated:" 
+prefix
+AssertionError: expected 0 to be greater than or equal to 3
+ Γ¥» src/pages/__tests__/CreditLines.test.tsx:59:36
+     57|     renderPage();
+     58|     const tooltipContents = document.querySelectorAll('.accessible-tooΓÇª
+     59|     expect(tooltipContents.length).toBeGreaterThanOrEqual(3);
+       |                                    ^
+     60|     tooltipContents.forEach(el => {
+     61|       expect(el.textContent).toMatch(/^Last updated: /);
+
+ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[4/4]ΓÄ»
+
+ Test Files  1 failed | 2 passed (3)
+      Tests  4 failed | 14 passed (18)
+   Start at  07:08:10
+   Duration  12.67s (transform 788ms, setup 2.33s, collect 8.19s, tests 10.98s, environment 11.64s, prepare 1.45s)
+

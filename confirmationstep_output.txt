@@ -1,0 +1,132 @@
+﻿node.exe : npm warn Unknown env config "devdir". This will stop working in the next major version of npm. See `npm 
+help npmrc` for supported config options.
+At line:1 char:1
++ & "C:\Program Files\nodejs/node.exe" "C:\Program Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (npm warn Unknow...config options.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+ RUN  v3.2.4 C:/Users/HP-USER/Creditra-Frontend
+
+stderr | src/components/ConfirmationStep.test.tsx > ConfirmationStep > toggles the Why this APR drawer with 
+aria-expanded and shows current pricing drivers
+Error: Uncaught [ReferenceError: getDrawPricingQuote is not defined]
+    at reportException 
+(C:\Users\HP-USER\Creditra-Frontend\node_modules\jsdom\lib\jsdom\living\helpers\runtime-script-errors.js:66:24)
+    at innerInvokeEventListeners 
+(C:\Users\HP-USER\Creditra-Frontend\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:353:9)
+    at invokeEventListeners 
+(C:\Users\HP-USER\Creditra-Frontend\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:286:3)
+    at HTMLUnknownElementImpl._dispatch 
+(C:\Users\HP-USER\Creditra-Frontend\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:233:9)
+    at HTMLUnknownElementImpl.dispatchEvent 
+(C:\Users\HP-USER\Creditra-Frontend\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:104:17)
+    at HTMLUnknownElement.dispatchEvent 
+(C:\Users\HP-USER\Creditra-Frontend\node_modules\jsdom\lib\jsdom\living\generated\EventTarget.js:241:34)
+    at Object.invokeGuardedCallbackDev 
+(C:\Users\HP-USER\Creditra-Frontend\node_modules\react-dom\cjs\react-dom.development.js:4213:16)
+    at invokeGuardedCallback 
+(C:\Users\HP-USER\Creditra-Frontend\node_modules\react-dom\cjs\react-dom.development.js:4277:31)
+    at beginWork$1 (C:\Users\HP-USER\Creditra-Frontend\node_modules\react-dom\cjs\react-dom.development.js:27490:7)
+    at performUnitOfWork 
+(C:\Users\HP-USER\Creditra-Frontend\node_modules\react-dom\cjs\react-dom.development.js:26599:12) ReferenceError: 
+getDrawPricingQuote is not defined
+    at ConfirmationStep (C:\Users\HP-USER\Creditra-Frontend\src\components\ConfirmationStep.tsx:61:5)
+    at renderWithHooks 
+(C:\Users\HP-USER\Creditra-Frontend\node_modules\react-dom\cjs\react-dom.development.js:15486:18)
+    at mountIndeterminateComponent 
+(C:\Users\HP-USER\Creditra-Frontend\node_modules\react-dom\cjs\react-dom.development.js:20103:13)
+    at beginWork (C:\Users\HP-USER\Creditra-Frontend\node_modules\react-dom\cjs\react-dom.development.js:21626:16)
+    at HTMLUnknownElement.callCallback 
+(C:\Users\HP-USER\Creditra-Frontend\node_modules\react-dom\cjs\react-dom.development.js:4164:14)
+    at HTMLUnknownElement.callTheUserObjectsOperation 
+(C:\Users\HP-USER\Creditra-Frontend\node_modules\jsdom\lib\jsdom\living\generated\EventListener.js:26:30)
+    at innerInvokeEventListeners 
+(C:\Users\HP-USER\Creditra-Frontend\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:350:25)
+    at invokeEventListeners 
+(C:\Users\HP-USER\Creditra-Frontend\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:286:3)
+    at HTMLUnknownElementImpl._dispatch 
+(C:\Users\HP-USER\Creditra-Frontend\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:233:9)
+    at HTMLUnknownElementImpl.dispatchEvent 
+(C:\Users\HP-USER\Creditra-Frontend\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:104:17)
+Error: Uncaught [ReferenceError: getDrawPricingQuote is not defined]
+    at reportException 
+(C:\Users\HP-USER\Creditra-Frontend\node_modules\jsdom\lib\jsdom\living\helpers\runtime-script-errors.js:66:24)
+    at innerInvokeEventListeners 
+(C:\Users\HP-USER\Creditra-Frontend\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:353:9)
+    at invokeEventListeners 
+(C:\Users\HP-USER\Creditra-Frontend\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:286:3)
+    at HTMLUnknownElementImpl._dispatch 
+(C:\Users\HP-USER\Creditra-Frontend\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:233:9)
+    at HTMLUnknownElementImpl.dispatchEvent 
+(C:\Users\HP-USER\Creditra-Frontend\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:104:17)
+    at HTMLUnknownElement.dispatchEvent 
+(C:\Users\HP-USER\Creditra-Frontend\node_modules\jsdom\lib\jsdom\living\generated\EventTarget.js:241:34)
+    at Object.invokeGuardedCallbackDev 
+(C:\Users\HP-USER\Creditra-Frontend\node_modules\react-dom\cjs\react-dom.development.js:4213:16)
+    at invokeGuardedCallback 
+(C:\Users\HP-USER\Creditra-Frontend\node_modules\react-dom\cjs\react-dom.development.js:4277:31)
+    at beginWork$1 (C:\Users\HP-USER\Creditra-Frontend\node_modules\react-dom\cjs\react-dom.development.js:27490:7)
+    at performUnitOfWork 
+(C:\Users\HP-USER\Creditra-Frontend\node_modules\react-dom\cjs\react-dom.development.js:26599:12) ReferenceError: 
+getDrawPricingQuote is not defined
+    at ConfirmationStep (C:\Users\HP-USER\Creditra-Frontend\src\components\ConfirmationStep.tsx:61:5)
+    at renderWithHooks 
+(C:\Users\HP-USER\Creditra-Frontend\node_modules\react-dom\cjs\react-dom.development.js:15486:18)
+    at mountIndeterminateComponent 
+(C:\Users\HP-USER\Creditra-Frontend\node_modules\react-dom\cjs\react-dom.development.js:20103:13)
+    at beginWork (C:\Users\HP-USER\Creditra-Frontend\node_modules\react-dom\cjs\react-dom.development.js:21626:16)
+    at HTMLUnknownElement.callCallback 
+(C:\Users\HP-USER\Creditra-Frontend\node_modules\react-dom\cjs\react-dom.development.js:4164:14)
+    at HTMLUnknownElement.callTheUserObjectsOperation 
+(C:\Users\HP-USER\Creditra-Frontend\node_modules\jsdom\lib\jsdom\living\generated\EventListener.js:26:30)
+    at innerInvokeEventListeners 
+(C:\Users\HP-USER\Creditra-Frontend\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:350:25)
+    at invokeEventListeners 
+(C:\Users\HP-USER\Creditra-Frontend\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:286:3)
+    at HTMLUnknownElementImpl._dispatch 
+(C:\Users\HP-USER\Creditra-Frontend\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:233:9)
+    at HTMLUnknownElementImpl.dispatchEvent 
+(C:\Users\HP-USER\Creditra-Frontend\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:104:17)
+The above error occurred in the <ConfirmationStep> component:
+
+    at ConfirmationStep (C:\Users\HP-USER\Creditra-Frontend\src\components\ConfirmationStep.tsx:18:3)
+    at WalletProvider (C:\Users\HP-USER\Creditra-Frontend\src\context\WalletContext.tsx:15:3)
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries.
+
+ ├ù src/components/ConfirmationStep.test.tsx > ConfirmationStep > toggles the Why this APR drawer with aria-expanded and shows current pricing drivers 148ms
+   ΓåÆ getDrawPricingQuote is not defined
+
+ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ» Failed Tests 1 ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»
+
+ FAIL  src/components/ConfirmationStep.test.tsx > ConfirmationStep > toggles the Why this APR drawer with 
+aria-expanded and shows current pricing drivers
+ReferenceError: getDrawPricingQuote is not defined
+ Γ¥» ConfirmationStep src/components/ConfirmationStep.tsx:61:5
+     59|   const safeAmount = Math.max(amount, 0);
+     60|   const { fee, apr, estimatedMonthlyInterest, riskBand, termMonths } =
+     61|     getDrawPricingQuote(creditLine, safeAmount);
+       |     ^
+     62|   const newBalance = utilizedBalance + safeAmount + fee;
+     63|   const remainingAvailable = Math.max(creditLine.limit - newBalance, 0ΓÇª
+ Γ¥» renderWithHooks node_modules/react-dom/cjs/react-dom.development.js:15486:18
+ Γ¥» mountIndeterminateComponent node_modules/react-dom/cjs/react-dom.development.js:20103:13
+ Γ¥» beginWork node_modules/react-dom/cjs/react-dom.development.js:21626:16
+ Γ¥» beginWork$1 node_modules/react-dom/cjs/react-dom.development.js:27465:14
+ Γ¥» performUnitOfWork node_modules/react-dom/cjs/react-dom.development.js:26599:12
+ Γ¥» workLoopSync node_modules/react-dom/cjs/react-dom.development.js:26505:5
+ Γ¥» renderRootSync node_modules/react-dom/cjs/react-dom.development.js:26473:7
+ Γ¥» recoverFromConcurrentError node_modules/react-dom/cjs/react-dom.development.js:25889:20
+ Γ¥» performConcurrentWorkOnRoot node_modules/react-dom/cjs/react-dom.development.js:25789:22
+
+ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[1/1]ΓÄ»
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  07:30:46
+   Duration  13.58s (transform 852ms, setup 852ms, collect 4.46s, tests 153ms, environment 3.96s, prepare 480ms)
+

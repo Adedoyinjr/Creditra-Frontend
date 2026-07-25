@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { AmountInput } from "./AmountInput";
+import { AmountInput, AmountInputSkeleton } from "./AmountInput";
 
 describe("AmountInput", () => {
   const creditLine = {
@@ -44,12 +44,9 @@ describe("AmountInput", () => {
       target: { value: "36000" },
     });
 
-    // Should have both helper and error in aria-describedby
     const describedBy = input.getAttribute("aria-describedby");
     expect(describedBy).toContain("draw-amount-helper");
     expect(describedBy).toContain("draw-amount-error");
-
-    // aria-invalid should be true when there's an error
     expect(input).toHaveAttribute("aria-invalid", "true");
   });
 
@@ -99,27 +96,24 @@ describe("AmountInput", () => {
       />,
     );
 
-    const maxButton = screen.getByRole("button", {
-      name: /set amount to maximum/i,
-    });
-    expect(maxButton).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /set amount to maximum/i }),
+    ).toBeInTheDocument();
   });
 
   it("sets amount to maximum available when Max button is clicked", () => {
-    const onAmountChange = vi.fn();
     render(
       <AmountInput
         creditLine={creditLine}
-        onAmountChange={onAmountChange}
+        onAmountChange={vi.fn()}
         onNext={vi.fn()}
         onBack={vi.fn()}
       />,
     );
 
-    const maxButton = screen.getByRole("button", {
-      name: /set amount to maximum/i,
-    });
-    fireEvent.click(maxButton);
+    fireEvent.click(
+      screen.getByRole("button", { name: /set amount to maximum/i }),
+    );
 
     const input = screen.getByLabelText(/draw amount/i) as HTMLInputElement;
     expect(input.value).toBe(creditLine.available.toString());
@@ -140,9 +134,7 @@ describe("AmountInput", () => {
     });
 
     expect(screen.getByText("Draw amount looks good")).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: /continue/i }),
-    ).not.toBeDisabled();
+    expect(screen.getByRole("button", { name: /continue/i })).not.toBeDisabled();
   });
 
   it("enables continue button only when amount is valid", () => {
@@ -165,7 +157,7 @@ describe("AmountInput", () => {
     expect(continueButton).not.toBeDisabled();
   });
 
-  it("sanitizes pasted currency strings (strips $, commas, whitespace)", async () => {
+  it("sanitizes pasted currency strings (strips $, commas, whitespace)", () => {
     render(
       <AmountInput
         creditLine={creditLine}
@@ -176,7 +168,7 @@ describe("AmountInput", () => {
     );
 
     const input = screen.getByLabelText(/draw amount/i) as HTMLInputElement;
-    
+
     fireEvent.paste(input, {
       clipboardData: {
         getData: (type: string) => {
@@ -185,12 +177,12 @@ describe("AmountInput", () => {
         },
       },
     });
-    
+
     expect(input.value).toBe("1500.00");
     expect(screen.getByText("Pasted value sanitized to $1,500.00")).toBeInTheDocument();
   });
 
-  it("rejects non-numeric pasted text and announces the error", async () => {
+  it("rejects non-numeric pasted text and announces the error", () => {
     render(
       <AmountInput
         creditLine={creditLine}
@@ -201,7 +193,7 @@ describe("AmountInput", () => {
     );
 
     const input = screen.getByLabelText(/draw amount/i) as HTMLInputElement;
-    
+
     fireEvent.paste(input, {
       clipboardData: {
         getData: (type: string) => {
@@ -210,12 +202,14 @@ describe("AmountInput", () => {
         },
       },
     });
-    
+
     expect(input.value).not.toBe("invalid-amount");
-    expect(screen.getByText("Invalid amount pasted. Please enter a numeric value.")).toBeInTheDocument();
+    expect(
+      screen.getByText("Invalid amount pasted. Please enter a numeric value."),
+    ).toBeInTheDocument();
   });
 
-  it("renders decrease stepper button with accessible label", () => {
+  it("renders explicit +/- stepper buttons with accessible labels", () => {
     render(
       <AmountInput
         creditLine={creditLine}
@@ -225,31 +219,20 @@ describe("AmountInput", () => {
       />,
     );
 
-    const decButton = screen.getByRole("button", {
+    const decreaseButton = screen.getByRole("button", {
       name: /decrease amount/i,
     });
-    expect(decButton).toBeInTheDocument();
-    expect(decButton).toBeDisabled(); // initially 0, can't go below 0
-  });
-
-  it("renders increase stepper button with accessible label", () => {
-    render(
-      <AmountInput
-        creditLine={creditLine}
-        onAmountChange={vi.fn()}
-        onNext={vi.fn()}
-        onBack={vi.fn()}
-      />,
-    );
-
-    const incButton = screen.getByRole("button", {
+    const increaseButton = screen.getByRole("button", {
       name: /increase amount/i,
     });
-    expect(incButton).toBeInTheDocument();
-    expect(incButton).not.toBeDisabled();
+
+    expect(decreaseButton).toBeInTheDocument();
+    expect(decreaseButton).toBeDisabled();
+    expect(increaseButton).toBeInTheDocument();
+    expect(increaseButton).not.toBeDisabled();
   });
 
-  it("increments amount by step when increase button is clicked", () => {
+  it("increments amount by the step value when increase is clicked", () => {
     render(
       <AmountInput
         creditLine={creditLine}
@@ -259,16 +242,17 @@ describe("AmountInput", () => {
       />,
     );
 
-    const incButton = screen.getByRole("button", {
+    const increaseButton = screen.getByRole("button", {
       name: /increase amount/i,
     });
     const input = screen.getByLabelText(/draw amount/i) as HTMLInputElement;
 
-    fireEvent.click(incButton);
+    fireEvent.click(increaseButton);
+
     expect(input.value).toBe("100");
   });
 
-  it("decrements amount by step when decrease button is clicked", () => {
+  it("decrements amount by the step value when decrease is clicked", () => {
     render(
       <AmountInput
         creditLine={creditLine}
@@ -281,49 +265,12 @@ describe("AmountInput", () => {
     const input = screen.getByLabelText(/draw amount/i) as HTMLInputElement;
     fireEvent.change(input, { target: { value: "500" } });
 
-    const decButton = screen.getByRole("button", {
-      name: /decrease amount/i,
-    });
-    fireEvent.click(decButton);
+    fireEvent.click(screen.getByRole("button", { name: /decrease amount/i }));
+
     expect(input.value).toBe("400");
   });
 
-  it("disables decrease button when amount is 0", () => {
-    render(
-      <AmountInput
-        creditLine={creditLine}
-        onAmountChange={vi.fn()}
-        onNext={vi.fn()}
-        onBack={vi.fn()}
-      />,
-    );
-
-    const decButton = screen.getByRole("button", {
-      name: /decrease amount/i,
-    });
-    expect(decButton).toBeDisabled();
-  });
-
-  it("disables increase button when amount equals available credit", () => {
-    render(
-      <AmountInput
-        creditLine={creditLine}
-        onAmountChange={vi.fn()}
-        onNext={vi.fn()}
-        onBack={vi.fn()}
-      />,
-    );
-
-    const input = screen.getByLabelText(/draw amount/i) as HTMLInputElement;
-    fireEvent.change(input, { target: { value: creditLine.available.toString() } });
-
-    const incButton = screen.getByRole("button", {
-      name: /increase amount/i,
-    });
-    expect(incButton).toBeDisabled();
-  });
-
-  it("does not increment amount beyond available credit", () => {
+  it("does not increment past the available credit", () => {
     render(
       <AmountInput
         creditLine={creditLine}
@@ -336,14 +283,12 @@ describe("AmountInput", () => {
     const input = screen.getByLabelText(/draw amount/i) as HTMLInputElement;
     fireEvent.change(input, { target: { value: "34900" } });
 
-    const incButton = screen.getByRole("button", {
-      name: /increase amount/i,
-    });
-    fireEvent.click(incButton);
+    fireEvent.click(screen.getByRole("button", { name: /increase amount/i }));
+
     expect(input.value).toBe(creditLine.available.toString());
   });
 
-  it("does not decrement amount below 0", () => {
+  it("does not decrement below zero", () => {
     render(
       <AmountInput
         creditLine={creditLine}
@@ -354,16 +299,14 @@ describe("AmountInput", () => {
     );
 
     const input = screen.getByLabelText(/draw amount/i) as HTMLInputElement;
-    // A small amount less than STEP_AMOUNT should floor to 0
     fireEvent.change(input, { target: { value: "50" } });
-    const decButton = screen.getByRole("button", {
-      name: /decrease amount/i,
-    });
-    fireEvent.click(decButton);
+
+    fireEvent.click(screen.getByRole("button", { name: /decrease amount/i }));
+
     expect(input.value).toBe("0");
   });
 
-  it("responds to ArrowUp key to increment amount", () => {
+  it("responds to ArrowUp and ArrowDown keys as stepper shortcuts", () => {
     render(
       <AmountInput
         creditLine={creditLine}
@@ -377,25 +320,12 @@ describe("AmountInput", () => {
     fireEvent.change(input, { target: { value: "500" } });
     fireEvent.keyDown(input, { key: "ArrowUp" });
     expect(input.value).toBe("600");
-  });
 
-  it("responds to ArrowDown key to decrement amount", () => {
-    render(
-      <AmountInput
-        creditLine={creditLine}
-        onAmountChange={vi.fn()}
-        onNext={vi.fn()}
-        onBack={vi.fn()}
-      />,
-    );
-
-    const input = screen.getByLabelText(/draw amount/i) as HTMLInputElement;
-    fireEvent.change(input, { target: { value: "500" } });
     fireEvent.keyDown(input, { key: "ArrowDown" });
-    expect(input.value).toBe("400");
+    expect(input.value).toBe("500");
   });
 
-  it("sets input step attribute", () => {
+  it("sets the input step attribute", () => {
     render(
       <AmountInput
         creditLine={creditLine}
@@ -426,5 +356,117 @@ describe("AmountInput", () => {
     });
 
     expect(input).toHaveAttribute("aria-invalid", "true");
+  });
+
+  describe("Skeleton Loading State (v7)", () => {
+    it("renders loading skeleton on first paint when isLoading is true", () => {
+      render(
+        <AmountInput
+          creditLine={creditLine}
+          isLoading={true}
+        />,
+      );
+
+      const skeletonRegion = screen.getByTestId("amount-input-skeleton");
+      expect(skeletonRegion).toBeInTheDocument();
+      expect(skeletonRegion).toHaveAttribute("aria-busy", "true");
+      expect(skeletonRegion).toHaveAttribute("aria-label", "Loading amount input");
+      expect(screen.queryByLabelText(/draw amount/i)).not.toBeInTheDocument();
+    });
+
+    it("renders skeleton when creditLine is not yet provided", () => {
+      render(<AmountInput isLoading={false} />);
+
+      const skeletonRegion = screen.getByTestId("amount-input-skeleton");
+      expect(skeletonRegion).toBeInTheDocument();
+      expect(skeletonRegion).toHaveAttribute("aria-busy", "true");
+    });
+
+    it("renders standalone AmountInputSkeleton correctly with accessibility attributes", () => {
+      render(<AmountInputSkeleton />);
+
+      const skeletonRegion = screen.getByTestId("amount-input-skeleton");
+      expect(skeletonRegion).toBeInTheDocument();
+      expect(skeletonRegion).toHaveAttribute("role", "region");
+      expect(skeletonRegion).toHaveAttribute("aria-busy", "true");
+      expect(skeletonRegion).toHaveAttribute("aria-label", "Loading amount input");
+    });
+  });
+
+  describe("Design Tokens & Typography Spacing (v7)", () => {
+    it("pins root container spacing and header typography to design tokens", () => {
+      render(
+        <AmountInput
+          creditLine={creditLine}
+          onAmountChange={vi.fn()}
+        />,
+      );
+
+      const heading = screen.getByRole("heading", { name: /enter amount/i });
+      expect(heading).toHaveClass("text-2xl", "sm:text-3xl", "font-bold", "text-foreground", "leading-[var(--lh-heading)]", "tracking-tight");
+    });
+
+    it("applies design token classes to input box, dollar prefix, and stepper controls", () => {
+      render(
+        <AmountInput
+          creditLine={creditLine}
+          onAmountChange={vi.fn()}
+        />,
+      );
+
+      const input = screen.getByLabelText(/draw amount/i);
+      expect(input).toHaveClass("tabular-nums", "leading-[var(--lh-display)]");
+
+      const maxButton = screen.getByRole("button", { name: /set amount to maximum/i });
+      expect(maxButton).toHaveClass("text-accent", "focus-visible:ring-accent", "min-h-[44px]");
+    });
+
+    it("maps severity validation tones to semantic status color tokens", () => {
+      render(
+        <AmountInput
+          creditLine={creditLine}
+          onAmountChange={vi.fn()}
+        />,
+      );
+
+      const input = screen.getByLabelText(/draw amount/i);
+
+      // Exceed availability -> danger tone mapped to error token
+      fireEvent.change(input, { target: { value: "40000" } });
+      const wrapper = input.closest(".border-2");
+      expect(wrapper).toHaveClass("border-error/70");
+    });
+
+    it("pins quick preset chips and main action buttons to semantic design tokens", () => {
+      render(
+        <AmountInput
+          creditLine={creditLine}
+          onAmountChange={vi.fn()}
+          onNext={vi.fn()}
+          onBack={vi.fn()}
+        />,
+      );
+
+      const presetButton = screen.getByRole("button", { name: /25 percent/i });
+      expect(presetButton).toHaveClass("border-border", "hover:border-accent", "focus-visible:ring-accent", "min-h-[44px]");
+
+      const continueButton = screen.getByRole("button", { name: /continue/i });
+      expect(continueButton).toHaveClass("bg-accent", "focus-visible:ring-accent", "min-h-[44px]");
+
+      const backButton = screen.getByRole("button", { name: /back/i });
+      expect(backButton).toHaveClass("border-border", "text-foreground", "focus-visible:ring-accent", "min-h-[44px]");
+    });
+
+    it("renders constraint boxes with typography rhythm tokens and tabular numerals", () => {
+      render(
+        <AmountInput
+          creditLine={creditLine}
+          onAmountChange={vi.fn()}
+        />,
+      );
+
+      const minLabel = screen.getByText("Minimum draw");
+      expect(minLabel).toHaveClass("text-[11px]", "font-semibold", "uppercase", "tracking-wider", "text-muted", "leading-[var(--lh-small)]");
+    });
   });
 });

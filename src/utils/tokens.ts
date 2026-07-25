@@ -45,6 +45,7 @@ export const STATUS_COLOR: Record<CreditLineStatus, { bg: string; color: string;
   Suspended: { bg: 'rgba(210,153,34,0.16)', color: '#f0c96a', border: 'rgba(210,153,34,0.46)' },
   Defaulted: { bg: 'rgba(248,81,73,0.14)', color: '#ffb0aa', border: 'rgba(248,81,73,0.46)' },
   Closed: { bg: 'rgba(139,148,158,0.16)', color: '#c4ccd6', border: 'rgba(139,148,158,0.42)' },
+  Frozen: { bg: 'rgba(88,166,255,0.12)', color: '#79c0ff', border: 'rgba(88,166,255,0.38)' },
 };
 
 /**

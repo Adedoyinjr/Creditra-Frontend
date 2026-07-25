@@ -7,6 +7,7 @@ import { useWallet } from "../context/WalletContext";
 import { Sparkline } from "../components/Sparkline";
 import { RiskBandsPanel } from "../components/RiskBandsPanel";
 import { WhatsChangedPanel } from "../components/WhatsChangedPanel";
+import { RiskExplainerOverlay } from "../components/RiskExplainerOverlay";
 import { MOCK_CREDIT_LINES } from "../data/mockData";
 import type { Transaction } from "../types/creditLine";
 import {
@@ -16,24 +17,21 @@ import {
   fmtDate,
   utilizationPct,
   RISK_COLOR,
+  getUtilizationLevel,
 } from "../utils/tokens";
 import { readJson, writeJson } from "../utils/storage";
-import "./Dashboard.css";
-import { Skeleton } from "../components/Skeleton";
+import "./Dashboard.css";  import { Skeleton } from "../components/Skeleton";
 import { NoDataGraph } from "../components/illustrations";
 import CompareLinesPanel from "../components/CompareLinesPanel";
-import { DashboardTour } from "../components/DashboardTour";
-import { SyncIndicator } from "../components/SyncIndicator";
 import { useFocusTrap } from "../hooks/useFocusTrap";
 import { useInertBackdrop } from "../hooks/useInertBackdrop";
 import { useBodyScrollLock } from "../hooks/useBodyScrollLock";
-import { getUtilizationLevel } from "../utils/tokens";
+import { useReducedMotion } from "../context/ReducedMotionContext";
 import { TipJar } from "../components/TipJar";
 import { NextSteps } from "../components/NextSteps";
 import { WhatChanged } from "../components/WhatChanged";
-import { useReducedMotion } from "../context/ReducedMotionContext";
-
-
+import { HealthTipsPanel } from "../components/HealthTipsPanel";
+import { RiskGauge } from "./RiskGauge";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -61,138 +59,6 @@ const TX_COLOR: Record<string, string> = {
   Fee: COLOR.muted,
   Interest: COLOR.warning,
 };
-
-// ─── Risk Score Gauge ─────────────────────────────────────────────────────────
-
-const easeCubicBezier = (x: number): number => {
-  if (x <= 0) return 0;
-  if (x >= 1) return 1;
-  const x1 = 0.16;
-  const x2 = 0.3;
-  let t = x;
-  for (let i = 0; i < 8; i++) {
-    const currentX = 3 * (1 - t) * (1 - t) * t * x1 + 3 * (1 - t) * t * t * x2 + t * t * t;
-    const diff = currentX - x;
-    if (Math.abs(diff) < 1e-6) break;
-    const dXdt = 3 * (1 - t) * (1 - t) * x1 + 6 * (1 - t) * t * (x2 - x1) + 3 * t * t * (1 - x2);
-    t -= diff / (dXdt || 1);
-  }
-  return 3 * t * (1 - t) + t * t * t;
-};
-
-export function RiskGauge({
-  score,
-  trend,
-  lastUpdated,
-  history,
-}: {
-  score: number;
-  trend: "improving" | "declining" | "stable";
-  lastUpdated: string;
-  history?: number[];
-}) {
-  const radius = 55;
-  const cx = 80;
-  const cy = 75;
-  const circumference = Math.PI * radius;
-  const normalizedScore = Math.min(850, Math.max(0, score));
-  const offset = circumference - (normalizedScore / 850) * circumference;
-
-  const gaugeColor = RISK_COLOR(normalizedScore);
-  const trendArrow =
-    trend === "improving" ? "▲" : trend === "declining" ? "▼" : "─";
-  const trendColor =
-    trend === "improving"
-      ? COLOR.success
-      : trend === "declining"
-        ? COLOR.danger
-        : COLOR.muted;
-
-  const { isReducedMotionActive } = useReducedMotion();
-  const [displayedScore, setDisplayedScore] = useState(normalizedScore);
-  const prevScoreRef = useRef(normalizedScore);
-
-  useEffect(() => {
-    if (isReducedMotionActive) {
-      setDisplayedScore(normalizedScore);
-      prevScoreRef.current = normalizedScore;
-      return;
-    }
-
-    const startScore = prevScoreRef.current;
-    const endScore = normalizedScore;
-    if (startScore === endScore) return;
-
-    const duration = 280;
-    const startTime = Date.now();
-    let animationFrameId: number;
-
-    const animate = () => {
-      const elapsed = Date.now() - startTime;
-      const progress = Math.min(elapsed / duration, 1);
-      const easedProgress = easeCubicBezier(progress);
-
-      const currentVal = startScore + (endScore - startScore) * easedProgress;
-      setDisplayedScore(currentVal);
-
-      if (progress < 1) {
-        animationFrameId = requestAnimationFrame(animate);
-      } else {
-        prevScoreRef.current = endScore;
-      }
-    };
-
-    animationFrameId = requestAnimationFrame(animate);
-
-    return () => {
-      cancelAnimationFrame(animationFrameId);
-    };
-  }, [normalizedScore, isReducedMotionActive]);
-
-  const scoreFormatter = useMemo(() => new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 }), []);
-
-  return (
-    <div className="risk-gauge-container">
-      <svg className="risk-gauge-svg" viewBox="0 0 160 100">
-        <path
-          className="risk-gauge-bg"
-          d={`M ${cx - radius} ${cy} A ${radius} ${radius} 0 0 1 ${cx + radius} ${cy}`}
-        />
-        <path
-          className="risk-gauge-fill"
-          d={`M ${cx - radius} ${cy} A ${radius} ${radius} 0 0 1 ${cx + radius} ${cy}`}
-          stroke={gaugeColor}
-          strokeDasharray={circumference}
-          strokeDashoffset={offset}
-        />
-        <text x={cx} y={cy - 12} className="risk-gauge-score">
-          {scoreFormatter.format(Math.round(displayedScore))}
-        </text>
-        <text x={cx} y={cy - 38} className="risk-gauge-label">
-          Risk Score
-        </text>
-      </svg>
-
-      <div className="risk-meta">
-        <div className="risk-meta-item">
-          <span className="rm-label">Trend</span>
-          <span className="rm-value" style={{ color: trendColor, display: "flex", alignItems: "center", gap: "8px" }}>
-            <span>{trendArrow} {trend.charAt(0).toUpperCase() + trend.slice(1)}</span>
-            {history && history.length > 0 && (
-              <Sparkline data={history} width={60} height={24} color={trendColor} />
-            )}
-          </span>
-        </div>
-        <div className="risk-meta-item">
-          <span className="rm-label">Last Updated</span>
-          <span className="rm-value" style={{ color: COLOR.muted }}>
-            {fmtDate(lastUpdated)}
-          </span>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 // ─── Risk Explainer ───────────────────────────────────────────────────────────
 
@@ -243,6 +109,9 @@ export function Dashboard() {
   const [repayCount, setRepayCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [isExplainOpen, setIsExplainOpen] = useState(false);
+  // `isExplainOpen` now drives the centred RiskExplainerOverlay (#426).
+  // The slide-out panel (`RiskBandsPanel`) keeps its own local state and
+  // is unaffected.
 
   // ─── Sync timestamps ─────────────────────────────────────────────────────
   const [riskSyncedAt, setRiskSyncedAt] = useState<Date>(() => new Date());
@@ -654,6 +523,8 @@ export function Dashboard() {
 
       {!loading && <ActivityFeed />}
 
+      {!loading && hasLines && <ContinuePrompt creditLines={creditLines} />}
+
       <div className="dashboard-grid">
         <div>
           <div className="card" style={{ animationDelay: "0.1s" }}>
@@ -713,7 +584,35 @@ export function Dashboard() {
 
           {/* Risk Score */}
           <div className="card" data-tour-target="riskGauge" style={{ animationDelay: '0.15s' }} aria-busy={loading}>
-            <h2><span className="icon">🛡️</span> Risk Score</h2>
+            <h2>
+              <span className="icon">🛡️</span> Risk Score
+              {!loading && (
+                <button
+                  ref={explainTriggerRef}
+                  type="button"
+                  onClick={() => setIsExplainOpen(true)}
+                  aria-haspopup="dialog"
+                  aria-expanded={isExplainOpen}
+                  aria-label="Explain risk bands"
+                  className="risk-explainer-trigger"
+                  data-testid="risk-explainer-trigger"
+                  style={{
+                    marginLeft: "auto",
+                    fontSize: "0.75rem",
+                    fontWeight: 600,
+                    padding: "0.25rem 0.6rem",
+                    borderRadius: 6,
+                    background: "transparent",
+                    border: "1px solid var(--border, #30363d)",
+                    color: "var(--muted, #8b949e)",
+                    cursor: "pointer",
+                    minHeight: "32px",
+                  }}
+                >
+                  Explain
+                </button>
+              )}
+            </h2>
             {loading ? (
               <div className="risk-gauge-container">
                 <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100px', width: '160px', marginBottom: '0.75rem' }}>
@@ -731,17 +630,11 @@ export function Dashboard() {
                 </div>
               </div>
             ) : (
-              <>
-                <RiskGauge
-                  score={avgRiskScore}
-                  trend="improving"
-                  lastUpdated={activeLinesOnly[0]?.updatedAt ?? new Date().toISOString()}
-                />
-                <RiskExplainer
-                  score={avgRiskScore}
-                  address={wallet?.publicKey}
-                />
-              </>
+              <RiskGauge
+                score={avgRiskScore}
+                trend="improving"
+                lastUpdated={activeLinesOnly[0]?.updatedAt ?? new Date().toISOString()}
+              />
             )}
           </div>
 
@@ -1177,7 +1070,166 @@ export function Dashboard() {
          </div>
        </div>
 
+        {/* Right Column */}
+        <div>
+          {/* Quick Actions */}
+          <div className="card" style={{ animationDelay: '0.12s' }}>
+            <h2><span className="icon">⚡</span> Quick Actions</h2>
+            <div className="quick-actions-grid">
+              {!hasLines && (
+                <button
+                  className="qa-btn"
+                  data-tour-target="requestEvaluation"
+                  style={{ borderColor: 'rgba(88,166,255,0.3)' }}
+                >
+                  <div className="qa-icon" style={{ background: 'rgba(88,166,255,0.12)', color: COLOR.accent }}>🆕</div>
+                  <div>
+                    <div className="qa-label" style={{ color: COLOR.accent }}>Open Credit Line</div>
+                    <div className="qa-desc" style={{ color: COLOR.muted }}>Get started with your first line</div>
+                  </div>
+                  <span className="qa-arrow" style={{ color: COLOR.muted }}>→</span>
+                </button>
+              )}
+              {hasLines && activeLinesOnly.length > 0 && (
+                <button
+                  className="qa-btn"
+                  data-tour-target="requestEvaluation"
+                  style={{ borderColor: 'rgba(88,166,255,0.3)' }}
+                >
+                  <div className="qa-icon" style={{ background: 'rgba(88,166,255,0.12)', color: COLOR.accent }}>↗</div>
+                  <div>
+                    <div className="qa-label" style={{ color: COLOR.accent }}>Draw Credit</div>
+                    <div className="qa-desc" style={{ color: COLOR.muted }}>{fmt(totalAvailable)} available</div>
+                  </div>
+                  <span className="qa-arrow" style={{ color: COLOR.muted }}>→</span>
+                </button>
+              )}
+              {hasUtilized && (
+                <button
+                  className="qa-btn"
+                  style={{ borderColor: 'rgba(63,185,80,0.3)' }}
+                >
+                  <div className="qa-icon" style={{ background: 'rgba(63,185,80,0.12)', color: COLOR.success }}>↙</div>
+                  <div>
+                    <div className="qa-label" style={{ color: COLOR.success }}>Repay Credit</div>
+                    <div className="qa-desc" style={{ color: COLOR.muted }}>{fmt(totalUtilized)} outstanding</div>
+                  </div>
+                  <span className="qa-arrow" style={{ color: COLOR.muted }}>→</span>
+                </button>
+              )}
+              <Link
+                to="/credit-lines"
+                className="qa-btn"
+                style={{ borderColor: 'transparent', textDecoration: 'none' }}
+              >
+                <div className="qa-icon" style={{ background: 'rgba(139,148,158,0.12)', color: COLOR.muted }}>📋</div>
+                <div>
+                  <div className="qa-label" style={{ color: COLOR.text }}>View Credit Lines</div>
+                  <div className="qa-desc" style={{ color: COLOR.muted }}>Manage all your credit lines</div>
+                </div>
+                <span className="qa-arrow" style={{ color: COLOR.muted }}>→</span>
+              </Link>
+            </div>
+          </div>
+
+          {/* Recent Activity */}
+          <div className="card" style={{ animationDelay: '0.18s' }} aria-busy={loading}>
+            <h2><span className="icon">📝</span> Recent Activity</h2>
+
+            {loading ? (
+              <>
+                <div className="activity-item">
+                  <Skeleton className="activity-icon" style={{ borderRadius: '6px' }} />
+                  <div className="activity-content" style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                    <Skeleton style={{ width: '120px', height: '14px', borderRadius: '2px' }} />
+                    <Skeleton style={{ width: '180px', height: '10px', borderRadius: '2px' }} />
+                  </div>
+                  <Skeleton style={{ width: '60px', height: '14px', marginLeft: 'auto', borderRadius: '2px' }} />
+                </div>
+                <div className="activity-item">
+                  <Skeleton className="activity-icon" style={{ borderRadius: '6px' }} />
+                  <div className="activity-content" style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                    <Skeleton style={{ width: '100px', height: '14px', borderRadius: '2px' }} />
+                    <Skeleton style={{ width: '150px', height: '10px', borderRadius: '2px' }} />
+                  </div>
+                  <Skeleton style={{ width: '50px', height: '14px', marginLeft: 'auto', borderRadius: '2px' }} />
+                </div>
+                <div className="activity-item">
+                  <Skeleton className="activity-icon" style={{ borderRadius: '6px' }} />
+                  <div className="activity-content" style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                    <Skeleton style={{ width: '140px', height: '14px', borderRadius: '2px' }} />
+                    <Skeleton style={{ width: '160px', height: '10px', borderRadius: '2px' }} />
+                  </div>
+                  <Skeleton style={{ width: '70px', height: '14px', marginLeft: 'auto', borderRadius: '2px' }} />
+                </div>
+              </>
+            ) : recentActivity.length === 0 ? (
+              <p style={{ color: COLOR.muted, fontSize: '0.8rem', textAlign: 'center', padding: '1.5rem 0' }}>
+                No transactions yet
+              </p>
+            ) : (
+              recentActivity.map((tx, i) => (
+                <div key={`${tx.id}-${i}`} className="activity-item">
+                  <div
+                    className="activity-icon"
+                    style={{
+                      background: `${TX_COLOR[tx.type]}15`,
+                      color: TX_COLOR[tx.type],
+                    }}
+                  >
+                    {TX_ICON[tx.type]}
+                  </div>
+                  <div className="activity-content">
+                    <div className="activity-title">{tx.note || tx.type}</div>
+                    <div className="activity-sub">{tx.lineName} · {relativeTime(tx.date)}</div>
+                  </div>
+                  <div className="activity-amount" style={{ color: TX_COLOR[tx.type] }}>
+                    {tx.type === 'Repay' ? '+' : '-'}{fmt(tx.amount)}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+
+          {/* Notifications */}
+          {notifications.length > 0 && (
+            <div className="card" style={{ animationDelay: '0.22s' }}>
+              <h2><span className="icon">🔔</span> Alerts</h2>
+
+              {notifications.map((note, i) => (
+                <div 
+                  key={i} 
+                  className={`notification-item notification-item--${note.type}`}
+                  role={note.type === 'danger' ? 'alert' : 'status'}
+                >
+                  <span className="notification-icon" aria-hidden="true">{note.icon}</span>
+                  <div>
+                    <div className="notification-text">
+                      {note.content}
+                    </div>
+                    {note.time && (
+                      <div className="notification-time">{relativeTime(note.time)}</div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Health Tips — contextual credit-education panel */}
+          <HealthTipsPanel />
+        </div>
+      </div>
       <DashboardTour />
+      {/* Centered risk-band explainer overlay (#426).  Triggered by the
+          "Explain risk bands" button rendered next to the risk gauge
+          header.  The component manages its own focus trap, body scroll
+          lock, and inert backdrop. */}
+      <RiskExplainerOverlay
+        isOpen={isExplainOpen}
+        onClose={() => setIsExplainOpen(false)}
+        triggerRef={explainTriggerRef}
+      />
     </div>
   );
 }

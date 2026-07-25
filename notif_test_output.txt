@@ -1,0 +1,46 @@
+﻿node.exe : npm warn Unknown env config "devdir". This will stop working in the next major version of npm. See `npm 
+help npmrc` for supported config options.
+At line:1 char:1
++ & "C:\Program Files\nodejs/node.exe" "C:\Program Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (npm warn Unknow...config options.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+ RUN  v3.2.4 C:/Users/HP-USER/Creditra-Frontend
+
+ Γ£ô src/components/notifications/NotificationCenter.test.tsx > resolveSheetSnapFromRatio > dismisses when dragged below the lower threshold 3ms
+ Γ£ô src/components/notifications/NotificationCenter.test.tsx > resolveSheetSnapFromRatio > snaps to half between 35% and 70% viewport height 1ms
+ Γ£ô src/components/notifications/NotificationCenter.test.tsx > resolveSheetSnapFromRatio > snaps to full at or above 70% viewport height 1ms
+ Γ£ô src/components/notifications/NotificationCenter.test.tsx > NotificationCenter mobile bottom-sheet > opens at the half snap point on mobile 602ms
+ Γ£ô src/components/notifications/NotificationCenter.test.tsx > NotificationCenter mobile bottom-sheet > expands to the full snap point via keyboard-accessible control 452ms
+ Γ£ô src/components/notifications/UndoToast.test.tsx > UndoToast integration > shows an undo toast after marking a single notification as read 1178ms
+ Γ£ô src/components/notifications/NotificationCenter.test.tsx > NotificationCenter mobile bottom-sheet > collapses back to the half snap point 519ms
+ Γ£ô src/components/notifications/UndoToast.test.tsx > UndoToast integration > restores notification read state when Undo is clicked 696ms
+ Γ£ô src/components/notifications/NotificationCenter.test.tsx > NotificationCenter mobile bottom-sheet > exposes expand and collapse controls only in the mobile sheet chrome 340ms
+ Γ£ô src/components/notifications/NotificationCenter.test.tsx > NotificationCenter mobile bottom-sheet > maps snap points to 50% and 90% viewport height ratios 1ms
+ Γ£ô src/components/notifications/NotificationCenter.test.tsx > NotificationCenter focus trap > focuses the first control when the panel opens 206ms
+ Γ£ô src/components/notifications/UndoToast.test.tsx > UndoToast integration > commits the read action when the timer expires 334ms
+ Γ£ô src/components/notifications/NotificationCenter.test.tsx > NotificationCenter focus trap > closes when Escape is pressed 165ms
+ Γ£ô src/components/notifications/UndoToast.test.tsx > UndoToast integration > supports marking all as read with undo 397ms
+ Γ£ô src/components/notifications/NotificationCenter.test.tsx > NotificationCenter mark all as read > marks all notifications as read when button is clicked 358ms
+ Γ£ô src/components/notifications/NotificationCenter.test.tsx > NotificationCenter mark all as read > announces completion to screen readers 233ms
+ Γ£ô src/components/notifications/UndoToast.test.tsx > UndoToast integration > handles rapid consecutive mark-read actions without duplicate timers 443ms
+ Γ£ô src/components/notifications/NotificationCenter.test.tsx > NotificationCenter mark all as read > announces singular form for one notification 270ms
+ Γ£ô src/components/notifications/NotificationCenter.test.tsx > NotificationCenter mark all as read > clears announcement after 3 seconds 334ms
+ Γ£ô src/components/notifications/UndoToast.test.tsx > UndoToast integration > undoes only the correct notification when stacked undo toasts are present 484ms
+ Γ£ô src/components/notifications/NotificationCenter.test.tsx > NotificationCenter mark all as read > disables button when there are no unread notifications 159ms
+ Γ£ô src/components/notifications/NotificationCenter.test.tsx > NotificationCenter mark all as read > includes unread count in button aria-label 381ms
+ Γ£ô src/components/notifications/NotificationCenter.test.tsx > NotificationCenter mark all as read > supports keyboard activation with Enter key 416ms
+ Γ£ô src/components/notifications/UndoToast.test.tsx > UndoToast integration > cleans up timers on unmount 530ms
+ Γ£ô src/components/notifications/UndoToast.test.tsx > UndoToast integration > renders the undo button with proper accessibility role 565ms
+ Γ£ô src/components/notifications/UndoToast.test.tsx > UndoToast integration > supports keyboard activation via Enter 1000ms
+ Γ£ô src/components/notifications/UndoToast.test.tsx > UndoToast integration > supports keyboard activation via Space 1222ms
+ Γ£ô src/components/notifications/UndoToast.test.tsx > UndoToast integration > has visible focus styles on the undo button 630ms
+ Γ£ô src/components/notifications/UndoToast.test.tsx > UndoToast integration > shows undo toast for each mark-read action independently 839ms
+
+ Test Files  2 passed (2)
+      Tests  29 passed (29)
+   Start at  07:23:57
+   Duration  15.03s (transform 382ms, setup 972ms, collect 3.74s, tests 12.77s, environment 6.56s, prepare 702ms)
+

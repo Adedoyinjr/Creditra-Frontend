@@ -1,126 +1,67 @@
 "use client";
 
 /**
- * DrawSummaryBar — persistent bottom summary bar for the Draw Credit wizard.
- *
- * Renders three stat tiles (Amount, APR, Total Cost) anchored to the bottom
- * of the viewport so the user always knows what they are about to draw,
- * regardless of which step of the wizard they are on.
+ * DrawSummaryBar — mobile sticky bottom summary for the Draw Credit wizard.
  *
  * Visibility
  * ──────────
- * The bar is shown only on the `amount` step. The early-wizard `select`
- * step is excluded (no line has been chosen yet, so there is no data to
- * summarise) and the terminal `status` step is excluded (the
- * success/error screen replaces the wizard entirely). The `confirm` step
- * is also excluded: the `ConfirmationStep` card already surfaces the
- * same figures inline and stacks its own sticky action bar (Cancel /
- * Back / Draw). Showing the page-level summary bar on top of that
- * action bar would create two stacked sticky strips at the bottom of
- * the viewport, obscuring the primary actions.
+ * Shown only below the `md` breakpoint (max-width 767px) on the `amount`
+ * step once a credit line is selected. Desktop uses the sidebar
+ * `PreviewSection`; `select`, `confirm`, and `status` steps are excluded
+ * (see VISIBLE_STEPS).
  *
- * Layout
- * ──────
- * The element uses `position: fixed` so it stays anchored to the viewport
- * bottom as the user scrolls through any of the step cards. See
- * `DrawSummaryBar.css` for the mobile safe-area inset. Parent components
- * must add bottom padding to their scroll container so the bar does not
- * occlude content (see the `pb-…` classes applied on `DrawCreditPage`).
+ * Scroll behaviour
+ * ────────────────
+ * Collapses to a one-line peek while the user scrolls down through the
+ * amount step; expands again on scroll-up. Under reduced-motion the
+ * transition is instant (see DrawSummaryBar.css).
  *
  * Accessibility
  * ─────────────
- * - `role="region"` + `aria-label="Draw summary"` so screen-reader users
- *   can navigate to it as a landmark.
- * - Each tile is a definition-list pair (`<dl>`) so SR users hear the
- *   label/value relationship explicitly.
- * - A screen-reader-only `aria-live="polite"` region announces the
- *   full summary in human-readable form, debounced via
- *   `useDebounceValue` so rapid amount edits (`100` → `1000` →
- *   `10000`) are not spammed to the SR user. Polite live regions wait
- *   for the SR to be idle, so the trailing-edge debounce gives a
- *   single coherent announcement.
- *
- * Theme awareness
- * ───────────────
- * Every visible style references CSS custom properties defined in
- * `src/index.css` (`--surface-overlay`, `--border`, `--text`,
- * `--muted`, `--accent`). Overrides for `[data-contrast="high"]` are
- * already declared on those tokens, so the bar auto-adapts to the
- * high-contrast toggle without any JS branching.
+ * - `role="region"` landmark labelled "Draw summary".
+ * - `tabIndex={0}` so keyboard users can Tab to the summary.
+ * - Definition-list tiles in the expanded state; compact text in collapsed.
+ * - Debounced `aria-live="polite"` region for screen-reader updates.
  */
 
 import { CreditLine, DrawStep } from "@/types/draw-credit.types";
 import { getDrawPricingQuote } from "@/lib/draw-credit-pricing";
 import { formatMoney } from "@/utils/amountValidation";
 import { useDebounceValue } from "@/hooks/useDebounceValue";
+import { useScrollCollapse } from "@/hooks/useScrollCollapse";
+import { BELOW_MD_MEDIA, useMediaQuery } from "@/hooks/useMediaQuery";
+import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 import "./DrawSummaryBar.css";
 
 interface DrawSummaryBarProps {
-  /** Selected credit line. When null, the bar renders nothing. */
   creditLine: CreditLine | null;
-  /** Current draw amount in whole dollars. Negative values are clamped to 0. */
   amount: number;
-  /** Current wizard step — controls visibility. */
   step: DrawStep;
 }
 
-/**
- * Steps on which the summary bar should be visible. Intentionally a
- * module-level constant so the set of visible steps is easy to audit in
- * one place. `confirm` is intentionally absent — see the Visibility
- * section of the file header for the rationale (avoid overlapping with
- * `ConfirmationStep`'s own sticky action bar).
- */
 const VISIBLE_STEPS: ReadonlySet<DrawStep> = new Set<DrawStep>(["amount"]);
 
-/** Synthetic quote used to keep hooks stable when the bar is invisible. */
-const HIDDEN_QUOTE = { apr: 0, fee: 0 };
-
-/**
- * Builds a one-sentence summary used by the screen-reader live region.
- *
- * Kept in plain English rather than a digit-stream so the user hears a
- * meaningful statement ("Draw ten thousand dollars at 11.5% APR.
- * Total cost ten thousand one hundred dollars.") instead of a row of
- * numbers.
- */
 function buildAnnouncement(
+  lineName: string,
   amountText: string,
   apr: number,
-  totalCostText: string,
 ): string {
-  return `Draw summary: ${amountText} draw amount, ${apr} percent APR, total cost ${totalCostText}.`;
+  return `Draw summary: ${lineName}, ${amountText} draw amount, ${apr} percent APR.`;
 }
 
-/**
- * Derived summary tuple — factored out so the debounce hook and the
- * render path use the *exact* same numbers, preventing a one-frame
- * drift between the visible tiles and the screen-reader announcement.
- */
 function computeSummary(
   line: CreditLine,
   amount: number,
 ): {
   apr: number;
-  fee: number;
-  totalCost: number;
   amountText: string;
-  totalCostText: string;
   announcement: string;
 } {
-  // Defensive clamp: the input layer already enforces >= 0, but we guard
-  // here so a wild prop value cannot blow up the live-region text or the
-  // money formatter.
   const safeAmount = Math.max(amount, 0);
-  const { apr, fee } = getDrawPricingQuote(line, safeAmount);
-  // Total cost = principal + 1 % flat fee. Interest is intentionally NOT
-  // bundled in: it varies with repayment schedule and adding it would
-  // mislead users about the *committed* cost of the draw.
-  const totalCost = safeAmount + fee;
+  const { apr } = getDrawPricingQuote(line, safeAmount);
   const amountText = formatMoney(safeAmount);
-  const totalCostText = formatMoney(totalCost);
-  const announcement = buildAnnouncement(amountText, apr, totalCostText);
-  return { apr, fee, totalCost, amountText, totalCostText, announcement };
+  const announcement = buildAnnouncement(line.name, amountText, apr);
+  return { apr, amountText, announcement };
 }
 
 export function DrawSummaryBar({
@@ -128,51 +69,71 @@ export function DrawSummaryBar({
   amount,
   step,
 }: DrawSummaryBarProps) {
-  // The bar is purely informational — bail out early on the steps where
-  // it would be confusing (no line yet, status screen, or confirm step
-  // already has its own sticky bar).
-  const isVisible = !!creditLine && VISIBLE_STEPS.has(step);
+  const isBelowMd = useMediaQuery(BELOW_MD_MEDIA);
+  const isVisible = !!creditLine && VISIBLE_STEPS.has(step) && isBelowMd;
+  const isCollapsed = useScrollCollapse(isVisible);
+  const prefersReducedMotion = usePrefersReducedMotion();
 
-  /*
-   * Hooks order rule
-   * ────────────────
-   * `useDebounceValue` MUST be called on every render so React's
-   * per-instance hooks array stays the same length across renders.
-   * We therefore compute the announcement string before the early
-   * return and feed the debounce hook even when the bar is invisible
-   * (passing an empty string). The early return short-circuits the
-   * render so the live region is never in the DOM in that branch.
-   *
-   * Computing the summary in one place also guarantees the visible
-   * tiles and the live-region text can never drift apart.
-   */
-  const summary = isVisible && creditLine
-    ? computeSummary(creditLine, amount)
-    : null;
+  const summary =
+    isVisible && creditLine ? computeSummary(creditLine, amount) : null;
   const announcement = summary ? summary.announcement : "";
-
-  // 400 ms debounce so SR users don't get a flood of partial
-  // announcements as they type digits into the amount field. Short
-  // enough to feel responsive but long enough to coalesce
-  // "10" → "100" → "1000" into one readback.
   const debouncedAnnouncement = useDebounceValue(announcement, 400);
 
-  if (!isVisible || !summary) {
+  if (!isVisible || !summary || !creditLine) {
     return null;
   }
 
-  const { apr, amountText, totalCostText } = summary;
+  const { apr, amountText } = summary;
 
   return (
     <aside
-      className="draw-summary-bar"
+      className={[
+        "draw-summary-bar",
+        isCollapsed ? "draw-summary-bar--collapsed" : "",
+        prefersReducedMotion ? "draw-summary-bar--reduced-motion" : "",
+      ]
+        .filter(Boolean)
+        .join(" ")}
       role="region"
       aria-label="Draw summary"
+      aria-expanded={!isCollapsed}
+      tabIndex={0}
       data-step={step}
       data-testid="draw-summary-bar"
     >
       <div className="draw-summary-bar__inner">
+        <p
+          className="draw-summary-bar__peek"
+          aria-hidden={!isCollapsed}
+          data-testid="draw-summary-peek"
+        >
+          <span className="draw-summary-bar__peek-line">{creditLine.name}</span>
+          <span className="draw-summary-bar__peek-sep" aria-hidden="true">
+            ·
+          </span>
+          <span className="draw-summary-bar__peek-amount num-tabular">
+            {amountText}
+          </span>
+          <span className="draw-summary-bar__peek-sep" aria-hidden="true">
+            ·
+          </span>
+          <span className="draw-summary-bar__peek-apr num-tabular">{apr}% APR</span>
+        </p>
+
         <dl className="draw-summary-bar__tiles">
+          <div
+            className="draw-summary-bar__tile"
+            data-tile="line"
+            data-testid="draw-summary-tile-line"
+          >
+            <dt className="draw-summary-bar__caption">Line</dt>
+            <dd
+              className="draw-summary-bar__value"
+              data-testid="draw-summary-line"
+            >
+              {creditLine.name}
+            </dd>
+          </div>
           <div
             className="draw-summary-bar__tile"
             data-tile="amount"
@@ -199,29 +160,9 @@ export function DrawSummaryBar({
               {apr}%
             </dd>
           </div>
-          <div
-            className="draw-summary-bar__tile"
-            data-tile="total"
-            data-testid="draw-summary-tile-total"
-          >
-            <dt className="draw-summary-bar__caption">Total cost</dt>
-            <dd
-              className="draw-summary-bar__value num-tabular"
-              data-testid="draw-summary-total"
-            >
-              {totalCostText}
-            </dd>
-          </div>
         </dl>
       </div>
 
-      {/*
-        Screen-reader-only polite live region announcing the *debounced*
-        summary. The element's text content only changes once typing has
-        settled, so a single coherent sentence is readback per change
-        rather than a stream of intermediate values. aria-atomic ensures
-        the entire string is read (not just the changed suffix).
-      */}
       <span
         className="sr-only"
         role="status"

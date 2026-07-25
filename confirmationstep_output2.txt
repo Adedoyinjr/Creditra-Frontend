@@ -1,0 +1,858 @@
+﻿node.exe : npm warn Unknown env config "devdir". This will stop working in the next major version of npm. See `npm 
+help npmrc` for supported config options.
+At line:1 char:1
++ & "C:\Program Files\nodejs/node.exe" "C:\Program Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (npm warn Unknow...config options.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+ RUN  v3.2.4 C:/Users/HP-USER/Creditra-Frontend
+
+ ├ù src/components/ConfirmationStep.test.tsx > ConfirmationStep > toggles the Why this APR drawer with aria-expanded and shows current pricing drivers 1609ms
+   ΓåÆ Unable to find an accessible element with the role "button" and name `/why this apr\?/i`
+
+Here are the accessible roles:
+
+  heading:
+
+  Name "Review and confirm":
+  [36m<h2[39m
+    [33mclass[39m=[32m"mt-1 text-2xl font-bold text-foreground sm:text-3xl"[39m
+    [33mid[39m=[32m"confirm-draw-heading"[39m
+  [36m/>[39m
+
+  Name "Credit Summary":
+  [36m<h3[39m
+    [33mclass[39m=[32m"text-sm font-semibold text-foreground uppercase tracking-wide flex items-center gap-1.5"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  banner:
+
+  Name "":
+  [36m<header />[39m
+
+  --------------------------------------------------
+  tooltip:
+
+  Name "Utilization is the percentage of your available credit that is currently being used.":
+  [36m<span[39m
+    [33mclass[39m=[32m"accessible-tooltip__content"[39m
+    [33mid[39m=[32m":r0:"[39m
+    [33mrole[39m=[32m"tooltip"[39m
+  [36m/>[39m
+
+  Name "A term is a defined period or condition of your credit agreement.":
+  [36m<span[39m
+    [33mclass[39m=[32m"accessible-tooltip__content"[39m
+    [33mid[39m=[32m":r1:"[39m
+    [33mrole[39m=[32m"tooltip"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  checkbox:
+
+  Name "I agree to the More information A term is a defined period or condition of your credit agreement. and conditions and authorize this draw. The funds will be deposited within 1-2 business days.":
+  [36m<input[39m
+    [33mclass[39m=[32m"mt-1 w-5 h-5 rounded accent-accent"[39m
+    [33mtype[39m=[32m"checkbox"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  button:
+
+  Name "Cancel":
+  [36m<button[39m
+    [33mclass[39m=[32m"rounded-lg border-2 border-border px-4 py-3 font-semibold text-foreground transition-colors hover:bg-background disabled:opacity-50 sm:w-auto"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Back":
+  [36m<button[39m
+    [33mclass[39m=[32m"rounded-lg border-2 border-border px-4 py-3 font-semibold text-foreground transition-colors hover:bg-background disabled:opacity-50 sm:w-auto"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Draw":
+  [36m<button[39m
+    [33maria-busy[39m=[32m"false"[39m
+    [33maria-describedby[39m=[32m"draw-disabled-helper"[39m
+    [33mclass[39m=[32m"pending-btn w-full rounded-lg bg-blue-600 px-4 py-3 font-semibold text-white transition-all hover:bg-blue-500 hover:shadow-lg hover:shadow-blue-500/40 disabled:cursor-not-allowed disabled:opacity-50"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  status:
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"text-center text-xs text-muted sm:text-right"[39m
+    [33mid[39m=[32m"draw-disabled-helper"[39m
+    [33mrole[39m=[32m"status"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"space-y-8"[39m
+    [36m>[39m
+      [36m<div>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"text-sm font-semibold uppercase text-muted"[39m
+        [36m>[39m
+          [0mStep 4[0m
+        [36m</p>[39m
+        [36m<h2[39m
+          [33mclass[39m=[32m"mt-1 text-2xl font-bold text-foreground sm:text-3xl"[39m
+          [33mid[39m=[32m"confirm-draw-heading"[39m
+        [36m>[39m
+          [0mReview and confirm[0m
+        [36m</h2>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"text-muted mt-2"[39m
+        [36m>[39m
+          [0mConfirm your draw details before submitting.[0m
+        [36m</p>[39m
+      [36m</div>[39m
+      [36m<section[39m
+        [33mclass[39m=[32m"bg-surface rounded-xl border border-border p-5 space-y-4"[39m
+        [33mstyle[39m=[32m"position: relative; overflow: hidden;"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mstyle[39m=[32m"position: absolute; top: 0px; left: 0px; width: 3px; height: 100%; background: rgb(210, 153, 34); border-radius: 4px 0 0 4px; pointer-events: none;"[39m
+        [36m/>[39m
+        [36m<header>[39m
+          [36m<h3[39m
+            [33mclass[39m=[32m"text-sm font-semibold text-foreground uppercase tracking-wide flex items-center gap-1.5"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mstyle[39m=[32m"display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: rgb(210, 153, 34); flex-shrink: 0;"[39m
+            [36m/>[39m
+            [0mCredit Summary[0m
+          [36m</h3>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-xs text-muted mt-1"[39m
+          [36m>[39m
+            [0mBusiness Line of Credit[0m
+          [36m</p>[39m
+        [36m</header>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"rounded-lg border border-border bg-background/60 p-3"[39m
+          [36m>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"text-muted"[39m
+            [36m>[39m
+              [0mLimit[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"text-base font-semibold text-foreground mt-1"[39m
+            [36m>[39m
+              [0m$50,000.00[0m
+            [36m</p>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"rounded-lg border border-border bg-background/60 p-3"[39m
+          [36m>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"text-muted"[39m
+            [36m>[39m
+              [0mUtilized[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"text-base font-semibold text-foreground mt-1"[39m
+            [36m>[39m
+              [0m$25,000.00[0m
+            [36m</p>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"rounded-lg border border-border bg-background/60 p-3"[39m
+          [36m>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"text-muted"[39m
+            [36m>[39m
+              [0mAvailable[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"text-base font-semibold text-foreground mt-1"[39m
+            [36m>[39m
+              [0m$25,000.00[0m
+            [36m</p>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</section>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"space-y-4"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"rounded-lg border border-border bg-surface p-5"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"grid gap-4 sm:grid-cols-2"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"sm:col-span-2"[39m
+            [36m>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"text-sm text-muted font-medium"[39m
+              [36m>[39m
+                [0mDraw amount[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"mt-1 text-3xl font-bold text-foreground tabular-nums"[39m
+              [36m>[39m
+                [0m$10,000.00[0m
+              [36m</p>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"rounded-lg border border-border bg-background/60 p-3"[39m
+            [36m>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"text-sm text-muted font-medium"[39m
+              [36m>[39m
+                [0mEstimated fee[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"mt-1 font-semibold text-foreground tabular-nums"[39m
+              [36m>[39m
+                [0m$100.00[0m
+              [36m</p>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"rounded-lg border border-border bg-background/60 p-3"[39m
+            [36m>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"text-sm text-muted font-medium"[39m
+              [36m>[39m
+                [0mEstimated monthly interest[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"mt-1 font-semibold text-foreground tabular-nums"[39m
+              [36m>[39m
+                [0m$95.83[0m
+              [36m</p>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"rounded-lg border border-border bg-background/60 p-3"[39m
+            [36m>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"text-sm text-muted font-medium"[39m
+              [36m>[39m
+                [0mNew balance[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"mt-1 font-semibold text-foreground tabular-nums"[39m
+              [36m>[39m
+                [0m$25,100.00[0m
+              [36m</p>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"rounded-lg border border-border bg-background/60 p-3"[39m
+            [36m>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"text-sm text-muted font-medium"[39m
+              [36m>[39m
+                [0mAvailable after draw[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"mt-1 font-semibold text-foreground tabular-nums"[39m
+              [36m>[39m
+                [0m$24,900.00[0m
+              [36m</p>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"mt-4 grid gap-3 border-t border-border pt-4 sm:grid-cols-2"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex justify-between gap-4 text-sm"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"text-muted font-medium"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"accessible-tooltip accessible-tooltip--inline"[39m
+                [36m>[39m
+                  [36m<span[39m
+                    [33maria-describedby[39m=[32m":r0:"[39m
+                    [33maria-label[39m=[32m"More information"[39m
+                    [33mclass[39m=[32m"accessible-tooltip__trigger accessible-tooltip__trigger--text"[39m
+                    [33mtabindex[39m=[32m"0"[39m
+                  [36m>[39m
+                    [36m<span[39m
+                      [33mclass[39m=[32m"accessible-tooltip__label"[39m
+                    [36m>[39m
+                      [36m<span>[39m
+                        [0mCurrent utilization[0m
+                      [36m</span>[39m
+                    [36m</span>[39m
+                  [36m</span>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"accessible-tooltip__content"[39m
+                    [33mid[39m=[32m":r0:"[39m
+                    [33mrole[39m=[32m"tooltip"[39m
+                  [36m>[39m
+                    [0mUtilization is the percentage of your available credit that is currently being used.[0m
+                  [36m</span>[39m
+                [36m</span>[39m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"font-semibold text-foreground tabular-nums"[39m
+              [36m>[39m
+                [0m30[0m
+                [0m%[0m
+              [36m</span>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex justify-between gap-4 text-sm"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"text-muted font-medium"[39m
+              [36m>[39m
+                [0mAfter draw[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"font-semibold tabular-nums text-foreground"[39m
+              [36m>[39m
+                [0m50[0m
+                [0m%[0m
+              [36m</span>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<label[39m
+        [33mclass[39m=[32m"flex cursor-pointer items-start gap-3 rounded-lg border border-border bg-surface p-4 transition-colors hover:bg-border"[39m
+      [36m>[39m
+        [36m<input[39m
+          [33mclass[39m=[32m"mt-1 w-5 h-5 rounded accent-accent"[39m
+          [33mtype[39m=[32m"checkbox"[39m
+        [36m/>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"text-sm text-foreground"[39m
+        [36m>[39m
+          [0mI agree to the[0m
+          [0m [0m
+          [36m<span[39m
+            [33mclass[39m=[32m"accessible-tooltip accessible-tooltip--inline"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33maria-describedby[39m=[32m":r1:"[39m
+              [33maria-label[39m=[32m"More information"[39m
+              [33mclass[39m=[32m"accessible-tooltip__trigger accessible-tooltip__trigger--text"[39m
+              [33mtabindex[39m=[32m"0"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"accessible-tooltip__label"[39m
+              [36m>[39m
+                [36m<span>[39m
+                  [0mterms[0m
+                [36m</span>[39m
+              [36m</span>[39m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"accessible-tooltip__content"[39m
+              [33mid[39m=[32m":r1:"[39m
+              [33mrole[39m=[32m"tooltip"[39m
+            [36m>[39m
+              [0mA term is a defined period or condition of your credit agreement.[0m
+            [36m</span>[39m
+          [36m</span>[39m
+          [0m [0m
+          [0mand conditions and authorize this draw. The funds will be deposited within 1-2 business days.[0m
+        [36m</span>[39m
+      [36m</label>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"sticky bottom-0 z-10 -mx-6 border-t border-border bg-surface/95 px-6 py-4 backdrop-blur sm:-mx-8 sm:px-8"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex flex-col-reverse gap-3 sm:flex-row"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"rounded-lg border-2 border-border px-4 py-3 font-semibold text-foreground transition-colors hover:bg-background disabled:opacity-50 sm:w-auto"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mCancel[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"rounded-lg border-2 border-border px-4 py-3 font-semibold text-foreground transition-colors hover:bg-background disabled:opacity-50 sm:w-auto"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mBack[0m
+          [36m</button>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"space-y-2 sm:ml-auto sm:min-w-64"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33maria-busy[39m=[32m"false"[39m
+              [33maria-describedby[39m=[32m"draw-disabled-helper"[39m
+              [33mclass[39m=[32m"pending-btn w-full rounded-lg bg-blue-600 px-4 py-3 font-semibold text-white transition-all hover:bg-blue-500 hover:shadow-lg hover:shadow-blue-500/40 disabled:cursor-not-allowed disabled:opacity-50"[39m
+              [33mdisabled[39m=[32m""[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0mDraw[0m
+            [36m</button>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"text-center text-xs text-muted sm:text-right"[39m
+              [33mid[39m=[32m"draw-disabled-helper"[39m
+              [33mrole[39m=[32m"status"[39m
+            [36m>[39m
+              [0mAccept the authorization terms to enable the Draw button.[0m
+            [36m</p>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ» Failed Tests 1 ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»
+
+ FAIL  src/components/ConfirmationStep.test.tsx > ConfirmationStep > toggles the Why this APR drawer with 
+aria-expanded and shows current pricing drivers
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name `/why this apr\?/i`
+
+Here are the accessible roles:
+
+  heading:
+
+  Name "Review and confirm":
+  [36m<h2[39m
+    [33mclass[39m=[32m"mt-1 text-2xl font-bold text-foreground sm:text-3xl"[39m
+    [33mid[39m=[32m"confirm-draw-heading"[39m
+  [36m/>[39m
+
+  Name "Credit Summary":
+  [36m<h3[39m
+    [33mclass[39m=[32m"text-sm font-semibold text-foreground uppercase tracking-wide flex items-center gap-1.5"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  banner:
+
+  Name "":
+  [36m<header />[39m
+
+  --------------------------------------------------
+  tooltip:
+
+  Name "Utilization is the percentage of your available credit that is currently being used.":
+  [36m<span[39m
+    [33mclass[39m=[32m"accessible-tooltip__content"[39m
+    [33mid[39m=[32m":r0:"[39m
+    [33mrole[39m=[32m"tooltip"[39m
+  [36m/>[39m
+
+  Name "A term is a defined period or condition of your credit agreement.":
+  [36m<span[39m
+    [33mclass[39m=[32m"accessible-tooltip__content"[39m
+    [33mid[39m=[32m":r1:"[39m
+    [33mrole[39m=[32m"tooltip"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  checkbox:
+
+  Name "I agree to the More information A term is a defined period or condition of your credit agreement. and 
+conditions and authorize this draw. The funds will be deposited within 1-2 business days.":
+  [36m<input[39m
+    [33mclass[39m=[32m"mt-1 w-5 h-5 rounded accent-accent"[39m
+    [33mtype[39m=[32m"checkbox"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  button:
+
+  Name "Cancel":
+  [36m<button[39m
+    [33mclass[39m=[32m"rounded-lg border-2 border-border px-4 py-3 font-semibold text-foreground transition-colors 
+hover:bg-background disabled:opacity-50 sm:w-auto"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Back":
+  [36m<button[39m
+    [33mclass[39m=[32m"rounded-lg border-2 border-border px-4 py-3 font-semibold text-foreground transition-colors 
+hover:bg-background disabled:opacity-50 sm:w-auto"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Draw":
+  [36m<button[39m
+    [33maria-busy[39m=[32m"false"[39m
+    [33maria-describedby[39m=[32m"draw-disabled-helper"[39m
+    [33mclass[39m=[32m"pending-btn w-full rounded-lg bg-blue-600 px-4 py-3 font-semibold text-white transition-all 
+hover:bg-blue-500 hover:shadow-lg hover:shadow-blue-500/40 disabled:cursor-not-allowed disabled:opacity-50"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  status:
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"text-center text-xs text-muted sm:text-right"[39m
+    [33mid[39m=[32m"draw-disabled-helper"[39m
+    [33mrole[39m=[32m"status"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"space-y-8"[39m
+    [36m>[39m
+      [36m<div>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"text-sm font-semibold uppercase text-muted"[39m
+        [36m>[39m
+          [0mStep 4[0m
+        [36m</p>[39m
+        [36m<h2[39m
+          [33mclass[39m=[32m"mt-1 text-2xl font-bold text-foreground sm:text-3xl"[39m
+          [33mid[39m=[32m"confirm-draw-heading"[39m
+        [36m>[39m
+          [0mReview and confirm[0m
+        [36m</h2>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"text-muted mt-2"[39m
+        [36m>[39m
+          [0mConfirm your draw details before submitting.[0m
+        [36m</p>[39m
+      [36m</div>[39m
+      [36m<section[39m
+        [33mclass[39m=[32m"bg-surface rounded-xl border border-border p-5 space-y-4"[39m
+        [33mstyle[39m=[32m"position: relative; overflow: hidden;"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mstyle[39m=[32m"position: absolute; top: 0px; left: 0px; width: 3px; height: 100%; background: 
+rgb(210, 153, 34); border-radius: 4px 0 0 4px; pointer-events: none;"[39m
+        [36m/>[39m
+        [36m<header>[39m
+          [36m<h3[39m
+            [33mclass[39m=[32m"text-sm font-semibold text-foreground uppercase tracking-wide flex items-center 
+gap-1.5"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mstyle[39m=[32m"display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: 
+rgb(210, 153, 34); flex-shrink: 0;"[39m
+            [36m/>[39m
+            [0mCredit Summary[0m
+          [36m</h3>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-xs text-muted mt-1"[39m
+          [36m>[39m
+            [0mBusiness Line of Credit[0m
+          [36m</p>[39m
+        [36m</header>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"rounded-lg border border-border bg-background/60 p-3"[39m
+          [36m>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"text-muted"[39m
+            [36m>[39m
+              [0mLimit[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"text-base font-semibold text-foreground mt-1"[39m
+            [36m>[39m
+              [0m$50,000.00[0m
+            [36m</p>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"rounded-lg border border-border bg-background/60 p-3"[39m
+          [36m>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"text-muted"[39m
+            [36m>[39m
+              [0mUtilized[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"text-base font-semibold text-foreground mt-1"[39m
+            [36m>[39m
+              [0m$25,000.00[0m
+            [36m</p>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"rounded-lg border border-border bg-background/60 p-3"[39m
+          [36m>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"text-muted"[39m
+            [36m>[39m
+              [0mAvailable[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"text-base font-semibold text-foreground mt-1"[39m
+            [36m>[39m
+              [0m$25,000.00[0m
+            [36m</p>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</section>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"space-y-4"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"rounded-lg border border-border bg-surface p-5"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"grid gap-4 sm:grid-cols-2"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"sm:col-span-2"[39m
+            [36m>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"text-sm text-muted font-medium"[39m
+              [36m>[39m
+                [0mDraw amount[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"mt-1 text-3xl font-bold text-foreground tabular-nums"[39m
+              [36m>[39m
+                [0m$10,000.00[0m
+              [36m</p>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"rounded-lg border border-border bg-background/60 p-3"[39m
+            [36m>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"text-sm text-muted font-medium"[39m
+              [36m>[39m
+                [0mEstimated fee[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"mt-1 font-semibold text-foreground tabular-nums"[39m
+              [36m>[39m
+                [0m$100.00[0m
+              [36m</p>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"rounded-lg border border-border bg-background/60 p-3"[39m
+            [36m>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"text-sm text-muted font-medium"[39m
+              [36m>[39m
+                [0mEstimated monthly interest[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"mt-1 font-semibold text-foreground tabular-nums"[39m
+              [36m>[39m
+                [0m$95.83[0m
+              [36m</p>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"rounded-lg border border-border bg-background/60 p-3"[39m
+            [36m>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"text-sm text-muted font-medium"[39m
+              [36m>[39m
+                [0mNew balance[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"mt-1 font-semibold text-foreground tabular-nums"[39m
+              [36m>[39m
+                [0m$25,100.00[0m
+              [36m</p>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"rounded-lg border border-border bg-background/60 p-3"[39m
+            [36m>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"text-sm text-muted font-medium"[39m
+              [36m>[39m
+                [0mAvailable after draw[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"mt-1 font-semibold text-foreground tabular-nums"[39m
+              [36m>[39m
+                [0m$24,900.00[0m
+              [36m</p>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"mt-4 grid gap-3 border-t border-border pt-4 sm:grid-cols-2"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex justify-between gap-4 text-sm"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"text-muted font-medium"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"accessible-tooltip accessible-tooltip--inline"[39m
+                [36m>[39m
+                  [36m<span[39m
+                    [33maria-describedby[39m=[32m":r0:"[39m
+                    [33maria-label[39m=[32m"More information"[39m
+                    [33mclass[39m=[32m"accessible-tooltip__trigger accessible-tooltip__trigger--text"[39m
+                    [33mtabindex[39m=[32m"0"[39m
+                  [36m>[39m
+                    [36m<span[39m
+                      [33mclass[39m=[32m"accessible-tooltip__label"[39m
+                    [36m>[39m
+                      [36m<span>[39m
+                        [0mCurrent utilization[0m
+                      [36m</span>[39m
+                    [36m</span>[39m
+                  [36m</span>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"accessible-tooltip__content"[39m
+                    [33mid[39m=[32m":r0:"[39m
+                    [33mrole[39m=[32m"tooltip"[39m
+                  [36m>[39m
+                    [0mUtilization is the percentage of your available credit that is currently being used.[0m
+                  [36m</span>[39m
+                [36m</span>[39m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"font-semibold text-foreground tabular-nums"[39m
+              [36m>[39m
+                [0m30[0m
+                [0m%[0m
+              [36m</span>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex justify-between gap-4 text-sm"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"text-muted font-medium"[39m
+              [36m>[39m
+                [0mAfter draw[0m
+              [36m</span>[39m
+              [36m<span[39m
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  07:32:08
+   Duration  10.03s (transform 412ms, setup 716ms, collect 2.28s, tests 1.61s, environment 3.41s, prepare 468ms)
+
+                [33mclass[39m=[32m"font-semibold tabular-nums text-foreground"[39m
+              [36m>[39m
+                [0m50[0m
+                [0m%[0m
+              [36m</span>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<label[39m
+        [33mclass[39m=[32m"flex cursor-pointer items-start gap-3 rounded-lg border border-border bg-surface p-4 
+transition-colors hover:bg-border"[39m
+      [36m>[39m
+        [36m<input[39m
+          [33mclass[39m=[32m"mt-1 w-5 h-5 rounded accent-accent"[39m
+          [33mtype[39m=[32m"checkbox"[39m
+        [36m/>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"text-sm text-foreground"[39m
+        [36m>[39m
+          [0mI agree to the[0m
+          [0m [0m
+          [36m<span[39m
+            [33mclass[39m=[32m"accessible-tooltip accessible-tooltip--inline"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33maria-describedby[39m=[32m":r1:"[39m
+              [33maria-label[39m=[32m"More information"[39m
+              [33mclass[39m=[32m"accessible-tooltip__trigger accessible-tooltip__trigger--text"[39m
+              [33mtabindex[39m=[32m"0"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"accessible-tooltip__label"[39m
+              [36m>[39m
+                [36m<span>[39m
+                  [0mterms[0m
+                [36m</span>[39m
+              [36m</span>[39m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"accessible-tooltip__content"[39m
+              [33mid[39m=[32m":r1:"[39m
+              [33mrole[39m=[32m"tooltip"[39m
+            [36m>[39m
+              [0mA term is a defined period or condition of your credit agreement.[0m
+            [36m</span>[39m
+          [36m</span>[39m
+          [0m [0m
+          [0mand conditions and authorize this draw. The funds will be deposited within 1-2 business days.[0m
+        [36m</span>[39m
+      [36m</label>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"sticky bottom-0 z-10 -mx-6 border-t border-border bg-surface/95 px-6 py-4 backdrop-blur 
+sm:-mx-8 sm:px-8"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex flex-col-reverse gap-3 sm:flex-row"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"rounded-lg border-2 border-border px-4 py-3 font-semibold text-foreground 
+transition-colors hover:bg-background disabled:opacity-50 sm:w-auto"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mCancel[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"rounded-lg border-2 border-border px-4 py-3 font-semibold text-foreground 
+transition-colors hover:bg-background disabled:opacity-50 sm:w-auto"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mBack[0m
+          [36m</button>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"space-y-2 sm:ml-auto sm:min-w-64"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33maria-busy[39m=[32m"false"[39m
+              [33maria-describedby[39m=[32m"draw-disabled-helper"[39m
+              [33mclass[39m=[32m"pending-btn w-full rounded-lg bg-blue-600 px-4 py-3 font-semibold text-white 
+transition-all hover:bg-blue-500 hover:shadow-lg hover:shadow-blue-500/40 disabled:cursor-not-allowed 
+disabled:opacity-50"[39m
+              [33mdisabled[39m=[32m""[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0mDraw[0m
+            [36m</button>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"text-center text-xs text-muted sm:text-right"[39m
+              [33mid[39m=[32m"draw-disabled-helper"[39m
+              [33mrole[39m=[32m"status"[39m
+            [36m>[39m
+              [0mAccept the authorization terms to enable the Draw button.[0m
+            [36m</p>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ Γ¥» Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ Γ¥» node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ Γ¥» node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ Γ¥» node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ Γ¥» src/components/ConfirmationStep.test.tsx:33:27
+     31|     );
+     32| 
+     33|     const toggle = screen.getByRole("button", { name: /why this apr\?/ΓÇª
+       |                           ^
+     34| 
+     35|     expect(toggle).toHaveAttribute("aria-expanded", "false");
+
+ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[1/1]ΓÄ»
+

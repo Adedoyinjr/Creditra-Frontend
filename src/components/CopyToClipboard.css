@@ -1,3 +1,34 @@
+/* ── CopyToClipboard ─────────────────────────────────────────────────────── */
+
+/* ----- Keyframes ----------------------------------------------------------- */
+
+/**
+ * Scale-pop used when the button enters the `copied` success state.
+ * Grows slightly above 1 then settles back to natural size, giving a
+ * satisfying "stamp" feel without displacing surrounding layout.
+ */
+@keyframes copy-success-pop {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.14); }
+  70%  { transform: scale(0.97); }
+  100% { transform: scale(1); }
+}
+
+/**
+ * Horizontal micro-shake used when the copy operation fails.
+ * Amplitude is intentionally small (3 px) so it reads as "something went
+ * wrong" without being disorienting for vestibular-sensitive users.
+ */
+@keyframes copy-error-shake {
+  0%, 100% { transform: translateX(0); }
+  20%       { transform: translateX(-3px); }
+  40%       { transform: translateX(3px); }
+  60%       { transform: translateX(-3px); }
+  80%       { transform: translateX(2px); }
+}
+
+/* ----- Layout -------------------------------------------------------------- */
+
 .copy-affordance {
   display: inline-flex;
   align-items: center;
@@ -14,6 +45,8 @@
   border-radius: 6px;
 }
 
+/* ----- Value label --------------------------------------------------------- */
+
 .copy-affordance__value {
   min-width: 0;
   overflow: hidden;
@@ -22,6 +55,8 @@
   color: var(--muted);
 }
 
+/* ----- Copy button — base -------------------------------------------------- */
+
 .copy-affordance__button {
   min-height: 32px;
   padding: 0.375rem 0.625rem;
@@ -29,13 +64,24 @@
   align-items: center;
   gap: 0.375rem;
   border: 1px solid transparent;
-  border-radius: 999px;
+  border-radius: var(--radius-pill, 9999px);
   background: rgba(88, 166, 255, 0.12);
   color: var(--accent);
   font: inherit;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.15s, border-color 0.15s, color 0.15s;
+
+  /*
+   * `transform` participates in the animations declared above.
+   * Including it in the transition list means both animated and
+   * non-animated state changes feel smooth.
+   */
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease,
+    transform 0.15s ease;
+
   flex-shrink: 0;
 }
 
@@ -49,11 +95,45 @@
   outline-offset: 2px;
 }
 
-.copy-affordance__button[data-copied='true'] {
+/* ----- Copied state -------------------------------------------------------- */
+
+.copy-affordance__button[data-copy-state='copied'] {
   background: rgba(63, 185, 80, 0.14);
   border-color: rgba(63, 185, 80, 0.35);
   color: var(--success);
+  animation: copy-success-pop 0.35s ease both;
 }
+
+/* Hover on copied state keeps the success colour so the button doesn't flicker */
+.copy-affordance__button[data-copy-state='copied']:hover {
+  background: rgba(63, 185, 80, 0.22);
+  border-color: rgba(63, 185, 80, 0.5);
+}
+
+/* Focus ring adapts to success colour for visual coherence */
+.copy-affordance__button[data-copy-state='copied']:focus-visible {
+  outline-color: var(--success);
+}
+
+/* ----- Error state --------------------------------------------------------- */
+
+.copy-affordance__button[data-copy-state='error'] {
+  background: rgba(248, 81, 73, 0.12);
+  border-color: rgba(248, 81, 73, 0.35);
+  color: var(--error);
+  animation: copy-error-shake 0.4s ease both;
+}
+
+.copy-affordance__button[data-copy-state='error']:hover {
+  background: rgba(248, 81, 73, 0.18);
+  border-color: rgba(248, 81, 73, 0.5);
+}
+
+.copy-affordance__button[data-copy-state='error']:focus-visible {
+  outline-color: var(--error);
+}
+
+/* ----- Icon + label -------------------------------------------------------- */
 
 .copy-affordance__button-label {
   line-height: 1;
@@ -62,4 +142,33 @@
 .copy-affordance__icon {
   width: 0.9rem;
   height: 0.9rem;
+}
+
+/* ----- Reduced-motion override --------------------------------------------- */
+/*
+ * When the user has requested reduced motion (OS-level preference or the
+ * repo's custom [data-motion="reduced"] attribute), collapse the keyframe
+ * animations and transform transitions to an instant colour-only swap.
+ * The state still changes — only the motion is removed, not the feedback.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .copy-affordance__button[data-copy-state='copied'],
+  .copy-affordance__button[data-copy-state='error'] {
+    animation: none;
+    transform: none;
+    transition:
+      background 0.01ms,
+      border-color 0.01ms,
+      color 0.01ms;
+  }
+}
+
+[data-motion='reduced'] .copy-affordance__button[data-copy-state='copied'],
+[data-motion='reduced'] .copy-affordance__button[data-copy-state='error'] {
+  animation: none;
+  transform: none;
+  transition:
+    background 0.01ms,
+    border-color 0.01ms,
+    color 0.01ms;
 }

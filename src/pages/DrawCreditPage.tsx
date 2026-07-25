@@ -1,7 +1,25 @@
-"use client";
+/**
+ * DrawCreditPage
+ *
+ * Multi-step draw-credit flow:
+ *   1. "select"  – choose a credit line
+ *   2. "amount"  – enter draw amount (+ live preview)
+ *   3. "confirm" – review details and accept terms
+ *   4. "status"  – loading spinner → transaction result
+ *
+ * Spacing, colour and typography all reference design tokens via the
+ * `dc-*` CSS classes defined in `src/index.css`. No raw Tailwind colour
+ * utilities (blue-500, green-400, etc.) are used in this module.
+ *
+ * Accessibility:
+ *   - <main> labelled with aria-label for screen-reader landmark navigation
+ *   - Loading state wrapped in role="status" + aria-live="polite"
+ *   - Spinner has aria-label describing the in-progress action
+ */
 
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { loadDraft, saveDraft, clearDraft } from "@/state/wizardDraft";
 import { CreditLineSelector } from "@/components/CreditLineSelector";
 import { AmountInput } from "@/components/AmountInput";
 import { PreviewSection } from "@/components/PreviewSection";
@@ -11,7 +29,11 @@ import { InlineHelpOverlay } from "@/components/InlineHelpOverlay";
 import { CreditLine, DrawStep, Transaction } from "@/types/draw-credit.types";
 import { mockCreditLines } from "@/lib/draw-credit-mock-data";
 import { WhyApr } from "@/components/WhyApr";
+import { DrawingLimit } from "@/components/DrawingLimit";
 import { DrawSummaryBar } from "@/components/DrawSummaryBar";
+import { DrawWizardMicroIndicator } from "@/components/DrawWizardMicroIndicator";
+import { useDrawWizardMicroProgress } from "@/hooks/useDrawWizardMicroProgress";
+import "@/components/DrawWizardMicroProgress.css";
 
 const drawSteps = [
   { id: "select", label: "Select line" },
@@ -26,12 +48,22 @@ export default function DrawCreditPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const routeTransaction = location.state?.transaction as Transaction | undefined;
+  const draftState = routeTransaction ? null : loadDraft();
+
   const [step, setStep] = useState<DrawStep>(
-    routeTransaction ? "status" : "select",
+    routeTransaction ? "status" : draftState?.step ?? "select",
   );
   const [selectedCreditLine, setSelectedCreditLine] =
-    useState<CreditLine | null>(null);
-  const [amount, setAmount] = useState(0);
+    useState<CreditLine | null>(draftState?.selectedCreditLine ?? null);
+  const [amount, setAmount] = useState(draftState?.amount ?? 0);
+
+  useEffect(() => {
+    if (step === "status") {
+      clearDraft();
+    } else {
+      saveDraft({ step, selectedCreditLine, amount });
+    }
+  }, [step, selectedCreditLine, amount]);
   const [isLoading, setIsLoading] = useState(false);
   const [isHelpOpen, setIsHelpOpen] = useState(false);
   const helpTriggerRef = useRef<HTMLButtonElement>(null);
@@ -40,10 +72,21 @@ export default function DrawCreditPage() {
   const [transaction, setTransaction] = useState<Transaction | null>(
     routeTransaction ?? null,
   );
+  const [confirmationAcknowledged, setConfirmationAcknowledged] =
+    useState(false);
+
+  const { steps: microProgressSteps, debouncedAnnouncement: microProgressAnnouncement } =
+    useDrawWizardMicroProgress({
+      selectedCreditLine,
+      amount,
+      confirmationAcknowledged,
+      isOnConfirmStep: step === "confirm",
+    });
 
   const handleSelectCreditLine = (creditLine: CreditLine) => {
     setSelectedCreditLine(creditLine);
     setAmount(0);
+    setConfirmationAcknowledged(false);
     setStep("amount");
   };
 
@@ -85,6 +128,7 @@ export default function DrawCreditPage() {
     setStep("select");
     setSelectedCreditLine(null);
     setAmount(0);
+    setConfirmationAcknowledged(false);
     setTransaction(null);
   };
 
@@ -92,8 +136,10 @@ export default function DrawCreditPage() {
     if (step === "amount") {
       setStep("select");
       setSelectedCreditLine(null);
+      setConfirmationAcknowledged(false);
     } else if (step === "confirm") {
       setStep("amount");
+      setConfirmationAcknowledged(false);
     }
   };
 
@@ -108,159 +154,96 @@ export default function DrawCreditPage() {
   );
 
   return (
-    <main className="min-h-screen bg-background px-4 pb-24 pt-6 sm:pb-28 sm:pt-8">
-      <div className="mx-auto w-full max-w-4xl space-y-5">
-        {step !== "status" && (
-          <header className="card" aria-label="Draw credit progress">
-            <div className="space-y-2">
-              <p className="text-sm font-semibold uppercase text-muted">
-                Draw Credit
-              </p>
-              <h1 className="text-2xl font-bold text-foreground sm:text-3xl">
-                Request funds from an approved line
-              </h1>
-            </div>
-            <ol className="mt-6 grid gap-3 sm:grid-cols-4">
-              {drawSteps.map((drawStep, index) => {
-                const isActive = index === activeStepIndex;
-                const isComplete = index < activeStepIndex;
+    /*
+     * `dc-page` sets min-height:100vh + flex centering via tokens.
+     * aria-label exposes this landmark to screen readers as "Draw credit".
+     */
+    <main className="dc-page" aria-label="Draw credit">
+      <div className="dc-page__inner">
+        {/* Card uses dc-page__card (token-backed padding + radius) — no inline style override */}
+        <div className="dc-page__card">
 
-                return (
-                  <li
-                    key={drawStep.id}
-                    className={`rounded-lg border px-3 py-3 ${
-                      isActive
-                        ? "border-blue-400 bg-blue-500/10"
-                        : isComplete
-                          ? "border-green-500/40 bg-green-500/10"
-                          : "border-border bg-background/60"
-                    }`}
-                    aria-current={isActive ? "step" : undefined}
-                  >
-                    <span className="text-xs font-semibold uppercase text-muted">
-                      Step {index + 1}
-                    </span>
-                    <p className="mt-1 text-sm font-semibold text-foreground">
-                      {drawStep.label}
-                    </p>
-                  </li>
-                );
-              })}
-            </ol>
-          </header>
-        )}
-
-        {step === "select" && (
-          <div className="card card-large" style={{ maxWidth: "none", margin: 0 }}>
-            <section aria-labelledby="select-credit-line-heading">
-              <CreditLineSelector
-                creditLines={mockCreditLines}
-                onSelect={handleSelectCreditLine}
-              />
-            </section>
-          </div>
-        )}
-
-        {step === "amount" && selectedCreditLine && (
-          <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(280px,360px)] lg:items-start">
-            <section className="card" style={{ margin: 0 }}>
-  <AmountInput
-    creditLine={selectedCreditLine}
-    onAmountChange={setAmount}
-    onNext={handleAmountNext}
-    onBack={handleBack}
-  />
-  {/* Drawing limit indicator */}
-  {selectedCreditLine && (
-    <div className="mt-6 border-t border-border pt-6">
-      <DrawingLimit
-        drawnAmount={selectedCreditLine.drawnAmount}
-        totalLimit={selectedCreditLine.limit}
-      />
-    </div>
-  )}
-</section>
-            <aside className="card lg:sticky lg:top-6" style={{ margin: 0 }}>
-              <PreviewSection creditLine={selectedCreditLine} amount={amount} />
-            </aside>
-          </div>
-        )}
-
-        {step === "confirm" && selectedCreditLine && (
-          <div className="card card-large" style={{ maxWidth: "none", margin: 0 }}>
-            <section aria-labelledby="confirm-draw-heading">
-              <ConfirmationStep
-                creditLine={selectedCreditLine}
-                amount={amount}
-                onConfirm={handleConfirm}
-                onBack={handleBack}
-                onCancel={handleCancel}
-                isLoading={isLoading}
-              />
-            </section>
-          </div>
-        )}
-
-        {step === "status" && transaction && (
-          <div className="card card-large" style={{ maxWidth: "none", margin: 0 }}>
-            <TransactionStatus
-              transaction={transaction}
-              onNewDraw={handleNewDraw}
+          {/* ── Step 1: Select a credit line ── */}
+          {step === "select" && (
+            <CreditLineSelector
+              creditLines={mockCreditLines}
+              onSelect={handleSelectCreditLine}
             />
-          </div>
-        )}
+          )}
 
-        {step === "status" && !transaction && (
-          <div className="card card-large" style={{ maxWidth: "none", margin: 0 }}>
-            <div className="space-y-4 text-center">
-              <h2 className="text-2xl font-bold text-foreground">
-                Draw status unavailable
-              </h2>
-              <p className="text-muted">
-                Start a new request to draw from an approved credit line.
-              </p>
-              <button
-                type="button"
-                onClick={handleNewDraw}
-                className="rounded-lg bg-blue-600 px-4 py-3 font-semibold text-white transition-all hover:bg-blue-500"
-              >
-                Start new draw
-              </button>
+          {/* ── Step 2: Enter amount + live preview ── */}
+          {step === "amount" && selectedCreditLine && (
+            <div className="dc-step">
+              <AmountInput
+                creditLine={selectedCreditLine}
+                onAmountChange={setAmount}
+                onNext={handleAmountNext}
+                onBack={handleBack}
+              />
+              {/* Separator uses dc-separator (border-top with space-8 padding — token-backed) */}
+              <div className="dc-separator">
+                <PreviewSection
+                  creditLine={selectedCreditLine}
+                  amount={amount}
+                />
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {step !== "status" && (
-          <div className="flex flex-col gap-2 text-center text-sm text-muted sm:flex-row sm:items-center sm:justify-between sm:text-left">
-            <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4">
-              <button
-                ref={helpTriggerRef}
-                type="button"
-                onClick={() => setIsHelpOpen(true)}
-                className="inline-flex min-h-11 items-center justify-center rounded-md px-3 font-semibold text-blue-300 underline-offset-4 transition-colors hover:text-blue-200 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-400 sm:justify-start"
-              >
-                I need help
-              </button>
-              {(step === "amount" || step === "confirm") && (
-                <button
-                  ref={whyAprTriggerRef}
-                  type="button"
-                  onClick={() => setIsWhyAprOpen(true)}
-                  className="inline-flex min-h-11 items-center justify-center rounded-md px-3 font-semibold text-blue-300 underline-offset-4 transition-colors hover:text-blue-200 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-400 sm:justify-start"
+          {/* ── Step 3: Review & confirm ── */}
+          {step === "confirm" && selectedCreditLine && (
+            <ConfirmationStep
+              creditLine={selectedCreditLine}
+              amount={amount}
+              onConfirm={handleConfirm}
+              onBack={handleBack}
+              isLoading={isLoading}
+            />
+          )}
+
+          {/* ── Step 4: Status (loading → result) ── */}
+          {step === "status" && (isLoading || transaction) && (
+            <>
+              {isLoading && (
+                /*
+                 * role="status" + aria-live="polite" announce the loading state
+                 * to screen readers without interrupting the user.
+                 * aria-label on the spinner ring itself provides a text
+                 * alternative for the animated element.
+                 */
+                <div
+                  className="dc-spinner-wrap"
+                  role="status"
+                  aria-live="polite"
+                  aria-label="Processing your draw request"
                 >
-                  Why this APR?
-                </button>
+                  <div className="dc-spinner-ring-bg">
+                    <div
+                      className="dc-spinner-ring"
+                      aria-hidden="true"
+                    />
+                  </div>
+                  <div>
+                    <h2 className="dc-step__title">Processing</h2>
+                    <p className="dc-step__subtitle">
+                      Your draw request is being processed.
+                    </p>
+                  </div>
+                </div>
               )}
-            </div>
-            <button
-              type="button"
-              onClick={handleCancel}
-              className="font-semibold text-foreground underline-offset-4 hover:text-blue-400 hover:underline"
-            >
-              Cancel draw
-            </button>
-          </div>
-        )}
+              {transaction && !isLoading && (
+                <TransactionStatus
+                  transaction={transaction}
+                  onNewDraw={handleNewDraw}
+                />
+              )}
+            </>
+          )}
+        </div>
+
+        <p className="dc-page__footer">
+          Need help? Contact support at 1-800-CREDIT-1
+        </p>
       </div>
       <InlineHelpOverlay
         isOpen={isHelpOpen}
@@ -273,12 +256,10 @@ export default function DrawCreditPage() {
         triggerRef={whyAprTriggerRef}
       />
       {/*
-        Sticky bottom summary bar — rendered at the page root so it
-        always anchors to the viewport bottom regardless of which step
-        card is currently mounted. The bar self-hides on the `select`
-        and `status` steps; see DrawSummaryBar.tsx for details. The
-        pb-32 / sm:pb-36 padding on <main> ensures content is never
-        occluded by the fixed-position bar.
+        Mobile-only sticky summary (below md) — fixed to the viewport so
+        line / amount / APR stay visible while scrolling the amount step.
+        Desktop uses the sidebar PreviewSection instead. Bottom padding on
+        <main> (max-md:pb-28) prevents content from sitting under the bar.
       */}
       <DrawSummaryBar
         creditLine={selectedCreditLine}

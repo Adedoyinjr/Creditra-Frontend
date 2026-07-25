@@ -1,5 +1,12 @@
 import { describe, it, expect } from 'vitest';
-import { formatCurrency, formatCompactCurrency } from './currency';
+import {
+  formatCurrency,
+  formatCompactCurrency,
+  roundToCents,
+  computeMonthlyAccruedInterest,
+  computeFullPayoffAmount,
+  formatAmountInputValue,
+} from './currency';
 
 describe('formatCurrency', () => {
   it('formats a whole-dollar amount in USD by default', () => {
@@ -29,5 +36,40 @@ describe('formatCompactCurrency', () => {
   it('produces a short representation for millions', () => {
     const result = formatCompactCurrency(3_400_000);
     expect(result).toMatch(/M/i);
+  });
+});
+
+describe('roundToCents', () => {
+  it('rounds to two decimal places', () => {
+    expect(roundToCents(10.005)).toBe(10.01);
+    expect(roundToCents(10.004)).toBe(10);
+  });
+});
+
+describe('computeMonthlyAccruedInterest', () => {
+  it('returns zero for non-positive principal or APR', () => {
+    expect(computeMonthlyAccruedInterest(0, 12)).toBe(0);
+    expect(computeMonthlyAccruedInterest(1000, 0)).toBe(0);
+  });
+
+  it('computes monthly interest from principal and APR', () => {
+    expect(computeMonthlyAccruedInterest(3000, 12)).toBe(30);
+  });
+});
+
+describe('computeFullPayoffAmount', () => {
+  it('sums principal and accrued monthly interest', () => {
+    expect(computeFullPayoffAmount(3000, 12)).toBe(3030);
+  });
+
+  it('returns zero when principal is zero', () => {
+    expect(computeFullPayoffAmount(0, 12)).toBe(0);
+  });
+});
+
+describe('formatAmountInputValue', () => {
+  it('formats with two fixed decimals', () => {
+    expect(formatAmountInputValue(3030)).toBe('3030.00');
+    expect(formatAmountInputValue(10.5)).toBe('10.50');
   });
 });

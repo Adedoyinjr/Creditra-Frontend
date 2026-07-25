@@ -1,0 +1,60 @@
+﻿ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ» Failed Tests 12 ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»
+
+ FAIL  src/components/notifications/UndoToast.test.tsx > UndoToast integration > shows an undo toast after marking a 
+single notification as read
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name `/mark all read|Open 
+panel/i`
+
+Here are the accessible roles:
+
+  log:
+
+  Name "Notifications":
+  [36m<div[39m
+    [33maria-label[39m=[32m"Notifications"[39m
+    [33maria-live[39m=[32m"polite"[39m
+    [33mclass[39m=[32m"toast-container"[39m
+    [33mrole[39m=[32m"log"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  button:
+
+  Name "Dummy opener":
+  [36m<button[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33maria-label[39m=[32m"Notifications"[39m
+      [33maria-live[39m=[32m"polite"[39m
+      [33mclass[39m=[32m"toast-container"[39m
+      [33mrole[39m=[32m"log"[39m
+    [36m/>[39m
+    [36m<div>[39m
+      [36m<button[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0mDummy opener[0m
+      [36m</button>[39m
+      [36m<div[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33maria-label[39m=[32m"Notification center"[39m
+        [33maria-modal[39m=[32m"false"[39m
+        [33mclass[39m=[32m"nc-panel "[39m
+        [33mid[39m=[32m"notification-center"[39m
+        [33mrole[39m=[32m"dialog"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"nc-drag-handle-area"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"nc-drag-handle"[39m
+          [36m/>[39m
+        [36m</div>[39m

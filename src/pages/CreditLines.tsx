@@ -1,43 +1,31 @@
-import { useRef, useState, useMemo } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { StatusBadge } from "../components/StatusBadge";
-import { CreditLineRowMenu } from "../components/CreditLineRowMenu";
-import { MOCK_CREDIT_LINES } from "../data/mockData";
+import { useState, useMemo, useRef } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { StatusBadge } from '../components/StatusBadge';
+import { RepaymentPlanChart } from '../components/RepaymentPlanChart';
+import { MOCK_CREDIT_LINES } from '../data/mockData';
+import type { CreditLineStatus, SortField, SortDirection } from '../types/creditLine';
+import {
+  COLOR,
+  UTIL_COLOR,
+  fmt,
+  fmtDate,
+  fmtDateTime,
+  relativeTime,
+  getUtilizationLevel,
+  utilizationPct,
+} from "../utils/tokens";
+import "./CreditLines.css";
+import { AccessibleTooltip } from "../components/AccessibleTooltip";
 import { useFocusTrap } from "../hooks/useFocusTrap";
 import { useInertBackdrop } from "../hooks/useInertBackdrop";
 import { useBodyScrollLock } from "../hooks/useBodyScrollLock";
 import CompareLinesPanel from "../components/CompareLinesPanel";
 import { CollateralSubstitutionModal } from "../components/CollateralSubstitutionModal";
 import { NoLines } from "../components/illustrations";
-import type {
-  CreditLineStatus,
-  SortField,
-  SortDirection,
-} from "../types/creditLine";
-import type { CollateralAsset } from "../types/collateral";
 import {
-  COLOR, UTIL_COLOR,
-  fmt, fmtDate, fmtDateTime, getUtilizationLevel, relativeTime, utilizationPct,
-} from '../utils/tokens';
-import { formatCountdown, getCountdownAriaLabel } from '../utils/dates';
-import { AccessibleTooltip } from '../components/AccessibleTooltip';
-import './CreditLines.css';
-
-// ─── Next Accrual Chip ───────────────────────────────────────────────────────
-
-function NextAccrualChip({ target }: { target: string }) {
-  return (
-    <>
-      <span className="cl-accrual-label">Next interest accrual</span>
-      <span
-        className="cl-accrual-chip"
-        aria-label={getCountdownAriaLabel(target)}
-      >
-        {formatCountdown(target)}
-      </span>
-    </>
-  );
-}
+  RepaymentSchedule,
+  buildRepaymentScheduleFromLines,
+} from "../components/RepaymentSchedule";
 
 // ─── Credit Line Card ────────────────────────────────────────────────────────
 
@@ -49,6 +37,8 @@ function CreditLineCard({
   onRepay,
   onSchedule,
   onDetails,
+  onFreeze,
+  onUnfreeze,
 }: {
   line: (typeof MOCK_CREDIT_LINES)[0];
   isSelected: boolean;
@@ -60,17 +50,22 @@ function CreditLineCard({
   onRepay?: () => void;
   onSchedule?: (lineId: string) => void;
   onDetails?: (lineId: string) => void;
+  onFreeze?: (lineId: string) => void;
+  onUnfreeze?: (lineId: string) => void;
 }) {
   const pct = utilizationPct(line.utilized, line.limit);
   const level = getUtilizationLevel(line.utilized, line.limit);
   const swapTriggerRef = useRef<HTMLButtonElement>(null);
 
   const isDefaulted = line.status === 'Defaulted';
+  const canFreeze = line.status === 'Active' || line.status === 'Frozen';
 
   return (
     <div
-      className={`cl-card${isDefaulted ? ' cl-row--defaulted' : ''}`}
-      aria-label={isDefaulted ? `Credit line ${line.id} is defaulted` : undefined}
+      className={`cl-card status-${line.status.toLowerCase()}${isDefaulted ? " cl-row--defaulted" : ""}`}
+      aria-label={
+        isDefaulted ? `Credit line ${line.id} is defaulted` : undefined
+      }
     >
        <div className="cl-card-header">
          <div className="cl-card-title-row">
@@ -93,7 +88,10 @@ function CreditLineCard({
            <CreditLineRowMenu
              lineId={line.id}
              lineName={line.name}
+             frozen={line.status === 'Frozen'}
              onRepay={onRepay}
+             onFreeze={canFreeze ? onFreeze : undefined}
+             onUnfreeze={canFreeze ? onUnfreeze : undefined}
              onSchedule={onSchedule}
              onDetails={onDetails}
            />
@@ -128,7 +126,9 @@ function CreditLineCard({
         <div className="cl-util-bar">
           <div className="cl-util-header">
             <span>Utilization</span>
-            <span className="num-tabular" style={{ color: UTIL_COLOR[level] }}>{pct}%</span>
+            <span className="num-tabular" style={{ color: UTIL_COLOR[level] }}>
+              {pct}%
+            </span>
           </div>
           <div className="cl-util-track">
             <div
@@ -153,13 +153,6 @@ function CreditLineCard({
           </div>
         </div>
 
-        <div className="cl-last-activity">
-          <span className="label">Last Activity</span>
-          <AccessibleTooltip label={`Last updated: ${fmtDateTime(line.updatedAt)}`}>
-            <span className="cl-last-activity__time">{relativeTime(line.updatedAt)}</span>
-          </AccessibleTooltip>
-        </div>
-
         {line.nextInterestAccrualDate && (
           <div className="cl-accrual">
             <NextAccrualChip target={line.nextInterestAccrualDate} />
@@ -167,8 +160,9 @@ function CreditLineCard({
         )}
       </div>
 
-       <div className="cl-card-footer">
-       </div>
+      <div className="cl-card-detail">
+        <RepaymentPlanChart line={line} />
+      </div>
     </div>
   );
 }
@@ -183,7 +177,7 @@ export default function CreditLines() {
     "all",
   );
 
-  const creditLines = MOCK_CREDIT_LINES;
+  const [creditLines, setCreditLines] = useState(MOCK_CREDIT_LINES);
   const hasCreditLines = creditLines.length > 0;
 
   const [showCompare, setShowCompare] = useState(false);
@@ -212,6 +206,45 @@ export default function CreditLines() {
 
   const handleRepay = (lineId: string) => {
     navigate(`/repay?line=${lineId}`);
+  };
+
+  const handleFreeze = (lineId: string) => {
+    setCreditLines((prev) =>
+      prev.map((cl) =>
+        cl.id === lineId
+          ? {
+              ...cl,
+              status: 'Frozen' as const,
+              updatedAt: new Date().toISOString(),
+              statusHistory: [
+                ...cl.statusHistory,
+                { status: 'Frozen' as const, date: new Date().toISOString(), note: 'Frozen by user' },
+              ],
+            }
+          : cl,
+      ),
+    );
+  };
+
+  const handleUnfreeze = (lineId: string) => {
+    setCreditLines((prev) =>
+      prev.map((cl) => {
+        if (cl.id !== lineId) return cl;
+        const lastNonFrozen = cl.statusHistory
+          .filter((s) => s.status !== 'Frozen')
+          .pop();
+        const restoredStatus = lastNonFrozen?.status || 'Active';
+        return {
+          ...cl,
+          status: restoredStatus,
+          updatedAt: new Date().toISOString(),
+          statusHistory: [
+            ...cl.statusHistory,
+            { status: restoredStatus, date: new Date().toISOString(), note: 'Unfrozen by user' },
+          ],
+        };
+      }),
+    );
   };
 
   const handleSchedule = (lineId: string) => {
@@ -323,7 +356,7 @@ export default function CreditLines() {
           <h1>Credit Lines</h1>
           <p className="subtitle">Manage your credit facilities</p>
         </div>
-        <div style={{ display: "flex", gap: "0.75rem" }}>
+        <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
           <button
             ref={triggerRef}
             className="cl-primary-btn"
@@ -333,6 +366,31 @@ export default function CreditLines() {
           >
             Compare Selected ({selectedLines.length}/2)
           </button>
+          {/* Full-page compare — only enabled when exactly 2 lines are selected */}
+          <Link
+            to={
+              selectedLines.length === 2
+                ? `/compare-credit-lines?a=${selectedLines[0]}&b=${selectedLines[1]}`
+                : '#'
+            }
+            className="cl-primary-btn"
+            aria-disabled={selectedLines.length !== 2}
+            aria-label={
+              selectedLines.length === 2
+                ? 'Open full-page comparison for the two selected credit lines'
+                : 'Select exactly 2 credit lines to open the full comparison page'
+            }
+            style={{
+              background: 'var(--surface)',
+              border: '1px solid var(--border)',
+              color: selectedLines.length === 2 ? 'var(--text)' : 'var(--muted)',
+              opacity: selectedLines.length === 2 ? 1 : 0.6,
+              pointerEvents: selectedLines.length === 2 ? 'auto' : 'none',
+            }}
+            tabIndex={selectedLines.length === 2 ? 0 : -1}
+          >
+            Full Compare →
+          </Link>
           <Link to="/open-credit" className="cl-primary-btn">
             + Open New Line
           </Link>
@@ -351,6 +409,7 @@ export default function CreditLines() {
             <option value="all">All Statuses</option>
             <option value="Active">Active</option>
             <option value="Suspended">Suspended</option>
+            <option value="Frozen">Frozen</option>
             <option value="Defaulted">Defaulted</option>
             <option value="Closed">Closed</option>
           </select>
@@ -454,11 +513,38 @@ export default function CreditLines() {
               onToggle={() => toggleSelection(line.id)}
               onSwapCollateral={handleSwapCollateral}
               onRepay={() => handleRepay(line.id)}
+              onFreeze={handleFreeze}
+              onUnfreeze={handleUnfreeze}
               onSchedule={() => handleSchedule(line.id)}
               onDetails={() => handleDetails(line.id)}
             />
           ))}
         </div>
+      )}
+
+      {/* ── Repayment Schedule (Issue #428) ───────────────────────────────
+       * Aggregate, chronological timeline of every past installment AND
+       * forward-looking payment across the user's credit lines. Renders
+       * only when at least one credit line has schedule-relevant data
+       * (transactions or a configured next payment). Built from the
+       * existing mock data via the pure `buildRepaymentScheduleFromLines`
+       * helper so the timeline updates as the upstream state changes. */}
+      {filteredAndSorted.length > 0 && (
+        <section
+          className="cl-repayment-schedule"
+          aria-labelledby="cl-repayment-schedule-heading"
+        >
+          <h2 id="cl-repayment-schedule-heading" className="cl-section-title">
+            Repayment Schedule
+          </h2>
+          <p className="cl-section-subtitle">
+            Past installments and upcoming payments across your credit lines.
+          </p>
+          <RepaymentSchedule
+            schedule={buildRepaymentScheduleFromLines(filteredAndSorted)}
+            title="All scheduled repayments"
+          />
+        </section>
       )}
 
       {/* Collateral substitution modal — mounted at page level so it overlays everything */}

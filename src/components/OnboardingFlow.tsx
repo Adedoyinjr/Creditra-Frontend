@@ -86,11 +86,13 @@ export const OnboardingFlow = ({ isOpen, onComplete, onSkip }: Props) => {
       if (event.key === 'Escape') {
         event.preventDefault();
         handleSkip();
+        return;
       }
 
       if (event.key === 'ArrowRight') {
         event.preventDefault();
         handleNext();
+        return;
       }
 
       if (event.key === 'ArrowLeft') {
@@ -103,7 +105,9 @@ export const OnboardingFlow = ({ isOpen, onComplete, onSkip }: Props) => {
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [handleBack, handleNext, handleSkip, isOpen]);
 
-  if (!isOpen) return null;
+  if (!isOpen) {
+    return null;
+  }
 
   return (
     <div className="onboarding-overlay" role="dialog" aria-modal="true" aria-label="Onboarding">
