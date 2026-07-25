@@ -1,0 +1,75 @@
+/*
+ * TrustBadges — security/audit assurance strip for auth pages.
+ *
+ * Uses design-system CSS custom properties exclusively.
+ * No one-off hex values — see docs/DESIGN_SYSTEM.md.
+ *
+ * prefers-reduced-motion: icon pulse animation is suppressed.
+ */
+
+/* ─── Container ──────────────────────────────────────────────────────────────── */
+
+.trust-badges {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: var(--space-lg);
+  padding: var(--space-lg) 0;
+}
+
+/* ─── Individual badge ───────────────────────────────────────────────────────── */
+
+.trust-badges__badge {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: var(--lh-small);
+  white-space: nowrap;
+
+  /* Keyboard focus indicator — matches global focus.css pattern */
+  outline-offset: 2px;
+}
+
+/* ─── Icon wrapper ───────────────────────────────────────────────────────────── */
+
+.trust-badges__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--accent);
+}
+
+/* ─── Variant: audit ─────────────────────────────────────────────────────────── */
+
+.trust-badges__badge--audit .trust-badges__icon {
+  color: var(--accent);
+}
+
+/* ─── Variant: secure ────────────────────────────────────────────────────────── */
+
+.trust-badges__badge--secure .trust-badges__icon {
+  color: var(--success);
+}
+
+/* ─── Variant: open-source ───────────────────────────────────────────────────── */
+
+.trust-badges__badge--open-source .trust-badges__icon {
+  color: var(--warning);
+}
+
+/* ─── Reduced-motion ─────────────────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  .trust-badges__icon {
+    animation: none;
+  }
+}
