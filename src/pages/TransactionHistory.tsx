@@ -1,18 +1,21 @@
-import React, { useState, useMemo } from "react";
-import { Link } from "react-router-dom";
+import React, { useState, useMemo, useRef, useCallback, useEffect } from "react";
+import { Link, useSearchParams, useLocation, useNavigate } from "react-router-dom";
 import { CopyToClipboard } from "../components/CopyToClipboard";
-import {
-  DateRangeChips,
-  type DatePreset,
-} from "../components/DateRangeChips";
+import { DateRangeChips, type DatePreset } from "../components/DateRangeChips";
+import { AmountRangeChips, type AmountRangePreset } from "../components/AmountRangeChips";
+import { useDebounceValue } from "../hooks/useDebounceValue";
+import { toCsv, downloadCsv } from "../utils/csv";
+import { useNotifications } from "../context/NotificationContext";
 import { MOCK_CREDIT_LINES } from "../data/mockData";
 import type {
-  TransactionType,
-  TransactionStatus,
   CreditLineStatus,
+  TransactionStatus,
+  TransactionType,
 } from "../types/creditLine";
+import { startOfDay, startOfMonth, startOfWeek } from "../utils/dates";
 import { COLOR, fmt, fmtDate, fmtDateTime } from "../utils/tokens";
 import "./TransactionHistory.css";
+import { NoActivity, NoDataGraph, NoLines } from "../components/illustrations";
 
 /**
  * TransactionHistory Page Component
@@ -29,7 +32,8 @@ import "./TransactionHistory.css";
  * - Real-time filtering by type, date range, credit line, status, and search query
  * - Pagination with 15 items per page
  * - Expandable transaction details
- * - CSV/PDF export functionality
+ * - CSV export for the currently filtered transaction set
+ * - Accessible search combobox (see Search Combobox section below)
  *
  * Accessibility:
  * - All filter chips use role="group" with aria-labelledby for proper grouping
@@ -38,14 +42,26 @@ import "./TransactionHistory.css";
  * - aria-atomic="true" ensures full announcement of result count changes
  * - Keyboard navigation: Tab to focus, Space/Enter to toggle filters
  * - Distinct visual states for active filters using CSS selectors
+ * - Export button remains keyboard reachable with a 44 px target and disabled explanation
+ *
+ * Search Combobox (ARIA 1.2 combobox pattern, WCAG 2.1 AA SC 4.1.2):
+ * - role="combobox" on the input signals a combined text entry + popup to AT
+ * - aria-expanded reflects whether the suggestion listbox is currently open
+ * - aria-controls references the role="listbox" element for direct AT navigation
+ * - aria-autocomplete="list" — suggestions appear in a separate popup (not inline)
+ * - aria-activedescendant points to the focused role="option" without moving DOM focus
+ * - Keyboard: ArrowDown/Up to navigate, Enter to commit, Escape to dismiss, Tab to close
+ * - Suggestions are debounced (250 ms) to avoid over-filtering on every keystroke;
+ *   the raw input value drives the visible listbox while searchQuery (the debounced
+ *   value) drives filteredTransactions.
+ * - The clear (✕) button meets the 44 × 44 px touch target and announces "Clear search"
+ * - prefers-reduced-motion: the listbox slide-in animation is disabled
  *
  * Empty State UX:
  * - Separate rendering paths for "no lines" vs "no transactions" vs "no filtered results"
  * - Clear filters button appears only when filters are active and return 0 results
  * - Icon and messaging distinguish between data absence and filter mismatch
  */
-
-// ─── Types ──────────────────────────────────────────────────────────────────────
 
 interface TransactionWithLine {
   id: string;
@@ -59,8 +75,6 @@ interface TransactionWithLine {
   lineName: string;
   lineStatus: CreditLineStatus;
 }
-
-// ─── Constants ────────────────────────────────────────────────────────────────
 
 const TX_TYPE_LABELS: Record<TransactionType, string> = {
   Draw: "Draw",
@@ -105,6 +119,34 @@ const TYPE_FILTER_OPTIONS: Array<{
 ];
 
 type TypeFilter = (typeof TYPE_FILTER_OPTIONS)[number]["value"];
+type RangePreset = "this-week" | "this-month" | "all-time" | "custom";
+
+const RANGE_PRESET_OPTIONS: Array<{ value: Exclude<RangePreset, "custom">; label: string }> = [
+  { value: "this-week", label: "This Week" },
+  { value: "this-month", label: "This Month" },
+  { value: "all-time", label: "All Time" },
+];
+
+const AMOUNT_RANGE_PRESET_BOUNDS: Record<
+  Exclude<AmountRangePreset, "all">,
+  { min?: number; max?: number }
+> = {
+  "under-5k": { max: 5000 },
+  "5k-25k": { min: 5000, max: 25000 },
+  "25k-plus": { min: 25000 },
+};
+
+const AMOUNT_FILTER_OPTIONS: Array<{
+  value: "all" | "lt100" | "100-1000" | "gt1000";
+  label: string;
+}> = [
+  { value: "all", label: "All Amounts" },
+  { value: "lt100", label: "<$100" },
+  { value: "100-1000", label: "$100–$1,000" },
+  { value: "gt1000", label: ">$1,000" },
+];
+
+type AmountFilter = (typeof AMOUNT_FILTER_OPTIONS)[number]["value"];
 
 // ─── Helper Functions ─────────────────────────────────────────────────────────
 
@@ -141,7 +183,49 @@ const getDateGroup = (iso: string): string => {
   return "Older";
 };
 
-// ─── Components ────────────────────────────────────────────────────────────────
+function getExportFilename(transactions: TransactionWithLine[]): string {
+  const validDates = transactions
+    .map((tx) => new Date(tx.date))
+    .filter((date) => !Number.isNaN(date.getTime()))
+    .sort((a, b) => a.getTime() - b.getTime());
+
+  const formatDateForFilename = (date: Date) => date.toISOString().slice(0, 10);
+  const start = validDates[0] ? formatDateForFilename(validDates[0]) : "all";
+  const end = validDates[validDates.length - 1]
+    ? formatDateForFilename(validDates[validDates.length - 1])
+    : "all";
+
+  return `creditra-transactions-${start}-${end}.csv`;
+}
+
+function buildTransactionCsv(transactions: TransactionWithLine[]): string {
+  const headers = [
+    "Date",
+    "Type",
+    "Amount",
+    "Credit Line",
+    "Credit Line ID",
+    "Status",
+    "Note",
+    "Transaction Hash",
+  ] as const;
+
+  const rows = transactions.map(
+    (tx) =>
+      [
+        fmtDateTime(tx.date),
+        TX_TYPE_LABELS[tx.type],
+        tx.amount,
+        tx.lineName,
+        tx.lineId,
+        tx.status,
+        tx.note ?? "",
+        tx.txHash ?? "",
+      ] as const,
+  );
+
+  return toCsv(headers, rows);
+}
 
 function TransactionRow({
   tx,
@@ -179,7 +263,7 @@ function TransactionRow({
           </span>
         </td>
         <td
-          className="tx-amount"
+          className="tx-amount num-tabular"
           style={{
             color: isNegative
               ? COLOR.success
@@ -254,7 +338,7 @@ function TransactionRow({
                   <div className="tx-detail-item">
                     <span className="label">Amount</span>
                     <span
-                      className="value"
+                      className="value num-tabular"
                       style={{
                         color: isNegative ? COLOR.success : COLOR.accent,
                       }}
@@ -313,29 +397,78 @@ function TransactionRow({
   );
 }
 
-// ─── Main Component ────────────────────────────────────────────────────────────
+/** Stable element ID that associates the export button with its helper text. */
+const CSV_EXPORT_EMPTY_REASON_ID = "csv-export-empty-reason";
 
-/**
- * Main TransactionHistory component that manages all filtering, pagination, and display logic.
- *
- * State Management:
- * - Filter states (type, date range, status, search) reset pagination to page 1
- * - expandedTx tracks which transaction detail is currently expanded
- * - showExportMenu toggles the export dropdown visibility
- */
 export function TransactionHistory() {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { addToast } = useNotifications();
+
   // ─── Filter and UI State ───
   const [selectedLine, setSelectedLine] = useState<string>("all");
   const [selectedType, setSelectedType] = useState<TypeFilter>("all");
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [selectedAmount, setSelectedAmount] = useState<AmountFilter>(() => {
+    const url = searchParams.get("amount");
+    if (url === "lt100" || url === "100-1000" || url === "gt1000") return url;
+    return "all";
+  });
   const [dateRange, setDateRange] = useState<DatePreset>("custom");
+  const [presetRange, setPresetRange] = useState<RangePreset>("custom");
   const [customStartDate, setCustomStartDate] = useState("");
   const [customEndDate, setCustomEndDate] = useState("");
+  const [selectedAmountRange, setSelectedAmountRange] =
+    useState<AmountRangePreset>("all");
+  const [customAmountMin, setCustomAmountMin] = useState("");
+  const [customAmountMax, setCustomAmountMax] = useState("");
+  const [isCustomAmountRangeActive, setIsCustomAmountRangeActive] =
+    useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  // ─── Combobox (accessible search with suggestions) ───────────────────────
+  // `searchInputValue` drives what the user sees while typing; `searchQuery`
+  // (the debounced value) drives the actual filter so we avoid re-filtering
+  // on every keystroke.
+  const [searchInputValue, setSearchInputValue] = useState("");
+  const debouncedSearch = useDebounceValue(searchInputValue, 250);
+  const [isSuggestionsOpen, setIsSuggestionsOpen] = useState(false);
+  const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(-1);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const listboxRef = useRef<HTMLUListElement>(null);
+  const SEARCH_LISTBOX_ID = "tx-search-listbox";
+  const SEARCH_INPUT_ID = "tx-search-input";
+
   const [expandedTx, setExpandedTx] = useState<string | null>(null);
-  const [showExportMenu, setShowExportMenu] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 15;
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const rangeParam = params.get("range");
+
+    if (rangeParam === "this-week" || rangeParam === "this-month" || rangeParam === "all-time") {
+      setPresetRange(rangeParam);
+      setDateRange("custom");
+      return;
+    }
+
+    setPresetRange("custom");
+    const customStart = params.get("start");
+    const customEnd = params.get("end");
+    if (customStart) {
+      setCustomStartDate(customStart);
+      setDateRange("custom");
+    } else {
+      setCustomStartDate("");
+    }
+    if (customEnd) {
+      setCustomEndDate(customEnd);
+      setDateRange("custom");
+    } else {
+      setCustomEndDate("");
+    }
+  }, [location.search]);
 
   // Get all transactions from all credit lines
   const allTransactions = useMemo(() => {
@@ -355,19 +488,53 @@ export function TransactionHistory() {
     );
   }, []);
 
+  // Sync the debounced input value into the filter state and reset page.
+  // This is the only place `searchQuery` (which drives filteredTransactions)
+  // is updated from user input, keeping keystroke and filter concerns separate.
+  useEffect(() => {
+    setSearchQuery(debouncedSearch);
+    setCurrentPage(1);
+  }, [debouncedSearch]);
+
   /**
-   * Apply all active filters to the transaction list.
-   * This runs whenever any filter state changes, triggering re-pagination to page 1.
+   * Build a deduplicated list of suggestion strings from the full transaction
+   * set that contain the current raw input value.  Suggestions surface
+   * credit-line names, line IDs, and notes — matching the same fields that
+   * the filter already searches.  Capped at 8 items for a manageable list.
    *
-   * Filters applied in order:
-   * 1. Credit line (by lineId)
-   * 2. Transaction type (Draw/Repay/Fee/Interest)
-   * 3. Status (Completed/Pending/Failed)
-   * 4. Full-text search (checks note, lineName, lineId, txHash)
-   * 5. Date range (using cutoff time from 7d/30d/90d preset)
-   *
-   * Result count is announced via aria-live region for accessibility.
+   * Computed from `searchInputValue` (not the debounced value) so that
+   * the dropdown tracks the live keystroke, while filtering is debounced.
    */
+  const suggestions = useMemo<string[]>(() => {
+    const q = searchInputValue.trim().toLowerCase();
+    if (!q) return [];
+
+    const seen = new Set<string>();
+    const results: string[] = [];
+
+    for (const tx of allTransactions) {
+      if (results.length >= 8) break;
+
+      const candidates: (string | undefined)[] = [
+        tx.lineName,
+        tx.lineId,
+        tx.note,
+      ];
+
+      for (const c of candidates) {
+        if (!c) continue;
+        const lower = c.toLowerCase();
+        if (lower.includes(q) && !seen.has(c)) {
+          seen.add(c);
+          results.push(c);
+          if (results.length >= 8) break;
+        }
+      }
+    }
+
+    return results;
+  }, [searchInputValue, allTransactions]);
+
   const filteredTransactions = useMemo(() => {
     return allTransactions.filter((tx) => {
       const txTime = new Date(tx.date).getTime();
@@ -377,6 +544,10 @@ export function TransactionHistory() {
       if (selectedType !== "all" && tx.type !== selectedType) return false;
       if (selectedStatus !== "all" && tx.status !== selectedStatus)
         return false;
+      if (selectedAmount === "lt100" && tx.amount >= 100) return false;
+      if (selectedAmount === "100-1000" && (tx.amount < 100 || tx.amount > 1000))
+        return false;
+      if (selectedAmount === "gt1000" && tx.amount <= 1000) return false;
       if (searchQuery) {
         const query = searchQuery.toLowerCase();
         const matchesNote = tx.note?.toLowerCase().includes(query);
@@ -386,18 +557,58 @@ export function TransactionHistory() {
         if (!matchesNote && !matchesLine && !matchesId && !matchesHash)
           return false;
       }
+
+      const transactionAmount = Math.abs(tx.amount);
+      if (isCustomAmountRangeActive) {
+        const minAmount =
+          customAmountMin.trim().length > 0 ? Number(customAmountMin) : null;
+        const maxAmount =
+          customAmountMax.trim().length > 0 ? Number(customAmountMax) : null;
+
+        if (minAmount !== null && transactionAmount < minAmount) return false;
+        if (maxAmount !== null && transactionAmount > maxAmount) return false;
+      } else if (selectedAmountRange !== "all") {
+        const bounds = AMOUNT_RANGE_PRESET_BOUNDS[selectedAmountRange];
+
+        if (bounds.min !== undefined && transactionAmount < bounds.min)
+          return false;
+        if (bounds.max !== undefined && transactionAmount > bounds.max)
+          return false;
+      }
+
       const now = new Date();
-      const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+      const startOfToday = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate(),
+      ).getTime();
 
       if (dateRange === "today" && txTime < startOfToday) return false;
-      if (dateRange === "7d" && txTime < Date.now() - 7 * 24 * 60 * 60 * 1000)
+      if (dateRange === "7d" && txTime < Date.now() - 7 * 24 * 60 * 60 * 1000) {
         return false;
-      if (dateRange === "30d" && txTime < Date.now() - 30 * 24 * 60 * 60 * 1000)
+      }
+      if (
+        dateRange === "30d" &&
+        txTime < Date.now() - 30 * 24 * 60 * 60 * 1000
+      ) {
         return false;
-      if (dateRange === "90d" && txTime < Date.now() - 90 * 24 * 60 * 60 * 1000)
+      }
+      if (
+        dateRange === "90d" &&
+        txTime < Date.now() - 90 * 24 * 60 * 60 * 1000
+      ) {
         return false;
+      }
 
-      if (dateRange === "custom") {
+      if (presetRange === "this-week") {
+        const weekStart = startOfWeek(now).getTime();
+        if (txTime < weekStart) return false;
+      } else if (presetRange === "this-month") {
+        const monthStart = startOfMonth(now).getTime();
+        if (txTime < monthStart) return false;
+      } else if (presetRange === "all-time") {
+        // No lower bound; keep all historical transactions.
+      } else if (presetRange === "custom" && dateRange === "custom") {
         if (customStartDate) {
           const start = new Date(`${customStartDate}T00:00:00`).getTime();
           if (txTime < start) return false;
@@ -416,20 +627,24 @@ export function TransactionHistory() {
     selectedLine,
     selectedType,
     selectedStatus,
+    selectedAmount,
     searchQuery,
+    selectedAmountRange,
+    isCustomAmountRangeActive,
+    customAmountMin,
+    customAmountMax,
     dateRange,
+    presetRange,
     customStartDate,
     customEndDate,
   ]);
 
-  // Pagination
   const totalPages = Math.ceil(filteredTransactions.length / itemsPerPage);
   const paginatedTransactions = useMemo(() => {
     const start = (currentPage - 1) * itemsPerPage;
     return filteredTransactions.slice(start, start + itemsPerPage);
   }, [filteredTransactions, currentPage]);
 
-  // Group paginated transactions
   const paginatedGrouped = useMemo(() => {
     const groups: Record<string, TransactionWithLine[]> = {};
     paginatedTransactions.forEach((tx) => {
@@ -440,7 +655,6 @@ export function TransactionHistory() {
     return groups;
   }, [paginatedTransactions]);
 
-  // Summary statistics
   const stats = useMemo(() => {
     const completedTxs = allTransactions.filter(
       (tx) => tx.status === "Completed",
@@ -458,102 +672,244 @@ export function TransactionHistory() {
     return { totalDrawn, totalRepaid, totalInterest, currentDebt };
   }, [allTransactions]);
 
-  // Export functions
-  const exportToCSV = () => {
-    const headers = [
-      "Date",
-      "Type",
-      "Amount",
-      "Credit Line",
-      "Credit Line ID",
-      "Status",
-      "Note",
-      "Transaction Hash",
-    ];
-    const rows = filteredTransactions.map((tx) => [
-      fmtDateTime(tx.date),
-      TX_TYPE_LABELS[tx.type],
-      tx.amount.toString(),
-      tx.lineName,
-      tx.lineId,
-      tx.status,
-      tx.note || "",
-      tx.txHash || "",
-    ]);
-    const csv = [headers, ...rows].map((row) => row.join(",")).join("\n");
-    const blob = new Blob([csv], { type: "text/csv" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `transactions-${new Date().toISOString().split("T")[0]}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
-    setShowExportMenu(false);
+  const exportDisabled = filteredTransactions.length === 0;
+
+  const handleExportCsv = () => {
+    if (exportDisabled) return;
+
+    const csv = buildTransactionCsv(filteredTransactions);
+    const filename = getExportFilename(filteredTransactions);
+
+    downloadCsv(filename, csv);
+
+    addToast({
+      type: "success",
+      category: "transaction",
+      title: "CSV export ready",
+      message: `Your filtered transaction history was downloaded as ${filename}.`,
+      saveToHistory: false,
+    });
   };
 
   const exportToPDF = () => {
-    // Simple PDF export using window.print
     window.print();
-    setShowExportMenu(false);
   };
 
   const handleToggleExpand = (txId: string) => {
     setExpandedTx(expandedTx === txId ? null : txId);
   };
 
+  /**
+   * Commit a suggestion by value: populate the input and close the listbox.
+   * Keyboard selection (Enter) and mouse click both call this.
+   */
+  const commitSuggestion = useCallback((value: string) => {
+    setSearchInputValue(value);
+    // Force immediate filter application rather than waiting for debounce.
+    setSearchQuery(value);
+    setIsSuggestionsOpen(false);
+    setActiveSuggestionIndex(-1);
+    setCurrentPage(1);
+    // Note: no explicit .focus() call here — for keyboard (Enter) the input already
+    // has focus, and for mouse (onMouseDown + e.preventDefault()) focus stays on the
+    // input too.  A programmatic focus() would re-trigger onFocus and reopen the list.
+  }, []);
+
+  /**
+   * Close the suggestions dropdown without changing the committed query.
+   * Called on Escape and when focus leaves the combobox container.
+   */
+  const dismissSuggestions = useCallback(() => {
+    setIsSuggestionsOpen(false);
+    setActiveSuggestionIndex(-1);
+  }, []);
+
+  /**
+   * Keyboard handler attached to the combobox input.
+   * Implements the ARIA combobox keyboard interaction model:
+   *   ArrowDown — open list / move active option down
+   *   ArrowUp   — move active option up
+   *   Enter     — commit active option (or close if none)
+   *   Escape    — dismiss list, keep typed value
+   *   Tab       — dismiss list, let focus move naturally
+   */
+  const handleSearchKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
+      const listOpen = isSuggestionsOpen && suggestions.length > 0;
+
+      switch (e.key) {
+        case "ArrowDown":
+          e.preventDefault();
+          if (!listOpen) {
+            if (suggestions.length > 0) setIsSuggestionsOpen(true);
+            return;
+          }
+          setActiveSuggestionIndex((prev) =>
+            prev < suggestions.length - 1 ? prev + 1 : 0,
+          );
+          break;
+
+        case "ArrowUp":
+          e.preventDefault();
+          if (!listOpen) return;
+          setActiveSuggestionIndex((prev) =>
+            prev <= 0 ? suggestions.length - 1 : prev - 1,
+          );
+          break;
+
+        case "Enter":
+          if (listOpen && activeSuggestionIndex >= 0) {
+            e.preventDefault();
+            commitSuggestion(suggestions[activeSuggestionIndex]);
+          }
+          break;
+
+        case "Escape":
+          if (listOpen) {
+            e.preventDefault();
+            dismissSuggestions();
+          }
+          break;
+
+        case "Tab":
+          dismissSuggestions();
+          break;
+
+        default:
+          break;
+      }
+    },
+    [isSuggestionsOpen, suggestions, activeSuggestionIndex, commitSuggestion, dismissSuggestions],
+  );
+
   const hasLines = MOCK_CREDIT_LINES.length > 0;
   const hasTransactions = allTransactions.length > 0;
 
-  /**
-   * Track if any filters are currently active.
-   * Used to determine whether to show "Clear filters" button in no-results state.
-   * Includes all filter types except the initial default states.
-   */
   const hasActiveFilters =
     selectedLine !== "all" ||
     selectedType !== "all" ||
     selectedStatus !== "all" ||
+    selectedAmount !== "all" ||
     dateRange !== "custom" ||
     customStartDate.length > 0 ||
     customEndDate.length > 0 ||
-    searchQuery.trim().length > 0;
+    searchInputValue.trim().length > 0;
+
+  const resultCountText = `${filteredTransactions.length} ${filteredTransactions.length === 1 ? "transaction" : "transactions"} shown`;
 
   /**
-   * Result count text displayed in aria-live region.
-   * Announces the number of filtered transactions to screen readers.
-   * Uses proper pluralization for accessibility.
+   * Accessible table caption (A11Y-004).
+   *
+   * Describes the table's current scope to screen-reader users.  The text is
+   * visually hidden via `.sr-only` but fully announced when the user navigates
+   * to the table.  It updates whenever the active filters change so the caption
+   * always reflects what is actually shown.
+   *
+   * Composition:
+   *   "Transaction history[, filtered by <type>][, <dateLabel>][, matching "<query>"]
+   *    — <n> result(s)"
    */
-  const resultCountText = `${filteredTransactions.length} ${filteredTransactions.length === 1 ? "transaction" : "transactions"} shown`;
+  const tableCaption = useMemo(() => {
+    const parts: string[] = [];
+
+    if (selectedType !== "all") {
+      parts.push(`filtered by ${TX_TYPE_LABELS[selectedType as TransactionType]}`);
+    }
+
+    const dateLabels: Record<string, string> = {
+      today: "today",
+      "7d": "last 7 days",
+      "30d": "last 30 days",
+      "90d": "last 90 days",
+    };
+    if (dateRange !== "custom" && dateLabels[dateRange]) {
+      parts.push(dateLabels[dateRange]);
+    } else if (dateRange === "custom" && (customStartDate || customEndDate)) {
+      const from = customStartDate || "any";
+      const to = customEndDate || "any";
+      parts.push(`from ${from} to ${to}`);
+    }
+
+    if (selectedStatus !== "all") {
+      parts.push(`status: ${selectedStatus}`);
+    }
+
+    if (searchInputValue.trim()) {
+      parts.push(`matching "${searchInputValue.trim()}"`);
+    }
+
+    const count = filteredTransactions.length;
+    const suffix = `— ${count} ${count === 1 ? "result" : "results"}`;
+
+    const scope = parts.length > 0 ? `, ${parts.join(", ")}` : "";
+    return `Transaction history${scope} ${suffix}`;
+  }, [
+    selectedType,
+    dateRange,
+    customStartDate,
+    customEndDate,
+    selectedStatus,
+    searchInputValue,
+    filteredTransactions.length,
+  ]);
 
   /**
    * Clear all active filters and return to initial state.
    * Called when user clicks "Clear filters" in the no-results empty state.
    * Also clears expanded transaction details and resets to page 1.
    */
+  const syncUrl = (nextPreset: RangePreset, start = "", end = "") => {
+    const params = new URLSearchParams(location.search);
+    if (nextPreset === "custom") {
+      if (start) {
+        params.set("start", start);
+      } else {
+        params.delete("start");
+      }
+      if (end) {
+        params.set("end", end);
+      } else {
+        params.delete("end");
+      }
+      if (params.get("range")) {
+        params.delete("range");
+      }
+    } else {
+      params.set("range", nextPreset);
+      params.delete("start");
+      params.delete("end");
+    }
+
+    const nextSearch = params.toString();
+    navigate({ pathname: location.pathname, search: nextSearch ? `?${nextSearch}` : "" }, { replace: true });
+  };
+
   const clearFilters = () => {
     setSelectedLine("all");
     setSelectedType("all");
     setSelectedStatus("all");
+    setSelectedAmount("all");
     setDateRange("custom");
+    setPresetRange("custom");
     setCustomStartDate("");
     setCustomEndDate("");
+    setSelectedAmountRange("all");
+    setCustomAmountMin("");
+    setCustomAmountMax("");
+    setIsCustomAmountRangeActive(false);
     setSearchQuery("");
+    setSearchInputValue("");
+    setIsSuggestionsOpen(false);
+    setActiveSuggestionIndex(-1);
     setCurrentPage(1);
     setExpandedTx(null);
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.delete("amount");
+      return next;
+    });
   };
 
-  /**
-   * Empty State Rendering
-   *
-   * Three distinct empty state scenarios:
-   * 1. No credit lines: User hasn't created any credit lines yet
-   * 2. No transactions: Credit lines exist but no transaction history
-   * 3. No filtered results: Transactions exist but current filters match nothing
-   *
-   * Each state has distinct messaging, icons, and actions per WCAG 2.1 AA guidelines.
-   */
-
-  // Scenario 1: No credit lines at all
   if (!hasLines) {
     return (
       <div className="transaction-history-page">
@@ -564,21 +920,20 @@ export function TransactionHistory() {
           </div>
         </div>
         <div className="empty-state">
-          <div className="empty-state-icon">📊</div>
+          <NoLines className="empty-state-illustration--muted" />
           <h2>No credit lines yet</h2>
           <p>
             You need an active credit line to view transaction history. Start by
             requesting a credit evaluation.
           </p>
           <Link to="/open-credit" className="empty-state-btn">
-            🚀 Request Credit Evaluation
+            Request Credit Evaluation
           </Link>
         </div>
       </div>
     );
   }
 
-  // Scenario 2: Credit lines exist but no transaction history yet
   if (!hasTransactions) {
     return (
       <div className="transaction-history-page">
@@ -589,12 +944,15 @@ export function TransactionHistory() {
           </div>
         </div>
         <div className="empty-state">
-          <div className="empty-state-icon">📊</div>
+          <NoActivity className="empty-state-illustration--muted" />
           <h2>No transactions yet</h2>
           <p>
             Your draws, repayments, fees, and interest activity will appear here
             once your credit lines have activity.
           </p>
+          <Link to="/credit-lines" className="empty-state-btn">
+            View Credit Lines
+          </Link>
         </div>
       </div>
     );
@@ -602,31 +960,43 @@ export function TransactionHistory() {
 
   return (
     <div className="transaction-history-page">
-      {/* Header */}
       <div className="th-header">
         <div>
           <h1>Transaction History</h1>
           <p className="subtitle">Track all your credit activity</p>
         </div>
         <div className="th-header-actions">
-          <div className="export-dropdown">
+          <div className="export-actions">
             <button
+              type="button"
               className="export-btn"
-              onClick={() => setShowExportMenu(!showExportMenu)}
+              onClick={handleExportCsv}
+              disabled={exportDisabled}
+              aria-describedby={
+                exportDisabled ? CSV_EXPORT_EMPTY_REASON_ID : undefined
+              }
             >
-              <span>📥</span> Export
+              <span aria-hidden="true">📥</span>
+              Export CSV
             </button>
-            {showExportMenu && (
-              <div className="export-menu">
-                <button onClick={exportToCSV}>📄 Export as CSV</button>
-                <button onClick={exportToPDF}>📑 Export as PDF</button>
-              </div>
-            )}
+            <button
+              type="button"
+              className="export-btn export-btn-secondary"
+              onClick={exportToPDF}
+            >
+              <span aria-hidden="true">📑</span>
+              Export PDF
+            </button>
           </div>
         </div>
       </div>
 
-      {/* Summary Statistics */}
+      <p id={CSV_EXPORT_EMPTY_REASON_ID} className="th-export-help">
+        {exportDisabled
+          ? "Export CSV is unavailable because the current filters do not match any transactions."
+          : ""}
+      </p>
+
       <div className="th-stats">
         <div className="th-stat-card">
           <span
@@ -637,7 +1007,7 @@ export function TransactionHistory() {
           </span>
           <div className="th-stat-content">
             <span className="th-stat-label">Total Drawn</span>
-            <span className="th-stat-value" style={{ color: COLOR.accent }}>
+            <span className="th-stat-value num-tabular" style={{ color: COLOR.accent }}>
               {fmt(stats.totalDrawn)}
             </span>
           </div>
@@ -651,7 +1021,7 @@ export function TransactionHistory() {
           </span>
           <div className="th-stat-content">
             <span className="th-stat-label">Total Repaid</span>
-            <span className="th-stat-value" style={{ color: COLOR.success }}>
+            <span className="th-stat-value num-tabular" style={{ color: COLOR.success }}>
               {fmt(stats.totalRepaid)}
             </span>
           </div>
@@ -668,7 +1038,7 @@ export function TransactionHistory() {
           </span>
           <div className="th-stat-content">
             <span className="th-stat-label">Total Interest</span>
-            <span className="th-stat-value" style={{ color: COLOR.warning }}>
+            <span className="th-stat-value num-tabular" style={{ color: COLOR.warning }}>
               {fmt(stats.totalInterest)}
             </span>
           </div>
@@ -683,7 +1053,7 @@ export function TransactionHistory() {
           <div className="th-stat-content">
             <span className="th-stat-label">Current Debt</span>
             <span
-              className="th-stat-value"
+              className="th-stat-value num-tabular"
               style={{
                 color: stats.currentDebt > 0 ? COLOR.danger : COLOR.success,
               }}
@@ -694,19 +1064,6 @@ export function TransactionHistory() {
         </div>
       </div>
 
-      {/*
-       * Filter Section: Contains all filtering mechanisms
-       *
-       * Components:
-       * 1. Credit Line dropdown (traditional select, less discoverable)
-       * 2. Transaction Type chips (aria-pressed toggle group, WCAG 2.1 AA)
-       * 3. Status dropdown (traditional select)
-       * 4. Date Range chips (aria-pressed toggle group, WCAG 2.1 AA)
-       * 5. Search input (full-text search)
-       * 6. Result count display (aria-live="polite" for announcements)
-       *
-       * All filter changes reset pagination to page 1 to avoid confusion.
-       */}
       <div className="th-filters">
         <div className="th-filter-group">
           <label>Credit Line</label>
@@ -726,17 +1083,6 @@ export function TransactionHistory() {
           </select>
         </div>
 
-        {/*
-         * Transaction Type Filter Chips
-         * Implements accessible toggle button group (WCAG 2.1 AA)
-         *
-         * Accessibility features:
-         * - role="group" with aria-labelledby links to visible label
-         * - aria-pressed="true/false" indicates toggle state
-         * - Keyboard: Tab to focus, Space/Enter to toggle
-         * - Visual feedback: background color, border, and shadow on active state
-         * - Screen readers announced changes via aria-live in result count
-         */}
         <div className="th-filter-group th-filter-group-wide">
           <span className="th-filter-label" id="transaction-type-filter-label">
             Type
@@ -762,6 +1108,52 @@ export function TransactionHistory() {
             ))}
           </div>
         </div>
+        {/*
+         * Amount Range Filter Chips
+         * Implements accessible toggle button group for amount-range filtering
+         *
+         * Filters by absolute transaction amount:
+         * - <$100: amounts under 100
+         * - $100–$1,000: amounts between 100 and 1,000 inclusive
+         * - >$1,000: amounts over 1,000
+         *
+         * URL state is synced via ?amount=lt100 | ?amount=100-1000 | ?amount=gt1000.
+         * Uses same aria-pressed toggle pattern as Type and Date chips.
+         */}
+        <div className="th-filter-group th-filter-group-wide">
+          <span className="th-filter-label" id="amount-filter-label">
+            Amount
+          </span>
+          <div
+            className="th-chip-group"
+            role="group"
+            aria-labelledby="amount-filter-label"
+          >
+            {AMOUNT_FILTER_OPTIONS.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                className="th-filter-chip"
+                aria-pressed={selectedAmount === option.value}
+                onClick={() => {
+                  setSelectedAmount(option.value);
+                  setCurrentPage(1);
+                  setSearchParams((prev) => {
+                    const next = new URLSearchParams(prev);
+                    if (option.value === "all") {
+                      next.delete("amount");
+                    } else {
+                      next.set("amount", option.value);
+                    }
+                    return next;
+                  });
+                }}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+        </div>
         <div className="th-filter-group">
           <label>Status</label>
           <select
@@ -778,57 +1170,264 @@ export function TransactionHistory() {
           </select>
         </div>
 
-        {/*
-         * Date Range Filter Chips
-         * Implements accessible toggle button group with quick presets
-         *
-         * Accessibility features (same as Type chips):
-         * - role="group" with aria-labelledby for semantic grouping
-         * - aria-pressed="true/false" indicates selected preset
-         * - Keyboard: Tab to focus, Space/Enter to toggle
-         * - Visual distinction for active preset
-         * - Changes trigger instant filter recalculation
-         */}
         <div className="th-filter-group th-filter-group-wide">
-          <DateRangeChips
-            selectedPreset={dateRange}
-            customStartDate={customStartDate}
-            customEndDate={customEndDate}
+          <div className="th-subgroup">
+            <span className="th-filter-label" id="transaction-range-filter-label">
+              Presets
+            </span>
+            <div className="th-chip-group" role="group" aria-labelledby="transaction-range-filter-label">
+              {RANGE_PRESET_OPTIONS.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  className="th-filter-chip"
+                  aria-pressed={presetRange === option.value}
+                  onClick={() => {
+                    const nextPreset = option.value;
+                    setPresetRange(nextPreset);
+                    setDateRange("custom");
+                    setCustomStartDate("");
+                    setCustomEndDate("");
+                    setCurrentPage(1);
+                    syncUrl(nextPreset);
+                  }}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="th-subgroup">
+            <span className="th-filter-label" id="transaction-date-filter-label">
+              Date Range
+            </span>
+            <div className="th-chip-group" role="group" aria-labelledby="transaction-date-filter-label">
+              {[
+                { value: "today" as DatePreset, label: "Today" },
+                { value: "7d" as DatePreset, label: "7d" },
+                { value: "30d" as DatePreset, label: "30d" },
+                { value: "90d" as DatePreset, label: "90d" },
+                { value: "custom" as DatePreset, label: "Custom" },
+              ].map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  className="th-filter-chip"
+                  aria-pressed={presetRange === "custom" && dateRange === option.value}
+                  onClick={() => {
+                    setPresetRange("custom");
+                    setDateRange(option.value);
+                    setCurrentPage(1);
+                    if (option.value === "custom") {
+                      syncUrl("custom", customStartDate, customEndDate);
+                    } else {
+                      setCustomStartDate("");
+                      setCustomEndDate("");
+                      syncUrl("custom");
+                    }
+                  }}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          </div>
+          {dateRange === "custom" && (
+            <div className="date-range-custom-fields">
+              <label className="date-range-custom-field">
+                <span>Start date</span>
+                <input
+                  type="date"
+                  value={customStartDate}
+                  onChange={(event) => {
+                    setDateRange("custom");
+                    setPresetRange("custom");
+                    setCustomStartDate(event.target.value);
+                    setCurrentPage(1);
+                    syncUrl("custom", event.target.value, customEndDate);
+                  }}
+                  max={customEndDate || undefined}
+                />
+              </label>
+              <label className="date-range-custom-field">
+                <span>End date</span>
+                <input
+                  type="date"
+                  value={customEndDate}
+                  onChange={(event) => {
+                    setDateRange("custom");
+                    setPresetRange("custom");
+                    setCustomEndDate(event.target.value);
+                    setCurrentPage(1);
+                    syncUrl("custom", customStartDate, event.target.value);
+                  }}
+                  min={customStartDate || undefined}
+                />
+              </label>
+            </div>
+          )}
+        </div>
+        <div className="th-filter-group th-filter-group-wide">
+          <AmountRangeChips
+            selectedPreset={selectedAmountRange}
+            customMin={customAmountMin}
+            customMax={customAmountMax}
+            isCustomActive={isCustomAmountRangeActive}
             onPresetChange={(preset) => {
-              setDateRange(preset);
+              setSelectedAmountRange(preset);
+              setCustomAmountMin("");
+              setCustomAmountMax("");
+              setIsCustomAmountRangeActive(false);
               setCurrentPage(1);
             }}
-            onCustomStartDateChange={(value) => {
-              setDateRange("custom");
-              setCustomStartDate(value);
+            onCustomRangeApply={({ min, max }) => {
+              setSelectedAmountRange("all");
+              setCustomAmountMin(min === null ? "" : String(min));
+              setCustomAmountMax(max === null ? "" : String(max));
+              setIsCustomAmountRangeActive(true);
               setCurrentPage(1);
             }}
-            onCustomEndDateChange={(value) => {
-              setDateRange("custom");
-              setCustomEndDate(value);
+            onCustomRangeClear={() => {
+              setSelectedAmountRange("all");
+              setCustomAmountMin("");
+              setCustomAmountMax("");
+              setIsCustomAmountRangeActive(false);
               setCurrentPage(1);
             }}
           />
         </div>
-        <div className="th-search-group">
-          <label>Search</label>
-          <input
-            type="text"
-            placeholder="Search transactions..."
-            value={searchQuery}
-            onChange={(e) => {
-              setSearchQuery(e.target.value);
-              setCurrentPage(1);
-            }}
-          />
+        {/*
+         * ─── Accessible Search Combobox ──────────────────────────────────────
+         *
+         * Implements the ARIA 1.2 "combobox" pattern (single-select list):
+         *   - role="combobox" on the <input> signals a combined text entry +
+         *     popup to assistive technology.
+         *   - aria-expanded tracks whether the suggestion listbox is open.
+         *   - aria-controls points to the listbox element so AT can navigate
+         *     directly to options.
+         *   - aria-autocomplete="list" indicates that completion suggestions
+         *     appear in a separate element (the listbox) rather than inline.
+         *   - aria-activedescendant carries the ID of the currently focused
+         *     option so screen readers announce it without moving DOM focus
+         *     away from the input.
+         *
+         * Keyboard model (WCAG 2.1 SC 2.1.1):
+         *   ArrowDown / ArrowUp — move active suggestion
+         *   Enter               — commit highlighted suggestion
+         *   Escape              — dismiss listbox, keep current query
+         *   Tab                 — dismiss listbox, advance focus naturally
+         *
+         * The outer div is given role="none" so the containing filter group
+         * structure is preserved; `onBlur` uses `relatedTarget` to detect when
+         * focus moves entirely outside the combobox widget.
+         */}
+        <div
+          className="th-search-group"
+          onBlur={(e) => {
+            // Dismiss only if focus moves outside the entire combobox widget
+            // (input + listbox). Using currentTarget captures the container.
+            if (!e.currentTarget.contains(e.relatedTarget as Node | null)) {
+              dismissSuggestions();
+            }
+          }}
+        >
+          <label htmlFor={SEARCH_INPUT_ID} className="th-filter-label">
+            Search
+          </label>
+          {/* combobox wrapper — positions the floating listbox */}
+          <div className="th-search-combobox">
+            <input
+              ref={searchInputRef}
+              id={SEARCH_INPUT_ID}
+              type="text"
+              role="combobox"
+              aria-label="Search transactions"
+              aria-expanded={isSuggestionsOpen && suggestions.length > 0}
+              aria-controls={SEARCH_LISTBOX_ID}
+              aria-autocomplete="list"
+              aria-activedescendant={
+                activeSuggestionIndex >= 0
+                  ? `tx-suggestion-${activeSuggestionIndex}`
+                  : undefined
+              }
+              placeholder="Search by note, line, ID, or hash…"
+              value={searchInputValue}
+              autoComplete="off"
+              spellCheck={false}
+              onChange={(e) => {
+                const val = e.target.value;
+                setSearchInputValue(val);
+                // Open the listbox whenever there is input; the suggestions
+                // useMemo will compute the correct list on the next render.
+                setIsSuggestionsOpen(val.trim().length > 0);
+                setActiveSuggestionIndex(-1);
+              }}
+              onKeyDown={handleSearchKeyDown}
+              onFocus={() => {
+                if (searchInputValue.trim() && suggestions.length > 0) {
+                  setIsSuggestionsOpen(true);
+                }
+              }}
+            />
+
+            {/* Clear button — only visible when query is non-empty */}
+            {searchInputValue && (
+              <button
+                type="button"
+                className="th-search-clear"
+                aria-label="Clear search"
+                tabIndex={0}
+                onClick={() => {
+                  setSearchInputValue("");
+                  setSearchQuery("");
+                  setIsSuggestionsOpen(false);
+                  setActiveSuggestionIndex(-1);
+                  setCurrentPage(1);
+                  searchInputRef.current?.focus();
+                }}
+              >
+                ✕
+              </button>
+            )}
+
+            {/*
+             * Suggestion listbox
+             *
+             * Hidden when no query is typed or suggestions list is empty.
+             * Always present in the DOM (display:none via CSS) so
+             * aria-controls always resolves to a valid element.
+             */}
+            <ul
+              ref={listboxRef}
+              id={SEARCH_LISTBOX_ID}
+              role="listbox"
+              aria-label="Search suggestions"
+              className={`th-search-listbox${isSuggestionsOpen && suggestions.length > 0 ? " th-search-listbox--open" : ""}`}
+            >
+              {suggestions.map((suggestion, index) => (
+                <li
+                  key={suggestion}
+                  id={`tx-suggestion-${index}`}
+                  role="option"
+                  aria-selected={index === activeSuggestionIndex}
+                  className={`th-search-option${index === activeSuggestionIndex ? " th-search-option--active" : ""}`}
+                  // Use onMouseDown (not onClick) so the event fires before the
+                  // input's onBlur, preventing premature listbox dismissal.
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    commitSuggestion(suggestion);
+                  }}
+                >
+                  <span className="th-search-option-icon" aria-hidden="true">
+                    🔍
+                  </span>
+                  {suggestion}
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
 
-        {/*
-         * Result Count Announcement Region
-         * Uses aria-live="polite" to announce filter changes to screen readers
-         * aria-atomic="true" ensures the entire message is announced
-         * Updates whenever filteredTransactions length changes
-         */}
         <div
           className="th-filter-results"
           role="status"
@@ -839,35 +1438,34 @@ export function TransactionHistory() {
         </div>
       </div>
 
-      {/*
-       * Transaction Table or No-Results State
-       *
-       * Scenario 3: No filtered results
-       * Shown when transactions exist but current filter combination returns 0 results
-       * Distinct from "No transactions yet" state with:
-       * - "No transactions match these filters" heading
-       * - Suggestions to modify filters
-       * - "Clear filters" button to easily reset all filters
-       */}
       <div className="th-table-container">
         {filteredTransactions.length === 0 ? (
-          <div className="th-empty th-empty-no-results">
-            <div className="th-empty-icon">🔍</div>
-            <h3>No transactions match these filters</h3>
-            <p>Try another transaction type, date range, or search term.</p>
+          <div 
+            className="empty-state"
+            role="status"
+            aria-live="polite"
+          >
+            <NoDataGraph className="empty-state-illustration--muted" />
+            <h2>No transactions found</h2>
+            <p>
+              We couldn't find any transactions matching your current filters. 
+              Try another transaction type, date range, or search term.
+            </p>
             {hasActiveFilters && (
               <button
                 type="button"
-                className="th-clear-filters-btn"
+                className="empty-state-btn"
                 onClick={clearFilters}
+                aria-label="Reset all filters to view transaction history"
               >
-                Clear filters
+                Reset Filters
               </button>
             )}
           </div>
         ) : (
           <>
             <table className="th-table">
+              <caption className="sr-only">{tableCaption}</caption>
               <thead>
                 <tr>
                   <th>Date</th>
@@ -895,25 +1493,26 @@ export function TransactionHistory() {
               </tbody>
             </table>
 
-            {/* Pagination */}
             {totalPages > 1 && (
               <div className="th-pagination">
                 <button
                   className="th-page-btn"
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                   disabled={currentPage === 1}
-                  onClick={() => setCurrentPage((p) => p - 1)}
                 >
-                  ← Previous
+                  Previous
                 </button>
                 <span className="th-page-info">
                   Page {currentPage} of {totalPages}
                 </span>
                 <button
                   className="th-page-btn"
+                  onClick={() =>
+                    setCurrentPage((p) => Math.min(totalPages, p + 1))
+                  }
                   disabled={currentPage === totalPages}
-                  onClick={() => setCurrentPage((p) => p + 1)}
                 >
-                  Next →
+                  Next
                 </button>
               </div>
             )}

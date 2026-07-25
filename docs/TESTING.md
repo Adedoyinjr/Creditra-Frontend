@@ -1,5 +1,15 @@
 # Testing
 
+## Transaction history CSV export
+
+`src/utils/csv.test.ts` verifies RFC-style escaping for commas, quotes,
+and newlines without adding a third-party CSV dependency.
+
+`src/pages/TransactionHistory.test.tsx` covers the disabled export state,
+the `aria-describedby` explanation, and the polite confirmation toast shown
+after a filtered export completes.
+
+
 Tests are how we make execution quality visible to reviewers. They also keep regressions
 out of the rendered surface where they would cost users money. This document is the
 testing strategy plus a snapshot of where we are today.
@@ -76,6 +86,7 @@ The test setup lives in `src/test/setup.ts` and is loaded via the
 | `src/components/StatusBadge.test.tsx` | Color/glyph mapping per status |
 | `src/components/__tests__/WalletConnectionModal.test.tsx` | Focus trap, escape close, install-state visual differentiation |
 | `src/hooks/__tests__/useFocusTrap.test.tsx` | Tab cycling, Shift+Tab cycling, Escape, return-focus |
+| `src/pages/CreditLineCompare.test.tsx` | Side-by-side compare page: picker UI, table rendering, diff highlighting, scorecard, swap/clear actions, invalid params, a11y, edge cases (49 tests) |
 | `src/pages/Dashboard.test.tsx` | Dashboard summary and risk-gauge render |
 | `src/pages/NotFound.test.tsx` | 404 semantic structure |
 | `src/pages/TransactionHistory.test.tsx` | Sortable headers + filter chips |

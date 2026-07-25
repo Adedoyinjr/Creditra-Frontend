@@ -27,7 +27,7 @@ flowchart TB
     Main --> R4["/open-credit<br/>pages/RequestEvaluation.tsx"]
     Main --> R5["* NotFound<br/>pages/NotFound.tsx"]
 
-    R1 --> C1["StatusBadge<br/>Skeleton<br/>CopyToClipboard<br/>RiskGauge (inline SVG)"]
+    R1 --> C1["StatusBadge<br/>Skeleton<br/>CopyToClipboard<br/>RiskGauge<br/>(src/components/RiskGauge.tsx)"]
     R3 --> C2["CreditLineSelector ▸<br/>AmountInput ▸<br/>PreviewSection ▸<br/>ConfirmationStep ▸<br/>TransactionStatus"]
     Header --> C3["WalletButton ▸<br/>WalletConnectionModal ▸<br/>OnboardingFlow"]
 
@@ -100,6 +100,8 @@ The store is deliberately small. We do not use Redux, Zustand, Recoil, or React 
 | --- | --- | --- |
 | Wallet connection lifecycle | `src/context/WalletContext.tsx` | `localStorage` via `src/utils/wallet.ts` (`saveWalletPreference`, `getStoredWallet`) |
 | Toasts and banners | `src/context/NotificationContext.tsx` | In-memory; preferences and inbox persisted to `localStorage` |
+| Colour-scheme theme | `src/context/ThemeContext.tsx` | `localStorage` key `creditra-theme` via `src/utils/storage.ts` |
+| High-contrast override | `src/context/ContrastContext.tsx` | `localStorage` key `creditra-contrast` via `src/utils/storage.ts` |
 | Page-local form state | The page component (e.g. `pages/DrawCreditPage.tsx`) | None — destroyed on navigation |
 | Wizard step | `useState` in the wizard root (`DrawCreditPage`) | URL parameters drive the success state via `useLocation().state` |
 
@@ -157,6 +159,7 @@ notifications while keeping transaction confirmations).
 | `/` | `<Dashboard />` | Default landing for a connected wallet |
 | `/transactions` | `<TransactionHistory />` | Sortable, filterable ledger |
 | `/credit-lines` | route is rendered in the nav but currently delegates to `pages/CreditLines.tsx`; wiring happens via `App.tsx` updates |
+| `/compare-credit-lines` | `<CreditLineCompare />` | Side-by-side comparison of two credit lines. Accepts `?a=<id>&b=<id>` query params; falls back to an inline picker when params are absent or invalid. Linked from the "Full Compare →" button on `/credit-lines`. |
 | `/draw-credit` | `<DrawCreditPage />` | 4-step wizard |
 | `/draw-credit/success` | `<DrawCreditPage />` | Same component, success branch driven by `useLocation().state.transaction` |
 | `/open-credit` | `<RequestEvaluation />` | New-applicant intake |
@@ -254,7 +257,7 @@ src/
 │   ├── notifications/   ToastContainer, BannerAlert, NotificationBell, NotificationCenter
 │   ├── (modals)         WalletConnectionModal, RepayModal, OnboardingFlow
 │   ├── (inputs)         FormField, FormMessage, AmountInput, PendingButton
-│   ├── (status)         StatusBadge, Skeleton, SuccessState, TransactionStatus
+│   ├── (status)         StatusBadge, Skeleton, SuccessState, TransactionStatus, RiskGauge
 │   ├── (a11y)           AccessibleTooltip, CopyToClipboard
 │   └── ErrorBoundary    Top-level render-error catcher
 ├── context/

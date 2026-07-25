@@ -91,6 +91,12 @@ is the rightmost button — predictable hand position for thumb users on mobile.
 **Trade-off.** Two clicks for what used to be one. We accept this because the cost of an
 accidental repayment is real money; the cost of one extra click is zero.
 
+**Repay all shortcut (2025).** Full-balance repayments used to require manual entry of
+principal plus accrued interest. A **Repay all** button adjacent to the amount field
+pre-fills the exact payoff from `computeFullPayoffAmount` (`src/utils/currency.ts`),
+locks the input, and exposes an **Edit** affordance to unlock. Lock/unlock transitions
+are announced through a polite live region.
+
 ---
 
 ## 4. Show APR *and* total cost, not just APR
@@ -206,6 +212,11 @@ recommended reserve is `warning`; a healthy draw is `success`. The message tone 
 the input's border, the helper text, and the icon all at once — no separate "error
 state" UI.
 
+For the GrantFox draw flow, the amount input also exposes explicit `+` and `-` stepper
+buttons alongside the numeric field. The intent is to make the step-by-step edit pattern
+unambiguous for both touch and keyboard users while preserving the same clamped bounds
+of `0` through `available credit`.
+
 **Trade-off.** More validation states to maintain. We accept this because the input is
 the highest-stakes interaction on the screen.
 
@@ -233,7 +244,23 @@ alternative — UI development being blocked on contract work — is worse.
 
 ---
 
-## 9. The 4-step draw wizard
+## 9. APR history stays inline on each credit-line card
+
+**Problem.** Users comparing credit facilities need quick context on whether the current APR is stable, improving, or worsening. A single APR number hides that movement and makes pricing feel more arbitrary than it is.
+
+**Alternatives considered.**
+
+- **APR number only.** Rejected — good for spot comparison, bad for trend comprehension.
+- **A separate detail page chart only.** Rejected — adds navigation friction for a comparison task users often do across multiple lines.
+- **A full analytics chart with axes and legend.** Rejected — too heavy for a card-level surface and harder to scan on mobile.
+
+**Chosen approach.** Each credit-line card on `src/pages/CreditLines.tsx` now includes an `AprHistoryChart` sparkline. The chart supports **30D / 90D / 365D** windows, uses semantic success/error tokens for trend color, and includes a screen-reader data table so the compact visual does not hide the underlying numbers.
+
+**Trade-off.** The cards are taller than before. We accept the extra height because the chart materially improves pricing explainability without forcing users into another screen.
+
+---
+
+## 10. The 4-step draw wizard
 
 **Problem.** A draw is a multi-decision action — *which line, how much, am I sure*. A
 single dense form makes those decisions feel coupled; a separate page per step feels
@@ -290,3 +317,48 @@ trigger on close, and the parent flow state stays mounted while the overlay is
 open. The dialog reuses the app modal hooks for focus trapping, body scroll lock,
 and inert background behavior, with reduced-motion users receiving the global
 motion-reduced animation behavior.
+
+---
+
+## 11. Per-step micro-progress in the draw wizard
+
+**Problem.** The draw wizard header shows which step is active but not whether
+each step's requirements are satisfied (line chosen, amount in bounds, preview
+computed, terms acknowledged). Users had to infer readiness from the form body.
+
+**Alternatives considered.**
+
+- **Colour-only step borders.** Rejected — completion colour on the card does
+  not spell out *what* is missing ("amount out of bounds" vs. "not started").
+- **Toast on each validity change.** Rejected — too noisy for sighted users and
+  redundant with polite `aria-live` for AT.
+- **Separate progress bar.** Rejected — duplicates the existing four-step header.
+
+**Chosen approach.** Compact chips beneath each step label in
+`DrawCreditPage` (`DrawWizardMicroIndicator`) driven by
+`computeDrawWizardMicroProgress`. Tones use existing `--success`, `--warning`,
+and `--muted` tokens. A single debounced `aria-live="polite"` region announces
+changes. Confirmation checkbox state is lifted to the page so the confirm chip
+stays in sync.
+
+**Trade-off.** Slightly denser header on mobile. Chips use ellipsis truncation
+so all four remain visible at compact density.
+
+---
+
+## 12. Microcopy glossary
+
+**Problem.** Risk-priced credit terminology (utilization, reserve, draw, APR
+vs. APY, attestation) appeared inconsistently across AmountInput, PreviewSection,
+and RepayModal. Different labels for the same concept eroded user confidence.
+
+**Chosen approach.** A single glossary at [`docs/MICROCOPY.md`](MICROCOPY.md)
+defines the canonical label and inline-gloss text for every credit term in the
+UI. The three target components were updated to use canonical phrasing; inline
+glosses use `AccessibleTooltip` so the definition is available on hover and
+focus without cluttering labels. The tone register is clear, neutral, and never
+alarming except on danger-state validation messages.
+
+**Trade-off.** The glossary is a documentation artefact that must be kept in
+sync with the code. We accept this because the alternative — inconsistent
+terminology appearing over time — is worse for users and contributors alike.

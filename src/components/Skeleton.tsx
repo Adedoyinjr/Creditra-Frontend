@@ -6,6 +6,8 @@ type SkeletonProps = React.HTMLAttributes<HTMLDivElement> & {
   width?: string | number;
   /** Height passed through as a CSS dimension (string or px number). */
   height?: string | number;
+  /** Shape of the skeleton. Defaults to 'rectangular'. */
+  shape?: 'rectangular' | 'circular' | 'rounded';
 };
 
 /**
@@ -22,9 +24,9 @@ type SkeletonProps = React.HTMLAttributes<HTMLDivElement> & {
  * @example
  *   <Skeleton width="100%" height={48} aria-label="Loading credit lines" />
  */
-export const Skeleton: React.FC<SkeletonProps> = ({ width, height, style, className, ...rest }) => (
+export const Skeleton: React.FC<SkeletonProps> = ({ width, height, shape = 'rectangular', style, className, ...rest }) => (
   <div
-    className={`skeleton ${className ?? ''}`.trim()}
+    className={`skeleton skeleton--${shape} ${className ?? ''}`.trim()}
     style={{ width, height, ...style }}
     {...rest}
   />

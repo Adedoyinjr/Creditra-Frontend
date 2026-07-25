@@ -229,6 +229,110 @@
   margin: 0;
 }
 
+.install-prompt {
+  margin: 0 1.5rem 1.5rem;
+  padding: 1.25rem;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.install-header {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+}
+
+.install-icon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.install-header strong {
+  display: block;
+  color: var(--text);
+  margin-bottom: 0.25rem;
+  font-size: 1rem;
+}
+
+.install-header p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.install-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  font-size: 0.85rem;
+}
+
+.detail-label {
+  color: var(--muted);
+}
+
+.detail-value {
+  color: var(--text);
+  text-align: right;
+}
+
+.install-links {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.install-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition: all 0.2s;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+
+.install-link.primary {
+  background: var(--accent);
+  color: white;
+}
+
+.install-link.primary:hover {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+}
+
+.install-link.secondary {
+  background: var(--surface);
+  color: var(--text);
+  border-color: var(--border);
+}
+
+.install-link.secondary:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.install-link:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
@@ -255,6 +359,17 @@
   }
   to {
     transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .modal-overlay,
+  .modal-content,
+  .success-icon,
+  .wallet-card,
+  .install-link {
+    animation: none;
+    transition: none;
   }
 }
 
@@ -293,6 +408,11 @@
 
   .wallet-info p {
     font-size: 0.8rem;
+  }
+
+  .install-prompt {
+    margin: 0 1rem 1rem;
+    padding: 1rem;
   }
 
   .error-state {
@@ -660,6 +780,182 @@
 }
 
 /* 
+   "Continue with last-used" affordance (MRU fast-path)
+   Visual separation from the rest of the modal so users see it as a
+   primary CTA.  Contrast ratio meets WCAG AA against the dialog surface.
+    */
+.wallet-modal-continue {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  margin-bottom: var(--space-md);
+  padding-bottom: var(--space-md);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.wallet-continue-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  width: 100%;
+  padding: var(--space-md);
+  border: 2px solid var(--color-primary);
+  border-radius: 12px;
+  background: rgba(99, 102, 241, 0.06);
+  cursor: pointer;
+  text-align: left;
+  color: var(--color-text);
+  transition: background 150ms, transform 150ms, border-color 150ms;
+  /* WCAG 2.5.5: tap target size */
+  min-height: var(--min-tap-target);
+
+  &:focus-visible {
+    outline: 3px solid var(--color-focus-ring);
+    outline-offset: 2px;
+  }
+
+  &:hover:not(:disabled) {
+    background: rgba(99, 102, 241, 0.12);
+  }
+
+  &:active:not(:disabled) {
+    transform: scale(0.98);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  img {
+    width: 32px;
+    height: 32px;
+    background: var(--modal-bg);
+    border-radius: 8px;
+    padding: 4px;
+  }
+}
+
+.wallet-continue-label {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.wallet-continue-eyebrow {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-primary);
+}
+
+.wallet-continue-name {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.wallet-continue-action {
+  font-size: 1.25rem;
+  color: var(--color-primary);
+}
+
+/* 
+   "Switch wallet" affordance — shown beneath the continue button when
+   the list is collapsed, and as an inline link when expanded.
+    */
+.wallet-switch-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  background: none;
+  border: none;
+  padding: var(--space-xs) var(--space-sm);
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-primary);
+  cursor: pointer;
+  align-self: center;
+  border-radius: 6px;
+  transition: background 150ms;
+  min-height: var(--min-tap-target);
+
+  &:hover {
+    background: rgba(99, 102, 241, 0.08);
+    text-decoration: underline;
+  }
+
+  &:focus-visible {
+    outline: 3px solid var(--color-focus-ring);
+    outline-offset: 2px;
+  }
+
+  &:active {
+    transform: scale(0.98);
+  }
+}
+
+.wallet-switch-link--inline {
+  margin-top: var(--space-md);
+  align-self: center;
+  color: var(--color-text-secondary);
+
+  &:hover {
+    color: var(--color-primary);
+  }
+}
+
+/* 
+   "Remember my choice" opt-in checkbox.
+   Default state is unchecked.  Hit area is enlarged to 44px minimum
+   so the label itself is a valid tap target.
+    */
+.wallet-remember-choice {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  cursor: pointer;
+  padding: var(--space-sm) 0;
+  user-select: none;
+  min-height: var(--min-tap-target);
+  color: var(--color-text);
+
+  /* Visually-hidden native checkbox is acceptable per WCAG when paired
+     with a label, but we keep a styled checkbox for state visibility.
+     The custom accent color passes WCAG 1.4.11 (4.5:1) against both
+     light and dark dialog surfaces. */
+  input[type='checkbox'] {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--color-primary);
+    cursor: pointer;
+    flex-shrink: 0;
+
+    &:focus-visible {
+      outline: 3px solid var(--color-focus-ring);
+      outline-offset: 2px;
+    }
+  }
+}
+
+.wallet-remember-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.wallet-remember-help {
+  font-size: 0.75rem;
+  color: var(--color-text-secondary);
+  line-height: 1.4;
+  /* Inset under the checkbox so the help text reads as supporting copy. */
+  margin: 0 0 var(--space-sm) 26px;
+}
+
+/* 
    Footer
     */
 .wallet-modal-footer {
@@ -840,3 +1136,17 @@
   white-space: nowrap;
   border-width: 0;
 }
+/* Reduced Motion Override */
+[data-motion="reduced"] .wallet-modal-backdrop,
+[data-motion="reduced"] .wallet-modal-dialog,
+[data-motion="reduced"] .wallet-option-spinner {
+    animation: none;
+  }
+[data-motion="reduced"] .wallet-modal-dialog {
+    transform: none;
+    opacity: 1;
+  }
+[data-motion="reduced"] .wallet-option:active:not(:disabled) {
+    transform: none;
+  }
+

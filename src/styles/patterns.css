@@ -1,0 +1,98 @@
+/* Patterns for Credit Line statuses to support color-blind accessibility */
+
+.status-active {
+  background-image: radial-gradient(circle, rgba(16, 185, 129, 0.1) 1px, transparent 1px);
+  background-size: 16px 16px;
+}
+
+.status-suspended {
+  background-image: linear-gradient(45deg, rgba(245, 158, 11, 0.1) 25%, transparent 25%, transparent 50%, rgba(245, 158, 11, 0.1) 50%, rgba(245, 158, 11, 0.1) 75%, transparent 75%, transparent);
+  background-size: 16px 16px;
+}
+
+.status-frozen {
+  background-image: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 25%, transparent 25%, transparent 50%, rgba(59, 130, 246, 0.1) 50%, rgba(59, 130, 246, 0.1) 75%, transparent 75%, transparent);
+  background-size: 16px 16px;
+}
+
+.status-defaulted {
+  background-image: repeating-linear-gradient(45deg, rgba(239, 68, 68, 0.1), rgba(239, 68, 68, 0.1) 10px, transparent 10px, transparent 20px);
+}
+
+.status-closed {
+  background-image: repeating-linear-gradient(0deg, rgba(107, 114, 128, 0.1), rgba(107, 114, 128, 0.1) 6px, transparent 6px, transparent 12px);
+}
+
+/* RepaymentVisualizer series — distinguish principal vs interest without color alone (WCAG 1.4.1) */
+
+.rv-legend-swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+  display: inline-block;
+  flex-shrink: 0;
+  border: 1px solid color-mix(in srgb, var(--border, #30363d) 70%, transparent);
+}
+
+.rv-legend-swatch--principal {
+  background-color: color-mix(in srgb, var(--accent, #58a6ff) 45%, transparent);
+  background-image: repeating-linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--accent, #58a6ff) 90%, #fff) 0,
+    color-mix(in srgb, var(--accent, #58a6ff) 90%, #fff) 1px,
+    transparent 1px,
+    transparent 5px
+  );
+}
+
+.rv-legend-swatch--interest {
+  background-color: color-mix(in srgb, var(--warning, #d29922) 45%, transparent);
+  background-image: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 2px,
+    color-mix(in srgb, var(--warning, #d29922) 85%, #fff) 2px,
+    color-mix(in srgb, var(--warning, #d29922) 85%, #fff) 3px
+  ),
+  repeating-linear-gradient(
+    -45deg,
+    transparent,
+    transparent 2px,
+    color-mix(in srgb, var(--warning, #d29922) 85%, #fff) 2px,
+    color-mix(in srgb, var(--warning, #d29922) 85%, #fff) 3px
+  );
+}
+
+@media (forced-colors: active) {
+  .rv-legend-swatch {
+    background-color: Canvas;
+    forced-color-adjust: none;
+  }
+
+  .rv-legend-swatch--principal {
+    background-image: repeating-linear-gradient(
+      135deg,
+      CanvasText 0,
+      CanvasText 1px,
+      transparent 1px,
+      transparent 5px
+    );
+  }
+
+  .rv-legend-swatch--interest {
+    background-image: repeating-linear-gradient(
+        45deg,
+        CanvasText 0,
+        CanvasText 1px,
+        transparent 1px,
+        transparent 4px
+      ),
+      repeating-linear-gradient(
+        -45deg,
+        CanvasText 0,
+        CanvasText 1px,
+        transparent 1px,
+        transparent 4px
+      );
+  }
+}

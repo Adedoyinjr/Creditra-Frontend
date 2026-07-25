@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, within, fireEvent } from "@testing-library/react";
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import "@testing-library/jest-dom";
 import App from "./App";
@@ -84,6 +84,15 @@ describe("App Navigation Header", () => {
     // WalletButton should be rendered in the header
     const header = screen.getByRole("banner");
     expect(header).toBeInTheDocument();
+  });
+
+  it("renders network status indicator in the header", () => {
+    render(<App />);
+
+    const header = screen.getByRole("banner");
+    expect(
+      within(header).getByLabelText(/network status:/i),
+    ).toBeInTheDocument();
   });
 
   it("renders the Settings shortcut help trigger", () => {
@@ -186,7 +195,7 @@ describe("App Styling and Accessibility", () => {
   it("opens shortcut help when ? is pressed outside inputs", () => {
     render(<App />);
 
-    document.dispatchEvent(new KeyboardEvent("keydown", { key: "?", bubbles: true }));
+    fireEvent.keyDown(document, { key: "?" });
 
     expect(
       screen.getByRole("dialog", { name: /move around faster/i }),
@@ -199,10 +208,32 @@ describe("App Styling and Accessibility", () => {
 
     const searchInput = screen.getByPlaceholderText("Search for help...");
     searchInput.focus();
-    searchInput.dispatchEvent(new KeyboardEvent("keydown", { key: "?", bubbles: true }));
+    fireEvent.keyDown(searchInput, { key: "?" });
 
     expect(
       screen.queryByRole("dialog", { name: /move around faster/i }),
     ).not.toBeInTheDocument();
+  });
+
+  it("opens command palette on Ctrl+K", () => {
+    render(<App />);
+    fireEvent.keyDown(document, { key: "k", ctrlKey: true });
+    expect(screen.getByTestId("command-palette")).toBeInTheDocument();
+  });
+
+  it("opens command palette on Meta+K (Cmd+K on macOS)", () => {
+    render(<App />);
+    fireEvent.keyDown(document, { key: "k", metaKey: true });
+    expect(screen.getByTestId("command-palette")).toBeInTheDocument();
+  });
+
+  it("toggles command palette closed on second Ctrl+K", () => {
+    render(<App />);
+    // Open
+    fireEvent.keyDown(document, { key: "k", ctrlKey: true });
+    expect(screen.getByTestId("command-palette")).toBeInTheDocument();
+    // Close by toggling
+    fireEvent.keyDown(document, { key: "k", ctrlKey: true });
+    expect(screen.queryByTestId("command-palette")).not.toBeInTheDocument();
   });
 });

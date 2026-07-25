@@ -1,0 +1,230 @@
+/*
+ * draw-summary-bar.css — mobile-only sticky bottom summary for the draw wizard.
+ *
+ * Breakpoint
+ * ──────────
+ * Hidden at md and above (min-width 768px). Desktop users see the sidebar
+ * PreviewSection instead.
+ *
+ * Safe area
+ * ─────────
+ * padding-bottom uses env(safe-area-inset-bottom) for iOS home indicator /
+ * Android gesture bar clearance.
+ *
+ * Collapse / expand
+ * ─────────────────
+ * Scroll-down adds .draw-summary-bar--collapsed (via useScrollCollapse).
+ * The expanded tile grid slides away; a one-line peek remains visible.
+ * Under prefers-reduced-motion or [data-motion="reduced"], the transition
+ * is instant.
+ */
+
+.draw-summary-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 40;
+
+  background: var(--surface-overlay, rgba(13, 17, 23, 0.92));
+  border-top: 1px solid var(--border, #30363d);
+  color: var(--text, #e6edf3);
+  box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.35);
+
+  /* Mobile safe area — pad inward so the gesture indicator never covers
+     the value text on iOS Safari or Chrome on Android.
+     Uses --sab from safe-area.css (maps env(safe-area-inset-bottom, 0px)).
+     Non-PWA browsers read 0px, so the padding collapses gracefully. */
+  padding-bottom: var(--sab, env(safe-area-inset-bottom, 0px));
+
+  animation: draw-summary-bar-mount 0.18s ease-out both;
+}
+
+/* Sticky summary is mobile-only — desktop uses the sidebar preview. */
+@media (min-width: 768px) {
+  .draw-summary-bar {
+    display: none;
+  }
+}
+
+@supports ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+  .draw-summary-bar {
+    -webkit-backdrop-filter: blur(8px) saturate(160%);
+    backdrop-filter: blur(8px) saturate(160%);
+  }
+}
+
+@keyframes draw-summary-bar-mount {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.draw-summary-bar:focus-visible {
+  outline: 2px solid var(--accent, #58a6ff);
+  outline-offset: -2px;
+}
+
+.draw-summary-bar__inner {
+  position: relative;
+  max-width: 64rem;
+  margin: 0 auto;
+  padding: 0.75rem 1rem;
+  overflow: hidden;
+  transition: max-height 0.22s ease, padding 0.22s ease;
+}
+
+.draw-summary-bar--reduced-motion .draw-summary-bar__inner {
+  transition: none;
+}
+
+/* ── Expanded tile grid ─────────────────────────────────────────────── */
+
+.draw-summary-bar__tiles {
+  display: grid;
+  gap: 0.5rem;
+  grid-template-columns: 1fr 1fr;
+  margin: 0;
+  padding: 0;
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 0.22s ease, transform 0.22s ease;
+}
+
+.draw-summary-bar__tile[data-tile="line"] {
+  grid-column: 1 / -1;
+}
+
+@media (min-width: 480px) and (max-width: 767px) {
+  .draw-summary-bar__tiles {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.75rem;
+  }
+
+  .draw-summary-bar__tile[data-tile="line"] {
+    grid-column: auto;
+  }
+}
+
+.draw-summary-bar__tile {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--radius-md, 6px);
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid transparent;
+  min-width: 0;
+}
+
+.draw-summary-bar__caption {
+  margin: 0;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted, #8b949e);
+}
+
+.draw-summary-bar__value {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text, #e6edf3);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── Collapsed peek row ─────────────────────────────────────────────── */
+
+.draw-summary-bar__peek {
+  display: none;
+  margin: 0;
+  padding: 0.25rem 0;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text, #e6edf3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.draw-summary-bar__peek-sep {
+  margin: 0 0.35rem;
+  color: var(--muted, #8b949e);
+}
+
+.draw-summary-bar__peek-line {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.draw-summary-bar__peek-apr {
+  color: var(--accent, #58a6ff);
+  flex-shrink: 0;
+}
+
+.draw-summary-bar--collapsed .draw-summary-bar__inner {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
+.draw-summary-bar--collapsed .draw-summary-bar__tiles {
+  opacity: 0;
+  transform: translateY(100%);
+  pointer-events: none;
+  position: absolute;
+  left: 0;
+  right: 0;
+  visibility: hidden;
+}
+
+.draw-summary-bar--collapsed .draw-summary-bar__peek {
+  display: block;
+}
+
+.draw-summary-bar--collapsed.draw-summary-bar--reduced-motion .draw-summary-bar__tiles {
+  transition: none;
+}
+
+/* ── High contrast ──────────────────────────────────────────────────── */
+
+[data-contrast="high"] .draw-summary-bar {
+  background: var(--surface, #0a0a0a);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  border-top-color: var(--border, #ffffff);
+}
+
+[data-contrast="high"] .draw-summary-bar__tile {
+  background: transparent;
+  border-color: var(--border, #ffffff);
+}
+
+/* ── Reduced motion ───────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  .draw-summary-bar {
+    animation: none;
+  }
+
+  .draw-summary-bar__inner,
+  .draw-summary-bar__tiles {
+    transition: none;
+  }
+}
+
+[data-motion="reduced"] .draw-summary-bar {
+  animation: none;
+}
+
+[data-motion="reduced"] .draw-summary-bar__inner,
+[data-motion="reduced"] .draw-summary-bar__tiles {
+  transition: none;
+}

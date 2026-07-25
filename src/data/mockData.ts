@@ -1,4 +1,39 @@
-import type { CreditLine } from '../types/creditLine';
+import type { CreditLine, AprHistoryEntry } from '../types/creditLine';
+
+// ─── APR history generation helper ───────────────────────────────────────────
+/**
+ * Generates a realistic-looking APR history for the past `days` days.
+ * Uses a simple bounded random walk anchored to `currentApr`.
+ * Deterministic seed per credit-line id keeps snapshots stable.
+ */
+function generateAprHistory(
+  currentApr: number,
+  days = 365,
+  seed = 42,
+): AprHistoryEntry[] {
+  const entries: AprHistoryEntry[] = [];
+  // Park the pseudo-random walk at currentApr at T=0 and walk backwards
+  let apr = currentApr;
+  const now = new Date();
+
+  // Simple LCG PRNG for stable, deterministic sequences
+  let s = seed;
+  const rand = () => { s = (s * 1664525 + 1013904223) & 0xffffffff; return (s >>> 0) / 0xffffffff; };
+
+  // Build from oldest to newest
+  for (let i = days; i >= 0; i--) {
+    const date = new Date(now);
+    date.setDate(date.getDate() - i);
+    // Small daily drift ±0.05 pp, clamped to ±2 pp from opening APR
+    const drift = (rand() - 0.5) * 0.1;
+    apr = Math.max(currentApr - 2, Math.min(currentApr + 2, apr + drift));
+    entries.push({
+      date: date.toISOString().slice(0, 10),
+      apr: Math.round(apr * 100) / 100,
+    });
+  }
+  return entries;
+}
 
 export const MOCK_CREDIT_LINES: CreditLine[] = [
   {
@@ -14,6 +49,7 @@ export const MOCK_CREDIT_LINES: CreditLine[] = [
     updatedAt: '2025-02-20T14:32:00Z',
     nextPaymentDate: '2025-03-01',
     nextPaymentAmount: 3200,
+    nextInterestAccrualDate: '2025-03-01',
     transactions: [
       { id: 'TX-001', type: 'Draw', amount: 50000, date: '2025-02-18T10:30:00Z', note: 'Equipment purchase', status: 'Completed', txHash: '0xabc123def456' },
       { id: 'TX-002', type: 'Repay', amount: 12500, date: '2025-02-10T14:15:00Z', note: 'Monthly repayment', status: 'Completed', txHash: '0xdef789ghi012' },
@@ -25,6 +61,7 @@ export const MOCK_CREDIT_LINES: CreditLine[] = [
     statusHistory: [
       { status: 'Active', date: '2024-03-15', note: 'Line opened and activated' },
     ],
+    aprHistory: generateAprHistory(8.5, 365, 101),
   },
   {
     id: 'CL-2024-002',
@@ -39,6 +76,7 @@ export const MOCK_CREDIT_LINES: CreditLine[] = [
     updatedAt: '2025-02-19T09:15:00Z',
     nextPaymentDate: '2025-03-05',
     nextPaymentAmount: 5100,
+    nextInterestAccrualDate: '2025-03-01',
     transactions: [
       { id: 'TX-007', type: 'Draw', amount: 100000, date: '2025-02-05T08:30:00Z', note: 'Market expansion', status: 'Completed', txHash: '0xabc111def222' },
       { id: 'TX-008', type: 'Repay', amount: 40000, date: '2025-01-28T13:45:00Z', note: 'Partial repayment', status: 'Completed', txHash: '0xdef333ghi444' },
@@ -51,6 +89,7 @@ export const MOCK_CREDIT_LINES: CreditLine[] = [
     statusHistory: [
       { status: 'Active', date: '2024-06-01', note: 'Line opened' },
     ],
+    aprHistory: generateAprHistory(9.25, 365, 202),
   },
   {
     id: 'CL-2023-003',
@@ -62,6 +101,7 @@ export const MOCK_CREDIT_LINES: CreditLine[] = [
     riskScore: 610,
     openedAt: '2023-11-10',
     updatedAt: '2025-01-15T16:45:00Z',
+    nextInterestAccrualDate: '2025-02-01',
     transactions: [
       { id: 'TX-014', type: 'Draw', amount: 45000, date: '2024-12-10T12:00:00Z', note: 'Operations', status: 'Completed', txHash: '0xaaa111bbb222' },
       { id: 'TX-015', type: 'Interest', amount: 413, date: '2025-01-01T00:00:00Z', note: 'Monthly interest', status: 'Completed' },
@@ -71,6 +111,7 @@ export const MOCK_CREDIT_LINES: CreditLine[] = [
       { status: 'Active', date: '2023-11-10', note: 'Line opened' },
       { status: 'Suspended', date: '2025-01-15', note: 'Missed payment — under review' },
     ],
+    aprHistory: generateAprHistory(11.0, 365, 303),
   },
   {
     id: 'CL-2023-004',
@@ -96,6 +137,7 @@ export const MOCK_CREDIT_LINES: CreditLine[] = [
       { status: 'Suspended', date: '2024-09-01', note: 'Payment overdue' },
       { status: 'Defaulted', date: '2024-11-01', note: '90+ days overdue' },
     ],
+    aprHistory: generateAprHistory(14.5, 365, 404),
   },
   {
     id: 'CL-2022-005',
@@ -116,6 +158,7 @@ export const MOCK_CREDIT_LINES: CreditLine[] = [
       { status: 'Active', date: '2022-08-01', note: 'Line opened' },
       { status: 'Closed', date: '2024-06-30', note: 'Fully repaid and closed by borrower' },
     ],
+    aprHistory: generateAprHistory(10.0, 365, 505),
   },
   {
     id: 'CL-2025-006',
@@ -128,6 +171,7 @@ export const MOCK_CREDIT_LINES: CreditLine[] = [
     collateral: 'USDC Treasury',
     openedAt: '2025-01-15',
     updatedAt: '2025-02-20T10:00:00Z',
+    nextInterestAccrualDate: '2025-03-15',
     transactions: [
       { id: 'TX-027', type: 'Draw', amount: 15000, date: '2025-02-15T09:00:00Z', note: 'Initial funding', status: 'Completed', txHash: '0xiii999jjj000' },
       { id: 'TX-028', type: 'Repay', amount: 15000, date: '2025-02-18T11:30:00Z', note: 'Quick repayment', status: 'Completed', txHash: '0xkkk111lll222' },
@@ -135,5 +179,68 @@ export const MOCK_CREDIT_LINES: CreditLine[] = [
     statusHistory: [
       { status: 'Active', date: '2025-01-15', note: 'Line opened and activated' },
     ],
+    aprHistory: generateAprHistory(7.5, 365, 606),
+  },
+];
+
+// ─── Sessions mock data ───────────────────────────────────────────────────────
+import type { Session } from '../types/session';
+
+/**
+ * Mock active sessions returned by the /auth/sessions endpoint.
+ *
+ * The first entry (`sess-001`) is flagged `isCurrent: true` to represent the
+ * in-progress browser session.  The rest simulate sessions from other devices.
+ */
+export const MOCK_SESSIONS: Session[] = [
+  {
+    id: 'sess-001',
+    isCurrent: true,
+    deviceLabel: 'Chrome 124 on macOS',
+    deviceType: 'desktop',
+    ipAddress: '203.0.113.42',
+    location: 'San Francisco, CA, US',
+    createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),       // 2 h ago
+    lastActiveAt: new Date().toISOString(),
+  },
+  {
+    id: 'sess-002',
+    isCurrent: false,
+    deviceLabel: 'Safari on iPhone',
+    deviceType: 'mobile',
+    ipAddress: '198.51.100.7',
+    location: 'New York, NY, US',
+    createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),  // 3 d ago
+    lastActiveAt: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(),    // 1 h ago
+  },
+  {
+    id: 'sess-003',
+    isCurrent: false,
+    deviceLabel: 'Firefox 125 on Windows',
+    deviceType: 'desktop',
+    ipAddress: '192.0.2.188',
+    location: 'Austin, TX, US',
+    createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 d ago
+    lastActiveAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+  },
+  {
+    id: 'sess-004',
+    isCurrent: false,
+    deviceLabel: 'Chrome on Android',
+    deviceType: 'mobile',
+    ipAddress: '203.0.113.99',
+    location: 'London, UK',
+    createdAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(),
+    lastActiveAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
+  },
+  {
+    id: 'sess-005',
+    isCurrent: false,
+    deviceLabel: 'Safari on iPad',
+    deviceType: 'tablet',
+    ipAddress: '198.51.100.55',
+    location: 'Toronto, ON, CA',
+    createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+    lastActiveAt: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000).toISOString(),
   },
 ];

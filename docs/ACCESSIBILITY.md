@@ -53,6 +53,9 @@ heading.
 - `aria-sort="ascending|descending|none"` is set on the active column header.
 - Row order is the visual order; no reordering of DOM relative to layout.
 - Filter chips are styled `<button>`s with `aria-pressed` reflecting the toggle state.
+- Notification filters use the WAI-ARIA tab pattern: the group has `role="tablist"`,
+  each filter has `role="tab"`, the active filter sets `aria-selected="true"`, and
+  Arrow/Home/End keys move focus and selection.
 
 ### Forms
 
@@ -60,8 +63,9 @@ heading.
   programmatically wires `htmlFor` ↔ `id`, sets `aria-describedby` to a space-separated
   list of help + error IDs, sets `aria-invalid` on error, and emits `aria-required` when
   marked required.
-- Error messages are rendered through `<FormMessage>` with `role="alert"` so screen
-  readers announce them on appearance.
+- Error messages are rendered through `<FormMessage>`. The visible message updates
+  immediately, while the live alert announcement is debounced by 300 ms so assistive
+  technology hears the settled validation state instead of every intermediate keystroke.
 - Inline validation does not block typing; it transitions the message tone from `info` →
   `success`/`warning`/`danger` per `getDrawAmountValidation` in
   `src/utils/amountValidation.ts`.
@@ -77,6 +81,40 @@ heading.
 - Example: `WalletButton.tsx` connected state — `aria-haspopup` and `aria-expanded` on the
   address chip, `role="menu"` on the dropdown.
 
+### Search combobox (TransactionHistory)
+
+The search field on the Transaction History page follows the **ARIA 1.2 combobox pattern**
+(single-select, list autocomplete). Implementation is in `src/pages/TransactionHistory.tsx`.
+
+| Attribute | Element | Value / purpose |
+| --- | --- | --- |
+| `role="combobox"` | `<input>` | Signals combined text-entry + popup to AT |
+| `aria-expanded` | `<input>` | `"true"` when suggestion listbox is visible |
+| `aria-controls` | `<input>` | ID of the `role="listbox"` element |
+| `aria-autocomplete="list"` | `<input>` | Completions appear in popup, not inline |
+| `aria-activedescendant` | `<input>` | ID of the currently keyboard-focused option |
+| `role="listbox"` | `<ul>` | Suggestion container |
+| `role="option"` | `<li>` | Individual suggestion |
+| `aria-selected` | `<li>` | `"true"` on the active (keyboard-navigated) option |
+| `aria-label="Clear search"` | `<button>` | ✕ clear button visible only when input is non-empty |
+
+Keyboard interaction:
+
+| Key | Behaviour |
+| --- | --- |
+| Arrow Down | Open list (if closed); move active option down (wraps) |
+| Arrow Up | Move active option up (wraps) |
+| Enter | Commit active option; if none active, close list |
+| Escape | Dismiss list, keep typed value |
+| Tab | Dismiss list, advance focus |
+
+Filtering is debounced (250 ms) to prevent layout thrashing on every keystroke; the raw
+input value drives the visible suggestion list immediately. The committed search query
+joins the existing AND-filter chain (type × date × amount × credit-line × status × search).
+
+`prefers-reduced-motion`: the listbox slide-in animation is suppressed via a
+`@media (prefers-reduced-motion: reduce)` block in `TransactionHistory.css`.
+
 ### Status badges and gauges
 
 - `StatusBadge` pairs a tinted pill with a single-letter glyph (`A | ! | X | C`). Color is
@@ -85,14 +123,54 @@ heading.
   arrow (`▲ | ▼ | ─`) plus the trend word as a sibling element so screen readers don't
   miss it.
 
+### Chart captions and SR-friendly table siblings
+
+Both `RepaymentVisualizer` and `RiskGauge` expose accessible descriptions at two levels:
+
+**Chart series patterns (RepaymentVisualizer)** — principal remaining and cumulative
+interest are distinguished by hatch direction (45° vs 135°) layered on the area
+gradients, with matching patterned legend swatches in `src/styles/patterns.css`
+(WCAG 1.4.1 — colour is not the only visual means of identification).
+
+**SVG-level label** — the `aria-label` / `aria-labelledby` on the `<svg role="img">` element
+is the first thing screen readers announce when the user focuses the chart.  Both components
+accept an optional prop to override the default description with a more specific one.
+
+**SR-only data table sibling** — a visually-hidden `<table className="sr-only">` is rendered
+adjacent to each chart so users who prefer table navigation get full data access without
+interacting with SVG arcs:
+
+| Component | SR table contents | Key attributes |
+| --- | --- | --- |
+| `RepaymentVisualizer` | Month-by-month principal/interest breakdown | `<caption>` auto-generated from term length + total interest; overridable via `caption` prop; `KbdHint` keyboard navigation (`←`/`→`/`Home`/`End`/`Esc`) |
+| `RiskGauge` | Three risk bands (High/Medium/Low) with score ranges | `aria-current="true"` on the row for the active band; rendered before the SVG so it appears first in reading order |
+
+These tables are always present in the accessibility tree (no `aria-hidden`) and follow
+the standard `<caption>` + `<th scope="col">` + `<td>` pattern.
+
+### Keyboard shortcut hints (`KbdHint`)
+
+The `KbdHint` component (`src/components/KbdHint.tsx`) provides standardized visual and screen-reader accessible keyboard shortcut hints.
+
+- Renders semantic `<kbd>` elements styled with design tokens (`var(--surface-raised)`, `var(--border)`, `var(--text)`).
+- Provides screen-reader accessible text via `.sr-only` element describing the shortcut action.
+- `RepaymentVisualizer` embeds `KbdHint` to indicate keyboard controls for chart inspection:
+  - `←` / `→`: Step backward / forward through schedule months
+  - `Home` / `End`: Jump to first / last repayment month
+  - `Esc`: Clear active data point inspection
+
+
 ### Live regions
 
 | Use | Politeness | Component |
 | --- | --- | --- |
-| Form field errors | `role="alert"` (assertive) | `FormMessage` |
+| Form field errors | `role="alert"` (assertive, debounced 300 ms) | `FormMessage` |
 | Copy-to-clipboard success | `aria-live="polite"` | `CopyToClipboard` |
+| Route changes | `role="status" aria-live="polite"` | `RouteAnnouncer` |
+| Transaction filter result count | `role="status" aria-live="polite" aria-atomic="true"` | `TransactionHistory` filter bar |
+| Browser connectivity (header) | Assertive on offline; polite on restore | `NetworkStatus` |
 | Post-action confirmation | `role="status" aria-live="polite"` | `SuccessState` |
-| Toast notifications | `role="status" aria-live="polite"` for info/success, `role="alert"` for error | `ToastContainer` |
+| Toast notifications | Polite `ToastContainer` live region for confirmations; individual error toasts escalate to `role="alert"` | `ToastContainer` |
 
 ### Focus management
 
@@ -100,6 +178,24 @@ heading.
 - Active nav links keep focus styling distinct from active styling (see the comment block
   around `.header-nav-link.active` in `src/index.css`).
 - Modal close returns focus to the trigger via `useFocusTrap`'s `triggerRef`.
+
+### Anchor/sidebar nav (HelpCenter)
+
+`HelpCenter.tsx` uses an anchor-link sidebar with `aria-current="true"` on the link whose
+target section intersects the viewport.
+
+- The active section is detected via `IntersectionObserver` (`src/hooks/useActiveSection.ts`).
+  The observer uses a `-80px 0px -60% 0px` root margin so the active link updates slightly
+  before the section reaches the top of the viewport, and a multi-threshold `[0, 0.25, 0.5, 0.75, 1]`
+  so the most-visible section wins when multiple overlap.
+- Only one nav link carries `aria-current="true"` at any time. The attribute is absent on all
+  other links.
+- Clicking an anchor calls `target.scrollIntoView({ behavior: 'smooth', block: 'start' })`.
+  Reduced-motion state is read from `useReducedMotion()` — when active, behavior switches to
+  `"instant"`.
+- The `<nav>` has `aria-label="Help topics"`. Links are real `<a href="#id">` elements —
+  keyboard navigable via Tab, activatable via Enter/Space, and receive the global
+  `:focus-visible` ring from `src/index.css`.
 
 ---
 
@@ -113,7 +209,7 @@ The table below is updated on every accessibility-impacting PR. Status legend:
 | `WalletButton` | Tab/Enter/Esc; trigger has `aria-haspopup`/`aria-expanded` | `aria-label` on icon-only states | AA | n/a | OK |
 | `WalletConnectionModal` | Focus trap + return; Escape closes | `role="dialog"`, `aria-modal`, `aria-labelledby` | AA | reduced-motion gated | OK |
 | `ShortcutHelpOverlay` | Global `?` trigger outside text inputs; Escape closes; focus returns | `role="dialog"`, `aria-modal`, grouped shortcut lists | AA | reduced-motion gated | OK |
-| `OnboardingFlow` | Arrow keys advance steps (planned), Esc skips | Stepper labelled via `aria-label` | AA | `useReducedMotion()` | OK |
+| `OnboardingFlow` | Arrow keys advance/back; Esc skips | Stepper labelled via `aria-label` | AA | `useReducedMotion()` | OK |
 | `FormField` | Native input semantics | Auto `htmlFor`, `aria-describedby`, `aria-invalid`, `aria-required` | AA | n/a | OK |
 | `FormMessage` | n/a (text only) | `role="alert"` on error | AA | reduced-motion gated | OK |
 | `AmountInput` | Native input + preset buttons; Tab in order | `aria-describedby` aggregates helper/constraint/status/error | AA | n/a | OK |
@@ -122,26 +218,31 @@ The table below is updated on every accessibility-impacting PR. Status legend:
 | `Skeleton` | n/a | n/a | n/a | reduced-motion gated | OK |
 | `CopyToClipboard` | Real `<button>`; Enter copies | Specific `aria-label`; polite live region announces "Copied" | AA | n/a | OK |
 | `AccessibleTooltip` | Trigger is keyboard-focusable | `role="tooltip"`, `aria-describedby` | AA | n/a | OK |
+| `RouteAnnouncer` | n/a (route observer) | Updates `document.title`, meta description, and a polite live region | AA | n/a | OK |
 | `NotificationBell` | Tab/Enter; counter is decorative | `aria-label="Notifications, N unread"` | AA | n/a | OK |
-| `NotificationCenter` | Focus trap inside the panel | `role="dialog"`, category filters use `aria-pressed` | AA | reduced-motion gated | OK |
+| `NotificationCenter` | Focus trap inside the panel; mobile Expand/Collapse snap controls for keyboard users | `role="dialog"`, category filters use `role="tab"` + `aria-selected`; iOS safe-area insets on bottom sheet | AA | reduced-motion disables snap transitions | OK |
 | `ToastContainer` | Tab/Esc to dismiss | `role="status"` / `role="alert"` per severity | AA | reduced-motion gated | OK |
 | `BannerAlert` | Tab/Enter on action & dismiss | `role="alert"` for warning/error | AA | n/a | OK |
-| `Dashboard` (risk gauge) | n/a | Score and trend exposed via `<text>` + sibling text | AA | n/a | OK |
+| `Dashboard` (risk gauge) | Tab/Enter/Space on SVG root and individual sector bands; keyboard fires `onSectorActivate` | Score and trend exposed via `<title>` + polite `sr-only` sibling; arc animates on value change with reduced-motion fallback; `ariaLabel` prop overrides the auto-generated description; SR-only risk-band table sibling with `aria-current` on the active band; `showSRTable` prop | AA | reduced-motion gated (CSS + JS `matchMedia`) | OK |
+| `RepaymentVisualizer` | n/a (display chart) | `role="img"` SVG with `aria-label` (overridable via `chartAriaLabel` prop); principal/interest hatch patterns + legend swatches (not colour alone); SR-only data table with `<caption>` auto-generated from term + total interest (overridable via `caption` prop); visible schedule table with expand/collapse | AA | n/a | OK |
 | `Header` nav | Tab through links; Enter activates | `aria-current="page"` on active link | AA | n/a | OK |
-| `RepayModal` | Focus trap | `role="dialog"`; uses focus-trap hook | AA | n/a | OK |
-| `TransactionHistory` | Sortable headers via Enter/Space | `aria-sort` reflects column state | AA | n/a | OK |
-| `HelpCenter` | Accordion buttons and transcript links are keyboard reachable | Video thumbnails are real buttons; iframe created only after opt-in | AA | n/a | OK |
+| `RepayModal` | Focus trap (canonical `{ isActive }` form) + return focus to trigger | `role="dialog"`, `aria-modal`, `aria-labelledby` | AA | n/a | OK |
+| `TransactionHistory` | Sortable headers via Enter/Space; search combobox fully keyboard navigable (ArrowDown/Up, Enter, Escape, Tab) | `aria-sort` reflects column state; search uses ARIA 1.2 combobox pattern (`role="combobox"`, `aria-expanded`, `aria-controls`, `aria-autocomplete="list"`, `aria-activedescendant`); result count in polite live region | AA | reduced-motion disables listbox animation | OK |
+| `HelpCenter` | Tab/Enter on sidebar anchor links; accordion buttons and transcript links keyboard reachable | Sidebar nav has `aria-label="Help topics"`; `aria-current="true"` on active section via IntersectionObserver | AA | `useReducedMotion()` gates smooth scroll | OK |
+| `SupportWidget` | Floating trigger, search field, FAQ toggles, and email handoff are keyboard reachable | `aria-expanded`, `aria-controls`, visible focus ring, non-modal `role="dialog"` shell | AA | n/a | OK |
 | `LandingPage` | Tab through CTAs and FAQ accordion | Framer Motion guarded by `useReducedMotion` | AA | reduced-motion gated | OK |
 | `ErrorBoundary` / `ErrorPage` | Tab through "Go back" and "Reload" | Semantic landmarks | AA | n/a | OK |
+| `LoginPage` | Tab through all inputs, checkbox, links, submit; Shift+Tab reverses | Both fields use `<FormField>` — `aria-describedby` always present on password input (`password-help`; `password-help password-error` on error), `aria-required="true"`, `aria-invalid` toggled by error state | AA | n/a | OK |
 
 ### Known gaps and target fix dates
 
 | ID | Component | Gap | Target |
 | --- | --- | --- | --- |
-| A11Y-001 | `OnboardingFlow` | Arrow-key step navigation not wired (today uses Next/Back buttons only) | next minor release |
-| A11Y-002 | `RepayModal` | Focus-trap call site uses legacy boolean signature; needs migration to `useFocusTrap({ isActive })` | next minor release |
+| ~~A11Y-001~~ | ~~`OnboardingFlow`~~ | ~~Arrow-key step navigation not wired (today uses Next/Back buttons only)~~ | **Fixed** — arrow keys now advance/back and Escape skips; regression tests added |
+| ~~A11Y-002~~ | ~~`RepayModal`~~ | ~~Focus-trap call site uses legacy boolean signature; needs migration to `useFocusTrap({ isActive })`~~ | **Fixed** — migrated to `{ isActive }` form; `triggerRef` wired; regression test added |
 | A11Y-003 | `NotificationCenter` | Filter tabs use `aria-pressed` but should additionally expose `role="tab"` + `aria-selected` for AT consistency | next minor release |
-| A11Y-004 | Tables | `aria-sort` is set but caption text describing the table is not yet announced | next minor release |
+| ~~A11Y-004~~ | ~~Tables~~ | ~~`aria-sort` is set but caption text describing the table is not yet announced~~ | **Closed** — `<caption>` added to TransactionHistory; `<section aria-label>` added to CreditLines; both update dynamically with filter state |
+| ~~A11Y-005~~ | ~~`LoginPage`~~ | ~~Password `<input>` had no `aria-describedby` in the non-error state because `FormField` was rendered without `helpText`, violating WCAG 2.1 SC 1.3.1~~ | **Fixed** — added `helpText="Enter the password for your account"` to the password `FormField`; the input now always carries `aria-describedby="password-help"` (or `"password-help password-error"` when an error is active); 16-test suite added |
 
 ---
 
@@ -189,6 +290,7 @@ pattern:
 | `BannerAlert` | `.banner-close` | ~20×20 | 44×44 | yes |
 | `BannerAlert` | `.banner-action` | ~20 h | 44 h | yes |
 | `ToastContainer` | `.toast-close` | ~20×20 | 44×44 | yes |
+| `TransactionHistory` | `.export-btn` | ~32 h | 44 h | yes |
 | `Dashboard` | `.wallet-address-chip` | ~32 h | 44 h | yes |
 | `WalletButton` | `.connect-wallet-btn` | 44 h | 44 h | yes (already) |
 | `WalletButton` | `.wallet-address-btn` | 44 h | 44 h | yes (already) |
@@ -220,8 +322,11 @@ or transaction hash. Its contract:
 ## 6. Reduced motion
 
 Every animation in the codebase is gated by
-`@media (prefers-reduced-motion: reduce)`. Inventory:
+`@media (prefers-reduced-motion: reduce)` and the equivalent `[data-motion="reduced"]` attribute. 
 
+For testing and verifying reduced-motion states without altering OS settings, use the **Reduced Motion Preview toggle** in the Settings page. This toggle sets `[data-motion="reduced"]` on the root `<html>` element, which disables animations globally across the app.
+
+Inventory of CSS files with reduced motion overrides:
 - `src/index.css` — two top-level reduced-motion blocks
 - `src/components/Skeleton.css`
 - `src/components/OnboardingFlow.css`
@@ -229,9 +334,8 @@ Every animation in the codebase is gated by
 - `src/components/FormField.css`
 - `src/components/LandingPage.css`
 
-JS-driven animations (Framer Motion) call `useReducedMotion()` and switch to instant
-state changes. The landing hero in `src/components/LandingPage.tsx` is the canonical
-example.
+JS-driven animations (Framer Motion) call `useReducedMotion()` from the context and switch to instant
+state changes. The landing hero in `src/components/LandingPage.tsx` and risk gauge in `src/components/RiskGauge.tsx` are canonical examples.
 
 ---
 

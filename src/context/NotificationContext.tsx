@@ -45,7 +45,9 @@ interface NotificationContextValue {
   unreadCount: number;
   markAsRead: (id: string) => void;
   markAllAsRead: () => void;
+  undoRead: (ids: string[]) => void;
   clearAll: () => void;
+  restoreNotifications: (notifications: Notification[]) => void;
   filterByCategory: (category: NotificationCategory | 'all') => Notification[];
 
   // Preferences
@@ -203,8 +205,18 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     setNotifications(prev => prev.map(n => ({ ...n, read: true })));
   }, []);
 
+  const undoRead = useCallback((ids: string[]) => {
+    setNotifications(prev =>
+      prev.map(n => (ids.includes(n.id) ? { ...n, read: false } : n))
+    );
+  }, []);
+
   const clearAll = useCallback(() => {
     setNotifications([]);
+  }, []);
+
+  const restoreNotifications = useCallback((toRestore: Notification[]) => {
+    setNotifications(toRestore);
   }, []);
 
   const filterByCategory = useCallback(
@@ -232,7 +244,9 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         unreadCount,
         markAsRead,
         markAllAsRead,
+        undoRead,
         clearAll,
+        restoreNotifications,
         filterByCategory,
         preferences,
         updatePreferences,
