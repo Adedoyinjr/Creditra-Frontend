@@ -26,6 +26,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { vi, describe, it, expect, beforeEach, afterEach } from "vitest";
 import DrawCreditPage from "./DrawCreditPage";
+import * as ReducedMotionContext from "@/context/ReducedMotionContext";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -288,5 +289,35 @@ describe("DrawCreditPage — step navigation & token audit", () => {
     ).toBeInTheDocument();
 
     randomSpy.mockRestore();
+  });
+});
+
+// ─── Reduced-motion fallback tests ────────────────────────────────────
+
+describe("DrawCreditPage — reduced-motion fallback", () => {
+  it("does NOT set data-reduced-motion when motion is enabled (default)", () => {
+    vi.spyOn(ReducedMotionContext, "useReducedMotion").mockReturnValue({
+      motionOverride: "system",
+      toggleMotionOverride: vi.fn(),
+      setMotionOverride: vi.fn(),
+      isReducedMotionActive: false,
+    });
+
+    render(<DrawCreditPage />);
+    const main = document.querySelector("main.dc-page");
+    expect(main).not.toHaveAttribute("data-reduced-motion");
+  });
+
+  it("sets data-reduced-motion='true' when in-app reduced-motion override is active", () => {
+    vi.spyOn(ReducedMotionContext, "useReducedMotion").mockReturnValue({
+      motionOverride: "reduced",
+      toggleMotionOverride: vi.fn(),
+      setMotionOverride: vi.fn(),
+      isReducedMotionActive: true,
+    });
+
+    render(<DrawCreditPage />);
+    const main = document.querySelector("main.dc-page");
+    expect(main).toHaveAttribute("data-reduced-motion", "true");
   });
 });
