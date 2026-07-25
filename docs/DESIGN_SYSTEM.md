@@ -100,8 +100,22 @@ loaded; this keeps CLS at zero and removes a third-party request.
 #### Utility: tabular numerals
 
 ```css
-.num-tabular { font-variant-numeric: tabular-nums; }
+.tabular-nums,
+.num-tabular,
+.amount,
+[data-amount] {
+  font-variant-numeric: tabular-nums;
+}
 ```
+
+Apply to any cell that displays money, percentages, or APR so digit widths are fixed and
+columns stay visually stable as values change. Defined in `src/styles/typography.css` and
+used on:
+
+- `AmountInput` — draw field, available limit, validation metrics (`.tabular-nums.amount`)
+- `TransactionHistory` — `tx-amount` / `th-stat-value` via `.num-tabular`
+- `CreditLines` — Limit / Utilized / Available metric values
+- `ConfirmationStep`, `RepayModal`, `RepaySuccessShareCard` — amount summaries
 
 Apply to any cell that displays money, percentages, or APR so digit widths are fixed and
 columns stay visually stable as values change. Currently used on:

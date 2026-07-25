@@ -1,6 +1,27 @@
-/* src/styles/typography.css */
+/* src/styles/typography.css
+ *
+ * Numeric typography utilities for money / rate / percent displays.
+ * Tabular numerals keep digit widths fixed so columns do not wobble
+ * when values update (e.g. $1,000 → $9,999).
+ */
 
-/* Add tabular-nums to amount displays for stability */
+/* Canonical utility — preferred class name going forward */
 .tabular-nums {
   font-variant-numeric: tabular-nums;
+}
+
+/* Alias used by TransactionHistory / CreditLines (legacy name) */
+.num-tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/**
+ * Semantic amount class — apply to any money / APR / utilization figure.
+ * Combines tabular numerals with a consistent numeric weight so AmountInput,
+ * ConfirmationStep, and list cells share one visual contract.
+ */
+.amount,
+[data-amount] {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
 }
