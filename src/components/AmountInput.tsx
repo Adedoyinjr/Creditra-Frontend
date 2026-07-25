@@ -14,11 +14,16 @@ import {
 } from "../utils/amountValidation";
 import { FormMessage } from "./FormMessage";
 import { Skeleton } from "./Skeleton";
+import { useReducedMotion } from "../context/ReducedMotionContext";
+import "./AmountInput.css";
 
 const STEP_AMOUNT = 100;
 
-const stepClasses =
-  "flex items-center justify-center w-11 h-11 rounded-lg border border-border bg-background/60 text-foreground hover:bg-surface hover:border-accent/50 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-surface disabled:opacity-40 disabled:cursor-not-allowed";
+function buildStepClasses(reducedMotion: boolean): string {
+  const base =
+    "flex items-center justify-center w-11 h-11 rounded-lg border border-border bg-background/60 text-foreground hover:bg-surface hover:border-accent/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-surface disabled:opacity-40 disabled:cursor-not-allowed";
+  return reducedMotion ? base : `${base} transition-all`;
+}
 
 const STEP_ICON_CLASS = "h-4 w-4 stroke-[2.5]";
 
@@ -127,6 +132,7 @@ export function AmountInput({
   const [amount, setAmount] = useState("");
   const [pasteAnnouncement, setPasteAnnouncement] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
+  const { isReducedMotionActive: reducedMotion } = useReducedMotion();
   const inputId = "draw-amount-input";
   const helperId = "draw-amount-helper";
   const errorId = "draw-amount-error";
@@ -242,9 +248,13 @@ export function AmountInput({
   const handleMaxClick = () => handlePreset(100);
   const getMessageType = () => validation.feedback.severity;
   const describedBy = `${helperId} ${constraintsId} ${statusId}${hasError ? ` ${errorId}` : ""}`;
+  const stepBtnClasses = buildStepClasses(reducedMotion);
 
   return (
-    <div className="space-y-6 sm:space-y-8">
+    <div
+      className="amount-input-root space-y-6 sm:space-y-8"
+      data-reduced-motion={reducedMotion ? "true" : undefined}
+    >
       <div>
         <h2 className="text-2xl sm:text-3xl font-bold text-foreground leading-[var(--lh-heading)] tracking-tight">
           Enter Amount
@@ -276,12 +286,12 @@ export function AmountInput({
 
         {/* Input field with border styling based on validation state */}
         <div
-          className={`flex items-center gap-2 sm:gap-3 bg-surface p-3.5 sm:p-4 rounded-xl border-2 overflow-hidden transition-colors ${inputStateClassName}`}
+          className={`flex items-center gap-2 sm:gap-3 bg-surface p-3.5 sm:p-4 rounded-xl border-2 overflow-hidden ${reducedMotion ? "" : "transition-colors"} ${inputStateClassName}`}
         >
           <button
             onClick={() => handleStep("down")}
             disabled={numAmount <= 0}
-            className={stepClasses}
+            className={stepBtnClasses}
             aria-label="Decrease amount"
             aria-controls={inputId}
             type="button"
@@ -316,7 +326,7 @@ export function AmountInput({
           <button
             onClick={() => handleStep("up")}
             disabled={numAmount >= creditLine.available}
-            className={stepClasses}
+            className={stepBtnClasses}
             aria-label="Increase amount"
             aria-controls={inputId}
             type="button"
@@ -326,7 +336,7 @@ export function AmountInput({
           {/* Max button for quick-fill with accessible label */}
           <button
             onClick={handleMaxClick}
-            className="px-3 py-2 text-sm font-semibold text-accent hover:bg-accent/10 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-surface flex-shrink-0 min-h-[44px]"
+            className={`px-3 py-2 text-sm font-semibold text-accent hover:bg-accent/10 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-surface flex-shrink-0 min-h-[44px]${reducedMotion ? "" : " transition-colors"}`}
             aria-label="Set amount to maximum available credit"
             type="button"
           >
@@ -398,7 +408,7 @@ export function AmountInput({
                   Math.floor((creditLine.available * percent) / 100).toString(),
                 )
               }
-              className="py-2.5 px-3 border-2 border-border rounded-lg hover:border-accent hover:bg-surface transition-all text-foreground font-medium text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background min-h-[44px] flex items-center justify-center"
+              className={`py-2.5 px-3 border-2 border-border rounded-lg hover:border-accent hover:bg-surface text-foreground font-medium text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background min-h-[44px] flex items-center justify-center${reducedMotion ? "" : " transition-all"}`}
               aria-label={`Set amount to ${percent} percent of available credit`}
               type="button"
             >
@@ -436,7 +446,7 @@ export function AmountInput({
       <div className="flex gap-3 pt-4">
         <button
           onClick={onBack}
-          className="flex-1 py-3 px-4 border-2 border-border text-foreground rounded-lg hover:bg-surface transition-colors font-semibold text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background min-h-[44px]"
+          className={`flex-1 py-3 px-4 border-2 border-border text-foreground rounded-lg hover:bg-surface font-semibold text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background min-h-[44px]${reducedMotion ? "" : " transition-colors"}`}
           type="button"
         >
           Back
@@ -444,7 +454,7 @@ export function AmountInput({
         <button
           onClick={() => onNext(numAmount)}
           disabled={!isValid}
-          className="flex-1 py-3 px-4 bg-accent text-background rounded-lg hover:bg-accent/90 transition-all font-semibold text-sm disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background min-h-[44px]"
+          className={`flex-1 py-3 px-4 bg-accent text-background rounded-lg hover:bg-accent/90 font-semibold text-sm disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background min-h-[44px]${reducedMotion ? "" : " transition-all"}`}
           type="button"
         >
           Continue

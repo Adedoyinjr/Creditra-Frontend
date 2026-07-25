@@ -1,6 +1,9 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { AmountInput, AmountInputSkeleton } from "./AmountInput";
+import * as ReducedMotionContext from "../context/ReducedMotionContext";
+import { readFileSync } from "fs";
+import { resolve } from "path";
 
 describe("AmountInput", () => {
   const creditLine = {
@@ -467,6 +470,117 @@ describe("AmountInput", () => {
 
       const minLabel = screen.getByText("Minimum draw");
       expect(minLabel).toHaveClass("text-[11px]", "font-semibold", "uppercase", "tracking-wider", "text-muted", "leading-[var(--lh-small)]");
+    });
+  });
+
+  describe("Reduced Motion (v7)", () => {
+    it("adds data-reduced-motion=true attribute on root when reduced motion is active", () => {
+      vi.spyOn(ReducedMotionContext, "useReducedMotion").mockReturnValue({
+        motionOverride: "reduced",
+        toggleMotionOverride: vi.fn(),
+        setMotionOverride: vi.fn(),
+        isReducedMotionActive: true,
+      });
+
+      const { container } = render(
+        <AmountInput
+          creditLine={creditLine}
+          onAmountChange={vi.fn()}
+          onNext={vi.fn()}
+          onBack={vi.fn()}
+        />,
+      );
+
+      const root = container.querySelector(".amount-input-root");
+      expect(root).toHaveAttribute("data-reduced-motion", "true");
+
+      vi.restoreAllMocks();
+    });
+
+    it("omits data-reduced-motion attribute when reduced motion is not active", () => {
+      vi.spyOn(ReducedMotionContext, "useReducedMotion").mockReturnValue({
+        motionOverride: "system",
+        toggleMotionOverride: vi.fn(),
+        setMotionOverride: vi.fn(),
+        isReducedMotionActive: false,
+      });
+
+      const { container } = render(
+        <AmountInput
+          creditLine={creditLine}
+          onAmountChange={vi.fn()}
+          onNext={vi.fn()}
+          onBack={vi.fn()}
+        />,
+      );
+
+      const root = container.querySelector(".amount-input-root");
+      expect(root).not.toHaveAttribute("data-reduced-motion");
+
+      vi.restoreAllMocks();
+    });
+
+    it("renders transition classes on stepper and action buttons when motion is active", () => {
+      vi.spyOn(ReducedMotionContext, "useReducedMotion").mockReturnValue({
+        motionOverride: "system",
+        toggleMotionOverride: vi.fn(),
+        setMotionOverride: vi.fn(),
+        isReducedMotionActive: false,
+      });
+
+      render(
+        <AmountInput
+          creditLine={creditLine}
+          onAmountChange={vi.fn()}
+          onNext={vi.fn()}
+          onBack={vi.fn()}
+        />,
+      );
+
+      const decreaseBtn = screen.getByRole("button", { name: /decrease amount/i });
+      const increaseBtn = screen.getByRole("button", { name: /increase amount/i });
+      const continueBtn = screen.getByRole("button", { name: /continue/i });
+
+      expect(decreaseBtn.className).toContain("transition-all");
+      expect(increaseBtn.className).toContain("transition-all");
+      expect(continueBtn.className).toContain("transition-all");
+
+      vi.restoreAllMocks();
+    });
+
+    it("omits transition classes on buttons when reduced motion is active", () => {
+      vi.spyOn(ReducedMotionContext, "useReducedMotion").mockReturnValue({
+        motionOverride: "reduced",
+        toggleMotionOverride: vi.fn(),
+        setMotionOverride: vi.fn(),
+        isReducedMotionActive: true,
+      });
+
+      render(
+        <AmountInput
+          creditLine={creditLine}
+          onAmountChange={vi.fn()}
+          onNext={vi.fn()}
+          onBack={vi.fn()}
+        />,
+      );
+
+      const decreaseBtn = screen.getByRole("button", { name: /decrease amount/i });
+      const increaseBtn = screen.getByRole("button", { name: /increase amount/i });
+      const continueBtn = screen.getByRole("button", { name: /continue/i });
+
+      expect(decreaseBtn.className).not.toContain("transition-all");
+      expect(increaseBtn.className).not.toContain("transition-all");
+      expect(continueBtn.className).not.toContain("transition-all");
+
+      vi.restoreAllMocks();
+    });
+
+    it("AmountInput CSS file includes prefers-reduced-motion reduce rule", () => {
+      const cssPath = resolve(__dirname, "AmountInput.css");
+      const css = readFileSync(cssPath, "utf-8");
+      expect(css).toContain("prefers-reduced-motion: reduce");
+      expect(css).toContain("transition-duration: 0s");
     });
   });
 });
