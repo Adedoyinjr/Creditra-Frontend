@@ -28,6 +28,7 @@
 import React, { useState, useRef, useCallback, useId } from 'react';
 import { COLOR } from '@/utils/tokens';
 import { KbdHint } from './KbdHint';
+import { LiveRegion } from './LiveRegion';
 import { useReducedMotion } from '@/context/ReducedMotionContext';
 import './RepaymentVisualizer.css';
 
@@ -392,8 +393,6 @@ function TooltipBubble({ data }: { data: TooltipData }) {
 
   return (
     <div
-      role="status"
-      aria-live="polite"
       className="p-2 sm:p-3 text-xs min-w-[140px] sm:min-w-[160px]"
       style={{
         background: 'var(--surface-raised, #1c2230)',
@@ -659,6 +658,16 @@ export function RepaymentVisualizer({
   const totalInterest = schedule[schedule.length - 1]?.cumulativeInterest ?? 0;
   const termMonths = schedule.length;
 
+  const liveMessage = tooltip
+    ? `Month ${tooltip.month}: Principal remaining $${Math.round(tooltip.principal)}, cumulative interest $${Math.round(tooltip.cumulativeInterest)}`
+    : schedule.length === 0
+      ? 'Enter a valid principal, APR, and monthly payment to see the repayment plan.'
+      : `Repayment plan updated: ${termMonths} months, ${new Intl.NumberFormat('en-US', {
+          style: 'currency',
+          currency: 'USD',
+          maximumFractionDigits: 0,
+        }).format(totalInterest)} total interest.`;
+
   return (
     <section
       aria-label="Repayment plan visualizer"
@@ -669,6 +678,7 @@ export function RepaymentVisualizer({
         borderRadius: 'var(--radius-lg)',
       }}
     >
+      <LiveRegion message={liveMessage} />
       <header className="mb-4 sm:mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4">
         <div className="flex flex-wrap items-center gap-3">
           <h2
