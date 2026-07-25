@@ -245,10 +245,10 @@ export default function RepayPage() {
                       <p className="mt-0.5 text-sm text-muted">{cl.id}</p>
                     </div>
                     <div className="text-right">
-                      <p className="font-semibold text-foreground">
+                      <p className="font-semibold text-foreground num-tabular">
                         {formatMoney(cl.utilized)}
                       </p>
-                      <p className="text-sm text-muted">{utilization}% utilized</p>
+                      <p className="text-sm text-muted"><span className="num-tabular">{utilization}%</span> utilized</p>
                     </div>
                   </div>
                   <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-border">
@@ -305,7 +305,7 @@ export default function RepayPage() {
           </h1>
           {step !== 'success' && (
             <p className="text-sm text-muted">
-              {selectedLine.name} &middot; {selectedLine.apr}% APR
+              {selectedLine.name} &middot; <span className="num-tabular">{selectedLine.apr}%</span> APR
             </p>
           )}
         </header>
@@ -316,7 +316,8 @@ export default function RepayPage() {
               <p className="text-xs font-semibold uppercase text-muted">
                 Current debt
               </p>
-              <p className="mt-1 text-3xl font-bold text-foreground">
+              {/* num-tabular: prevents digit-width jitter as repayment amounts change (FWC26) */}
+              <p className="mt-1 text-3xl font-bold text-foreground num-tabular">
                 {formatMoney(selectedLine.utilized)}
               </p>
               <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-border">
@@ -332,7 +333,7 @@ export default function RepayPage() {
                 />
               </div>
               <p className="mt-1 text-xs text-muted">
-                {oldPct}% of {formatMoney(selectedLine.limit)} limit
+                <span className="num-tabular">{oldPct}%</span> of <span className="num-tabular">{formatMoney(selectedLine.limit)}</span> limit
               </p>
             </div>
 
@@ -347,7 +348,7 @@ export default function RepayPage() {
                       Amount to repay
                     </label>
                     <span className="text-xs text-muted">
-                      Wallet: {formatMoney(walletBalance)}
+                      Wallet: <span className="num-tabular">{formatMoney(walletBalance)}</span>
                     </span>
                   </div>
 
@@ -443,7 +444,7 @@ export default function RepayPage() {
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-muted">Remaining debt</span>
                       <span
-                        className={`font-semibold ${
+                        className={`font-semibold num-tabular ${
                           amount > 0 && remainingDebt === 0
                             ? 'text-success'
                             : 'text-foreground'
@@ -455,8 +456,8 @@ export default function RepayPage() {
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-muted">New utilization</span>
                       <span className="font-semibold text-foreground">
-                        {newPct}%
-                        <span className="ml-1.5 text-muted line-through">
+                        <span className="num-tabular">{newPct}%</span>
+                        <span className="ml-1.5 text-muted line-through num-tabular">
                           {oldPct}%
                         </span>
                       </span>
@@ -567,7 +568,7 @@ export default function RepayPage() {
           <div className="space-y-6">
             <div className="rounded-lg border border-border bg-surface p-6 text-center">
               <p className="text-sm text-muted">You are about to repay</p>
-              <p className="mt-2 text-4xl font-bold text-foreground">
+              <p className="mt-2 text-4xl font-bold text-foreground num-tabular">
                 {formatMoney(amount)}
               </p>
             </div>
@@ -577,7 +578,7 @@ export default function RepayPage() {
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-muted">Remaining debt after</span>
                   <span
-                    className={`font-semibold ${
+                    className={`font-semibold num-tabular ${
                       remainingDebt === 0 ? 'text-success' : 'text-foreground'
                     }`}
                   >
@@ -586,7 +587,7 @@ export default function RepayPage() {
                 </div>
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-muted">Wallet balance</span>
-                  <span className="font-semibold text-success">
+                  <span className="font-semibold text-success num-tabular">
                     {formatMoney(walletBalance)}
                   </span>
                 </div>
@@ -649,7 +650,7 @@ export default function RepayPage() {
 
             <div>
               <h2 className="text-2xl font-bold text-foreground">
-                You repaid {formatMoney(amount)}!
+                You repaid <span className="num-tabular">{formatMoney(amount)}</span>!
               </h2>
               <p className="mt-1 text-muted">
                 Your transaction was successful.
@@ -659,14 +660,14 @@ export default function RepayPage() {
             <div className="rounded-lg border border-border bg-surface p-4 text-left">
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted">Remaining debt</span>
-                <span className="font-semibold text-foreground">
+                <span className="font-semibold text-foreground num-tabular">
                   {formatMoney(remainingDebt)}
                 </span>
               </div>
               <div className="mt-2 flex items-center justify-between text-sm">
                 <span className="text-muted">Credit line utilization</span>
                 <span className="font-semibold text-foreground">
-                  Reduced to {newPct}%
+                  Reduced to <span className="num-tabular">{newPct}%</span>
                 </span>
               </div>
               {isAutoSchedule && (
