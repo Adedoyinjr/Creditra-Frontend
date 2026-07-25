@@ -25,7 +25,7 @@
  * it without needing JS class manipulation on every child element.
  */
 
-import React, { useState, useRef, useCallback, useId } from 'react';
+import React, { useState, useRef, useCallback, useId, useMemo } from 'react';
 import { COLOR } from '@/utils/tokens';
 import { KbdHint } from './KbdHint';
 import { LiveRegion } from './LiveRegion';
@@ -661,7 +661,7 @@ export function RepaymentVisualizer({
   const termMonths = schedule.length;
 
   // ── ARIA live-region announcement ──
-  const liveMessage = (() => {
+  const liveMessage = useMemo(() => {
     if (schedule.length === 0) return '';
 
     const interestFmt = new Intl.NumberFormat('en-US', {
@@ -685,7 +685,7 @@ export function RepaymentVisualizer({
     }
 
     return `Repayment plan: ${termMonths} month${termMonths !== 1 ? 's' : ''}, ${interestFmt} total interest.`;
-  })();
+  }, [schedule, tooltip, termMonths, totalInterest]);
 
   return (
     <section
