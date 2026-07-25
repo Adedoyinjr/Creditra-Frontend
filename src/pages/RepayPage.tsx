@@ -13,7 +13,7 @@ import {
 import type { CreditLine } from '@/types/creditLine';
 import { MOCK_CREDIT_LINES } from '@/data/mockData';
 
-type RepayStep = 'input' | 'review' | 'success';
+type RepayStep = 'input' | 'review';
 
 const SEVERITY_CONFIG = {
   info: {
@@ -117,12 +117,19 @@ export default function RepayPage() {
   };
 
   const handleConfirm = () => {
-    setStep('success');
-  };
-
-  const handleNewRepay = () => {
-    setAmountStr('');
-    setStep('input');
+    navigate('/repay/success', {
+      state: {
+        amount,
+        creditLineName: selectedLine.name,
+        creditLineId: selectedLine.id,
+        transactionId: `TXN-${Date.now()}`,
+        remainingDebt,
+        limit: selectedLine.limit,
+        apr: selectedLine.apr,
+        nextPaymentAmount: selectedLine.nextPaymentAmount,
+        timestamp: new Date().toISOString(),
+      },
+    });
   };
 
   const handleBack = () => {
@@ -220,20 +227,16 @@ export default function RepayPage() {
       <div className="space-y-6">
         <header className="space-y-2">
           <p className="text-xs font-semibold uppercase text-muted">
-            {step === 'success' ? 'Repayment Complete' : 'Repay Credit'}
+            Repay Credit
           </p>
           <h1 className="text-2xl font-bold text-foreground sm:text-3xl">
-            {step === 'success'
-              ? 'Payment successful!'
-              : step === 'review'
-                ? 'Review your repayment'
-                : 'Make a repayment'}
+            {step === 'review'
+              ? 'Review your repayment'
+              : 'Make a repayment'}
           </h1>
-          {step !== 'success' && (
-            <p className="text-sm text-muted">
-              {selectedLine.name} &middot; {selectedLine.apr}% APR
-            </p>
-          )}
+          <p className="text-sm text-muted">
+            {selectedLine.name} &middot; {selectedLine.apr}% APR
+          </p>
         </header>
 
         {step === 'input' && (
@@ -517,62 +520,6 @@ export default function RepayPage() {
           </div>
         )}
 
-        {step === 'success' && (
-          <div className="space-y-6 text-center">
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-success/20">
-              <CheckCircle className="h-8 w-8 text-success" aria-hidden="true" />
-            </div>
-
-            <div>
-              <h2 className="text-2xl font-bold text-foreground">
-                You repaid {formatMoney(amount)}!
-              </h2>
-              <p className="mt-1 text-muted">
-                Your transaction was successful.
-              </p>
-            </div>
-
-            <div className="rounded-lg border border-border bg-surface p-4 text-left">
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-muted">Remaining debt</span>
-                <span className="font-semibold text-foreground">
-                  {formatMoney(remainingDebt)}
-                </span>
-              </div>
-              <div className="mt-2 flex items-center justify-between text-sm">
-                <span className="text-muted">Credit line utilization</span>
-                <span className="font-semibold text-foreground">
-                  Reduced to {newPct}%
-                </span>
-              </div>
-            </div>
-
-            <PayoffProjection
-              currentDebt={selectedLine.utilized}
-              apr={selectedLine.apr}
-              repayAmount={amount}
-              limit={selectedLine.limit}
-              nextPaymentAmount={selectedLine.nextPaymentAmount}
-            />
-
-            <div className="flex gap-3">
-              <button
-                type="button"
-                onClick={() => navigate('/')}
-                className="flex-1 rounded-lg bg-accent px-4 py-3 text-sm font-semibold text-background transition-all hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
-              >
-                Back to Dashboard
-              </button>
-              <button
-                type="button"
-                onClick={handleNewRepay}
-                className="flex-1 rounded-lg border border-border bg-surface px-4 py-3 text-sm font-semibold text-foreground transition-all hover:bg-border focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
-              >
-                Make another repayment
-              </button>
-            </div>
-          </div>
-        )}
       </div>
 
       <InlineHelpOverlay

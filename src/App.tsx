@@ -16,6 +16,7 @@ import { NotFound } from "./pages/NotFound";
 import HelpCenter from "./pages/HelpCenter";
 import { ShortcutHelpOverlay } from "./components/ShortcutHelpOverlay";
 import { DutchAuctions } from "./pages/DutchAuctions";
+import RepaySuccess from "./pages/RepaySuccess";
 import { LinkedAccounts } from "./pages/LinkedAccounts";
 import { WalletReconnectBanner } from "./components/WalletReconnectBanner";
 import { NetworkMismatchBanner } from "./components/notifications/NetworkMismatchBanner";
@@ -128,6 +129,7 @@ function App() {
                 <Route path="/open-credit" element={<RequestEvaluation />} />
                 <Route path="/dutch-auctions" element={<DutchAuctions />} />
                 <Route path="/linked-accounts" element={<LinkedAccounts />} />
+                <Route path="/repay/success" element={<RepaySuccess />} />
                 <Route path="/notification-preferences" element={<NotificationPreferences />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
