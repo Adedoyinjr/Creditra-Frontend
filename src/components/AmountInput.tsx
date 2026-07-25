@@ -269,7 +269,7 @@ export function AmountInput({
         <p id={helperId} className="text-sm text-muted leading-[var(--lh-body)]">
           Enter the amount you wish to draw from your available credit.
           Available limit:{" "}
-          <span className="font-semibold text-foreground tabular-nums">
+          <span className="font-semibold text-foreground tabular-nums amount" data-amount>
             {formatMoney(creditLine.available)}
           </span>
         </p>
@@ -303,7 +303,7 @@ export function AmountInput({
             onPaste={handlePaste}
             onKeyDown={handleKeyDown}
             ref={inputRef}
-            className="text-xl sm:text-2xl font-bold bg-transparent outline-none flex-1 text-foreground placeholder:text-muted/50 min-w-0 tabular-nums leading-[var(--lh-display)]"
+            className="text-xl sm:text-2xl font-bold bg-transparent outline-none flex-1 text-foreground placeholder:text-muted/50 min-w-0 tabular-nums amount leading-[var(--lh-display)]"
             min={validation.minAmount}
             max={creditLine.available}
             step={STEP_AMOUNT}

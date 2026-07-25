@@ -100,17 +100,23 @@ loaded; this keeps CLS at zero and removes a third-party request.
 #### Utility: tabular numerals
 
 ```css
-.num-tabular { font-variant-numeric: tabular-nums; }
-.tabular-nums { font-variant-numeric: tabular-nums; }
+.num-tabular,
+.tabular-nums,
+.amount,
+[data-amount] {
+  font-variant-numeric: tabular-nums;
+}
 ```
 
 Apply to any cell that displays money, percentages, or APR so digit widths are fixed and
-columns stay visually stable as values change. Currently used on:
+columns stay visually stable as values change. Defined in `src/styles/typography.css` and
+used on:
 
-- `TransactionHistory` — `tx-amount` column cells, `th-stat-value` summary cards, and the
-  Amount row in the expanded detail panel.
-- `CreditLines` — `cl-metric-value` (Limit / Utilized / Available), utilization percentage,
-  APR, and Risk Score cells.
+- `AmountInput` — draw field, available limit, validation metrics (`.tabular-nums.amount`)
+- `TransactionHistory` — `tx-amount` / `th-stat-value` via `.num-tabular`
+- `CreditLines` — Limit / Utilized / Available metric values
+- `ConfirmationStep`, `RepayModal`, `RepaySuccessShareCard` — amount summaries
+- Dashboard summary cards via `.num-display` / `.num-tabular`
 
 #### Utility: per-account color stripe
 

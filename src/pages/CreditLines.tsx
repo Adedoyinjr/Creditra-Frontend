@@ -102,14 +102,14 @@ function CreditLineCard({
         <div className="cl-metrics">
           <div className="cl-metric">
             <span className="cl-metric-label">Limit</span>
-            <span className="cl-metric-value" style={{ color: COLOR.accent }}>
+            <span className="cl-metric-value amount tabular-nums" style={{ color: COLOR.accent }}>
               {fmt(line.limit)}
             </span>
           </div>
           <div className="cl-metric">
             <span className="cl-metric-label">Utilized</span>
             <span
-              className="cl-metric-value"
+              className="cl-metric-value amount tabular-nums"
               style={{ color: UTIL_COLOR[level] }}
             >
               {fmt(line.utilized)}
@@ -117,7 +117,7 @@ function CreditLineCard({
           </div>
           <div className="cl-metric">
             <span className="cl-metric-label">Available</span>
-            <span className="cl-metric-value" style={{ color: COLOR.success }}>
+            <span className="cl-metric-value amount tabular-nums" style={{ color: COLOR.success }}>
               {fmt(line.limit - line.utilized)}
             </span>
           </div>

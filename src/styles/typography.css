@@ -5,21 +5,17 @@
 
   Tabular numerals (font-variant-numeric: tabular-nums)
   ──────────────────────────────────────────────────────
-  Applied to every numeric display on the Dashboard — credit totals, utilization
-  percentages, transaction amounts — so that digit columns stay visually stable
-  as values change (no horizontal "jitter" when a $1,000 becomes $10,000).
-
-  This is a GrantFox FWC26 (Stellar Wave) requirement:
-  "Apply font-variant-numeric: tabular-nums to numeric displays on Dashboard."
+  Applied to every numeric display — credit totals, utilization percentages,
+  transaction amounts, AmountInput — so digit columns stay visually stable
+  as values change (no horizontal "jitter" when $1,000 becomes $10,000).
 
   Usage
   ─────
-  Add `num-tabular` (or `tabular-nums`) to any element that renders a number:
+  Add `num-tabular`, `tabular-nums`, `amount`, or `data-amount` to any
+  element that renders a number:
 
     <p className="value num-tabular">{fmt(totalLimit)}</p>
-
-  Both class names are intentionally aliases so existing code using either
-  name does not need to be changed.
+    <span className="amount tabular-nums" data-amount>$1,234.56</span>
 
   Dark-mode / High-contrast
   ─────────────────────────
@@ -34,27 +30,20 @@
 /* ── Tabular numerals ────────────────────────────────────────────────────── */
 
 /**
- * .num-tabular / .tabular-nums
+ * .num-tabular / .tabular-nums / .amount / [data-amount]
  * Prevent digit-width wobble in money, percentage, and score columns.
- *
- * font-variant-numeric: tabular-nums instructs the font engine to use
- * fixed-width (tabular) glyph forms for digits 0–9 so that a column of
- * numbers lines up vertically and individual digits do not shift
- * horizontally when the displayed value changes.
- *
- * Both class names resolve to the same declaration so callers can use
- * whichever reads more naturally in context.
  */
 .num-tabular,
-.tabular-nums {
+.tabular-nums,
+.amount,
+[data-amount] {
   font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
 }
 
 /**
  * .num-display
  * Large hero/display number — used for the primary value in summary cards.
- * Inherits tabular-nums and adds a slightly-tightened tracking so wide
- * currency strings don't overflow the card on narrow viewports.
  */
 .num-display {
   font-variant-numeric: tabular-nums;
