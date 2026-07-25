@@ -51,6 +51,7 @@ export default function RepayPage() {
   const [selectedId, setSelectedId] = useState<string>(preselectedId ?? '');
   const [amountStr, setAmountStr] = useState('');
   const [confirmAmountStr, setConfirmAmountStr] = useState('');
+  const [isAutoSchedule, setIsAutoSchedule] = useState(false);
   const [isHelpOpen, setIsHelpOpen] = useState(false);
   const helpTriggerRef = useRef<HTMLButtonElement>(null);
 
@@ -122,6 +123,7 @@ export default function RepayPage() {
 
   const handleNewRepay = () => {
     setAmountStr('');
+    setIsAutoSchedule(false);
     setStep('input');
   };
 
@@ -395,6 +397,36 @@ export default function RepayPage() {
                     </div>
                   </div>
 
+                  <div className="mt-6 flex items-center justify-between border-t border-border pt-4">
+                    <div>
+                      <label
+                        htmlFor="auto-schedule-toggle"
+                        className="text-sm font-medium text-foreground cursor-pointer"
+                        onClick={() => setIsAutoSchedule(!isAutoSchedule)}
+                      >
+                        Auto-schedule
+                      </label>
+                      <p className="text-xs text-muted">Repeat this payment monthly</p>
+                    </div>
+                    <button
+                      id="auto-schedule-toggle"
+                      type="button"
+                      role="switch"
+                      aria-checked={isAutoSchedule}
+                      onClick={() => setIsAutoSchedule(!isAutoSchedule)}
+                      className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
+                        isAutoSchedule ? 'bg-accent' : 'bg-border'
+                      }`}
+                    >
+                      <span
+                        aria-hidden="true"
+                        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                          isAutoSchedule ? 'translate-x-5' : 'translate-x-0'
+                        }`}
+                      />
+                    </button>
+                  </div>
+
                   <button
                     type="button"
                     onClick={handleReview}
@@ -476,6 +508,12 @@ export default function RepayPage() {
                     {formatMoney(walletBalance)}
                   </span>
                 </div>
+                {isAutoSchedule && (
+                  <div className="flex items-center justify-between text-sm border-t border-border pt-3">
+                    <span className="text-muted">Auto-schedule</span>
+                    <span className="font-semibold text-accent">Monthly</span>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -545,6 +583,12 @@ export default function RepayPage() {
                   Reduced to {newPct}%
                 </span>
               </div>
+              {isAutoSchedule && (
+                <div className="mt-2 flex items-center justify-between text-sm">
+                  <span className="text-muted">Auto-schedule</span>
+                  <span className="font-semibold text-accent">Active</span>
+                </div>
+              )}
             </div>
 
             <PayoffProjection
