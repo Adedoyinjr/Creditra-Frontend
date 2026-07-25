@@ -1,9 +1,10 @@
-import { Link, NavLink } from 'react-router-dom';
-import type { RefObject } from 'react';
-import { NetworkStatus } from '../components/NetworkStatus';
-import { KycTriggerButton } from '../components/KycDrawer';
-import { QuickRepayTrigger } from '../components/QuickRepayTrigger';
-import { WalletButton } from '../components/WalletButton';
+import { Link, NavLink } from "react-router-dom";
+import type { RefObject } from "react";
+import { NetworkStatus } from "../components/NetworkStatus";
+import { KycTriggerButton } from "../components/KycDrawer";
+import { QuickRepayTrigger } from "../components/QuickRepayTrigger";
+import { WalletButton } from "../components/WalletButton";
+import { NotificationWidget } from "../components/notifications/NotificationWidget";
 
 export interface HeaderProps {
   settingsTriggerRef: RefObject<HTMLButtonElement | null>;
@@ -41,7 +42,7 @@ export function Header({
           to="/"
           end
           className={({ isActive }) =>
-            isActive ? 'header-nav-link active' : 'header-nav-link'
+            isActive ? "header-nav-link active" : "header-nav-link"
           }
         >
           Dashboard
@@ -49,7 +50,7 @@ export function Header({
         <NavLink
           to="/transactions"
           className={({ isActive }) =>
-            isActive ? 'header-nav-link active' : 'header-nav-link'
+            isActive ? "header-nav-link active" : "header-nav-link"
           }
         >
           Transactions
@@ -57,7 +58,7 @@ export function Header({
         <NavLink
           to="/credit-lines"
           className={({ isActive }) =>
-            isActive ? 'header-nav-link active' : 'header-nav-link'
+            isActive ? "header-nav-link active" : "header-nav-link"
           }
         >
           Credit Lines
@@ -65,7 +66,7 @@ export function Header({
         <NavLink
           to="/open-credit"
           className={({ isActive }) =>
-            isActive ? 'header-nav-link active' : 'header-nav-link'
+            isActive ? "header-nav-link active" : "header-nav-link"
           }
         >
           Open Credit Line
@@ -73,7 +74,7 @@ export function Header({
         <NavLink
           to="/dutch-auctions"
           className={({ isActive }) =>
-            isActive ? 'header-nav-link active' : 'header-nav-link'
+            isActive ? "header-nav-link active" : "header-nav-link"
           }
         >
           Dutch Auctions
@@ -90,6 +91,7 @@ export function Header({
       <NetworkStatus />
       <KycTriggerButton triggerRef={kycTriggerRef} onClick={onKycClick} />
       <QuickRepayTrigger />
+      <NotificationWidget />
       <WalletButton />
     </header>
   );

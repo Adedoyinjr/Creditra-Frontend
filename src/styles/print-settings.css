@@ -1,0 +1,109 @@
+/* src/styles/print-settings.css
+   Print stylesheet for the Settings page.
+   Import in index.css: @import './styles/print-settings.css';
+   All values reference semantic CSS custom properties so they adapt to
+   dark-mode and [data-contrast="high"] automatically.
+*/
+
+@media print {
+  /*
+    Hide interactive/navigational elements that serve no purpose on paper.
+    Includes toggle buttons, header chrome, and utility controls.
+  */
+  .header,
+  .header-nav,
+  .hc-toggle-btn,
+  .hc-toggle-track,
+  .hc-toggle-thumb,
+  .sr-only {
+    display: none !important;
+  }
+
+  /*
+    Keep the setting label and description visible so the printed page
+    documents which accessibility options are available.
+  */
+  .hc-toggle-row {
+    display: block;
+    break-inside: avoid;
+    margin-bottom: 1rem;
+  }
+
+  .hc-toggle-label-group {
+    display: block;
+  }
+
+  .hc-toggle-label {
+    font-size: 11pt;
+    font-weight: 700;
+    color: #000;
+  }
+
+  .hc-toggle-description {
+    font-size: 9.5pt;
+    color: #333;
+    line-height: 1.4;
+  }
+
+  /*
+    Card overrides: remove background, border, shadow, and hover transform
+    so the content reads cleanly on white paper.
+  */
+  .card,
+  .card-large {
+    background: none !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    transform: none !important;
+  }
+
+  .card h2 {
+    font-size: 14pt;
+    font-weight: 700;
+    color: #000;
+    margin-bottom: 0.5rem;
+  }
+
+  .card h2 .icon {
+    display: none;
+  }
+
+  .card p {
+    font-size: 10pt;
+    color: #222;
+    margin-bottom: 1rem;
+  }
+
+  /*
+    Section heading for Accessibility.
+  */
+  section[aria-labelledby="settings-a11y-heading"] {
+    break-inside: avoid;
+  }
+
+  section[aria-labelledby="settings-a11y-heading"] h3 {
+    font-size: 9pt;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #555 !important;
+    margin-bottom: 0.75rem;
+  }
+
+  /*
+    General print optimisation.
+  */
+  body {
+    background: #fff !important;
+    color: #000 !important;
+    font-size: 10pt;
+    line-height: 1.5;
+  }
+
+  a {
+    color: #000 !important;
+    text-decoration: underline;
+  }
+}

@@ -7,6 +7,7 @@ const STATUS_CUE: Record<CreditLineStatus, string> = {
   Suspended: '!',
   Defaulted: 'X',
   Closed: 'C',
+  Frozen: 'F',
 };
 
 interface StatusBadgeProps {

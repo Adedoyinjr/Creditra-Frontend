@@ -175,6 +175,24 @@ export const WalletButton = () => {
               </div>
             )}
             <span className="sr-only" role="status" aria-live="polite">{announceMsg}</span>
+            <button
+              type="button"
+              className="qr-btn"
+              role="menuitem"
+              aria-expanded={showQr}
+              onClick={() => setShowQr((v) => !v)}
+            >
+              {showQr ? 'Hide QR code' : 'Show QR code'}
+            </button>
+            {showQr && wallet?.publicKey && (
+              <div className="wallet-qr-wrapper">
+                <WalletQrCode address={wallet.publicKey} />
+                <CopyToClipboard
+                  value={wallet.publicKey}
+                  ariaLabel="Copy wallet address"
+                />
+              </div>
+            )}
             {/* Privacy control: only shown when the user opted-in to remember.
                 Keeps the dropdown tidy for users who never opted in. */}
             {isRemembered && (
@@ -193,7 +211,12 @@ export const WalletButton = () => {
                 {forgetAnnouncement}
               </span>
             )}
-            <button className="disconnect-btn" onClick={handleDisconnect}>
+            <button
+              type="button"
+              className="disconnect-btn"
+              role="menuitem"
+              onClick={handleDisconnect}
+            >
               Disconnect
             </button>
           </div>

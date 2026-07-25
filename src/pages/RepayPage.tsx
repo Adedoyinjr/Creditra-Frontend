@@ -1,17 +1,25 @@
-import { useState, useMemo, useRef } from 'react';
+import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { AlertCircle, AlertTriangle, CheckCircle, Info, ArrowLeft } from 'lucide-react';
 import { PayoffProjection } from '@/components/PayoffProjection';
 import { RepaymentVisualizer } from '@/components/RepaymentVisualizer';
 import { InlineHelpOverlay } from '@/components/InlineHelpOverlay';
-import { formatMoney, getRepayAmountValidation, requiresRepayConfirmation } from '@/utils/amountValidation';
+import { EmptyState } from '@/components/EmptyState';
+import { NoOutstandingDebt } from '@/components/illustrations';
+import {
+  formatMoney,
+  getRepayAmountValidation,
+  requiresRepayConfirmation,
+} from '@/utils/amountValidation';
 import { suggestRepayAmount } from '@/utils/suggestRepay';
 import {
-  TypedAmountConfirmField,
   isTypedAmountMatch,
+  TypedAmountConfirmField,
 } from '@/components/TypedAmountConfirm';
-import type { CreditLine } from '@/types/creditLine';
+import { KbdHint } from '@/components/KbdHint';
 import { MOCK_CREDIT_LINES } from '@/data/mockData';
+import { motionClasses, useReducedMotion } from '@/context/ReducedMotionContext';
+import './RepayPage.css';
 
 type RepayStep = 'input' | 'review';
 
@@ -42,6 +50,16 @@ const SEVERITY_CONFIG = {
   },
 } as const;
 
+/**
+ * RepayPage — reduced-motion strategy
+ *
+ * All CSS transitions are neutralised globally by the
+ * `prefers-reduced-motion: reduce` reset in src/index.css (animation/transition
+ * durations collapsed to 0.01 ms on `*`).  On top of that, transition utility
+ * classes are only applied through `motionClasses(...)`, so they drop out of
+ * the DOM entirely whenever reduced motion is active (OS-level or via the
+ * in-app override).
+ */
 export default function RepayPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -51,8 +69,10 @@ export default function RepayPage() {
   const [selectedId, setSelectedId] = useState<string>(preselectedId ?? '');
   const [amountStr, setAmountStr] = useState('');
   const [confirmAmountStr, setConfirmAmountStr] = useState('');
+  const [isAutoSchedule, setIsAutoSchedule] = useState(false);
   const [isHelpOpen, setIsHelpOpen] = useState(false);
   const helpTriggerRef = useRef<HTMLButtonElement>(null);
+  const { isReducedMotionActive } = useReducedMotion();
 
   const creditLines = useMemo(
     () => MOCK_CREDIT_LINES.filter((cl) => cl.status === 'Active' && cl.utilized > 0),
@@ -117,22 +137,16 @@ export default function RepayPage() {
   };
 
   const handleConfirm = () => {
-    navigate('/repay/success', {
-      state: {
-        amount,
-        creditLineName: selectedLine.name,
-        creditLineId: selectedLine.id,
-        transactionId: `TXN-${Date.now()}`,
-        remainingDebt,
-        limit: selectedLine.limit,
-        apr: selectedLine.apr,
-        nextPaymentAmount: selectedLine.nextPaymentAmount,
-        timestamp: new Date().toISOString(),
-      },
-    });
+    setStep('success');
   };
 
-  const handleBack = () => {
+  const handleNewRepay = () => {
+    setAmountStr('');
+    setIsAutoSchedule(false);
+    setStep('input');
+  };
+
+  const handleBack = useCallback(() => {
     if (step === 'review') {
       setStep('input');
     } else if (!preselectedId) {
@@ -140,18 +154,52 @@ export default function RepayPage() {
     } else {
       navigate(-1);
     }
-  };
+  }, [step, preselectedId, navigate]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+        if (e.key === 'Escape') {
+          e.target.blur();
+        }
+        return;
+      }
+
+      if (e.key === 'Escape') {
+        handleBack();
+      } else if (e.key === 's' || e.key === 'S') {
+        if (step === 'input' && selectedLine) {
+          handleSmartPay();
+        }
+      } else if (e.key === 'm' || e.key === 'M') {
+        if (step === 'input' && selectedLine) {
+          handlePercent(100);
+        }
+      } else if (e.key === 'Enter') {
+        if (step === 'input' && selectedLine && !isInvalid && amount > 0) {
+          handleReview();
+        } else if (step === 'review' && !isConfirmDisabled) {
+          handleConfirm();
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [step, selectedLine, isInvalid, amount, isConfirmDisabled, handleBack, suggestedAmount, walletBalance]);
 
   if (!selectedLine) {
     return (
-      <div className="mx-auto max-w-2xl space-y-6 px-4 py-8">
+      <div className="repay-page mx-auto max-w-2xl space-y-6 px-4 py-8">
         <button
           type="button"
+          aria-label="Back"
           onClick={() => navigate(-1)}
-          className="inline-flex items-center gap-1.5 text-sm text-muted transition-colors hover:text-foreground"
+          className={`inline-flex items-center gap-1.5 rounded-md text-sm text-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${motionClasses(isReducedMotionActive, 'transition-colors hover:text-foreground')}`}
         >
           <ArrowLeft className="h-4 w-4" aria-hidden="true" />
           Back
+          <KbdHint keys={['Esc']} className="ml-1" />
         </button>
 
         <header>
@@ -161,49 +209,64 @@ export default function RepayPage() {
           </h1>
         </header>
 
-        <div className="space-y-3">
-          {creditLines.map((cl) => {
-            const utilization = Math.round((cl.utilized / cl.limit) * 100);
-            return (
-              <button
-                key={cl.id}
-                type="button"
-                onClick={() => setSelectedId(cl.id)}
-                className="w-full rounded-lg border border-border bg-surface p-4 text-left transition-all hover:border-accent hover:bg-accent/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
-              >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-semibold text-foreground">{cl.name}</p>
-                    <p className="mt-0.5 text-sm text-muted">{cl.id}</p>
+        {creditLines.length === 0 ? (
+          <EmptyState
+            data-testid="repay-empty-state"
+            tone="success"
+            eyebrow="All caught up"
+            illustration={
+              <NoOutstandingDebt className="empty-state-illustration--muted" />
+            }
+            title="Nothing to repay right now"
+            description="You don\u2019t have any active credit lines with an outstanding balance. Make a new draw or come back later when a repayment is scheduled."
+            primaryAction={{
+              label: 'Request a credit line',
+              to: '/open-credit',
+            }}
+            secondaryAction={{
+              label: 'Back to dashboard',
+              to: '/',
+            }}
+          />
+        ) : (
+          <div className="space-y-3">
+            {creditLines.map((cl) => {
+              const utilization = Math.round((cl.utilized / cl.limit) * 100);
+              return (
+                <button
+                  key={cl.id}
+                  type="button"
+                  onClick={() => setSelectedId(cl.id)}
+                  className={`w-full rounded-lg border border-border bg-surface p-4 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${motionClasses(isReducedMotionActive, 'transition-all hover:border-accent hover:bg-accent/5')}`}
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-semibold text-foreground">{cl.name}</p>
+                      <p className="mt-0.5 text-sm text-muted">{cl.id}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-semibold text-foreground">
+                        {formatMoney(cl.utilized)}
+                      </p>
+                      <p className="text-sm text-muted">{utilization}% utilized</p>
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <p className="font-semibold text-foreground">
-                      {formatMoney(cl.utilized)}
-                    </p>
-                    <p className="text-sm text-muted">{utilization}% utilized</p>
+                  <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-border">
+                    <div
+                      className={`h-full rounded-full ${
+                        utilization > 80
+                          ? 'bg-red-500'
+                          : utilization > 50
+                            ? 'bg-yellow-500'
+                            : 'bg-green-500'
+                      }`}
+                      style={{ width: `${utilization}%` }}
+                    />
                   </div>
-                </div>
-                <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-border">
-                  <div
-                    className={`h-full rounded-full ${
-                      utilization > 80
-                        ? 'bg-red-500'
-                        : utilization > 50
-                          ? 'bg-yellow-500'
-                          : 'bg-green-500'
-                    }`}
-                    style={{ width: `${utilization}%` }}
-                  />
-                </div>
-              </button>
-            );
-          })}
-        </div>
-
-        {creditLines.length === 0 && (
-          <p className="text-center text-muted">
-            No active credit lines with outstanding debt to repay.
-          </p>
+                </button>
+              );
+            })}
+          </div>
         )}
       </div>
     );
@@ -214,14 +277,18 @@ export default function RepayPage() {
   const newPct = Math.round((remainingDebt / selectedLine.limit) * 100);
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-6 sm:py-8">
+    <div className="repay-page mx-auto max-w-4xl px-4 py-6 sm:py-8">
       <button
         type="button"
+        aria-label={step === 'input' ? 'Back to credit lines' : 'Back to input'}
         onClick={handleBack}
-        className="mb-4 inline-flex items-center gap-1.5 text-sm text-muted transition-colors hover:text-foreground"
+        className={`mb-4 inline-flex items-center gap-1.5 rounded-md text-sm text-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${motionClasses(isReducedMotionActive, 'transition-colors hover:text-foreground')}`}
       >
         <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-        {step === 'input' ? 'Back to credit lines' : 'Back to input'}
+        <span className="flex items-center gap-1.5">
+          {step === 'input' ? 'Back to credit lines' : 'Back to input'}
+          <KbdHint keys={['Esc']} />
+        </span>
       </button>
 
       <div className="space-y-6">
@@ -286,19 +353,27 @@ export default function RepayPage() {
                         key={pct}
                         type="button"
                         onClick={() => handlePercent(pct)}
-                        className="flex-1 rounded-md border border-accent/30 px-2 py-1.5 text-xs font-medium text-accent transition-colors hover:bg-accent/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+                        className={`flex-1 rounded-md border border-accent/30 px-2 py-1.5 text-xs font-medium text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${motionClasses(isReducedMotionActive, 'transition-colors hover:bg-accent/10')}`}
                         aria-label={`Set amount to ${pct === 100 ? 'maximum' : `${pct} percent`}`}
                       >
-                        {pct === 100 ? 'MAX' : `${pct}%`}
+                        {pct === 100 ? (
+                          <span className="flex items-center justify-center gap-1">
+                            MAX <KbdHint keys={['M']} />
+                          </span>
+                        ) : (
+                          `${pct}%`
+                        )}
                       </button>
                     ))}
                     <button
                       type="button"
                       onClick={handleSmartPay}
-                      className="flex-1 rounded-md border border-success/30 px-2 py-1.5 text-xs font-medium text-success transition-colors hover:bg-success/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-success"
+                      className={`flex-1 rounded-md border border-success/30 px-2 py-1.5 text-xs font-medium text-success focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-success ${motionClasses(isReducedMotionActive, 'transition-colors hover:bg-success/10')}`}
                       aria-label={`Smart Pay suggested repayment of ${formatMoney(suggestedAmount)}`}
                     >
-                      Smart Pay
+                      <span className="flex items-center justify-center gap-1">
+                        Smart Pay <KbdHint keys={['S']} />
+                      </span>
                     </button>
                   </div>
 
@@ -318,7 +393,7 @@ export default function RepayPage() {
                       min={1}
                       step={0.01}
                       aria-invalid={validation?.feedback.severity === 'danger' || undefined}
-                      className="w-full rounded-lg border bg-background px-3 py-3 pl-8 text-lg font-semibold text-foreground outline-none transition-colors focus:ring-2 focus:ring-accent"
+                      className={`w-full rounded-lg border bg-background px-3 py-3 pl-8 text-lg font-semibold text-foreground outline-none focus:ring-2 focus:ring-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${motionClasses(isReducedMotionActive, 'transition-colors')}`}
                       style={{
                         borderColor:
                           validation?.feedback.severity === 'danger'
@@ -384,27 +459,59 @@ export default function RepayPage() {
                     </div>
                     <div className="h-2 w-full overflow-hidden rounded-full bg-border">
                       <div
-                        className="h-full rounded-full bg-red-500/30 transition-all"
+                        className="h-full rounded-full bg-red-500/30 transition-all motion-reduce:transition-none"
                         style={{ width: `${oldPct}%` }}
                       />
                     </div>
                     <div className="h-2 w-full overflow-hidden rounded-full bg-border">
                       <div
-                        className={`h-full rounded-full transition-all ${
+                        className={`h-full rounded-full transition-all motion-reduce:transition-none ${
                           remainingDebt === 0 ? 'bg-green-500' : 'bg-yellow-500'
-                        }`}
+                        } ${motionClasses(isReducedMotionActive, 'transition-all')}`}
                         style={{ width: `${newPct}%` }}
                       />
                     </div>
+                  </div>
+
+                  <div className="mt-6 flex items-center justify-between border-t border-border pt-4">
+                    <div>
+                      <label
+                        htmlFor="auto-schedule-toggle"
+                        className="text-sm font-medium text-foreground cursor-pointer"
+                        onClick={() => setIsAutoSchedule(!isAutoSchedule)}
+                      >
+                        Auto-schedule
+                      </label>
+                      <p className="text-xs text-muted">Repeat this payment monthly</p>
+                    </div>
+                    <button
+                      id="auto-schedule-toggle"
+                      type="button"
+                      role="switch"
+                      aria-checked={isAutoSchedule}
+                      onClick={() => setIsAutoSchedule(!isAutoSchedule)}
+                      className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent focus:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
+                        isAutoSchedule ? 'bg-accent' : 'bg-border'
+                      } ${motionClasses(isReducedMotionActive, 'transition-colors duration-200 ease-in-out')}`}
+                    >
+                      <span
+                        aria-hidden="true"
+                        className={`repay-page__toggle-thumb pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 ${
+                          isAutoSchedule ? 'translate-x-5' : 'translate-x-0'
+                        } ${motionClasses(isReducedMotionActive, 'transition duration-200 ease-in-out')}`}
+                      />
+                    </button>
                   </div>
 
                   <button
                     type="button"
                     onClick={handleReview}
                     disabled={isInvalid || amount <= 0}
-                    className="mt-4 w-full rounded-lg bg-accent px-4 py-3 text-sm font-semibold text-background transition-all hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
+                    className={`mt-4 w-full rounded-lg bg-accent px-4 py-3 text-sm font-semibold text-background focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-50 ${motionClasses(isReducedMotionActive, 'transition-all hover:brightness-110')}`}
                   >
-                    Review Repayment
+                    <span className="flex items-center justify-center gap-2">
+                      Review Repayment <KbdHint keys={['Enter']} />
+                    </span>
                   </button>
                 </div>
               </div>
@@ -437,14 +544,14 @@ export default function RepayPage() {
                 ref={helpTriggerRef}
                 type="button"
                 onClick={() => setIsHelpOpen(true)}
-                className="text-sm font-semibold text-blue-300 underline-offset-4 transition-colors hover:text-blue-200 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-400"
+                className={`rounded-md text-sm font-semibold text-blue-300 underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-400 ${motionClasses(isReducedMotionActive, 'transition-colors hover:text-blue-200 hover:underline')}`}
               >
                 I need help
               </button>
               <button
                 type="button"
                 onClick={() => navigate('/')}
-                className="text-sm font-semibold text-foreground underline-offset-4 hover:text-accent hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+                className={`rounded-md text-sm font-semibold text-foreground underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${motionClasses(isReducedMotionActive, 'hover:text-accent hover:underline')}`}
               >
                 Cancel
               </button>
@@ -479,6 +586,12 @@ export default function RepayPage() {
                     {formatMoney(walletBalance)}
                   </span>
                 </div>
+                {isAutoSchedule && (
+                  <div className="flex items-center justify-between text-sm border-t border-border pt-3">
+                    <span className="text-muted">Auto-schedule</span>
+                    <span className="font-semibold text-accent">Monthly</span>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -503,23 +616,89 @@ export default function RepayPage() {
               <button
                 type="button"
                 onClick={handleBack}
-                className="flex-1 rounded-lg border border-border bg-surface px-4 py-3 text-sm font-semibold text-foreground transition-all hover:bg-border focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+                className={`flex-1 rounded-lg border border-border bg-surface px-4 py-3 text-sm font-semibold text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${motionClasses(isReducedMotionActive, 'transition-all hover:bg-border')}`}
               >
-                Back
+                <span className="flex items-center justify-center gap-2">
+                  Back <KbdHint keys={['Esc']} />
+                </span>
               </button>
               <button
                 type="button"
                 onClick={handleConfirm}
                 disabled={isConfirmDisabled}
                 aria-disabled={isConfirmDisabled || undefined}
-                className="flex-[2] rounded-lg bg-accent px-4 py-3 text-sm font-semibold text-background transition-all hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-50"
+                className={`flex-[2] rounded-lg bg-accent px-4 py-3 text-sm font-semibold text-background focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-50 ${motionClasses(isReducedMotionActive, 'transition-all hover:brightness-110')}`}
               >
-                Confirm Repayment
+                <span className="flex items-center justify-center gap-2">
+                  Confirm Repayment <KbdHint keys={['Enter']} />
+                </span>
               </button>
             </div>
           </div>
         )}
 
+        {step === 'success' && (
+          <div className="space-y-6 text-center">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-success/20">
+              <CheckCircle className="h-8 w-8 text-success" aria-hidden="true" />
+            </div>
+
+            <div>
+              <h2 className="text-2xl font-bold text-foreground">
+                You repaid {formatMoney(amount)}!
+              </h2>
+              <p className="mt-1 text-muted">
+                Your transaction was successful.
+              </p>
+            </div>
+
+            <div className="rounded-lg border border-border bg-surface p-4 text-left">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted">Remaining debt</span>
+                <span className="font-semibold text-foreground">
+                  {formatMoney(remainingDebt)}
+                </span>
+              </div>
+              <div className="mt-2 flex items-center justify-between text-sm">
+                <span className="text-muted">Credit line utilization</span>
+                <span className="font-semibold text-foreground">
+                  Reduced to {newPct}%
+                </span>
+              </div>
+              {isAutoSchedule && (
+                <div className="mt-2 flex items-center justify-between text-sm">
+                  <span className="text-muted">Auto-schedule</span>
+                  <span className="font-semibold text-accent">Active</span>
+                </div>
+              )}
+            </div>
+
+            <PayoffProjection
+              currentDebt={selectedLine.utilized}
+              apr={selectedLine.apr}
+              repayAmount={amount}
+              limit={selectedLine.limit}
+              nextPaymentAmount={selectedLine.nextPaymentAmount}
+            />
+
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => navigate('/')}
+                className={`flex-1 rounded-lg bg-accent px-4 py-3 text-sm font-semibold text-background focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${motionClasses(isReducedMotionActive, 'transition-all hover:brightness-110')}`}
+              >
+                Back to Dashboard
+              </button>
+              <button
+                type="button"
+                onClick={handleNewRepay}
+                className={`flex-1 rounded-lg border border-border bg-surface px-4 py-3 text-sm font-semibold text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${motionClasses(isReducedMotionActive, 'transition-all hover:bg-border')}`}
+              >
+                Make another repayment
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       <InlineHelpOverlay
