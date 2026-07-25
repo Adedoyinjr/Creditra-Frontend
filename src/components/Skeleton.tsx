@@ -55,7 +55,7 @@ type SkeletonProps = React.HTMLAttributes<HTMLDivElement> & {
  * (the runtime JS toggle managed by ReducedMotionContext).
  * See the loading-state policy in `docs/ARCHITECTURE.md` §5.
  */
-export const Skeleton: React.FC<SkeletonProps> = ({ width, height, shape = 'rectangular', style, className, 'aria-hidden': ariaHidden = true, ...rest }) => (
+export const Skeleton: React.FC<SkeletonProps> = ({ width, height, shape = 'rectangular', variant, style, className, 'aria-hidden': ariaHidden = true, ...rest }) => (
   <div
     className={[
       'skeleton',

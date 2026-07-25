@@ -63,6 +63,92 @@
   );
 }
 
+/* ── AmountInput validation-state patterns (color-blind safe, WCAG 1.4.1) ── */
+/*
+  GrantFox FWC26 (Stellar Wave) — "Add pattern fills beyond color on
+  AmountInput statuses."
+
+  Each validation severity gets a distinct background pattern so color is
+  never the sole visual cue.  The patterns use the design-token tint colours
+  (--accent-tint, --success-tint, etc.) to stay theme-aware.
+
+  Classes are applied to the AmountInput's inline validation message so
+  users can tell info / success / warning / danger apart without colour.
+*/
+
+.ai-pattern-info {
+  background-image: radial-gradient(circle, var(--accent-tint, rgba(88, 166, 255, 0.12)) 1px, transparent 1px);
+  background-size: 8px 8px;
+}
+
+.ai-pattern-success {
+  background-image:
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 3px,
+      var(--success-tint, rgba(63, 185, 80, 0.12)) 3px,
+      var(--success-tint, rgba(63, 185, 80, 0.12)) 6px
+    );
+}
+
+.ai-pattern-warning {
+  background-image:
+    repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 5px,
+      var(--warning-tint, rgba(210, 153, 34, 0.12)) 5px,
+      var(--warning-tint, rgba(210, 153, 34, 0.12)) 6px
+    );
+}
+
+.ai-pattern-danger {
+  background-image:
+    repeating-linear-gradient(
+      45deg,
+      var(--error-tint, rgba(248, 81, 73, 0.12)) 0,
+      var(--error-tint, rgba(248, 81, 73, 0.12)) 2px,
+      transparent 2px,
+      transparent 4px
+    ),
+    repeating-linear-gradient(
+      -45deg,
+      var(--error-tint, rgba(248, 81, 73, 0.12)) 0,
+      var(--error-tint, rgba(248, 81, 73, 0.12)) 2px,
+      transparent 2px,
+      transparent 4px
+    );
+}
+
+/* Respect forced-colors mode — patterns become Canvas-based */
+@media (forced-colors: active) {
+  .ai-pattern-info,
+  .ai-pattern-success,
+  .ai-pattern-warning,
+  .ai-pattern-danger {
+    forced-color-adjust: none;
+  }
+
+  .ai-pattern-info {
+    background-image: radial-gradient(circle, CanvasText 1px, Canvas 1px);
+  }
+
+  .ai-pattern-success {
+    background-image: repeating-linear-gradient(0deg, Canvas, Canvas 3px, CanvasText 3px, CanvasText 6px);
+  }
+
+  .ai-pattern-warning {
+    background-image: repeating-linear-gradient(45deg, Canvas, Canvas 5px, CanvasText 5px, CanvasText 6px);
+  }
+
+  .ai-pattern-danger {
+    background-image:
+      repeating-linear-gradient(45deg, CanvasText 0, CanvasText 2px, Canvas 2px, Canvas 4px),
+      repeating-linear-gradient(-45deg, CanvasText 0, CanvasText 2px, Canvas 2px, Canvas 4px);
+  }
+}
+
 @media (forced-colors: active) {
   .rv-legend-swatch {
     background-color: Canvas;

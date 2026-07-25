@@ -362,16 +362,30 @@ export function AmountInput({
           </div>
         </div>
 
-        {/* Inline validation message - displayed only when there's content */}
-        <FormMessage
-          id={errorId}
-          title={validation.feedback.title}
-          message={validation.feedback.message}
-          type={getMessageType()}
-          tone="inline"
-          reserveSpace={true}
-          minHeight={60}
-        />
+        {/* Inline validation message with color-blind-safe pattern */}
+        <div
+          className={`rounded-lg overflow-hidden ${
+            validation.feedback.severity === "info"
+              ? "ai-pattern-info"
+              : validation.feedback.severity === "success"
+                ? "ai-pattern-success"
+                : validation.feedback.severity === "warning"
+                  ? "ai-pattern-warning"
+                  : validation.feedback.severity === "danger"
+                    ? "ai-pattern-danger"
+                    : ""
+          }`}
+        >
+          <FormMessage
+            id={errorId}
+            title={validation.feedback.title}
+            message={validation.feedback.message}
+            type={getMessageType()}
+            tone="inline"
+            reserveSpace={true}
+            minHeight={60}
+          />
+        </div>
       </div>
 
       {/* Polite live region for paste announcements */}
