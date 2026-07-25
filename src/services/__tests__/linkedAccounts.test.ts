@@ -305,7 +305,7 @@ describe('linkedAccounts service', () => {
         .mockReturnValueOnce([mockAccount]); // For checking already linked
 
       const promise = reconnectAccount('google-123');
-      vi.advanceTimersByTime(400);
+      await vi.advanceTimersByTimeAsync(800);
       const result = await promise;
 
       expect(result).toHaveProperty('authUrl');
@@ -337,13 +337,14 @@ describe('linkedAccounts service', () => {
       vi.mocked(storage.readJson).mockReturnValue([mockAccount]);
       // Mock Math.random to always succeed verification
       vi.spyOn(Math, 'random').mockReturnValue(0.5);
+      const originalLastVerified = mockAccount.lastVerified;
 
       const promise = verifyAccount('google-123');
-      vi.advanceTimersByTime(1000);
+      await vi.advanceTimersByTimeAsync(1000);
       const result = await promise;
 
       expect(result.status).toBe('connected');
-      expect(result.lastVerified).not.toBe(mockAccount.lastVerified);
+      expect(result.lastVerified).not.toBe(originalLastVerified);
       expect(storage.writeJson).toHaveBeenCalled();
     });
 
