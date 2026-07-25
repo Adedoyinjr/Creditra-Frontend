@@ -52,11 +52,27 @@ export function AmountInputSkeleton() {
 
         {/* Input box with stepper buttons skeleton */}
         <div className="flex items-center gap-2 bg-surface p-4 rounded-xl border border-border">
-          <Skeleton width="44px" height="44px" className="rounded-lg shrink-0" />
-          <Skeleton width="24px" height="32px" className="rounded-md shrink-0" />
+          <Skeleton
+            width="44px"
+            height="44px"
+            className="rounded-lg shrink-0"
+          />
+          <Skeleton
+            width="24px"
+            height="32px"
+            className="rounded-md shrink-0"
+          />
           <Skeleton width="100%" height="40px" className="rounded-lg flex-1" />
-          <Skeleton width="44px" height="44px" className="rounded-lg shrink-0" />
-          <Skeleton width="56px" height="36px" className="rounded-lg shrink-0" />
+          <Skeleton
+            width="44px"
+            height="44px"
+            className="rounded-lg shrink-0"
+          />
+          <Skeleton
+            width="56px"
+            height="36px"
+            className="rounded-lg shrink-0"
+          />
         </div>
 
         {/* Constraint cards skeleton */}
@@ -74,7 +90,12 @@ export function AmountInputSkeleton() {
 
         {/* Inline message placeholder skeleton */}
         <div className="h-[60px] rounded-lg border border-border/40 bg-surface/30 p-3 flex items-center gap-3">
-          <Skeleton width="20px" height="20px" shape="circular" className="shrink-0" />
+          <Skeleton
+            width="20px"
+            height="20px"
+            shape="circular"
+            className="shrink-0"
+          />
           <div className="space-y-1 flex-1">
             <Skeleton width="40%" height="0.875rem" className="rounded-sm" />
             <Skeleton width="70%" height="0.75rem" className="rounded-sm" />
@@ -145,9 +166,10 @@ export function AmountInput({
       if (!creditLine) return;
       setAmount((prev) => {
         const current = parseFloat(prev) || 0;
-        const next = direction === "up"
-          ? Math.min(current + STEP_AMOUNT, creditLine.available)
-          : Math.max(current - STEP_AMOUNT, 0);
+        const next =
+          direction === "up"
+            ? Math.min(current + STEP_AMOUNT, creditLine.available)
+            : Math.max(current - STEP_AMOUNT, 0);
         return next.toString();
       });
     },
@@ -157,16 +179,18 @@ export function AmountInput({
   const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
     e.preventDefault();
     const pastedText = e.clipboardData.getData("text");
-    
+
     // Sanitize: Strip $, commas, and whitespace
     const sanitized = pastedText.replace(/[$,\s]/g, "");
-    
+
     // Validate if it's a valid number
     if (sanitized === "" || isNaN(parseFloat(sanitized))) {
-      setPasteAnnouncement("Invalid amount pasted. Please enter a numeric value.");
+      setPasteAnnouncement(
+        "Invalid amount pasted. Please enter a numeric value.",
+      );
       return;
     }
-    
+
     const numValue = parseFloat(sanitized);
     setAmount(sanitized);
     setPasteAnnouncement(`Pasted value sanitized to ${formatMoney(numValue)}`);
@@ -210,28 +234,48 @@ export function AmountInput({
       bg: "bg-accent/10",
       border: "border-accent/30",
       text: "text-foreground",
-      icon: <Info className="mt-0.5 h-4 w-4 flex-shrink-0 text-accent" aria-hidden="true" />,
+      icon: (
+        <Info
+          className="mt-0.5 h-4 w-4 flex-shrink-0 text-accent"
+          aria-hidden="true"
+        />
+      ),
       input: "border-border focus-within:border-accent",
     },
     success: {
       bg: "bg-success/10",
       border: "border-success/30",
       text: "text-foreground",
-      icon: <CheckCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-success" aria-hidden="true" />,
+      icon: (
+        <CheckCircle
+          className="mt-0.5 h-4 w-4 flex-shrink-0 text-success"
+          aria-hidden="true"
+        />
+      ),
       input: "border-success/60 focus-within:border-success",
     },
     warning: {
       bg: "bg-warning/10",
       border: "border-warning/30",
       text: "text-foreground",
-      icon: <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0 text-warning" aria-hidden="true" />,
+      icon: (
+        <AlertTriangle
+          className="mt-0.5 h-4 w-4 flex-shrink-0 text-warning"
+          aria-hidden="true"
+        />
+      ),
       input: "border-warning/60 focus-within:border-warning",
     },
     danger: {
       bg: "bg-error/10",
       border: "border-error/30",
       text: "text-foreground",
-      icon: <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-error" aria-hidden="true" />,
+      icon: (
+        <AlertCircle
+          className="mt-0.5 h-4 w-4 flex-shrink-0 text-error"
+          aria-hidden="true"
+        />
+      ),
       input: "border-error/70 focus-within:border-error",
     },
   };
@@ -266,10 +310,16 @@ export function AmountInput({
         </label>
 
         {/* Helper text explaining the input */}
-        <p id={helperId} className="text-sm text-muted leading-[var(--lh-body)]">
+        <p
+          id={helperId}
+          className="text-sm text-muted leading-[var(--lh-body)]"
+        >
           Enter the amount you wish to draw from your available credit.
           Available limit:{" "}
-          <span className="font-semibold text-foreground tabular-nums amount" data-amount>
+          <span
+            className="font-semibold text-foreground tabular-nums amount"
+            data-amount
+          >
             {formatMoney(creditLine.available)}
           </span>
         </p>
@@ -334,7 +384,7 @@ export function AmountInput({
           </button>
         </div>
 
-        {/* Constraint boxes showing min, available, and reserve */}
+        {/* Constraint boxes showing min, available, and suggested buffer */}
         <div id={constraintsId} className="grid gap-2 sm:grid-cols-3">
           <div className="rounded-lg border border-border bg-background/60 px-3 py-2.5 space-y-0.5">
             <p className="text-[11px] font-semibold uppercase tracking-wider text-muted leading-[var(--lh-small)]">
@@ -354,10 +404,32 @@ export function AmountInput({
           </div>
           <div className="rounded-lg border border-border bg-background/60 px-3 py-2.5 space-y-0.5">
             <p className="text-[11px] font-semibold uppercase tracking-wider text-muted leading-[var(--lh-small)]">
-              Reserve
+              Buffer
             </p>
             <p className="text-sm font-semibold text-foreground tabular-nums leading-[var(--lh-body)]">
               {formatMoney(validation.recommendedReserve)}
+            </p>
+          </div>
+        </div>
+
+        <div
+          className="flex items-start gap-2 rounded-lg border border-accent/30 bg-accent/10 px-3 py-3"
+          role="note"
+        >
+          <Info
+            className="mt-0.5 h-4 w-4 shrink-0 text-accent"
+            aria-hidden="true"
+          />
+          <div className="space-y-1">
+            <p className="text-sm font-semibold text-foreground">
+              Suggested buffer
+            </p>
+            <p className="text-sm text-muted leading-[var(--lh-body)]">
+              Keep a small safety buffer in reserve for fees and urgent
+              liquidity.
+            </p>
+            <p className="text-sm font-medium text-foreground tabular-nums">
+              Recommended reserve: {formatMoney(validation.recommendedReserve)}
             </p>
           </div>
         </div>
