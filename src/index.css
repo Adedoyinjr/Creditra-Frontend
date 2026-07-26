@@ -3,6 +3,7 @@
 /* focus.css — WCAG 2.1 AA focus-ring tokens and utilities (FWC26) */
 @import "./styles/focus.css";
 @import "./styles/safe-area.css";
+@import "./styles/patterns.css";
 @import "./components/FormField.css";
 
 /* ─── Design Tokens ─────────────────────────────────────────────────────────
