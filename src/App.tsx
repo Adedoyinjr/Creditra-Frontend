@@ -21,6 +21,7 @@ import { DutchAuctions } from "./pages/DutchAuctions";
 import RepayPage from "./pages/RepayPage";
 import { LinkedAccounts } from "./pages/LinkedAccounts";
 import AnalyticsSettings from "./pages/settings/Analytics";
+import NotificationSettings from "./pages/settings/Notifications";
 import { Header } from "./layouts/Header";
 import CreditLineCompare from "./pages/CreditLineCompare";
 
@@ -228,6 +229,7 @@ function App() {
                         the "Repay" action on Credit Lines). */}
                     <Route path="/repay" element={<RepayPage />} />
                     <Route path="/settings/analytics" element={<AnalyticsSettings />} />
+                    <Route path="/settings/notifications" element={<NotificationSettings />} />
                     <Route path="*" element={<NotFound />} />
                   </Routes>
                 </main>
