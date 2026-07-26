@@ -1,0 +1,138 @@
+/**
+ * SupportForm component styles.
+ *
+ * All values reference CSS custom properties defined in src/index.css.
+ * No hard-coded hex values — one-off hex colours are a review blocker per
+ * the project's Engineering Principles.
+ *
+ * Responsive:
+ * - The form fills the width of its container (set by SupportWidget).
+ * - On narrow viewports the submit button stretches full-width for
+ *   comfortable touch interaction (min 44 px touch target preserved).
+ *
+ * Dark-mode and high-contrast:
+ * - All colours adapt automatically via `:root` / `[data-contrast="high"]`
+ *   token overrides in src/index.css.
+ *
+ * Reduced motion:
+ * - Transitions on the spinner and success icon respect
+ *   `prefers-reduced-motion` and the `[data-motion="reduced"]` attribute
+ *   set by ReducedMotionToggle.
+ */
+
+/* ─── Form container ──────────────────────────────────────────────────────── */
+
+.support-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  padding: var(--space-lg) 0 0;
+}
+
+/* ─── Submit-level error banner ───────────────────────────────────────────── */
+
+.support-form__submit-error {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-sm);
+  padding: var(--space-md) var(--space-lg);
+  font-size: 0.875rem;
+  line-height: var(--lh-small);
+  color: var(--error);
+  background: rgba(248, 81, 73, 0.08);
+  border: 1px solid rgba(248, 81, 73, 0.28);
+  border-radius: var(--radius-md);
+}
+
+.support-form__error-icon {
+  flex-shrink: 0;
+  margin-top: 1px;
+  color: var(--error);
+}
+
+/* ─── Submit button ───────────────────────────────────────────────────────── */
+
+.support-form__submit {
+  width: 100%;
+  padding: 0.75rem var(--space-xl);
+  border: none;
+  border-radius: var(--radius-pill);
+  background: var(--accent);
+  color: var(--bg);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  cursor: pointer;
+  /* Minimum 44 px touch target */
+  min-height: 44px;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.support-form__submit:hover:not(:disabled) {
+  opacity: 0.88;
+  transform: translateY(-1px);
+}
+
+.support-form__submit:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ─── Success state ───────────────────────────────────────────────────────── */
+
+.support-form--success {
+  align-items: center;
+  text-align: center;
+  padding: var(--space-2xl) var(--space-lg);
+  gap: var(--space-md);
+}
+
+.support-form__success-icon {
+  color: var(--success);
+}
+
+.support-form__success-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0;
+}
+
+.support-form__success-body {
+  font-size: 0.875rem;
+  color: var(--muted);
+  line-height: var(--lh-body);
+  margin: 0;
+}
+
+.support-form__reset-btn {
+  padding: var(--space-sm) var(--space-xl);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--text);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  /* Minimum 44 px touch target */
+  min-height: 44px;
+  transition: background 0.15s ease;
+}
+
+.support-form__reset-btn:hover {
+  background: rgba(88, 166, 255, 0.08);
+}
+
+/* ─── Reduced motion ──────────────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  .support-form__submit,
+  .support-form__reset-btn {
+    transition: none;
+  }
+}
+
+[data-motion="reduced"] .support-form__submit,
+[data-motion="reduced"] .support-form__reset-btn {
+  transition: none;
+}

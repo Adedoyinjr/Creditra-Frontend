@@ -6,53 +6,68 @@ type SkeletonProps = React.HTMLAttributes<HTMLDivElement> & {
   width?: string | number;
   /** Height passed through as a CSS dimension (string or px number). */
   height?: string | number;
+  /**
+   * Shape of the skeleton. Defaults to 'rectangular'.
+   *
+   * - `rectangular` — sharp corners, default border-radius from --skeleton-radius.
+   * - `circular` — border-radius: 50%, for avatar / icon placeholders.
+   * - `rounded` — same as rectangular but explicitly uses --skeleton-radius;
+   *   provided as a semantic alias for callers that want to document intent.
+   */
+  shape?: 'rectangular' | 'circular' | 'rounded';
+  /**
+   * Visual variant.
+   *
+   * - `default`  — uses `var(--skeleton-bg)` → `var(--surface-raised, #1c2230)`.
+   *                Best for placeholders on card surfaces.
+   * - `subtle`   — reduces opacity to 60% so the placeholder blends more
+   *                softly against lighter-toned sections.
+   *
+   * GrantFox FWC26 (Stellar Wave): the `default` variant replaces the
+   * previous `var(--border)` background with a properly-themed surface token
+   * so skeletons adapt to [data-contrast="high"] and dark-mode overrides.
+   */
+  variant?: 'default' | 'subtle';
 };
 
 /**
  * Shimmer placeholder used during loading states.
  *
- * Dimensions are deliberately passed through as props so callers can
- * match the size of the eventual content exactly — preserving CLS while
- * a fetch is in flight.
+ * ## Usage
+ * ```tsx
+ * <Skeleton width="100%" height={48} aria-label="Loading credit lines" />
+ * ```
  *
- * The shimmer animation is defined in `Skeleton.css` and is suppressed
- * under `@media (prefers-reduced-motion: reduce)`. See the loading-state
- * policy in `docs/ARCHITECTURE.md` section 5.
+ * ## Theming (FWC26)
+ * The background is driven by `var(--skeleton-bg)`, which defaults to
+ * `var(--surface-raised)`.  Override the token at any scope:
+ * ```css
+ * .my-section { --skeleton-bg: var(--surface-overlay); }
+ * ```
  *
- * @example
- *   <Skeleton width="100%" height={48} aria-label="Loading credit lines" />
+ * ## Dimensions
+ * Pass `width` / `height` to match the eventual content size and prevent
+ * Cumulative Layout Shift (CLS) while the data fetch is in flight.
+ *
+ * ## Motion
+ * The shimmer animation is suppressed under both
+ * `@media (prefers-reduced-motion: reduce)` and `[data-motion="reduced"]`
+ * (the runtime JS toggle managed by ReducedMotionContext).
+ * See the loading-state policy in `docs/ARCHITECTURE.md` §5.
  */
-export const Skeleton: React.FC<SkeletonProps> = ({ width, height, style, className, ...rest }) => (
+export const Skeleton: React.FC<SkeletonProps> = ({ width, height, shape = 'rectangular', style, className, 'aria-hidden': ariaHidden = true, ...rest }) => (
   <div
-    className={`skeleton ${className ?? ''}`.trim()}
+    className={[
+      'skeleton',
+      `skeleton--${shape}`,
+      variant === 'subtle' ? 'skeleton--subtle' : '',
+      className ?? '',
+    ]
+      .filter(Boolean)
+      .join(' ')}
     style={{ width, height, ...style }}
+    aria-hidden={ariaHidden}
     {...rest}
   />
 );
 
-export const RiskGaugeSkeleton: React.FC = () => {
-  return (
-    <div className="risk-gauge-container skeleton-gauge" aria-label="Loading risk gauge" role="img">
-      <svg className="risk-gauge-svg" viewBox="0 0 160 100" aria-hidden="true" tabIndex={-1}>
-        <path
-          className="risk-gauge-bg"
-          d="M 25 75 A 55 55 0 0 1 135 75"
-        />
-        <path
-          className="skeleton-arc-shimmer"
-          d="M 25 75 A 55 55 0 0 1 135 75"
-        />
-      </svg>
-      <div className="risk-meta" aria-hidden="true">
-        <div className="risk-meta-item">
-          <Skeleton width={40} height={10} style={{ marginBottom: 4, borderRadius: 2 }} />
-          <Skeleton width={60} height={14} style={{ borderRadius: 2 }} />
-        </div>
-        <div className="risk-meta-item">
-          <Skeleton width={60} height={10} style={{ marginBottom: 4, borderRadius: 2 }} />
-          <Skeleton width={80} height={14} style={{ borderRadius: 2 }} />
-        </div>
-      </div>
-    </div>
-  );
-};

@@ -1,6 +1,7 @@
 .offline-banner {
   position: fixed;
-  bottom: var(--space-lg);
+  /* Lift above the home indicator on iOS: base spacing + --sab */
+  bottom: calc(var(--space-lg) + var(--sab, 0px));
   left: 50%;
   transform: translateX(-50%);
   background: var(--surface-raised);

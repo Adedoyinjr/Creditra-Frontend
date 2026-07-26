@@ -11,6 +11,27 @@
   max-width: calc(100vw - 2.5rem);
 }
 
+/* ── iOS PWA / viewport-fit=cover adjustments ────────────────────────────
+ *
+ * On notched iPhones (Face ID models) the default 1.25rem top offset can
+ * land inside the status-bar safe area.  The toast container is nudged
+ * down and inward so toasts are always visible and never clipped.
+ *
+ * --sat / --sar come from src/styles/safe-area.css.
+ * They are 0px on browsers that do not support env() or when
+ * viewport-fit=cover is absent.
+ */
+@media (max-width: 640px) {
+  .toast-container {
+    /* Clear the top notch / status bar */
+    top: calc(1rem + var(--sat, 0px));
+    /* Clear the right edge (landscape notch) */
+    right: calc(1rem + var(--sar, 0px));
+    /* Keep width constrained to the safe viewport */
+    max-width: calc(100vw - 2rem - var(--sal, 0px) - var(--sar, 0px));
+  }
+}
+
 /* ── Base toast ─────────────────────────────────────────────────────────────── */
 
 .toast-item {

@@ -42,6 +42,7 @@ const steps = [
 
 export const OnboardingFlow = ({ isOpen, onComplete, onSkip }: Props) => {
   const [currentStep, setCurrentStep] = useState(0);
+  const [direction, setDirection] = useState<'forward' | 'backward'>('forward');
   const prefersReducedMotion = usePrefersReducedMotion();
 
   useEffect(() => {
@@ -85,11 +86,13 @@ export const OnboardingFlow = ({ isOpen, onComplete, onSkip }: Props) => {
       if (event.key === 'Escape') {
         event.preventDefault();
         handleSkip();
+        return;
       }
 
       if (event.key === 'ArrowRight') {
         event.preventDefault();
         handleNext();
+        return;
       }
 
       if (event.key === 'ArrowLeft') {
@@ -101,6 +104,10 @@ export const OnboardingFlow = ({ isOpen, onComplete, onSkip }: Props) => {
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [handleBack, handleNext, handleSkip, isOpen]);
+
+  if (!isOpen) {
+    return null;
+  }
 
   return (
     <div className="onboarding-overlay" role="dialog" aria-modal="true" aria-label="Onboarding">
@@ -118,9 +125,17 @@ export const OnboardingFlow = ({ isOpen, onComplete, onSkip }: Props) => {
             <motion.div
               key={currentStep}
               className="onboarding-step"
-              initial={prefersReducedMotion ? { opacity: 1, x: 0 } : { opacity: 0, x: 20 }}
+              initial={
+                prefersReducedMotion
+                  ? { opacity: 1, x: 0 }
+                  : { opacity: 0, x: direction === 'forward' ? 20 : -20 }
+              }
               animate={{ opacity: 1, x: 0 }}
-              exit={prefersReducedMotion ? { opacity: 1, x: 0 } : { opacity: 0, x: -20 }}
+              exit={
+                prefersReducedMotion
+                  ? { opacity: 1, x: 0 }
+                  : { opacity: 0, x: direction === 'forward' ? -20 : 20 }
+              }
               transition={{ duration: prefersReducedMotion ? 0 : 0.3 }}
             >
               <div className="step-icon">{step.icon}</div>

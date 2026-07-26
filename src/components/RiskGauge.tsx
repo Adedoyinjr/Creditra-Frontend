@@ -5,11 +5,15 @@
  *
  * Animation behaviour
  * ─────────────────────────────────────────────────────────────────────────────
- * When `score` changes the arc sweeps from empty (full dashoffset = circumference)
- * to the target value via a CSS keyframe animation.  The animation is re-triggered
- * by changing the `key` prop on the <path> element whenever the score changes —
- * this is the lightest-weight way to restart a CSS animation without JavaScript
- * timers.
+ * On first mount the arc sweeps from empty (full dashoffset = circumference)
+ * to the target value via a CSS @keyframes animation, gated by the
+ * `[data-initial-sweep="true"]` attribute (see RiskGauge.css).
+ *
+ * On every subsequent score change the fill <path> is a stable element (no
+ * remount) and simply receives a new `stroke-dashoffset`; a CSS `transition`
+ * on `.risk-gauge-fill` glides from the previous value to the new one. This
+ * avoids replaying the full empty→value sweep on every minor live update,
+ * which previously looked like a flash/reset on each change.
  *
  * Reduced-motion
  * ─────────────────────────────────────────────────────────────────────────────
@@ -51,7 +55,7 @@
  *           `showSectors?: boolean`  (default true)
  */
 
-import { useMemo, useRef, useState, KeyboardEvent } from 'react';
+import { useEffect, useMemo, useRef, type KeyboardEvent } from 'react';
 import { useReducedMotion } from '../context/ReducedMotionContext';
 import { LiveRegion } from './LiveRegion';
 import { RiskGaugeSkeleton } from './Skeleton';
@@ -79,6 +83,32 @@ export interface RiskGaugeProps {
    * a purely presentational gauge (e.g. in print layouts).
    */
   showSectors?: boolean;
+  /**
+   * Override the accessible label for the gauge SVG element.
+   *
+   * By default the SVG's `<title>` (and the sibling `<p className="sr-only">`)
+   * read: "Risk score N out of 100. Trend: X. Last updated D."
+   *
+   * Supply a custom string when you need a more specific or branded
+   * description — e.g. "Creditra risk score: 78 (Excellent)".
+   *
+   * Note: this value replaces the auto-generated description in both the
+   * SVG title and the live-region paragraph, keeping them in sync.
+   */
+  ariaLabel?: string;
+  /**
+   * When true (default) a visually-hidden `<table>` sibling is rendered
+   * adjacent to the gauge SVG.  The table lists all three risk bands with
+   * their score ranges and marks the band the current score falls in.
+   *
+   * Screen readers announce this table when the gauge receives focus,
+   * giving users a structured breakdown without navigating the SVG
+   * arc sectors individually.
+   *
+   * Set to false only when the caller renders its own equivalent structure
+   * to avoid duplicate content for AT users.
+   */
+  showSRTable?: boolean;
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -135,10 +165,6 @@ function sectorArcPath(startDeg: number, endDeg: number): string {
   const large = endDeg - startDeg > 180 ? 1 : 0;
   return `M ${sx} ${sy} A ${RADIUS} ${RADIUS} 0 ${large} 1 ${ex} ${ey}`;
 }
-
-// ─── Hook: reduced-motion ─────────────────────────────────────────────────────
-
-// ─── Hook removed in favour of Context ────────────────────────────────────────
 
 // ─── Sub-component: interactive gauge sector ──────────────────────────────────
 
@@ -277,6 +303,60 @@ function SectorGroup({ sector, isActive, onActivate, titleId }: SectorGroupProps
   );
 }
 
+// ─── SR table sibling ─────────────────────────────────────────────────────────
+
+/**
+ * RiskGaugeSRTable
+ *
+ * A visually-hidden `<table>` rendered as a sibling of the gauge SVG.
+ * It lists all three risk bands with their score ranges and marks the band
+ * that the current score falls in with `aria-current="true"`.
+ *
+ * This gives assistive-technology users a navigable, structured alternative
+ * to the arc visualisation without requiring them to interact with the SVG
+ * sectors individually.
+ *
+ * The table is hidden from sighted users with `.sr-only` and `aria-hidden`
+ * is NOT set — it should be read by screen readers.
+ */
+interface RiskGaugeSRTableProps {
+  normalizedScore: number;
+  activeSector: RiskSector;
+}
+
+function RiskGaugeSRTable({ normalizedScore, activeSector }: RiskGaugeSRTableProps) {
+  return (
+    <table
+      className="sr-only"
+      aria-label="Risk score band breakdown"
+      style={{ borderCollapse: 'collapse' }}
+    >
+      <caption className="sr-only">
+        Risk score bands. Current score: {normalizedScore} out of 100.
+      </caption>
+      <thead>
+        <tr>
+          <th scope="col">Band</th>
+          <th scope="col">Score range</th>
+          <th scope="col">Current score</th>
+        </tr>
+      </thead>
+      <tbody>
+        {SECTORS.map((sector) => {
+          const isCurrent = activeSector === sector.id;
+          return (
+            <tr key={sector.id} aria-current={isCurrent ? 'true' : undefined}>
+              <td>{sector.label}</td>
+              <td>{sector.range}</td>
+              <td>{isCurrent ? `Yes — ${normalizedScore}` : 'No'}</td>
+            </tr>
+          );
+        })}
+      </tbody>
+    </table>
+  );
+}
+
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export function RiskGauge({
@@ -286,6 +366,8 @@ export function RiskGauge({
   lastUpdated,
   onSectorActivate,
   showSectors = true,
+  ariaLabel,
+  showSRTable = true,
 }: RiskGaugeProps) {
   if (loading) {
     return <RiskGaugeSkeleton />;
@@ -303,20 +385,26 @@ export function RiskGauge({
   const arcPath = `M ${CX - RADIUS} ${CY} A ${RADIUS} ${RADIUS} 0 0 1 ${CX + RADIUS} ${CY}`;
 
   /**
-   * `animKey` changes every time `normalizedScore` changes.
-   * Assigning it as the React `key` on the fill <path> forces React to
-   * unmount/remount the element, which re-triggers the CSS @keyframes
-   * animation from scratch without any JS timer logic.
+   * Distinguishes the very first paint from subsequent re-renders. Only the
+   * first paint gets the full empty→value @keyframes sweep; later score
+   * changes instead transition in place (see `dashoffset` below and the
+   * `.risk-gauge-fill` CSS transition).
    */
-  const animKey = `gauge-fill-${normalizedScore}`;
+  const isFirstRenderRef = useRef(true);
+  useEffect(() => {
+    isFirstRenderRef.current = false;
+  }, []);
+  const isInitialSweep = !reducedMotion && isFirstRenderRef.current;
 
   /**
-   * When reduced motion is active we skip the animation entirely by starting
-   * the dashoffset at its final value rather than at `CIRCUMFERENCE`.
-   * This prevents the brief flash-of-empty-arc that would otherwise appear
-   * while the CSS media query suppresses the keyframe.
+   * On the initial sweep we start at full circumference so the @keyframes
+   * animation has somewhere to sweep from. Every other render — including
+   * when reduced motion is active — goes straight to the target offset;
+   * for reduced motion this avoids any flash-of-empty-arc, and for later
+   * score changes it lets the CSS transition animate from the previous
+   * dashoffset to this one.
    */
-  const initialOffset = reducedMotion ? offset : CIRCUMFERENCE;
+  const dashoffset = isInitialSweep ? CIRCUMFERENCE : offset;
 
   // Unique ID for aria-labelledby — stable across renders.
   const titleId = useRef(`risk-gauge-title-${Math.random().toString(36).slice(2)}`).current;
@@ -331,8 +419,9 @@ export function RiskGauge({
 
   const srDescription = useMemo(
     () =>
+      ariaLabel ??
       `Risk score ${normalizedScore} out of 100. Trend: ${trendLabel}. Last updated ${formatDate(lastUpdated)}.`,
-    [normalizedScore, trendLabel, lastUpdated],
+    [ariaLabel, normalizedScore, trendLabel, lastUpdated],
   );
 
   const [liveMessage, setLiveMessage] = useState<string>(srDescription);
@@ -372,6 +461,21 @@ export function RiskGauge({
       {/* Screen-reader description outside SVG for AT implementations that
           skip <title> inside inline SVG. */}
       <LiveRegion message={liveMessage} />
+
+      {/*
+        SR-only table listing the three risk bands with ranges.
+        Gives AT users a structured alternative to the arc sectors so they
+        can understand the full band context without interacting with SVG.
+        Hidden from sighted users via .sr-only; always present in the
+        accessibility tree (no aria-hidden).
+        Rendered before the SVG so it appears early in reading order.
+      */}
+      {showSRTable && (
+        <RiskGaugeSRTable
+          normalizedScore={normalizedScore}
+          activeSector={activeSector}
+        />
+      )}
 
       <svg
         className="risk-gauge-svg"
@@ -417,18 +521,17 @@ export function RiskGauge({
 
         {/*
           Fill arc.
-          key=animKey forces remount → restarts @keyframes on score change.
-          style sets the CSS custom property --gauge-offset which the
-          keyframe animates toward; reduced-motion users get the final value
-          directly via initialOffset = offset.
+          No longer remounted on score change — stroke-dashoffset updates in
+          place and RiskGauge.css transitions between values. Only the very
+          first paint (data-initial-sweep="true") gets the full empty→value
+          @keyframes sweep.
         */}
         <path
-          key={animKey}
           className="risk-gauge-fill"
           d={arcPath}
           stroke={colorVar}
           strokeDasharray={CIRCUMFERENCE}
-          strokeDashoffset={initialOffset}
+          strokeDashoffset={dashoffset}
           style={
             {
               '--gauge-target-offset': offset,
@@ -438,6 +541,7 @@ export function RiskGauge({
           aria-hidden="true"
           data-score={normalizedScore}
           data-reduced-motion={reducedMotion ? 'true' : 'false'}
+          data-initial-sweep={isInitialSweep ? 'true' : undefined}
         />
 
         {/* Score numeral */}

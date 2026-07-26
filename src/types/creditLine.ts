@@ -2,7 +2,7 @@
  * Lifecycle states of a credit line. Drives badge color, available
  * actions in the UI, and any "view-only" guard rails on detail screens.
  */
-export type CreditLineStatus = 'Active' | 'Suspended' | 'Defaulted' | 'Closed';
+export type CreditLineStatus = 'Active' | 'Suspended' | 'Defaulted' | 'Closed' | 'Frozen';
 
 /**
  * Columns the credit-line list view can be sorted by. Kept narrow on
@@ -58,6 +58,17 @@ export interface StatusHistoryEntry {
 }
 
 /**
+ * A single data point in a credit line's APR history.
+ * Used by AprHistoryChart to render the 30/90/365-day sparkline.
+ */
+export interface AprHistoryEntry {
+  /** ISO 8601 date string (YYYY-MM-DD or full timestamp). */
+  date: string;
+  /** Annual percentage rate recorded on this date. */
+  apr: number;
+}
+
+/**
  * Canonical credit-line shape used by the dashboard and credit-lines
  * list view. Mirrors the backend payload. The lighter wizard projection
  * lives in `draw-credit.types.ts` and is constructed from this shape.
@@ -83,6 +94,12 @@ export interface CreditLine {
   updatedAt: string;
   transactions: Transaction[];
   statusHistory: StatusHistoryEntry[];
+  /**
+   * Historical APR data points used by AprHistoryChart.
+   * Entries should be sorted oldest→newest. The chart supports
+   * 30 / 90 / 365-day window filtering on this array.
+   */
+  aprHistory?: AprHistoryEntry[];
   /** ISO 8601 timestamp of the next scheduled payment, if any. */
   nextPaymentDate?: string;
   /** Amount of the next scheduled payment, paired with `nextPaymentDate`. */

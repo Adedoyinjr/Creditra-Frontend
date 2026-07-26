@@ -187,3 +187,22 @@ export function formatRelative(
     ...(sameYear ? {} : { year: 'numeric' }),
   }).format(then);
 }
+
+export function startOfDay(date: Date): Date {
+  const d = new Date(date);
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+export function startOfWeek(date: Date): Date {
+  const d = new Date(date);
+  const day = d.getDay();
+  const diff = d.getDate() - day;
+  const result = new Date(d.setDate(diff));
+  result.setHours(0, 0, 0, 0);
+  return result;
+}
+
+export function startOfMonth(date: Date): Date {
+  return new Date(date.getFullYear(), date.getMonth(), 1, 0, 0, 0, 0);
+}

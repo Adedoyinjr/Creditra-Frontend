@@ -112,6 +112,7 @@ Every entry below is grounded in a real file in `src/`.
 | --- | --- | --- |
 | `/` | `pages/Dashboard.tsx` | Risk gauge, credit summary, recent transactions, wallet chip |
 | `/credit-lines` | `pages/CreditLines.tsx` | Credit-line list with sort by status/limit/utilization/APR/risk |
+| `/compare-credit-lines` | `pages/CreditLineCompare.tsx` | Side-by-side comparison of two credit lines. Accepts `?a=<id>&b=<id>`; falls back to an inline picker. Navigable from the "Full Compare →" button on the credit-lines page. |
 | `/transactions` | `pages/TransactionHistory.tsx` | Filterable transaction ledger with sortable headers |
 | `/repay` | `pages/RepayPage.tsx` | Repay flow with Smart Pay suggested amount, percent presets, review step |
 | `/draw-credit` | `pages/DrawCreditPage.tsx` | 4-step wizard: select → amount → confirm → status |

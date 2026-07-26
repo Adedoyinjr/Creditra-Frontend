@@ -120,3 +120,68 @@ describe('RepayModal – focus trap (A11Y-002)', () => {
     expect(document.activeElement).toBe(screen.getByTestId('repay-trigger'));
   });
 });
+
+describe('RepayModal – Repay all shortcut', () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('pre-fills the exact payoff including accrued interest when Repay all is clicked', async () => {
+    const user = userEvent.setup();
+    render(<TestWrapper />);
+
+    await user.click(screen.getByTestId('repay-all-shortcut'));
+
+    const input = screen.getByTestId('repay-amount-input') as HTMLInputElement;
+    expect(input.value).toBe('3030.00');
+    expect(input).toHaveAttribute('readonly');
+    expect(screen.getByTestId('repay-all-edit')).toBeInTheDocument();
+  });
+
+  it('announces lock and unlock changes via a polite live region', async () => {
+    const user = userEvent.setup();
+    render(<TestWrapper />);
+
+    await user.click(screen.getByTestId('repay-all-shortcut'));
+
+    const live = screen.getByTestId('repay-all-lock-announcement');
+    expect(live).toHaveAttribute('aria-live', 'polite');
+    expect(live.textContent).toMatch(/locked at/i);
+    expect(live.textContent).toMatch(/3,030/);
+
+    await user.click(screen.getByTestId('repay-all-edit'));
+    expect(live.textContent).toMatch(/unlocked/i);
+  });
+
+  it('unlocks the field and restores manual editing when Edit is pressed', async () => {
+    const user = userEvent.setup();
+    render(<TestWrapper />);
+
+    await user.click(screen.getByTestId('repay-all-shortcut'));
+    await user.click(screen.getByTestId('repay-all-edit'));
+
+    const input = screen.getByTestId('repay-amount-input') as HTMLInputElement;
+    expect(input).not.toHaveAttribute('readonly');
+
+    await user.clear(input);
+    await user.type(input, '500');
+    expect(input.value).toBe('500');
+  });
+
+  it('applies locked-state styling class for AA contrast affordance', async () => {
+    const user = userEvent.setup();
+    render(<TestWrapper />);
+
+    await user.click(screen.getByTestId('repay-all-shortcut'));
+
+    const input = screen.getByTestId('repay-amount-input');
+    expect(input).toHaveClass('repay-modal-input--locked');
+  });
+
+  it('exposes a 44px minimum hit target on Repay all and Edit buttons', () => {
+    render(<TestWrapper />);
+
+    const repayAll = screen.getByTestId('repay-all-shortcut');
+    expect(repayAll).toHaveClass('repay-modal-repay-all-btn');
+  });
+});

@@ -1,67 +1,178 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { SupportWidget } from "./SupportWidget";
 
+// SupportForm's onSubmit defaults to a setTimeout — mock to avoid leaking timers
+vi.mock("./SupportForm", async (importOriginal) => {
+  const mod = await importOriginal<typeof import("./SupportForm")>();
+  return {
+    ...mod,
+    SupportForm: (
+      props: React.ComponentProps<typeof mod.SupportForm>,
+    ) => (
+      <mod.SupportForm
+        {...props}
+        onSubmit={async () => {
+          // No-op for widget integration tests
+        }}
+      />
+    ),
+  };
+});
+
+function renderWidget() {
+  return render(
+    <MemoryRouter>
+      <SupportWidget />
+    </MemoryRouter>,
+  );
+}
+
 describe("SupportWidget", () => {
-  it("opens from the floating button and exposes FAQ search plus email handoff", async () => {
-    const user = userEvent.setup();
+  describe("trigger button", () => {
+    it("renders the trigger button with aria-expanded=false", () => {
+      renderWidget();
+      const trigger = screen.getByRole("button", { name: "Support" });
+      expect(trigger).toHaveAttribute("aria-expanded", "false");
+    });
 
-    render(
-      <MemoryRouter>
-        <SupportWidget />
-      </MemoryRouter>,
-    );
+    it("opens the panel on click", async () => {
+      const user = userEvent.setup();
+      renderWidget();
 
-    const trigger = screen.getByRole("button", { name: "Support" });
-    expect(trigger).toHaveAttribute("aria-expanded", "false");
+      await user.click(screen.getByRole("button", { name: "Support" }));
 
-    await user.click(trigger);
+      expect(
+        screen.getByRole("dialog", { name: "Support" }),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: "Support" }),
+      ).toHaveAttribute("aria-expanded", "true");
+    });
 
-    expect(trigger).toHaveAttribute("aria-expanded", "true");
-    expect(
-      screen.getByRole("dialog", { name: "Support and FAQ search" }),
-    ).toBeInTheDocument();
+    it("closes the panel on a second click", async () => {
+      const user = userEvent.setup();
+      renderWidget();
 
-    const search = screen.getByRole("searchbox", { name: "Search FAQ" });
-    expect(search).toHaveFocus();
+      const trigger = screen.getByRole("button", { name: "Support" });
+      await user.click(trigger);
+      await user.click(trigger);
 
-    await user.type(search, "wallet");
-
-    expect(
-      screen.getByRole("button", { name: "How do I connect a wallet?" }),
-    ).toBeInTheDocument();
-    expect(
-      screen.queryByRole("button", {
-        name: "Where can I review my credit lines?",
-      }),
-    ).not.toBeInTheDocument();
-
-    expect(screen.getByRole("link", { name: "Email support" })).toHaveAttribute(
-      "href",
-      "mailto:support@creditra.com?subject=GrantFox%20support%20request",
-    );
+      expect(
+        screen.queryByRole("dialog", { name: "Support" }),
+      ).not.toBeInTheDocument();
+    });
   });
 
-  it("closes with Escape", async () => {
-    const user = userEvent.setup();
+  describe("FAQ tab (default)", () => {
+    it("shows FAQ tab as active by default", async () => {
+      const user = userEvent.setup();
+      renderWidget();
+      await user.click(screen.getByRole("button", { name: "Support" }));
 
-    render(
-      <MemoryRouter>
-        <SupportWidget />
-      </MemoryRouter>,
-    );
+      const faqTab = screen.getByRole("tab", { name: /faq/i });
+      expect(faqTab).toHaveAttribute("aria-selected", "true");
+    });
 
-    await user.click(screen.getByRole("button", { name: "Support" }));
-    expect(
-      screen.getByRole("dialog", { name: "Support and FAQ search" }),
-    ).toBeInTheDocument();
+    it("focuses search input when panel opens", async () => {
+      const user = userEvent.setup();
+      renderWidget();
+      await user.click(screen.getByRole("button", { name: "Support" }));
 
-    await user.keyboard("{Escape}");
+      expect(screen.getByRole("searchbox", { name: "Search FAQ" })).toHaveFocus();
+    });
 
-    expect(
-      screen.queryByRole("dialog", { name: "Support and FAQ search" }),
-    ).not.toBeInTheDocument();
+    it("filters FAQs by search query", async () => {
+      const user = userEvent.setup();
+      renderWidget();
+      await user.click(screen.getByRole("button", { name: "Support" }));
+
+      await user.type(screen.getByRole("searchbox", { name: "Search FAQ" }), "wallet");
+
+      expect(
+        screen.getByRole("button", { name: "How do I connect a wallet?" }),
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByRole("button", {
+          name: "Where can I review my credit lines?",
+        }),
+      ).not.toBeInTheDocument();
+    });
+
+    it("shows email support link with GrantFox subject", async () => {
+      const user = userEvent.setup();
+      renderWidget();
+      await user.click(screen.getByRole("button", { name: "Support" }));
+
+      expect(screen.getByRole("link", { name: "Email support" })).toHaveAttribute(
+        "href",
+        "mailto:support@creditra.com?subject=GrantFox%20support%20request",
+      );
+    });
+  });
+
+  describe("Contact tab", () => {
+    async function openContactTab() {
+      const user = userEvent.setup();
+      renderWidget();
+
+      await user.click(screen.getByRole("button", { name: "Support" }));
+      await user.click(screen.getByRole("tab", { name: /contact/i }));
+
+      return user;
+    }
+
+    it("switches to Contact tab on click", async () => {
+      await openContactTab();
+
+      const contactTab = screen.getByRole("tab", { name: /contact/i });
+      expect(contactTab).toHaveAttribute("aria-selected", "true");
+
+      const faqTab = screen.getByRole("tab", { name: /faq/i });
+      expect(faqTab).toHaveAttribute("aria-selected", "false");
+    });
+
+    it("shows the support form on the Contact tab", async () => {
+      await openContactTab();
+
+      // Query within the contact tab panel (visible, not hidden)
+      expect(screen.getByRole("form", { name: "Contact support" })).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: "Send message" }),
+      ).toBeInTheDocument();
+    });
+
+    it("can switch back to FAQ tab", async () => {
+      const user = await openContactTab();
+
+      await user.click(screen.getByRole("tab", { name: /faq/i }));
+
+      expect(
+        screen.getByRole("tab", { name: /faq/i }),
+      ).toHaveAttribute("aria-selected", "true");
+      expect(
+        screen.getByRole("searchbox", { name: "Search FAQ" }),
+      ).toBeInTheDocument();
+    });
+  });
+
+  describe("keyboard behaviour", () => {
+    it("closes with Escape", async () => {
+      const user = userEvent.setup();
+      renderWidget();
+
+      await user.click(screen.getByRole("button", { name: "Support" }));
+      expect(
+        screen.getByRole("dialog", { name: "Support" }),
+      ).toBeInTheDocument();
+
+      await user.keyboard("{Escape}");
+
+      expect(
+        screen.queryByRole("dialog", { name: "Support" }),
+      ).not.toBeInTheDocument();
+    });
   });
 });

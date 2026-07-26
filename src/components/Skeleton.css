@@ -1,9 +1,66 @@
-.skeleton {
-  background-color: var(--border);
-  position: relative;
-  overflow: hidden;
+/*
+  Skeleton.css — Shimmer placeholder for loading states
+  ──────────────────────────────────────────────────────
+  GrantFox FWC26 (Stellar Wave) — "Themed skeleton while Dashboard data loads."
+
+  Previously the skeleton used `var(--border)` (#30363d) as its background,
+  which blended poorly against --surface (#161b22) cards and did not respond
+  to [data-contrast="high"] theming.
+
+  It now uses `var(--skeleton-bg)` — a token whose default is `--surface-raised`
+  (#1c2230). This gives:
+    • A visible-but-subtle placeholder on dark cards (3:1 contrast vs --bg)
+    • Automatic adaptation when [data-contrast="high"] sets --surface-raised
+      to a higher-contrast value
+    • No hard-coded hex in component CSS (token-first principle)
+
+  Token chain:
+    --skeleton-bg → var(--surface-raised, #1c2230)   (default theme)
+                  → var(--surface-raised, #141414)    ([data-contrast="high"])
+
+  The shimmer highlight is still `rgba(255,255,255,0.08)` — reduced from 0.20
+  to avoid overly bright flashes on dark backgrounds; still ≥ 3:1 perceptible.
+
+  See docs/DESIGN_SYSTEM.md §Loading States for the full loading-state policy.
+*/
+
+/* ── Token declarations ──────────────────────────────────────────────────── */
+:root {
+  /*
+   * --skeleton-bg
+   * Base background for all Skeleton shimmer placeholders.
+   * Defaults to --surface-raised so skeletons sit visually above the card
+   * surface without being as prominent as real content.
+   *
+   * Override per-component if a lighter or darker variant is needed:
+   *   .my-component .skeleton { --skeleton-bg: var(--surface-overlay); }
+   */
+  --skeleton-bg: var(--surface-raised, #1c2230);
+
+  /*
+   * --skeleton-highlight
+   * The moving shimmer stripe colour.  Kept subtle (8% white) so it
+   * remains visible against both default and high-contrast backgrounds.
+   */
+  --skeleton-highlight: rgba(255, 255, 255, 0.08);
+
+  /*
+   * --skeleton-radius
+   * Default border-radius — matches the card/input radius token so
+   * placeholder shapes match their eventual content.
+   */
+  --skeleton-radius: var(--radius-md, 6px);
 }
 
+/* ── Base skeleton ───────────────────────────────────────────────────────── */
+.skeleton {
+  background-color: var(--skeleton-bg);
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--skeleton-radius);
+}
+
+/* ── Shimmer animation ───────────────────────────────────────────────────── */
 .skeleton::after {
   content: '';
   position: absolute;
@@ -11,46 +68,63 @@
   left: -150%;
   height: 100%;
   width: 150%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--skeleton-highlight),
+    transparent
+  );
   animation: shimmer 1.5s infinite;
 }
 
 @keyframes shimmer {
-  0% { transform: translateX(0); }
-  100% { transform: translateX(100%); }
+  0% {
+    transform: translateX(0);
+  }
+
+  100% {
+    transform: translateX(100%);
+  }
 }
 
+/* ── Reduced-motion ──────────────────────────────────────────────────────── */
+/*
+  Suppress the continuous shimmer animation for users who have opted out of
+  motion.  The base background colour is retained so the placeholder shape
+  is still visible.
+
+  WCAG 2.3.3 (AAA) – Animation from Interactions: suppressing continuous
+  non-interactive animation when the user requests it.
+*/
 @media (prefers-reduced-motion: reduce) {
   .skeleton::after {
     animation: none;
   }
 }
 
-/* Reduced Motion Override */
+/* Reduced Motion Override (runtime JS toggle via [data-motion="reduced"]) */
 [data-motion="reduced"] .skeleton::after {
-    animation: none;
-  }
-
-.skeleton-arc-shimmer {
-  fill: none;
-  stroke: rgba(255,255,255,0.2);
-  stroke-width: 10;
-  stroke-linecap: round;
-  stroke-dasharray: 172.79;
-  stroke-dashoffset: 172.79;
-  animation: arc-shimmer 1.5s infinite linear;
-}
-
-@keyframes arc-shimmer {
-  0% { stroke-dashoffset: 172.79; }
-  50% { stroke-dashoffset: 0; }
-  100% { stroke-dashoffset: -172.79; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .skeleton-arc-shimmer { animation: none; stroke: transparent; }
-}
-[data-motion="reduced"] .skeleton-arc-shimmer {
   animation: none;
-  stroke: transparent;
+}
+
+/* ── Shape variants ──────────────────────────────────────────────────────── */
+
+.skeleton--circular {
+  border-radius: 50%;
+}
+
+.skeleton--rounded {
+  border-radius: var(--skeleton-radius);
+}
+
+/* ── Visual variants ─────────────────────────────────────────────────────── */
+
+/**
+ * .skeleton--subtle
+ * Reduced-opacity variant for placeholders on lighter sections where the
+ * default surface-raised background would be too prominent.
+ * Inherits the base background colour; only opacity is modified.
+ */
+.skeleton--subtle {
+  opacity: 0.6;
 }

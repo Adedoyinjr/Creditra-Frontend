@@ -1,0 +1,17 @@
+.aging-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.15rem 0.45rem;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  line-height: var(--lh-small);
+  white-space: nowrap;
+}
+
+.aging-tag__icon {
+  flex-shrink: 0;
+  stroke-width: 5px;
+}
