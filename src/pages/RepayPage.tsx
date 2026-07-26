@@ -21,7 +21,7 @@ import { MOCK_CREDIT_LINES } from '@/data/mockData';
 import { motionClasses, useReducedMotion } from '@/context/ReducedMotionContext';
 import './RepayPage.css';
 
-type RepayStep = 'input' | 'review' | 'success';
+type RepayStep = 'input' | 'review';
 
 const SEVERITY_CONFIG = {
   info: {
@@ -137,6 +137,19 @@ export default function RepayPage() {
   };
 
   const handleConfirm = () => {
+    navigate('/repay/success', {
+      state: {
+        amount,
+        creditLineName: selectedLine.name,
+        creditLineId: selectedLine.id,
+        transactionId: `TXN-${Date.now()}`,
+        remainingDebt,
+        limit: selectedLine.limit,
+        apr: selectedLine.apr,
+        nextPaymentAmount: selectedLine.nextPaymentAmount,
+        timestamp: new Date().toISOString(),
+      },
+    });
     setStep('success');
   };
 
@@ -294,20 +307,16 @@ export default function RepayPage() {
       <div className="space-y-6">
         <header className="space-y-2">
           <p className="text-xs font-semibold uppercase text-muted">
-            {step === 'success' ? 'Repayment Complete' : 'Repay Credit'}
+            Repay Credit
           </p>
           <h1 className="text-2xl font-bold text-foreground sm:text-3xl">
-            {step === 'success'
-              ? 'Payment successful!'
-              : step === 'review'
-                ? 'Review your repayment'
-                : 'Make a repayment'}
+            {step === 'review'
+              ? 'Review your repayment'
+              : 'Make a repayment'}
           </h1>
-          {step !== 'success' && (
-            <p className="text-sm text-muted">
-              {selectedLine.name} &middot; <span className="num-tabular">{selectedLine.apr}%</span> APR
-            </p>
-          )}
+          <p className="text-sm text-muted">
+            {selectedLine.name} &middot; {selectedLine.apr}% APR
+          </p>
         </header>
 
         {step === 'input' && (

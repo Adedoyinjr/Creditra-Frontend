@@ -251,6 +251,39 @@ function App() {
                   }}
                   triggerRef={kycTriggerRef}
                 />
+                <Route path="/open-credit" element={<RequestEvaluation />} />
+                <Route path="/dutch-auctions" element={<DutchAuctions />} />
+                <Route path="/linked-accounts" element={<LinkedAccounts />} />
+                <Route path="/repay/success" element={<RepaySuccess />} />
+                <Route path="/notification-preferences" element={<NotificationPreferences />} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </main>
+            <ShortcutHelpOverlay
+              isOpen={isShortcutHelpOpen}
+              onClose={() => setIsShortcutHelpOpen(false)}
+              triggerRef={openedFromSettingsLink ? settingsTriggerRef : undefined}
+            />
+            <KycDrawer
+              isOpen={isKycDrawerOpen}
+              onClose={() => setIsKycDrawerOpen(false)}
+              onResume={(stepId) => {
+                // Navigate to the KYC page with the step pre-selected.
+                // Replace with router.push('/kyc?step=' + stepId) when the
+                // full KYC page exists.
+                console.info('[KYC] Resume at step:', stepId);
+              }}
+              triggerRef={kycTriggerRef}
+            />
+            <CommandPalette
+              isOpen={isPaletteOpen}
+              onClose={() => setIsPaletteOpen(false)}
+              triggerRef={paletteTriggerRef}
+            />
+          </div>
+        </BrowserRouter>
+        </ReducedMotionProvider>
+        </NotificationProvider>
               </div>
             </BrowserRouter>
           </NotificationProvider>
