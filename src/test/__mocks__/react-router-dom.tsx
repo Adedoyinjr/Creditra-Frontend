@@ -14,8 +14,16 @@ import { createElement, Fragment } from 'react';
  */
 let currentPathname = '/';
 let currentSearch = '';
+let currentHash = '';
 
 function applyEntry(entry: string) {
+  const hashIndex = entry.indexOf('#');
+  if (hashIndex >= 0) {
+    currentHash = entry.slice(hashIndex);
+    entry = entry.slice(0, hashIndex);
+  } else {
+    currentHash = '';
+  }
   const qIndex = entry.indexOf('?');
   currentPathname = qIndex >= 0 ? entry.slice(0, qIndex) : entry;
   currentSearch = qIndex >= 0 ? entry.slice(qIndex) : '';
@@ -93,7 +101,7 @@ export function useLocation() {
   return {
     pathname: currentPathname,
     search: currentSearch,
-    hash: '',
+    hash: currentHash,
     state: null,
   };
 }
