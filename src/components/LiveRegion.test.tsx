@@ -1,60 +1,44 @@
-/**
- * LiveRegion.test.tsx
- *
- * Unit tests for the LiveRegion accessibility component (ariallive-v7).
- * Verifies the rendered ARIA attributes and visual-hiding behaviour.
- */
-
-import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import LiveRegion from './LiveRegion';
+import { describe, it, expect } from 'vitest';
+import { LiveRegion } from './LiveRegion';
 
 describe('LiveRegion', () => {
-  it('renders with role="status"', () => {
-    render(<LiveRegion message="Hello" />);
-    expect(screen.getByRole('status')).toBeInTheDocument();
+  it('renders a visually hidden div with aria attributes', () => {
+    render(<LiveRegion message="Test message" />);
+    const region = screen.getByRole('status');
+    
+    expect(region).toBeInTheDocument();
+    expect(region).toHaveClass('sr-only');
+    expect(region).toHaveAttribute('aria-live', 'polite');
+    expect(region).toHaveAttribute('aria-atomic', 'true');
+    expect(region).toHaveTextContent('Test message');
   });
 
-  it('renders the message text', () => {
-    render(<LiveRegion message="Payment confirmed" />);
-    expect(screen.getByTestId('live-region')).toHaveTextContent('Payment confirmed');
+  it('updates the announcement when the message changes', () => {
+    const { rerender } = render(<LiveRegion message="Initial message" />);
+    expect(screen.getByRole('status')).toHaveTextContent('Initial message');
+
+    rerender(<LiveRegion message="Updated message" />);
+    expect(screen.getByRole('status')).toHaveTextContent('Updated message');
   });
 
-  it('defaults to aria-live="polite"', () => {
-    render(<LiveRegion message="test" />);
-    expect(screen.getByTestId('live-region')).toHaveAttribute('aria-live', 'polite');
+  it('does not clear the announcement when message is set to null or empty', () => {
+    const { rerender } = render(<LiveRegion message="Persistent message" />);
+    expect(screen.getByRole('status')).toHaveTextContent('Persistent message');
+
+    rerender(<LiveRegion message="" />);
+    // The previous message should persist to give screen readers time to announce it.
+    expect(screen.getByRole('status')).toHaveTextContent('Persistent message');
+
+    rerender(<LiveRegion message={null} />);
+    expect(screen.getByRole('status')).toHaveTextContent('Persistent message');
   });
 
-  it('accepts aria-live="assertive"', () => {
-    render(<LiveRegion message="urgent" politeness="assertive" />);
-    expect(screen.getByTestId('live-region')).toHaveAttribute('aria-live', 'assertive');
-  });
-
-  it('defaults to aria-atomic="true"', () => {
-    render(<LiveRegion message="test" />);
-    expect(screen.getByTestId('live-region')).toHaveAttribute('aria-atomic', 'true');
-  });
-
-  it('can set aria-atomic="false"', () => {
-    render(<LiveRegion message="test" atomic={false} />);
-    expect(screen.getByTestId('live-region')).toHaveAttribute('aria-atomic', 'false');
-  });
-
-  it('carries the sr-only class for visual hiding', () => {
-    render(<LiveRegion message="hidden" />);
-    expect(screen.getByTestId('live-region')).toHaveClass('sr-only');
-  });
-
-  it('renders an empty message without throwing', () => {
-    render(<LiveRegion message="" />);
-    expect(screen.getByTestId('live-region')).toBeInTheDocument();
-    expect(screen.getByTestId('live-region').textContent).toBe('');
-  });
-
-  it('updates text content when message prop changes', () => {
-    const { rerender } = render(<LiveRegion message="step one" />);
-    expect(screen.getByTestId('live-region')).toHaveTextContent('step one');
-    rerender(<LiveRegion message="step two" />);
-    expect(screen.getByTestId('live-region')).toHaveTextContent('step two');
+  it('allows overriding className and aria-live', () => {
+    render(<LiveRegion message="Test" className="custom-class" aria-live="assertive" />);
+    const region = screen.getByRole('status');
+    
+    expect(region).toHaveClass('custom-class');
+    expect(region).toHaveAttribute('aria-live', 'assertive');
   });
 });

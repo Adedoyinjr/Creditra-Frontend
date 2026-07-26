@@ -116,13 +116,13 @@ describe('RiskGauge', () => {
     expect(title?.textContent).toMatch(/improving/i);
   });
 
-  it('renders a polite sr-only paragraph with the same description', () => {
+  it('renders a polite sr-only live region with the same description', () => {
     renderGauge({ score: 72, trend: 'stable' });
-    // The sr-only paragraph is outside the SVG; it has aria-live="polite"
-    const srPara = document.querySelector('p[aria-live="polite"]');
-    expect(srPara).toBeInTheDocument();
-    expect(srPara?.textContent).toMatch(/risk score 72/i);
-    expect(srPara?.textContent).toMatch(/stable/i);
+    // The sr-only element is outside the SVG; it has aria-live="polite"
+    const srRegion = document.querySelector('div[aria-live="polite"]');
+    expect(srRegion).toBeInTheDocument();
+    expect(srRegion?.textContent).toMatch(/risk score 72/i);
+    expect(srRegion?.textContent).toMatch(/stable/i);
   });
 
   it('clamps score below 0 to 0', () => {
@@ -383,12 +383,14 @@ describe('RiskGauge', () => {
       expect(low?.getAttribute('aria-pressed')).toBe('false');
     });
 
-    it('pressing Enter on a sector fires onSectorActivate with that sector id', () => {
+    it('pressing Enter on a sector fires onSectorActivate with that sector id and announces activation', () => {
       const onActivate = vi.fn();
       const { container } = renderGauge({ onSectorActivate: onActivate });
       const mediumSector = container.querySelector('[data-sector="medium"]')!;
       fireEvent.keyDown(mediumSector, { key: 'Enter', code: 'Enter' });
       expect(onActivate).toHaveBeenCalledWith('medium');
+      const srRegion = document.querySelector('div[aria-live="polite"]');
+      expect(srRegion?.textContent).toMatch(/Activated Medium score zone, scores 50–69/i);
     });
 
     it('pressing Space on a sector fires onSectorActivate with that sector id', () => {

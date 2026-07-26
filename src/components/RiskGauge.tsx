@@ -57,6 +57,7 @@
 
 import { useEffect, useMemo, useRef, type KeyboardEvent } from 'react';
 import { useReducedMotion } from '../context/ReducedMotionContext';
+import { LiveRegion } from './LiveRegion';
 import './RiskGauge.css';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -416,11 +417,21 @@ export function RiskGauge({
     [ariaLabel, normalizedScore, trendLabel, lastUpdated],
   );
 
-  /** Which sector does the current score fall in? */
+  const [liveMessage, setLiveMessage] = useState<string>(srDescription);
+
+  // Announce the main score description whenever it changes
+  useMemo(() => {
+    setLiveMessage(srDescription);
+  }, [srDescription]);
+
   const activeSector: RiskSector =
     normalizedScore >= 70 ? 'high' : normalizedScore >= 50 ? 'medium' : 'low';
 
   function handleSectorActivate(sector: RiskSector) {
+    const sectorDef = SECTORS.find((s) => s.id === sector);
+    if (sectorDef) {
+      setLiveMessage(`Activated ${sectorDef.label}, scores ${sectorDef.range}`);
+    }
     onSectorActivate?.(sector);
   }
 
@@ -442,9 +453,7 @@ export function RiskGauge({
     <div className="risk-gauge-container">
       {/* Screen-reader description outside SVG for AT implementations that
           skip <title> inside inline SVG. */}
-      <p className="sr-only" aria-live="polite" aria-atomic="true">
-        {srDescription}
-      </p>
+      <LiveRegion message={liveMessage} />
 
       {/*
         SR-only table listing the three risk bands with ranges.
