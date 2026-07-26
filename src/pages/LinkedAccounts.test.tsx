@@ -11,7 +11,7 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { render, screen, waitFor, within, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { LinkedAccounts } from './LinkedAccounts';
 import * as linkedAccountsService from '../services/linkedAccounts';
@@ -437,6 +437,111 @@ describe('LinkedAccounts', () => {
       await user.click(dismissButton);
 
       expect(screen.queryByRole('status')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('Sticky Bottom Action Bar', () => {
+    it('renders the toolbar', async () => {
+      render(<LinkedAccounts />);
+
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /connect google account/i })).toBeInTheDocument();
+      });
+
+      const toolbar = screen.getByRole('toolbar', { name: /linked accounts actions/i });
+      expect(toolbar).toBeInTheDocument();
+    });
+
+    it('starts hidden before scrolling', async () => {
+      render(<LinkedAccounts />);
+
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /connect google account/i })).toBeInTheDocument();
+      });
+
+      const toolbar = screen.getByTestId('sticky-action-bar');
+      expect(toolbar.className).not.toContain('sticky-action-bar--visible');
+    });
+
+    it('appears after scrolling past the header', async () => {
+      render(<LinkedAccounts />);
+
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /connect google account/i })).toBeInTheDocument();
+      });
+
+      const toolbar = screen.getByTestId('sticky-action-bar');
+      const headerEl = screen.getByTestId('linked-accounts-header');
+
+      const origGetBoundingClientRect = headerEl.getBoundingClientRect.bind(headerEl);
+      vi.spyOn(headerEl, 'getBoundingClientRect').mockReturnValue({
+        bottom: -100,
+        top: -200,
+        left: 0,
+        right: 0,
+        width: 0,
+        height: 100,
+        x: 0,
+        y: 0,
+        toJSON: () => null,
+      } as DOMRect);
+
+      act(() => {
+        window.dispatchEvent(new Event('scroll', { bubbles: true }));
+      });
+
+      expect(toolbar.className).toContain('sticky-action-bar--visible');
+
+      headerEl.getBoundingClientRect = origGetBoundingClientRect;
+    });
+
+    it('shows connected count when accounts are linked', async () => {
+      vi.mocked(linkedAccountsService.fetchLinkedAccounts).mockResolvedValue(mockAccounts);
+
+      render(<LinkedAccounts />);
+
+      await waitFor(() => {
+        expect(screen.getByText(/1 connected/i)).toBeInTheDocument();
+      });
+    });
+
+    it('shows no accounts message when none are linked', async () => {
+      render(<LinkedAccounts />);
+
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /connect google account/i })).toBeInTheDocument();
+      });
+
+      expect(screen.getByText(/no accounts linked/i)).toBeInTheDocument();
+    });
+
+    it('has connect button in toolbar', async () => {
+      render(<LinkedAccounts />);
+
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /connect google account/i })).toBeInTheDocument();
+      });
+
+      expect(screen.getByRole('button', { name: /connect new account from toolbar/i })).toBeInTheDocument();
+    });
+
+    it('calls initiateLinkAccount from toolbar connect button', async () => {
+      const user = userEvent.setup();
+      vi.mocked(linkedAccountsService.fetchLinkedAccounts).mockResolvedValue([]);
+      vi.mocked(linkedAccountsService.initiateLinkAccount).mockResolvedValue({
+        authUrl: '/oauth/google?state=test',
+        state: 'test-state',
+      });
+
+      render(<LinkedAccounts />);
+
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /connect google account/i })).toBeInTheDocument();
+      });
+
+      await user.click(screen.getByRole('button', { name: /connect new account from toolbar/i }));
+
+      expect(linkedAccountsService.initiateLinkAccount).toHaveBeenCalledWith({ provider: 'google' });
     });
   });
 });
