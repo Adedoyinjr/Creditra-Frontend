@@ -42,11 +42,14 @@
  *     otherwise skip a freshly-rendered instance straight past "select"
  */
 
-import { render, screen, fireEvent, act, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, fireEvent, act } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { vi, describe, it, expect, beforeEach } from "vitest";
+import { vi, describe, it, expect, beforeEach, afterEach } from "vitest";
+import { readFileSync } from "fs";
+import { fileURLToPath } from "url";
+import { dirname, join } from "path";
 import DrawCreditPage from "./DrawCreditPage";
-import * as ReducedMotionContext from "@/context/ReducedMotionContext";
+import { DrawCreditPageSkeleton } from "./DrawCreditPage";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -631,5 +634,32 @@ describe("DrawCreditPage — keyboard shortcut hints", () => {
     ).map((el) => el.textContent);
 
     expect(separators).toContain('/');
+  });
+});
+
+describe("DrawCreditPage — responsive breakpoint audit", () => {
+  const cssPath = join(dirname(fileURLToPath(import.meta.url)), "../index.css");
+  const css = readFileSync(cssPath, "utf-8");
+
+  it("skeleton uses dc-* classes instead of Tailwind utilities", () => {
+    render(<DrawCreditPageSkeleton />);
+    const main = screen.getByRole("main");
+    expect(main).toHaveClass("dc-page");
+    expect(main).not.toHaveClass("min-h-screen", "bg-background", "px-4");
+  });
+
+  it(".dc-page has reduced padding on screens ≤ 480px", () => {
+    const pattern = /@media\s*\(max-width:\s*480px\)\s*{[^}]*\.dc-page\s*{[^}]*padding:\s*var\(--space-3\)/;
+    expect(css).toMatch(pattern);
+  });
+
+  it(".dc-presets switches from 4 columns to 2 columns on screens ≤ 480px", () => {
+    const pattern = /@media\s*\(max-width:\s*480px\)\s*{[^}]*\.dc-presets\s*{[^}]*grid-template-columns:\s*repeat\(2,\s*1fr\)/;
+    expect(css).toMatch(pattern);
+  });
+
+  it(".dc-stat-grid switches from 2 columns to 1 column on screens ≤ 480px", () => {
+    const pattern = /@media\s*\(max-width:\s*480px\)\s*{[^}]*\.dc-stat-grid\s*{[^}]*grid-template-columns:\s*1fr/;
+    expect(css).toMatch(pattern);
   });
 });

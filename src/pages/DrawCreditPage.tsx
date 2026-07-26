@@ -481,48 +481,41 @@ export default function DrawCreditPage() {
 
 export function DrawCreditPageSkeleton() {
   return (
-    <main className="dc-page" aria-busy="true" aria-label="Loading draw credit page">
+    <main
+      className="dc-page"
+      aria-busy="true"
+      aria-label="Loading draw credit page"
+    >
       <div className="dc-page__inner">
         <div className="dc-page__card" aria-hidden="true">
-          <div className="dc-step">
-            <div>
-              <Skeleton width="200px" height="32px" className="mb-2" />
-              <Skeleton width="300px" height="24px" />
-            </div>
-
-            <ul className="dc-credit-line-list" role="list">
-              {[1, 2, 3].map((i) => (
-                <li key={i}>
-                  <div className="dc-credit-line-item">
-                    <div className="dc-credit-line-item__inner w-full">
-                      <div className="dc-credit-line-item__body w-full">
-                        <Skeleton width="120px" height="24px" className="mb-3" />
-                        
-                        <div className="flex gap-6 mb-3">
-                          <div className="space-y-1">
-                            <Skeleton width="60px" height="14px" />
-                            <Skeleton width="80px" height="20px" />
-                          </div>
-                          <div className="space-y-1">
-                            <Skeleton width="70px" height="14px" />
-                            <Skeleton width="50px" height="20px" />
-                          </div>
-                        </div>
-
-                        <Skeleton width="100%" height="8px" shape="rounded" />
-                      </div>
-                      <div className="ml-4 flex-shrink-0 flex items-center justify-center">
-                        <Skeleton width="20px" height="20px" shape="circular" />
-                      </div>
+          <div className="space-y-4">
+            <Skeleton width="120px" height="20px" />
+            <Skeleton width="60%" height="36px" />
+          </div>
+          <div className="dc-credit-line-list" style={{ marginTop: 'var(--space-6)' }}>
+            {[1, 2, 3, 4].map((i) => (
+              <div
+                key={i}
+                className="dc-credit-line-item"
+                style={{ pointerEvents: 'none' }}
+              >
+                <div className="dc-credit-line-item__inner">
+                  <div className="dc-credit-line-item__body">
+                    <div className="dc-credit-line-item__name">
+                      <Skeleton width="120px" height="20px" />
+                    </div>
+                    <div className="dc-credit-line-item__meta">
+                      <Skeleton width="80px" height="16px" />
+                      <Skeleton width="60px" height="16px" />
                     </div>
                   </div>
-                </li>
-              ))}
-            </ul>
+                  <div className="dc-chevron">
+                    <Skeleton width="16px" height="16px" />
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
-        </div>
-        <div className="dc-page__footer flex justify-center mt-4">
-           <Skeleton width="250px" height="20px" />
         </div>
       </div>
     </main>
