@@ -47,6 +47,48 @@
     opacity: 0.9;
 }
 
+/* ─── Skeleton Loading State ─────────────────────────────────────────────── */
+
+/* Skeleton placeholders are <div>s so no `display: block` reset needed. */
+
+.cl-skeleton-title {
+    margin-bottom: 0.65rem;
+}
+
+.cl-skeleton-subtitle {
+    margin-top: 0.35rem;
+}
+
+.cl-skeleton-actions {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.cl-filters--skeleton {
+    align-items: flex-start;
+}
+
+.cl-grid--skeleton {
+    margin-top: 0.25rem;
+}
+
+.cl-card--skeleton {
+    min-height: 20rem;
+}
+
+.cl-skeleton-card-title {
+    margin-bottom: 0.5rem;
+}
+
+.cl-skeleton-card-subtitle {
+    margin-bottom: 0.75rem;
+}
+
+.cl-skeleton-block + .cl-skeleton-block {
+    margin-top: 0.5rem;
+}
+
 /* ─── Filters ───────────────────────────────────────────────────────────────── */
 
 .cl-filters {

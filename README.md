@@ -23,6 +23,7 @@ talks to Stellar wallets via injected provider APIs.
   a single `WalletInfo` shape (`src/utils/wallet.ts`) behind one
   `WalletProvider` (`src/context/WalletContext.tsx`).
 - **WCAG 2.1 AA by default.** Three composable hooks
+- **Smoother first paint.** The Credit Lines route now shows a branded skeleton state on first load so the page feels responsive while data is settling.
   (`useFocusTrap`, `useBodyScrollLock`, `useInertBackdrop`) standardise every modal.
   Every interactive element meets the 44×44 px touch target.
 - **Token-first styling.** Color, spacing, radius and elevation tokens live in

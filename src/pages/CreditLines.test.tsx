@@ -1,7 +1,7 @@
-import { render, screen, within, fireEvent } from "@testing-library/react";
+import { act, render, screen, within } from "@testing-library/react";
 import { MOCK_CREDIT_LINES } from "../data/mockData";
 import { MemoryRouter } from "react-router-dom";
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import CreditLines from "./CreditLines";
 
 // CL-2023-004 ("Emergency Reserve Line") is the only Defaulted entry in MOCK_CREDIT_LINES
@@ -26,6 +26,27 @@ function renderCreditLines() {
 }
 
 describe("CreditLines — Defaulted row visual treatment (issue #223)", () => {
+  it("shows a loading skeleton on first paint and then renders the content", () => {
+    vi.useFakeTimers();
+
+    renderCreditLines();
+
+    expect(
+      screen.getByRole("status", { name: /loading credit lines/i }),
+    ).toBeInTheDocument();
+
+    act(() => {
+      vi.advanceTimersByTime(600);
+    });
+
+    expect(
+      screen.queryByRole("status", { name: /loading credit lines/i }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /credit lines/i })).toBeInTheDocument();
+
+    vi.useRealTimers();
+  });
+
   // ─── Card view ────────────────────────────────────────────────────────────
 
   describe("card view", () => {
