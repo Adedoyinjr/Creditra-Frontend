@@ -17,6 +17,7 @@ import { COLOR, fmt, fmtDate, fmtDateTime } from "../utils/tokens";
 import "./TransactionHistory.css";
 import { NoActivity, NoDataGraph, NoLines } from "../components/illustrations";
 import { LiveRegion } from "../components/LiveRegion";
+import { KbdHint } from "../components/KbdHint";
 
 /**
  * TransactionHistory Page Component
@@ -1500,9 +1501,32 @@ export function TransactionHistory() {
             }
           }}
         >
-          <label htmlFor={SEARCH_INPUT_ID} className="th-filter-label">
-            Search
-          </label>
+          <div className="th-search-label-row">
+            <label htmlFor={SEARCH_INPUT_ID} className="th-filter-label">
+              Search
+            </label>
+            <div
+              className="th-search-shortcuts"
+              role="group"
+              aria-label="Search keyboard shortcuts"
+            >
+              <KbdHint
+                keys={["↑", "↓"]}
+                label="Navigate"
+                description="Use Arrow Up and Arrow Down to navigate search suggestions"
+              />
+              <KbdHint
+                keys="Enter"
+                label="Select"
+                description="Press Enter to select the active search suggestion"
+              />
+              <KbdHint
+                keys="Esc"
+                label="Close"
+                description="Press Escape to close search suggestions"
+              />
+            </div>
+          </div>
           {/* combobox wrapper — positions the floating listbox */}
           <div className="th-search-combobox">
             <input

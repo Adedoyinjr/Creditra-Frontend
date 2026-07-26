@@ -1040,3 +1040,26 @@
         page-break-inside: avoid;
     }
 }
+
+/* Keyboard guidance for the search combobox. */
+.th-search-label-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-sm);
+    flex-wrap: wrap;
+}
+
+.th-search-shortcuts {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: var(--space-sm);
+    flex-wrap: wrap;
+}
+
+@media (max-width: 640px) {
+    .th-search-shortcuts {
+        justify-content: flex-start;
+    }
+}
