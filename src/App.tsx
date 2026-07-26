@@ -19,6 +19,7 @@ import HelpCenter from "./pages/HelpCenter";
 import { ShortcutHelpOverlay } from "./components/ShortcutHelpOverlay";
 import { DutchAuctions } from "./pages/DutchAuctions";
 import RepayPage from "./pages/RepayPage";
+import RepayCalendar from "./pages/RepayCalendar";
 import { LinkedAccounts } from "./pages/LinkedAccounts";
 import NotificationPreferences from "./pages/NotificationPreferences";
 import { WalletReconnectBanner } from "./components/WalletReconnectBanner";
@@ -232,6 +233,7 @@ function App() {
                     {/* Issue #581: Repay flow (now reachable from header /
                         the "Repay" action on Credit Lines). */}
                     <Route path="/repay" element={<RepayPage />} />
+                    <Route path="/repay/calendar" element={<RepayCalendar />} />
                     <Route path="*" element={<NotFound />} />
                   </Routes>
                 </main>
