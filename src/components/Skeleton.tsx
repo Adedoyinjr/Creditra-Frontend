@@ -9,12 +9,18 @@ type SkeletonProps = React.HTMLAttributes<HTMLDivElement> & {
   /**
    * Shape of the skeleton. Defaults to 'rectangular'.
    *
-   * - `rectangular` — sharp corners, default border-radius from --skeleton-radius.
-   * - `circular` — border-radius: 50%, for avatar / icon placeholders.
-   * - `rounded` — same as rectangular but explicitly uses --skeleton-radius;
-   *   provided as a semantic alias for callers that want to document intent.
+   * - `rectangular` — uses `--skeleton-radius` (matches cards, inputs, buttons).
+   * - `circular`    — border-radius: 50%, for avatar / icon placeholders.
+   * - `rounded`     — semantic alias for rectangular; explicit intent for
+   *                   inline text-row placeholders.
+   * - `pill`        — uses `--skeleton-radius-pill` (9999px) for badge / chip
+   *                   placeholders (StatusBadge, network-badge, wallet chip).
+   *
+   * Shape parity principle (FWC26 — issue #690): each variant resolves to the
+   * same radius token used by the final rendered component so first-paint
+   * skeleton geometry matches loaded-state geometry exactly (CLS = 0).
    */
-  shape?: 'rectangular' | 'circular' | 'rounded';
+  shape?: 'rectangular' | 'circular' | 'rounded' | 'pill';
   /**
    * Visual variant.
    *
@@ -49,13 +55,28 @@ type SkeletonProps = React.HTMLAttributes<HTMLDivElement> & {
  * Pass `width` / `height` to match the eventual content size and prevent
  * Cumulative Layout Shift (CLS) while the data fetch is in flight.
  *
+ * ## Shape parity (FWC26 — issue #690)
+ * Use `shape="rounded"` (the default, driven by `--skeleton-radius`) for
+ * most block placeholders so the border-radius matches the final card/input
+ * element and first-paint does not jump when real content arrives.
+ * Use `shape="circular"` only for avatar / icon-sized placeholders (≤ 48 px).
+ *
  * ## Motion
  * The shimmer animation is suppressed under both
  * `@media (prefers-reduced-motion: reduce)` and `[data-motion="reduced"]`
  * (the runtime JS toggle managed by ReducedMotionContext).
  * See the loading-state policy in `docs/ARCHITECTURE.md` §5.
  */
-export const Skeleton: React.FC<SkeletonProps> = ({ width, height, shape = 'rectangular', variant, style, className, 'aria-hidden': ariaHidden = true, ...rest }) => (
+export const Skeleton: React.FC<SkeletonProps> = ({
+  width,
+  height,
+  shape = 'rectangular',
+  variant = 'default',
+  style,
+  className,
+  'aria-hidden': ariaHidden = true,
+  ...rest
+}) => (
   <div
     className={[
       'skeleton',
