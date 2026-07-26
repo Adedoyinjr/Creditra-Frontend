@@ -390,8 +390,19 @@ describe("AmountInput", () => {
       expect(screen.queryByLabelText(/draw amount/i)).not.toBeInTheDocument();
     });
 
-    it("renders skeleton when creditLine is not yet provided", () => {
-      render(<AmountInput isLoading={false} />);
+    it("renders themed empty state when creditLine is not yet provided and not loading", () => {
+      const onBack = vi.fn();
+      render(<AmountInput isLoading={false} onBack={onBack} />);
+
+      const emptyRegion = screen.getByTestId("amount-input-empty");
+      expect(emptyRegion).toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: "No credit line selected" })).toBeInTheDocument();
+      expect(screen.getByText(/Select a credit line from the dashboard/)).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Go back" })).toBeInTheDocument();
+    });
+
+    it("renders skeleton when creditLine is not yet provided but loading", () => {
+      render(<AmountInput isLoading={true} />);
 
       const skeletonRegion = screen.getByTestId("amount-input-skeleton");
       expect(skeletonRegion).toBeInTheDocument();
