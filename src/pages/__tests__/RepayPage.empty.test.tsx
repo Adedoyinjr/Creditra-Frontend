@@ -1,5 +1,5 @@
-import { describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { render, screen, act } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 
 // Local mock — this file is the empty-state suite, so we override the
@@ -12,11 +12,15 @@ vi.mock('@/data/mockData', () => ({
 import RepayPage from '../RepayPage';
 
 function renderEmpty(initialEntries = ['/repay']) {
-  return render(
+  const result = render(
     <MemoryRouter initialEntries={initialEntries}>
       <RepayPage />
     </MemoryRouter>,
   );
+  act(() => {
+    vi.advanceTimersByTime(1000);
+  });
+  return result;
 }
 
 /**
@@ -34,6 +38,13 @@ function renderEmpty(initialEntries = ['/repay']) {
  * with the populated suite (see comment in `RepayPage.test.tsx`).
  */
 describe('RepayPage empty state (issue #581)', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+  afterEach(() => {
+    vi.runOnlyPendingTimers();
+    vi.useRealTimers();
+  });
   it('renders the themed empty state when no repayable lines exist', () => {
     renderEmpty();
 
@@ -115,6 +126,13 @@ describe('RepayPage empty state (issue #581)', () => {
  * illustration path must still engage.
  */
 describe('RepayPage empty state when all utilization is zero', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+  afterEach(() => {
+    vi.runOnlyPendingTimers();
+    vi.useRealTimers();
+  });
   it('renders the empty state when the only line has utilized === 0', async () => {
     // Override the mock for this single test by re-mocking the module via
     // dynamic import; the file-level mock keeps things tidy otherwise.
@@ -143,6 +161,9 @@ describe('RepayPage empty state when all utilization is zero', () => {
         <FreshRepayPage />
       </MemoryRouter>,
     );
+    act(() => {
+      vi.advanceTimersByTime(1000);
+    });
 
     expect(
       screen.getByRole('heading', { name: 'Nothing to repay right now' }),
