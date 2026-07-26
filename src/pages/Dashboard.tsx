@@ -415,68 +415,35 @@ export function Dashboard() {
       <div className="summary-cards" data-tour-target="summaryCards" aria-busy={loading}>
         {loading ? (
           <>
-            <div className="summary-card skeleton-card">
-              <Skeleton
-                style={{
-                  width: "60%",
-                  height: "14px",
-                  marginBottom: "16px",
-                  borderRadius: "4px",
-                }}
-              />
-              <Skeleton
-                style={{
-                  width: "80%",
-                  height: "32px",
-                  marginBottom: "12px",
-                  borderRadius: "4px",
-                }}
-              />
-              <Skeleton
-                style={{ width: "40%", height: "12px", borderRadius: "4px" }}
-              />
+            {/* ── Summary-card skeletons ──────────────────────────────────────────
+                Heights and radii mirror the final rendered elements exactly so
+                first-paint geometry matches loaded-state geometry (CLS = 0).
+
+                Final .summary-card layout (min-height: 114px, padding: 1.25rem 1.5rem):
+                  .label  — 0.7rem text, line-height --lh-small (1.5) → ~16.8px
+                  .value  — 1.75rem text, line-height --lh-display (1.2) → ~33.6px
+                  .sub    — 0.75rem text, line-height --lh-small (1.5) → ~18px
+
+                Skeleton heights are set to the nearest even integer at 1× pixel
+                density.  Spacing (marginBottom) mirrors padding/gap in the card.
+            ─────────────────────────────────────────────────────────────────── */}
+            <div className="summary-card skeleton-card" aria-hidden="true">
+              {/* label placeholder — 0.7rem cap height ≈ 11px, block at 14px */}
+              <Skeleton width="60%" height={14} shape="rounded" style={{ marginBottom: 'var(--space-2, 8px)' }} />
+              {/* value placeholder — 1.75rem ≈ 28px, block at 32px */}
+              <Skeleton width="80%" height={32} shape="rectangular" style={{ marginBottom: 'var(--space-2, 8px)' }} />
+              {/* sub placeholder — 0.75rem cap height ≈ 12px, block at 12px */}
+              <Skeleton width="40%" height={12} shape="rounded" />
             </div>
-            <div className="summary-card skeleton-card">
-              <Skeleton
-                style={{
-                  width: "60%",
-                  height: "14px",
-                  marginBottom: "16px",
-                  borderRadius: "4px",
-                }}
-              />
-              <Skeleton
-                style={{
-                  width: "80%",
-                  height: "32px",
-                  marginBottom: "12px",
-                  borderRadius: "4px",
-                }}
-              />
-              <Skeleton
-                style={{ width: "40%", height: "12px", borderRadius: "4px" }}
-              />
+            <div className="summary-card skeleton-card" aria-hidden="true">
+              <Skeleton width="60%" height={14} shape="rounded" style={{ marginBottom: 'var(--space-2, 8px)' }} />
+              <Skeleton width="80%" height={32} shape="rectangular" style={{ marginBottom: 'var(--space-2, 8px)' }} />
+              <Skeleton width="40%" height={12} shape="rounded" />
             </div>
-            <div className="summary-card skeleton-card">
-              <Skeleton
-                style={{
-                  width: "60%",
-                  height: "14px",
-                  marginBottom: "16px",
-                  borderRadius: "4px",
-                }}
-              />
-              <Skeleton
-                style={{
-                  width: "80%",
-                  height: "32px",
-                  marginBottom: "12px",
-                  borderRadius: "4px",
-                }}
-              />
-              <Skeleton
-                style={{ width: "40%", height: "12px", borderRadius: "4px" }}
-              />
+            <div className="summary-card skeleton-card" aria-hidden="true">
+              <Skeleton width="60%" height={14} shape="rounded" style={{ marginBottom: 'var(--space-2, 8px)' }} />
+              <Skeleton width="80%" height={32} shape="rectangular" style={{ marginBottom: 'var(--space-2, 8px)' }} />
+              <Skeleton width="40%" height={12} shape="rounded" />
             </div>
           </>
         ) : (
@@ -621,18 +588,33 @@ export function Dashboard() {
               )}
             </h2>
             {loading ? (
-              <div className="risk-gauge-container">
-                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100px', width: '160px', marginBottom: '0.75rem' }}>
-                  <Skeleton style={{ width: '80px', height: '80px', borderRadius: '50%' }} />
-                </div>
+              /* ── Risk-gauge skeleton ─────────────────────────────────────────
+                 The final RiskGauge renders:
+                   <svg viewBox="0 0 160 100" max-width:160px; height:auto>
+                   Two .risk-meta-item rows side-by-side (label + value)
+
+                 The skeleton mirrors the SVG's 160:100 aspect ratio with a
+                 rounded-rectangle placeholder (not a circle — the arc spans
+                 the full width).  Meta items use text-line heights matching
+                 .rm-label (0.65rem) and .rm-value (0.85rem).
+              ─────────────────────────────────────────────────────────────── */
+              <div className="risk-gauge-container" aria-hidden="true">
+                {/* SVG arc placeholder: 160px wide × 100px tall, rounded to match card radius */}
+                <Skeleton
+                  width="100%"
+                  style={{ maxWidth: '160px', aspectRatio: '160 / 100', marginBottom: '0.75rem' }}
+                  shape="rounded"
+                />
                 <div className="risk-meta" style={{ width: '100%' }}>
-                  <div className="risk-meta-item" style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                    <Skeleton style={{ width: '40px', height: '10px', marginBottom: '6px', borderRadius: '2px' }} />
-                    <Skeleton style={{ width: '60px', height: '14px', borderRadius: '2px' }} />
+                  <div className="risk-meta-item" style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.375rem' }}>
+                    {/* .rm-label — 0.65rem ≈ 10px cap height, block at 10px */}
+                    <Skeleton width={40} height={10} shape="rounded" />
+                    {/* .rm-value — 0.85rem ≈ 14px cap height, block at 14px */}
+                    <Skeleton width={60} height={14} shape="rounded" />
                   </div>
-                  <div className="risk-meta-item" style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                    <Skeleton style={{ width: '60px', height: '10px', marginBottom: '6px', borderRadius: '2px' }} />
-                    <Skeleton style={{ width: '50px', height: '14px', borderRadius: '2px' }} />
+                  <div className="risk-meta-item" style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.375rem' }}>
+                    <Skeleton width={60} height={10} shape="rounded" />
+                    <Skeleton width={50} height={14} shape="rounded" />
                   </div>
                 </div>
               </div>
@@ -690,179 +672,60 @@ export function Dashboard() {
                )}
              </h2>
              {loading ? (
+               /* ── Credit-line preview skeletons ──────────────────────────────
+                  Final .cl-preview-item layout (min-height: 57px):
+                    Left:  .cl-preview-name (0.875rem / 14px) + StatusBadge chip
+                           .cl-preview-id   (0.7rem monospace / 11px)
+                    Right: .cl-preview-amount (0.875rem / 14px)
+                           .cl-preview-bar   (80px wide × 3px tall)
+
+                  StatusBadge renders as a full-pill chip → shape="pill".
+                  Name/amount/id rows use shape="rounded" text-line heights.
+                  The mini utilisation bar is 3px tall → rounded bar.
+               ────────────────────────────────────────────────────────────── */
                <>
-                 <div className="cl-preview-item">
+                 <div className="cl-preview-item" aria-hidden="true">
                    <div style={{ flex: 1, minWidth: 0 }}>
-                     <div
-                       style={{
-                         display: "flex",
-                         alignItems: "center",
-                         gap: "0.5rem",
-                         marginBottom: "0.4rem",
-                       }}
-                     >
-                       <Skeleton
-                         style={{
-                           width: "100px",
-                           height: "14px",
-                           borderRadius: "2px",
-                         }}
-                       />
-                       <Skeleton
-                         style={{
-                           width: "50px",
-                           height: "14px",
-                           borderRadius: "4px",
-                         }}
-                       />
+                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.4rem' }}>
+                       {/* .cl-preview-name — 0.875rem font / 14px */}
+                       <Skeleton width={100} height={14} shape="rounded" />
+                       {/* StatusBadge pill placeholder */}
+                       <Skeleton width={50} height={18} shape="pill" />
                      </div>
-                     <Skeleton
-                       style={{
-                         width: "120px",
-                         height: "10px",
-                         borderRadius: "2px",
-                       }}
-                     />
+                     {/* .cl-preview-id — 0.7rem mono / 11px, block at 10px */}
+                     <Skeleton width={120} height={10} shape="rounded" />
                    </div>
-                   <div
-                     className="cl-preview-right"
-                     style={{
-                       display: "flex",
-                       flexDirection: "column",
-                       alignItems: "flex-end",
-                       gap: "0.4rem",
-                     }}
-                   >
-                     <Skeleton
-                       style={{
-                         width: "80px",
-                         height: "14px",
-                         borderRadius: "2px",
-                       }}
-                     />
-                     <Skeleton
-                       style={{
-                         width: "60px",
-                         height: "6px",
-                         borderRadius: "2px",
-                       }}
-                     />
+                   <div className="cl-preview-right" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.4rem' }}>
+                     {/* .cl-preview-amount — 0.875rem / 14px */}
+                     <Skeleton width={80} height={14} shape="rounded" />
+                     {/* .cl-preview-bar — 80px × 3px */}
+                     <Skeleton width={80} height={3} shape="rounded" />
                    </div>
                  </div>
-                 <div className="cl-preview-item">
+                 <div className="cl-preview-item" aria-hidden="true">
                    <div style={{ flex: 1, minWidth: 0 }}>
-                     <div
-                       style={{
-                         display: "flex",
-                         alignItems: "center",
-                         gap: "0.5rem",
-                         marginBottom: "0.4rem",
-                       }}
-                     >
-                       <Skeleton
-                         style={{
-                           width: "80px",
-                           height: "14px",
-                           borderRadius: "2px",
-                         }}
-                       />
-                       <Skeleton
-                         style={{
-                           width: "50px",
-                           height: "14px",
-                           borderRadius: "4px",
-                         }}
-                       />
+                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.4rem' }}>
+                       <Skeleton width={80} height={14} shape="rounded" />
+                       <Skeleton width={50} height={18} shape="pill" />
                      </div>
-                     <Skeleton
-                       style={{
-                         width: "100px",
-                         height: "10px",
-                         borderRadius: "2px",
-                       }}
-                     />
+                     <Skeleton width={100} height={10} shape="rounded" />
                    </div>
-                   <div
-                     className="cl-preview-right"
-                     style={{
-                       display: "flex",
-                       flexDirection: "column",
-                       alignItems: "flex-end",
-                       gap: "0.4rem",
-                     }}
-                   >
-                     <Skeleton
-                       style={{
-                         width: "70px",
-                         height: "14px",
-                         borderRadius: "2px",
-                       }}
-                     />
-                     <Skeleton
-                       style={{
-                         width: "50px",
-                         height: "6px",
-                         borderRadius: "2px",
-                       }}
-                     />
+                   <div className="cl-preview-right" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.4rem' }}>
+                     <Skeleton width={70} height={14} shape="rounded" />
+                     <Skeleton width={80} height={3} shape="rounded" />
                    </div>
                  </div>
-                 <div className="cl-preview-item">
+                 <div className="cl-preview-item" aria-hidden="true">
                    <div style={{ flex: 1, minWidth: 0 }}>
-                     <div
-                       style={{
-                         display: "flex",
-                         alignItems: "center",
-                         gap: "0.5rem",
-                         marginBottom: "0.4rem",
-                       }}
-                     >
-                       <Skeleton
-                         style={{
-                           width: "90px",
-                           height: "14px",
-                           borderRadius: "2px",
-                         }}
-                       />
-                       <Skeleton
-                         style={{
-                           width: "50px",
-                           height: "14px",
-                           borderRadius: "4px",
-                         }}
-                       />
+                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.4rem' }}>
+                       <Skeleton width={90} height={14} shape="rounded" />
+                       <Skeleton width={50} height={18} shape="pill" />
                      </div>
-                     <Skeleton
-                       style={{
-                         width: "110px",
-                         height: "10px",
-                         borderRadius: "2px",
-                       }}
-                     />
+                     <Skeleton width={110} height={10} shape="rounded" />
                    </div>
-                   <div
-                     className="cl-preview-right"
-                     style={{
-                       display: "flex",
-                       flexDirection: "column",
-                       alignItems: "flex-end",
-                       gap: "0.4rem",
-                     }}
-                   >
-                     <Skeleton
-                       style={{
-                         width: "60px",
-                         height: "14px",
-                         borderRadius: "2px",
-                       }}
-                     />
-                     <Skeleton
-                       style={{
-                         width: "40px",
-                         height: "6px",
-                         borderRadius: "2px",
-                       }}
-                     />
+                   <div className="cl-preview-right" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.4rem' }}>
+                     <Skeleton width={60} height={14} shape="rounded" />
+                     <Skeleton width={80} height={3} shape="rounded" />
                    </div>
                  </div>
                </>
@@ -1003,30 +866,45 @@ export function Dashboard() {
                )}
              </h2>
              {loading ? (
+               /* ── Activity-item skeletons ───────────────────────────────────
+                  Final .activity-item layout (min-height: 48px):
+                    .activity-icon   — 28px × 28px, border-radius: 6px
+                    .activity-title  — 0.825rem / 13px text
+                    .activity-sub    — 0.725rem / 11px text
+                    .activity-amount — 0.825rem / 13px text, right-aligned
+
+                  Icon is 28×28 with 6px radius → shape="rectangular" (not
+                  circular — final icons are square with rounded corners).
+                  Title and sub use text-line heights at their rendered caps.
+               ────────────────────────────────────────────────────────────── */
                <>
-                 <div className="activity-item">
-                   <Skeleton className="activity-icon" style={{ borderRadius: "6px" }} />
-                   <div className="activity-content" style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
-                     <Skeleton style={{ width: "120px", height: "14px", borderRadius: "2px" }} />
-                     <Skeleton style={{ width: "180px", height: "10px", borderRadius: "2px" }} />
+                 <div className="activity-item" aria-hidden="true">
+                   {/* .activity-icon — 28 × 28, border-radius: 6px ≈ --radius-sm */}
+                   <Skeleton width={28} height={28} shape="rectangular" className="activity-icon" />
+                   <div className="activity-content" style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                     {/* .activity-title — 0.825rem → 14px block */}
+                     <Skeleton width={120} height={14} shape="rounded" />
+                     {/* .activity-sub — 0.725rem → 10px block */}
+                     <Skeleton width={180} height={10} shape="rounded" />
                    </div>
-                   <Skeleton style={{ width: "60px", height: "14px", marginLeft: "auto", borderRadius: "2px" }} />
+                   {/* .activity-amount — 0.825rem → 14px block */}
+                   <Skeleton width={60} height={14} shape="rounded" style={{ marginLeft: 'auto' }} />
                  </div>
-                 <div className="activity-item">
-                   <Skeleton className="activity-icon" style={{ borderRadius: "6px" }} />
-                   <div className="activity-content" style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
-                     <Skeleton style={{ width: "100px", height: "14px", borderRadius: "2px" }} />
-                     <Skeleton style={{ width: "150px", height: "10px", borderRadius: "2px" }} />
+                 <div className="activity-item" aria-hidden="true">
+                   <Skeleton width={28} height={28} shape="rectangular" className="activity-icon" />
+                   <div className="activity-content" style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                     <Skeleton width={100} height={14} shape="rounded" />
+                     <Skeleton width={150} height={10} shape="rounded" />
                    </div>
-                   <Skeleton style={{ width: "50px", height: "14px", marginLeft: "auto", borderRadius: "2px" }} />
+                   <Skeleton width={50} height={14} shape="rounded" style={{ marginLeft: 'auto' }} />
                  </div>
-                 <div className="activity-item">
-                   <Skeleton className="activity-icon" style={{ borderRadius: "6px" }} />
-                   <div className="activity-content" style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
-                     <Skeleton style={{ width: "140px", height: "14px", borderRadius: "2px" }} />
-                     <Skeleton style={{ width: "160px", height: "10px", borderRadius: "2px" }} />
+                 <div className="activity-item" aria-hidden="true">
+                   <Skeleton width={28} height={28} shape="rectangular" className="activity-icon" />
+                   <div className="activity-content" style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                     <Skeleton width={140} height={14} shape="rounded" />
+                     <Skeleton width={160} height={10} shape="rounded" />
                    </div>
-                   <Skeleton style={{ width: "70px", height: "14px", marginLeft: "auto", borderRadius: "2px" }} />
+                   <Skeleton width={70} height={14} shape="rounded" style={{ marginLeft: 'auto' }} />
                  </div>
                </>
              ) : recentActivity.length === 0 ? (

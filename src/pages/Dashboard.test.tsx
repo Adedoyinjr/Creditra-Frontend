@@ -1,8 +1,14 @@
 import { render, screen, act, fireEvent } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { Dashboard, RiskGauge } from './Dashboard';
 import { ReducedMotionProvider } from '../context/ReducedMotionContext';
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
+
+// Path to Dashboard.css — used for source-level CSS assertions
+const _dashCssPath = join(dirname(fileURLToPath(import.meta.url)), 'Dashboard.css');
 
 // Mock modules before imports
 vi.mock('../context/WalletContext', () => ({
@@ -435,5 +441,317 @@ describe('Dashboard component — themed skeleton loading state (FWC26)', () => 
     expect(skeletonsAfterLoad).toBeLessThan(skeletonsDuringLoad);
 
     vi.useRealTimers();
+  });
+});
+
+// ── FWC26 #690: Skeleton shape/height/spacing parity tests ───────────────────
+//
+// These tests assert that skeleton placeholders in the Dashboard loading state
+// have heights and shapes that match the final rendered components so that
+// first-paint does not cause a layout jump (CLS = 0).
+
+describe('Dashboard skeleton — height/spacing/shape parity (FWC26 #690)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  // ── Summary card skeletons ─────────────────────────────────────────────
+
+  it('summary-card label skeleton has height 14 matching .label rendered height', () => {
+    const { container } = render(
+      <BrowserRouter>
+        <Dashboard />
+      </BrowserRouter>
+    );
+
+    // Three summary cards, each has a label skeleton as the first .skeleton child
+    const summaryCards = container.querySelectorAll('.summary-card.skeleton-card');
+    expect(summaryCards.length).toBe(3);
+
+    summaryCards.forEach((card) => {
+      const skeletons = card.querySelectorAll('.skeleton');
+      // First skeleton = label row (height: 14px)
+      const labelSkeleton = skeletons[0] as HTMLElement;
+      expect(labelSkeleton.style.height).toBe('14px');
+    });
+  });
+
+  it('summary-card value skeleton has height 32 matching .value rendered height', () => {
+    const { container } = render(
+      <BrowserRouter>
+        <Dashboard />
+      </BrowserRouter>
+    );
+
+    const summaryCards = container.querySelectorAll('.summary-card.skeleton-card');
+    summaryCards.forEach((card) => {
+      const skeletons = card.querySelectorAll('.skeleton');
+      // Second skeleton = value row (height: 32px)
+      const valueSkeleton = skeletons[1] as HTMLElement;
+      expect(valueSkeleton.style.height).toBe('32px');
+    });
+  });
+
+  it('summary-card sub skeleton has height 12 matching .sub rendered height', () => {
+    const { container } = render(
+      <BrowserRouter>
+        <Dashboard />
+      </BrowserRouter>
+    );
+
+    const summaryCards = container.querySelectorAll('.summary-card.skeleton-card');
+    summaryCards.forEach((card) => {
+      const skeletons = card.querySelectorAll('.skeleton');
+      // Third skeleton = sub row (height: 12px)
+      const subSkeleton = skeletons[2] as HTMLElement;
+      expect(subSkeleton.style.height).toBe('12px');
+    });
+  });
+
+  it('summary-card label/sub skeletons use rounded shape (not bare rectangular)', () => {
+    const { container } = render(
+      <BrowserRouter>
+        <Dashboard />
+      </BrowserRouter>
+    );
+
+    const summaryCards = container.querySelectorAll('.summary-card.skeleton-card');
+    summaryCards.forEach((card) => {
+      const skeletons = card.querySelectorAll('.skeleton');
+      const labelSkeleton = skeletons[0] as HTMLElement;
+      const subSkeleton = skeletons[2] as HTMLElement;
+      // Text-line placeholders use 'rounded' shape
+      expect(labelSkeleton.classList.contains('skeleton--rounded')).toBe(true);
+      expect(subSkeleton.classList.contains('skeleton--rounded')).toBe(true);
+    });
+  });
+
+  it('summary-card value skeleton uses rectangular shape (matches card/button radius)', () => {
+    const { container } = render(
+      <BrowserRouter>
+        <Dashboard />
+      </BrowserRouter>
+    );
+
+    const summaryCards = container.querySelectorAll('.summary-card.skeleton-card');
+    summaryCards.forEach((card) => {
+      const skeletons = card.querySelectorAll('.skeleton');
+      const valueSkeleton = skeletons[1] as HTMLElement;
+      expect(valueSkeleton.classList.contains('skeleton--rectangular')).toBe(true);
+    });
+  });
+
+  it('summary-card skeleton wrapper has min-height 114 matching real card min-height', () => {
+    // The CSS rule .summary-card.skeleton-card { min-height: 114px } prevents
+    // collapse. We can only assert the class is present (jsdom does not apply CSS).
+    const { container } = render(
+      <BrowserRouter>
+        <Dashboard />
+      </BrowserRouter>
+    );
+    const skeletonCards = container.querySelectorAll('.summary-card.skeleton-card');
+    expect(skeletonCards.length).toBe(3);
+    skeletonCards.forEach((card) => {
+      expect(card.classList.contains('summary-card')).toBe(true);
+      expect(card.classList.contains('skeleton-card')).toBe(true);
+    });
+  });
+
+  // ── Risk gauge skeleton ────────────────────────────────────────────────
+
+  it('risk-gauge skeleton uses rounded shape (matches SVG viewBox aspect)', () => {
+    const { container } = render(
+      <BrowserRouter>
+        <Dashboard />
+      </BrowserRouter>
+    );
+
+    const gaugeContainer = container.querySelector('.risk-gauge-container');
+    expect(gaugeContainer).toBeInTheDocument();
+
+    // The primary arc placeholder must be skeleton--rounded (not circular)
+    const arcSkeleton = gaugeContainer?.querySelector('.skeleton--rounded') as HTMLElement | null;
+    expect(arcSkeleton).toBeInTheDocument();
+  });
+
+  it('risk-gauge skeleton arc placeholder has 100% width with max-width constraint', () => {
+    const { container } = render(
+      <BrowserRouter>
+        <Dashboard />
+      </BrowserRouter>
+    );
+
+    const gaugeContainer = container.querySelector('.risk-gauge-container');
+    const arcSkeleton = gaugeContainer?.querySelector('.skeleton--rounded') as HTMLElement | null;
+
+    // Width must be 100% so it scales responsively like the SVG
+    expect(arcSkeleton?.style.width).toBe('100%');
+  });
+
+  it('risk-gauge meta skeletons use text-line heights (10px for label, 14px for value)', () => {
+    const { container } = render(
+      <BrowserRouter>
+        <Dashboard />
+      </BrowserRouter>
+    );
+
+    const gaugeContainer = container.querySelector('.risk-gauge-container');
+    const metaItems = gaugeContainer?.querySelectorAll('.risk-meta-item');
+    expect(metaItems?.length).toBe(2);
+
+    metaItems?.forEach((item) => {
+      const skeletons = item.querySelectorAll('.skeleton');
+      expect(skeletons.length).toBe(2);
+      // First = label (0.65rem ≈ 10px), Second = value (0.85rem ≈ 14px)
+      expect((skeletons[0] as HTMLElement).style.height).toBe('10px');
+      expect((skeletons[1] as HTMLElement).style.height).toBe('14px');
+    });
+  });
+
+  // ── Credit line skeletons ──────────────────────────────────────────────
+
+  it('credit-line name skeletons have height 14 matching .cl-preview-name', () => {
+    const { container } = render(
+      <BrowserRouter>
+        <Dashboard />
+      </BrowserRouter>
+    );
+
+    // Three .cl-preview-item rows during loading
+    const previewItems = container.querySelectorAll('.cl-preview-item');
+    expect(previewItems.length).toBeGreaterThan(0);
+
+    previewItems.forEach((item) => {
+      // First skeleton in left column = name placeholder (14px)
+      const nameSkeleton = item.querySelector('.skeleton') as HTMLElement | null;
+      expect(nameSkeleton).toBeInTheDocument();
+      expect(nameSkeleton?.style.height).toBe('14px');
+    });
+  });
+
+  it('credit-line status badge skeletons use pill shape (matches StatusBadge chip)', () => {
+    const { container } = render(
+      <BrowserRouter>
+        <Dashboard />
+      </BrowserRouter>
+    );
+
+    const previewItems = container.querySelectorAll('.cl-preview-item');
+    previewItems.forEach((item) => {
+      // The second skeleton in each name-row is the pill badge placeholder
+      const nameRow = item.querySelector('[style*="display"]') as HTMLElement | null;
+      if (!nameRow) return;
+      const pillSkeleton = nameRow.querySelector('.skeleton--pill') as HTMLElement | null;
+      expect(pillSkeleton).toBeInTheDocument();
+      expect(pillSkeleton?.style.height).toBe('18px');
+    });
+  });
+
+  it('credit-line bar skeletons have height 3 matching .cl-preview-bar height', () => {
+    const { container } = render(
+      <BrowserRouter>
+        <Dashboard />
+      </BrowserRouter>
+    );
+
+    const previewItems = container.querySelectorAll('.cl-preview-item');
+    previewItems.forEach((item) => {
+      const rightCol = item.querySelector('.cl-preview-right') as HTMLElement | null;
+      if (!rightCol) return;
+      const skeletons = rightCol.querySelectorAll('.skeleton');
+      // Second skeleton in right column = mini utilisation bar (3px)
+      const barSkeleton = skeletons[1] as HTMLElement | null;
+      expect(barSkeleton?.style.height).toBe('3px');
+    });
+  });
+
+  // ── Activity item skeletons ────────────────────────────────────────────
+
+  it('activity icon skeletons have correct 28×28 dimensions matching .activity-icon', () => {
+    const { container } = render(
+      <BrowserRouter>
+        <Dashboard />
+      </BrowserRouter>
+    );
+
+    const activityItems = container.querySelectorAll('.activity-item');
+    expect(activityItems.length).toBeGreaterThan(0);
+
+    activityItems.forEach((item) => {
+      const iconSkeleton = item.querySelector('.activity-icon.skeleton') as HTMLElement | null;
+      expect(iconSkeleton).toBeInTheDocument();
+      // Must match the 28×28 .activity-icon dimensions exactly
+      expect(iconSkeleton?.style.width).toBe('28px');
+      expect(iconSkeleton?.style.height).toBe('28px');
+    });
+  });
+
+  it('activity icon skeletons use rectangular shape (matches 6px-radius icon)', () => {
+    const { container } = render(
+      <BrowserRouter>
+        <Dashboard />
+      </BrowserRouter>
+    );
+
+    const activityItems = container.querySelectorAll('.activity-item');
+    activityItems.forEach((item) => {
+      const iconSkeleton = item.querySelector('.activity-icon.skeleton') as HTMLElement | null;
+      // Activity icons are square with border-radius: 6px → skeleton--rectangular
+      expect(iconSkeleton?.classList.contains('skeleton--rectangular')).toBe(true);
+    });
+  });
+
+  it('activity title skeletons have height 14 matching .activity-title', () => {
+    const { container } = render(
+      <BrowserRouter>
+        <Dashboard />
+      </BrowserRouter>
+    );
+
+    const activityItems = container.querySelectorAll('.activity-item');
+    activityItems.forEach((item) => {
+      const content = item.querySelector('.activity-content') as HTMLElement | null;
+      if (!content) return;
+      const titleSkeleton = content.querySelectorAll('.skeleton')[0] as HTMLElement;
+      // .activity-title: 0.825rem font → 14px block placeholder
+      expect(titleSkeleton.style.height).toBe('14px');
+    });
+  });
+
+  it('activity sub skeletons have height 10 matching .activity-sub', () => {
+    const { container } = render(
+      <BrowserRouter>
+        <Dashboard />
+      </BrowserRouter>
+    );
+
+    const activityItems = container.querySelectorAll('.activity-item');
+    activityItems.forEach((item) => {
+      const content = item.querySelector('.activity-content') as HTMLElement | null;
+      if (!content) return;
+      const subSkeleton = content.querySelectorAll('.skeleton')[1] as HTMLElement;
+      // .activity-sub: 0.725rem font → 10px block placeholder
+      expect(subSkeleton.style.height).toBe('10px');
+    });
+  });
+
+  // ── CSS source assertions ──────────────────────────────────────────────
+
+  it('Dashboard.css declares min-height 114px for .summary-card.skeleton-card', () => {
+    const css = readFileSync(_dashCssPath, 'utf-8');
+    expect(css).toContain('.summary-card.skeleton-card');
+    expect(css).toContain('min-height: 114px');
+  });
+
+  it('Dashboard.css declares min-height 57px for .cl-preview-item', () => {
+    const css = readFileSync(_dashCssPath, 'utf-8');
+    expect(css).toContain('.cl-preview-item');
+    expect(css).toContain('min-height: 57px');
+  });
+
+  it('Dashboard.css declares min-height 48px for .activity-item', () => {
+    const css = readFileSync(_dashCssPath, 'utf-8');
+    expect(css).toContain('.activity-item');
+    expect(css).toContain('min-height: 48px');
   });
 });
