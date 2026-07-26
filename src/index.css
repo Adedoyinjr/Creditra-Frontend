@@ -506,6 +506,12 @@ button.header-nav-link {
   background: var(--bg);
 }
 
+@media (max-width: 480px) {
+  .dc-page {
+    padding: var(--space-3);
+  }
+}
+
 .dc-page__inner {
   width: 100%;
   max-width: 42rem;
@@ -699,6 +705,10 @@ button.header-nav-link {
 /* ── Quick-preset buttons ── */
 .dc-presets { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-2); }
 
+@media (max-width: 480px) {
+  .dc-presets { grid-template-columns: repeat(2, 1fr); }
+}
+
 .dc-preset-btn {
   padding: var(--space-2) var(--space-3);
   border: 2px solid var(--border);
@@ -760,6 +770,10 @@ button.header-nav-link {
 
 /* ── Preview stat cards ── */
 .dc-stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); }
+
+@media (max-width: 480px) {
+  .dc-stat-grid { grid-template-columns: 1fr; gap: var(--space-3); }
+}
 .dc-stat-card { padding: var(--space-4); border-radius: var(--radius-xl); border: 1px solid transparent; }
 .dc-stat-card--accent { background: var(--accent-tint); border-color: var(--accent-border); }
 .dc-stat-card--success { background: var(--success-tint); border-color: var(--success-border); }

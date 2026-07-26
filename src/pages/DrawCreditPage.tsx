@@ -274,44 +274,40 @@ export default function DrawCreditPage() {
 export function DrawCreditPageSkeleton() {
   return (
     <main
-      className="min-h-screen bg-background px-4 pb-24 pt-6 max-md:pb-28 md:pb-8 sm:pt-8"
+      className="dc-page"
       aria-busy="true"
       aria-label="Loading draw credit page"
     >
-      <div className="mx-auto w-full max-w-4xl space-y-5">
-        <header className="card" aria-hidden="true">
-          <div className="space-y-2">
+      <div className="dc-page__inner">
+        <div className="dc-page__card" aria-hidden="true">
+          <div className="space-y-4">
             <Skeleton width="120px" height="20px" />
-            <Skeleton width="60%" height="36px" className="max-w-[400px]" />
+            <Skeleton width="60%" height="36px" />
           </div>
-          <div className="mt-6 grid gap-3 sm:grid-cols-4">
+          <div className="dc-credit-line-list" style={{ marginTop: 'var(--space-6)' }}>
             {[1, 2, 3, 4].map((i) => (
               <div
                 key={i}
-                className="rounded-lg border border-border bg-background/60 px-3 py-3"
+                className="dc-credit-line-item"
+                style={{ pointerEvents: 'none' }}
               >
-                <Skeleton width="40px" height="16px" className="mb-1" />
-                <Skeleton width="80px" height="20px" />
+                <div className="dc-credit-line-item__inner">
+                  <div className="dc-credit-line-item__body">
+                    <div className="dc-credit-line-item__name">
+                      <Skeleton width="120px" height="20px" />
+                    </div>
+                    <div className="dc-credit-line-item__meta">
+                      <Skeleton width="80px" height="16px" />
+                      <Skeleton width="60px" height="16px" />
+                    </div>
+                  </div>
+                  <div className="dc-chevron">
+                    <Skeleton width="16px" height="16px" />
+                  </div>
+                </div>
               </div>
             ))}
           </div>
-        </header>
-
-        <div className="card card-large" style={{ maxWidth: "none", margin: 0 }} aria-hidden="true">
-          <section>
-            <Skeleton width="200px" height="28px" className="mb-4" />
-            <div className="space-y-4">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="rounded-lg border border-border p-4">
-                  <div className="flex justify-between items-center mb-2">
-                    <Skeleton width="150px" height="24px" />
-                    <Skeleton width="80px" height="24px" />
-                  </div>
-                  <Skeleton width="100px" height="16px" />
-                </div>
-              ))}
-            </div>
-          </section>
         </div>
       </div>
     </main>
