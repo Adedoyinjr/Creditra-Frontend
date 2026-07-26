@@ -397,6 +397,19 @@ describe("TransactionHistory", () => {
       expect(listbox).toHaveAttribute("role", "listbox");
     });
 
+    it("shows keyboard shortcut hints for search suggestions", () => {
+      const { container } = renderTransactionHistory();
+
+      const shortcuts = container.querySelector(
+        '[aria-label="Search keyboard shortcuts"]',
+      );
+      expect(shortcuts).toBeInTheDocument();
+      expect(shortcuts?.querySelectorAll("kbd")).toHaveLength(4);
+      expect(shortcuts).toHaveTextContent("Navigate");
+      expect(shortcuts).toHaveTextContent("Select");
+      expect(shortcuts).toHaveTextContent("Close");
+    });
+
     it("filters transactions by credit-line name", async () => {
       renderTransactionHistory();
       // Full dataset: 28 transactions
