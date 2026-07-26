@@ -68,6 +68,14 @@ heading.
   each filter has `role="tab"`, the active filter sets `aria-selected="true"`, and
   Arrow/Home/End keys move focus and selection.
 
+### Tabs
+
+Use the shared controlled `Tabs` component (`src/components/Tabs.tsx`) for tabbed
+interfaces. It exposes `role="tablist"`, `role="tab"`, and `role="tabpanel"`, links tabs
+to their panels with `aria-controls` and `aria-labelledby`, and implements roving focus.
+Arrow Left/Right wraps through enabled tabs; Home/End selects the first/last enabled tab.
+Consumers provide `tabs`, `activeTab`, `onTabChange`, and a descriptive `ariaLabel`.
+
 ### Forms
 
 - Every input is wrapped by `<FormField>` (`src/components/FormField.tsx`) which
