@@ -3,12 +3,26 @@ import { BrowserRouter } from 'react-router-dom';
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 import CreditLines from '../CreditLines';
 
+beforeEach(() => {
+  vi.useFakeTimers();
+});
+
+afterEach(() => {
+  vi.useRealTimers();
+});
+
+// See src/pages/CreditLines.test.tsx for why this advances past the
+// loading skeleton's 500ms timer.
 function renderPage() {
-  return render(
+  const result = render(
     <BrowserRouter>
       <CreditLines defaultLoading={false} />
     </BrowserRouter>
   );
+  act(() => {
+    vi.advanceTimersByTime(500);
+  });
+  return result;
 }
 
 describe('CreditLines page', () => {

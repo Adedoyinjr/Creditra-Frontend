@@ -1,28 +1,21 @@
-/**
- * CreditLines — sortable list of the user's credit facilities.
- *
- * Motion gating (issue #574 / GrantFox FWC26):
- *  - All CSS animations and transitions are gated by
- *    `@media (prefers-reduced-motion: reduce)` (OS-level signal) AND
- *    `[data-motion="reduced"]` (in-app toggle from ReducedMotionContext).
- *  - The root element carries a `data-reduced-motion` attribute that mirrors
- *    the current state so other tooling, tests, and downstream CSS layers can
- *    single-source the override.
- *
- * WCAG 2.1 SC 2.3.3 (Animation from Interactions) is satisfied by collapsing
- * the entrance animation (`clFadeInUp` on `.cl-empty`), hover lift transforms
- * (`.cl-card:hover`), and 600 ms width tweens (`.cl-util-fill`) to instant
- * state changes under reduced-motion.
- */
-import { useState, useMemo, useRef, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { StatusBadge } from '../components/StatusBadge';
-import { AgingTag } from '../components/AgingTag';
-import { RepaymentPlanChart } from '../components/RepaymentPlanChart';
-import { Skeleton } from '../components/Skeleton';
-import { KbdHint } from '../components/KbdHint';
-import { CreditLineRowMenu } from '../components/CreditLineRowMenu';
-import { formatCountdown, getCountdownAriaLabel } from '../utils/dates';
+import { useEffect, useRef, useState, useMemo } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { StatusBadge } from "../components/StatusBadge";
+import { CreditLineRowMenu } from "../components/CreditLineRowMenu";
+import { Skeleton } from "../components/Skeleton";
+import CompareLinesPanel from "../components/CompareLinesPanel";
+import { CollateralSubstitutionModal } from "../components/CollateralSubstitutionModal";
+import { NoLines } from "../components/illustrations";
+import { useFocusTrap } from "../hooks/useFocusTrap";
+import { useInertBackdrop } from "../hooks/useInertBackdrop";
+import { useBodyScrollLock } from "../hooks/useBodyScrollLock";
+import { MOCK_CREDIT_LINES } from "../data/mockData";
+import type {
+  CreditLineStatus,
+  SortField,
+  SortDirection,
+} from "../types/creditLine";
+import type { CollateralAsset } from "../types/collateral";
 import {
   HealthFactorChart,
   buildHealthHistory,
@@ -62,6 +55,58 @@ import { useReducedMotion } from "../context/ReducedMotionContext";
 import type { CollateralAsset } from "../types/collateral";
 
 // ─── Credit Line Card ────────────────────────────────────────────────────────
+
+/**
+ * Restored from commit e340fa8 ("feat: add next-accrual countdown chips to
+ * CreditLines rows"), which was dropped by a later, unrelated edit while
+ * the <NextAccrualChip /> call site in CreditLineCard was left behind.
+ * Preserved verbatim rather than rewritten, since it shipped and was
+ * reviewed previously.
+ */
+function NextAccrualChip({ target }: { target: string }) {
+  const [now, setNow] = useState(() => new Date());
+  const timerRef = { current: undefined as ReturnType<typeof setInterval> | undefined };
+
+  useEffect(() => {
+    const tick = () => setNow(new Date());
+
+    const handleVisibility = () => {
+      if (document.hidden) {
+        if (timerRef.current !== undefined) {
+          clearInterval(timerRef.current);
+          timerRef.current = undefined;
+        }
+      } else {
+        if (timerRef.current !== undefined) {
+          clearInterval(timerRef.current);
+        }
+        tick();
+        timerRef.current = setInterval(tick, 60000);
+      }
+    };
+
+    if (!document.hidden) {
+      timerRef.current = setInterval(tick, 60000);
+    }
+
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => {
+      if (timerRef.current !== undefined) {
+        clearInterval(timerRef.current);
+      }
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
+  }, []);
+
+  const label = formatCountdown(target, now);
+  const ariaLabel = getCountdownAriaLabel(target, now);
+
+  return (
+    <span className="cl-accrual-chip" aria-label={ariaLabel}>
+      {label}
+    </span>
+  );
+}
 
 function CreditLineCard({
   line,
@@ -230,6 +275,69 @@ function CreditLineCard({
   );
 }
 
+
+
+// ─── Credit Line Card Skeleton ───────────────────────────────────────────────
+
+/**
+ * Loading placeholder matching CreditLineCard's shape exactly, so the
+ * layout doesn't shift when real data arrives. Reuses the same cl-card /
+ * cl-grid classes as the real card, which means it inherits the existing
+ * responsive breakpoint (see the @media (max-width: 768px) block in
+ * CreditLines.css) with no additional CSS needed.
+ */
+function CreditLineCardSkeleton() {
+  return (
+    <div className="cl-card" aria-hidden="true">
+      <div className="cl-card-header">
+        <div className="cl-card-title-row">
+          <div>
+            <Skeleton style={{ width: "140px", height: "18px", marginBottom: "6px", borderRadius: "4px" }} />
+            <Skeleton style={{ width: "90px", height: "13px", borderRadius: "4px" }} />
+          </div>
+        </div>
+        <Skeleton style={{ width: "70px", height: "22px", borderRadius: "999px" }} />
+      </div>
+
+      <div className="cl-card-body">
+        <div className="cl-metrics">
+          <div className="cl-metric">
+            <Skeleton style={{ width: "50px", height: "12px", marginBottom: "6px", borderRadius: "4px" }} />
+            <Skeleton style={{ width: "80px", height: "18px", borderRadius: "4px" }} />
+          </div>
+          <div className="cl-metric">
+            <Skeleton style={{ width: "60px", height: "12px", marginBottom: "6px", borderRadius: "4px" }} />
+            <Skeleton style={{ width: "80px", height: "18px", borderRadius: "4px" }} />
+          </div>
+          <div className="cl-metric">
+            <Skeleton style={{ width: "65px", height: "12px", marginBottom: "6px", borderRadius: "4px" }} />
+            <Skeleton style={{ width: "80px", height: "18px", borderRadius: "4px" }} />
+          </div>
+        </div>
+
+        <div className="cl-util-bar">
+          <Skeleton style={{ width: "100%", height: "8px", borderRadius: "4px" }} />
+        </div>
+
+        <div className="cl-details">
+          <div className="cl-detail">
+            <Skeleton style={{ width: "40px", height: "11px", marginBottom: "4px", borderRadius: "4px" }} />
+            <Skeleton style={{ width: "50px", height: "14px", borderRadius: "4px" }} />
+          </div>
+          <div className="cl-detail">
+            <Skeleton style={{ width: "70px", height: "11px", marginBottom: "4px", borderRadius: "4px" }} />
+            <Skeleton style={{ width: "30px", height: "14px", borderRadius: "4px" }} />
+          </div>
+          <div className="cl-detail">
+            <Skeleton style={{ width: "55px", height: "11px", marginBottom: "4px", borderRadius: "4px" }} />
+            <Skeleton style={{ width: "80px", height: "14px", borderRadius: "4px" }} />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Main Component ────────────────────────────────────────────────────────────
 
 export default function CreditLines({ defaultLoading = true }: { defaultLoading?: boolean }) {
@@ -243,6 +351,14 @@ export default function CreditLines({ defaultLoading = true }: { defaultLoading?
   const [statusFilter, setStatusFilter] = useState<CreditLineStatus | "all">(
     "all",
   );
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, []);
 
   const [creditLines, setCreditLines] = useState(MOCK_CREDIT_LINES);
   const [isLoading, setIsLoading] = useState(true);
@@ -671,12 +787,30 @@ export default function CreditLines({ defaultLoading = true }: { defaultLoading?
         </div>
       )}
 
-      {filteredAndSorted.length === 0 ? (
-        <EmptyState
-          icon={<NoLines className="empty-state-illustration--muted" />}
-          title="No credit lines found"
-          description="Apply for a credit line to get started"
-          action={
+      <div role="status" aria-live="polite" aria-busy={loading}>
+        <span className="sr-only">
+          {loading ? "Loading credit lines" : "Credit lines loaded"}
+        </span>
+        {loading ? (
+          <div className="cl-grid">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <CreditLineCardSkeleton key={i} />
+            ))}
+          </div>
+        ) : filteredAndSorted.length === 0 ? (
+        !hasCreditLines ? (
+          <div className="cl-empty" role="region" aria-label="No credit lines">
+            <NoLines className="empty-state-illustration--muted" />
+            <h2 className="cl-empty-title">Get started with Credit Lines</h2>
+            <p className="cl-empty-desc">
+              Credit lines give you access to flexible capital when you need it.
+              Open your first line and unlock funding tailored to your business.
+            </p>
+            <ul className="cl-empty-features">
+              <li>Flexible funding up to $500K</li>
+              <li>Competitive rates from 7.5% APR</li>
+              <li>Quick approval with digital collateral</li>
+            </ul>
             <Link to="/open-credit" className="cl-primary-btn">
               Open Credit Line
             </Link>
@@ -700,6 +834,7 @@ export default function CreditLines({ defaultLoading = true }: { defaultLoading?
           ))}
         </div>
       )}
+      </div>
 
       {/* ── Repayment Schedule (Issue #428) ───────────────────────────────
        * Aggregate, chronological timeline of every past installment AND
