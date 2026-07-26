@@ -16,7 +16,9 @@ import { startOfDay, startOfMonth, startOfWeek } from "../utils/dates";
 import { COLOR, fmt, fmtDate, fmtDateTime } from "../utils/tokens";
 import "./TransactionHistory.css";
 import { NoActivity, NoDataGraph, NoLines } from "../components/illustrations";
+import { TransactionHistorySkeleton } from "../components/TransactionHistorySkeleton";
 import { LiveRegion } from "../components/LiveRegion";
+import { KbdHint } from "../components/KbdHint";
 
 /**
  * TransactionHistory Page Component
@@ -421,6 +423,27 @@ export function TransactionHistory() {
   const location = useLocation();
   const navigate = useNavigate();
   const { addToast } = useNotifications();
+
+  /**
+   * First-paint loading guard.
+   *
+   * `isLoading` starts as `true` and is cleared to `false` in a
+   * zero-delay `useEffect` (runs after the first committed render).
+   * This gives the browser one frame to paint the skeleton before the
+   * full component tree is committed, preventing a flash of unstyled
+   * content on initial navigation.
+   *
+   * In a real application this flag would be wired to an async data
+   * fetch; here it simulates that pattern against the static mock data.
+   */
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    // Simulate async data resolution on first mount.
+    // Replace with the real data-fetch completion signal when the API is wired up.
+    const id = setTimeout(() => setIsLoading(false), 0);
+    return () => clearTimeout(id);
+  }, []);
 
   // ─── Filter and UI State ───
   const [selectedLine, setSelectedLine] = useState<string>("all");
@@ -1095,6 +1118,10 @@ export function TransactionHistory() {
     });
   };
 
+  if (isLoading) {
+    return <TransactionHistorySkeleton />;
+  }
+
   if (!hasLines) {
     return (
       <div className="transaction-history-page">
@@ -1516,9 +1543,32 @@ export function TransactionHistory() {
             }
           }}
         >
-          <label htmlFor={SEARCH_INPUT_ID} className="th-filter-label">
-            Search
-          </label>
+          <div className="th-search-label-row">
+            <label htmlFor={SEARCH_INPUT_ID} className="th-filter-label">
+              Search
+            </label>
+            <div
+              className="th-search-shortcuts"
+              role="group"
+              aria-label="Search keyboard shortcuts"
+            >
+              <KbdHint
+                keys={["↑", "↓"]}
+                label="Navigate"
+                description="Use Arrow Up and Arrow Down to navigate search suggestions"
+              />
+              <KbdHint
+                keys="Enter"
+                label="Select"
+                description="Press Enter to select the active search suggestion"
+              />
+              <KbdHint
+                keys="Esc"
+                label="Close"
+                description="Press Escape to close search suggestions"
+              />
+            </div>
+          </div>
           {/* combobox wrapper — positions the floating listbox */}
           <div className="th-search-combobox">
             <input

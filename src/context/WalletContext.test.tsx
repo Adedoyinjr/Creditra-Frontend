@@ -27,7 +27,6 @@ import {
   render,
   screen,
   act,
-  waitFor,
 } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { WalletProvider, useWallet } from './WalletContext';
@@ -105,6 +104,12 @@ function renderProvider(timeoutMs = 200) {
   );
 }
 
+async function flushPromises() {
+  await act(async () => {
+    await Promise.resolve();
+  });
+}
+
 // ─── Setup / Teardown ─────────────────────────────────────────────────────────
 
 beforeEach(() => {
@@ -178,9 +183,8 @@ describe('WalletContext — opt-in connect', () => {
       screen.getByTestId('connect-btn').click();
     });
 
-    await waitFor(() => {
-      expect(screen.getByTestId('status').textContent).toBe('connected');
-    });
+    await flushPromises();
+    expect(screen.getByTestId('status').textContent).toBe('connected');
     expect(walletUtils.setWalletRemembered).toHaveBeenCalledWith(false);
     expect(screen.getByTestId('is-remembered').textContent).toBe('false');
     expect(walletUtils.recordRecentWallet).toHaveBeenCalledWith('freighter');
@@ -194,9 +198,8 @@ describe('WalletContext — opt-in connect', () => {
       screen.getByTestId('connect-remember-btn').click();
     });
 
-    await waitFor(() => {
-      expect(screen.getByTestId('status').textContent).toBe('connected');
-    });
+    await flushPromises();
+    expect(screen.getByTestId('status').textContent).toBe('connected');
     expect(walletUtils.setWalletRemembered).toHaveBeenCalledWith(true);
     expect(screen.getByTestId('is-remembered').textContent).toBe('true');
     expect(walletUtils.recordRecentWallet).toHaveBeenCalledWith('freighter');
@@ -214,9 +217,8 @@ describe('WalletContext — opt-in connect', () => {
       screen.getByTestId('connect-bool-btn').click();
     });
 
-    await waitFor(() => {
-      expect(screen.getByTestId('status').textContent).toBe('connected');
-    });
+    await flushPromises();
+    expect(screen.getByTestId('status').textContent).toBe('connected');
     expect(walletUtils.setWalletRemembered).toHaveBeenCalledWith(false);
     expect(walletUtils.recordRecentWallet).toHaveBeenCalledWith('albedo');
   });
@@ -232,9 +234,8 @@ describe('WalletContext — opt-in connect', () => {
       screen.getByTestId('connect-remember-btn').click();
     });
 
-    await waitFor(() => {
-      expect(screen.getByTestId('status').textContent).toBe('error');
-    });
+    await flushPromises();
+    expect(screen.getByTestId('status').textContent).toBe('error');
     // setWalletRemembered must never be called on a failed connect
     expect(walletUtils.setWalletRemembered).not.toHaveBeenCalled();
   });
@@ -365,10 +366,9 @@ describe('WalletContext — auto-reconnect', () => {
     // Now let the connect finish
     await act(async () => { resolveConnect(STORED_WALLET); });
 
-    await waitFor(() => {
-      expect(screen.getByTestId('status').textContent).toBe('connected');
-      expect(screen.getByTestId('reconnect-timed-out').textContent).toBe('false');
-    });
+    await flushPromises();
+    expect(screen.getByTestId('status').textContent).toBe('connected');
+    expect(screen.getByTestId('reconnect-timed-out').textContent).toBe('false');
   });
 
   // 6

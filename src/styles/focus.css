@@ -229,3 +229,17 @@
   outline-offset: var(--focus-ring-offset, 3px);
   border-radius: var(--focus-ring-radius, 6px);
 }
+
+/* ── CreditLines interactive elements ────────────────────────────────────── */
+/*
+  GrantFox FWC26 (Stellar Wave) — "Visible focus outline on keyboard-only
+  nav for CreditLines" requirement.
+*/
+
+.cl-primary-btn:focus-visible,
+.cl-sort-dir:focus-visible,
+.cl-card:focus-visible {
+  outline: var(--focus-ring-width, 2px) solid var(--focus-ring-color, #58a6ff);
+  outline-offset: var(--focus-ring-offset, 3px);
+  border-radius: var(--focus-ring-radius, 6px);
+}

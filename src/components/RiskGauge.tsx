@@ -57,7 +57,10 @@
 
 import { useEffect, useMemo, useRef, type KeyboardEvent } from 'react';
 import { useReducedMotion } from '../context/ReducedMotionContext';
+import { LiveRegion } from './LiveRegion';
+import { RiskGaugeSkeleton } from './Skeleton';
 import './RiskGauge.css';
+import '../styles/patterns.css';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -65,6 +68,7 @@ import './RiskGauge.css';
 export type RiskSector = 'low' | 'medium' | 'high';
 
 export interface RiskGaugeProps {
+  loading?: boolean;
   /** Risk score 0–100. Values outside this range are clamped. */
   score: number;
   trend: 'improving' | 'declining' | 'stable';
@@ -277,7 +281,7 @@ function SectorGroup({ sector, isActive, onActivate, titleId }: SectorGroupProps
 
       {/* The visible sector arc band */}
       <path
-        className="risk-gauge-sector-arc"
+        className={`risk-gauge-sector-arc risk-gauge-pattern--${sector.id}`}
         d={sectorPath}
         stroke={sector.colorVar}
         aria-hidden="true"
@@ -357,6 +361,7 @@ function RiskGaugeSRTable({ normalizedScore, activeSector }: RiskGaugeSRTablePro
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export function RiskGauge({
+  loading,
   score,
   trend,
   lastUpdated,
@@ -365,6 +370,10 @@ export function RiskGauge({
   ariaLabel,
   showSRTable = true,
 }: RiskGaugeProps) {
+  if (loading) {
+    return <RiskGaugeSkeleton />;
+  }
+
   const normalizedScore = Math.min(100, Math.max(0, score));
   const offset = CIRCUMFERENCE - (normalizedScore / 100) * CIRCUMFERENCE;
   const colorVar = gaugeColorVar(normalizedScore);
@@ -416,11 +425,21 @@ export function RiskGauge({
     [ariaLabel, normalizedScore, trendLabel, lastUpdated],
   );
 
-  /** Which sector does the current score fall in? */
+  const [liveMessage, setLiveMessage] = useState<string>(srDescription);
+
+  // Announce the main score description whenever it changes
+  useMemo(() => {
+    setLiveMessage(srDescription);
+  }, [srDescription]);
+
   const activeSector: RiskSector =
     normalizedScore >= 70 ? 'high' : normalizedScore >= 50 ? 'medium' : 'low';
 
   function handleSectorActivate(sector: RiskSector) {
+    const sectorDef = SECTORS.find((s) => s.id === sector);
+    if (sectorDef) {
+      setLiveMessage(`Activated ${sectorDef.label}, scores ${sectorDef.range}`);
+    }
     onSectorActivate?.(sector);
   }
 
@@ -442,9 +461,7 @@ export function RiskGauge({
     <div className="risk-gauge-container">
       {/* Screen-reader description outside SVG for AT implementations that
           skip <title> inside inline SVG. */}
-      <p className="sr-only" aria-live="polite" aria-atomic="true">
-        {srDescription}
-      </p>
+      <LiveRegion message={liveMessage} />
 
       {/*
         SR-only table listing the three risk bands with ranges.

@@ -16,6 +16,7 @@ import { useFocusTrap } from '../../hooks/useFocusTrap';
 import { useInertBackdrop } from '../../hooks/useInertBackdrop';
 import type { Notification, NotificationCategory } from '../../types/notification';
 import { CATEGORY_ICON, TYPE_COLOR, TYPE_ICON } from './notificationIcons';
+import { KbdHint } from '../KbdHint';
 import './NotificationCenter.css';
 
 const PANEL_ID = 'notification-center';
@@ -131,6 +132,21 @@ export function NotificationCenter({ triggerRef }: NotificationCenterProps = {})
       if (announcementTimerRef.current) clearTimeout(announcementTimerRef.current);
     };
   }, []);
+
+  // Keyboard shortcut: Shift+R to mark all as read when panel is open
+  useEffect(() => {
+    if (!isPanelOpen) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.shiftKey && e.key === 'r' && unreadCount > 0) {
+        e.preventDefault();
+        handleMarkAllAsRead();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isPanelOpen, unreadCount, handleMarkAllAsRead]);
 
   const filtered = filterByCategory(activeFilter);
   const dragStartY = useRef<number | null>(null);
@@ -330,7 +346,17 @@ export function NotificationCenter({ triggerRef }: NotificationCenterProps = {})
               disabled={unreadCount === 0}
               aria-label={`Mark all notifications as read${unreadCount > 0 ? `, ${unreadCount} unread` : ''}`}
             >
-              Mark all read
+              <span className="nc-btn-content">
+                Mark all read
+                {unreadCount > 0 && (
+                  <KbdHint 
+                    keys={['Shift', 'R']} 
+                    variant="badge"
+                    className="nc-shortcut-hint"
+                    aria-label="Keyboard shortcut: Shift then R"
+                  />
+                )}
+              </span>
             </button>
             {notifications.length > 0 && (
               <button

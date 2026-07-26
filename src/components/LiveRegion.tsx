@@ -4,6 +4,8 @@ interface LiveRegionProps {
   message: string;
   politeness?: "polite" | "assertive";
   atomic?: boolean;
+  /** Optional id, useful when a page renders more than one live region. */
+  id?: string;
 }
 
 /**
@@ -17,6 +19,7 @@ export function LiveRegion({
   message,
   politeness = "polite",
   atomic = true,
+  id,
 }: LiveRegionProps) {
   const [announcement, setAnnouncement] = useState("");
 

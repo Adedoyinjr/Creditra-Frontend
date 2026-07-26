@@ -5,7 +5,37 @@ import transactionHistoryCss from "./TransactionHistory.css?raw";
 import { TransactionHistory } from "./TransactionHistory";
 import { NotificationProvider } from "../context/NotificationContext";
 
+/**
+ * Render helper — mounts TransactionHistory and flushes the first-paint
+ * loading timer so tests interact with the fully-loaded UI by default.
+ *
+ * The `isLoading` useEffect uses setTimeout(0) to simulate an async data
+ * resolution on first mount.  Because the describe block uses
+ * vi.useFakeTimers(), that timer is frozen until we explicitly advance it.
+ * Wrapping in act() + vi.runAllTimers() guarantees React has committed the
+ * state update before any assertion runs.
+ */
 const renderTransactionHistory = (initialEntries: string[] = ["/transactions"]) => {
+  const result = render(
+    <NotificationProvider>
+      <MemoryRouter initialEntries={initialEntries}>
+        <TransactionHistory />
+      </MemoryRouter>
+    </NotificationProvider>,
+  );
+  // Flush only the zero-delay loading useEffect timer (setTimeout 0).
+  // Using advanceTimersByTime(1) rather than runAllTimers() so the 250ms
+  // debounce timers used by later async tests are NOT pre-fired here.
+  act(() => { vi.advanceTimersByTime(1); });
+  return result;
+};
+
+/**
+ * Render helper that does NOT flush the loading timer.
+ * Used exclusively by the "Loading skeleton" describe block to assert on the
+ * skeleton UI before the data is available.
+ */
+const renderTransactionHistoryLoading = (initialEntries: string[] = ["/transactions"]) => {
   return render(
     <NotificationProvider>
       <MemoryRouter initialEntries={initialEntries}>
@@ -59,6 +89,87 @@ describe("TransactionHistory", () => {
     URL.createObjectURL = originalCreateObjectURL;
     URL.revokeObjectURL = originalRevokeObjectURL;
   });
+
+  // ── Loading skeleton ────────────────────────────────────────────────────────
+
+  describe("Loading skeleton", () => {
+    it("renders the skeleton status region on first paint before data loads", () => {
+      // Do NOT flush timers — skeleton should be visible.
+      renderTransactionHistoryLoading();
+
+      const skeleton = screen.getByRole("status", {
+        name: /loading transaction history/i,
+      });
+      expect(skeleton).toBeInTheDocument();
+      expect(skeleton).toHaveAttribute("aria-busy", "true");
+    });
+
+    it("skeleton contains shimmer placeholders", () => {
+      renderTransactionHistoryLoading();
+
+      const skeleton = screen.getByRole("status", {
+        name: /loading transaction history/i,
+      });
+      // The skeleton renders multiple .skeleton divs (stats + filter + rows).
+      const shimmerElements = skeleton.querySelectorAll(".skeleton");
+      expect(shimmerElements.length).toBeGreaterThan(0);
+    });
+
+    it("does not render the transaction table while loading", () => {
+      renderTransactionHistoryLoading();
+
+      expect(screen.queryByRole("table")).not.toBeInTheDocument();
+    });
+
+    it("does not render filter chips while loading", () => {
+      renderTransactionHistoryLoading();
+
+      expect(
+        screen.queryByRole("group", { name: /type/i }),
+      ).not.toBeInTheDocument();
+    });
+
+    it("does not render the export button while loading", () => {
+      renderTransactionHistoryLoading();
+
+      expect(
+        screen.queryByRole("button", { name: /export csv/i }),
+      ).not.toBeInTheDocument();
+    });
+
+    it("transitions from skeleton to loaded content after the loading timer fires", () => {
+      renderTransactionHistoryLoading();
+
+      // Skeleton must be present before the timer fires.
+      expect(
+        screen.getByRole("status", { name: /loading transaction history/i }),
+      ).toBeInTheDocument();
+
+      // Flush the loading useEffect timer.
+      act(() => { vi.runAllTimers(); });
+
+      // Skeleton must be gone.
+      expect(
+        screen.queryByRole("status", { name: /loading transaction history/i }),
+      ).not.toBeInTheDocument();
+
+      // Fully loaded content must now be present.
+      expect(screen.getByRole("table", { name: /transaction history/i })).toBeInTheDocument();
+    });
+
+    it("renders the default number of skeleton rows (8)", () => {
+      renderTransactionHistoryLoading();
+
+      const skeleton = screen.getByRole("status", {
+        name: /loading transaction history/i,
+      });
+      // Each row has the class th-skeleton__row.
+      const rows = skeleton.querySelectorAll(".th-skeleton__row");
+      expect(rows).toHaveLength(8);
+    });
+  });
+
+  // ── Existing tests (all use renderTransactionHistory which flushes the load timer) ──
 
   it("renders type, date, and amount filter chips as labeled pressed toggle groups", () => {
     renderTransactionHistory();
@@ -284,6 +395,19 @@ describe("TransactionHistory", () => {
       const listbox = document.getElementById(listboxId!);
       expect(listbox).toBeInTheDocument();
       expect(listbox).toHaveAttribute("role", "listbox");
+    });
+
+    it("shows keyboard shortcut hints for search suggestions", () => {
+      const { container } = renderTransactionHistory();
+
+      const shortcuts = container.querySelector(
+        '[aria-label="Search keyboard shortcuts"]',
+      );
+      expect(shortcuts).toBeInTheDocument();
+      expect(shortcuts?.querySelectorAll("kbd")).toHaveLength(4);
+      expect(shortcuts).toHaveTextContent("Navigate");
+      expect(shortcuts).toHaveTextContent("Select");
+      expect(shortcuts).toHaveTextContent("Close");
     });
 
     it("filters transactions by credit-line name", async () => {

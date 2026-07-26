@@ -69,17 +69,11 @@ export function DrawingLimit({
       <div className="flex items-center justify-between text-sm">
         <div className="flex items-center gap-4">
           <span className="font-medium text-foreground">
-            {drawnLabel}:{" "}
-            <span className={`font-semibold ${textColor}`}>
-              {formatCurrency(drawnAmount)}
-            </span>
+            {drawnLabel}: {formatCurrency(drawnAmount)}
           </span>
           <span className="text-muted-foreground">/</span>
           <span className="text-muted-foreground">
-            {availableLabel}:{" "}
-            <span className="font-semibold text-foreground">
-              {formatCurrency(available)}
-            </span>
+            {availableLabel}: {formatCurrency(available)}
           </span>
         </div>
         <span

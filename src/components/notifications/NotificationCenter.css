@@ -171,6 +171,16 @@
   transition: opacity 0.15s;
 }
 
+.nc-btn-content {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.nc-shortcut-hint {
+  font-size: 0.65rem;
+}
+
 .nc-text-btn:hover         { opacity: 0.75; }
 .nc-text-btn:disabled      { color: #6e7681; cursor: not-allowed; opacity: 0.6; }
 .nc-text-btn:disabled:hover { opacity: 0.6; }

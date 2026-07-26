@@ -14,8 +14,16 @@ import { createElement, Fragment } from 'react';
  */
 let currentPathname = '/';
 let currentSearch = '';
+let currentHash = '';
 
 function applyEntry(entry: string) {
+  const hashIndex = entry.indexOf('#');
+  if (hashIndex >= 0) {
+    currentHash = entry.slice(hashIndex);
+    entry = entry.slice(0, hashIndex);
+  } else {
+    currentHash = '';
+  }
   const qIndex = entry.indexOf('?');
   currentPathname = qIndex >= 0 ? entry.slice(0, qIndex) : entry;
   currentSearch = qIndex >= 0 ? entry.slice(qIndex) : '';
@@ -93,11 +101,66 @@ export function useLocation() {
   return {
     pathname: currentPathname,
     search: currentSearch,
-    hash: '',
+    hash: currentHash,
     state: null,
   };
 }
 
+/**
+ * Test helper — sets the mock location to the given pathname + search.
+ *
+ * Call this between renders in a test to simulate client-side navigation.
+ *
+ * @example
+ * ```ts
+ * import { __setMockLocation } from 'react-router-dom';
+ *
+ * __setMockLocation('/transactions');
+ * rerender({ pathname: '/transactions' });
+ * ```
+ */
+export function __setMockLocation(pathname: string, search = '') {
+  currentPathname = pathname;
+  currentSearch = search;
+}
+
 export function useParams() {
   return {};
+}
+
+// MemoryRouter — renders children directly (same as BrowserRouter)
+export function MemoryRouter({
+  children,
+  initialEntries,
+}: {
+  children: React.ReactNode;
+  initialEntries?: string[];
+}) {
+  // Expose the first entry via the search hook so useSearchParams works
+  const first = (initialEntries && initialEntries[0]) ?? "/";
+  const searchStr = first.includes("?") ? first.slice(first.indexOf("?")) : "";
+  _currentSearch = searchStr;
+  return createElement(Fragment, null, children);
+}
+
+// Internal store for the current search string so useSearchParams can read it
+let _currentSearch = "";
+
+// NavLink — same as Link but with optional activeClassName
+export function NavLink({
+  to,
+  children,
+  ...props
+}: {
+  to: string;
+  children: React.ReactNode;
+  [key: string]: unknown;
+}) {
+  return createElement("a", { href: to, ...props }, children);
+}
+
+// useSearchParams — parses the active MemoryRouter entry's search string
+export function useSearchParams(): [URLSearchParams, (params: URLSearchParams) => void] {
+  const params = new URLSearchParams(_currentSearch.replace(/^\?/, ""));
+  return [params, () => {}];
 }

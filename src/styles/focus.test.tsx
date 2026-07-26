@@ -101,6 +101,18 @@ describe('focus.css — design tokens and utility classes', () => {
     expect(css).toContain('.view-all-link:focus-visible');
   });
 
+  it('defines CreditLines-specific .cl-primary-btn focus rule', () => {
+    expect(css).toContain('.cl-primary-btn:focus-visible');
+  });
+
+  it('defines CreditLines-specific .cl-filters select focus rule', () => {
+    expect(css).toContain('.cl-filters select:focus-visible');
+  });
+
+  it('defines CreditLines-specific .cl-sort-dir focus rule', () => {
+    expect(css).toContain('.cl-sort-dir:focus-visible');
+  });
+
   it('does NOT suppress focus rings under prefers-reduced-motion', () => {
     // The reduced-motion block must not contain any outline or box-shadow rule
     const rmIdx = css.indexOf('@media (prefers-reduced-motion: reduce)');
@@ -185,3 +197,16 @@ describe('Dashboard — focus-ring classes on interactive elements (FWC26)', () 
     expect(indexCss).toMatch(/@import ["']\.\/styles\/focus\.css["']/);
   });
 });
+
+// ── CreditLines integration tests ─────────────────────────────────────────
+
+describe('CreditLines — focus-ring classes on interactive elements (FWC26)', () => {
+  it('defines CreditLines-specific focus rules in focus.css', () => {
+    const cssPath = resolve(__dirname, '../styles/focus.css');
+    const css = readFileSync(cssPath, 'utf-8');
+    expect(css).toContain('.cl-primary-btn:focus-visible');
+    expect(css).toContain('.cl-sort-dir:focus-visible');
+    expect(css).toContain('.cl-card:focus-visible');
+  });
+});
+

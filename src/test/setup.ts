@@ -1,4 +1,4 @@
-import "@testing-library/jest-dom";
+import "@testing-library/jest-dom/vitest";
 import "../index.css";
 import { beforeEach, vi } from "vitest";
 

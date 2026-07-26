@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { Sparkline } from "../components/Sparkline";
+import { EmptyState } from "../components/EmptyState";
+import { NoDataGraph } from "../components/illustrations/EmptyStateIllustrations";
 import { COLOR, RISK_COLOR, fmtDate } from "../utils/tokens";
 import { useReducedMotion } from "../context/ReducedMotionContext";
 
@@ -20,15 +22,21 @@ const easeCubicBezier = (x: number): number => {
 };
 
 export function RiskGauge({
-  score,
-  trend,
-  lastUpdated,
+  score = 0,
+  trend = "stable",
+  lastUpdated = "",
   history,
+  isEmpty = false,
+  onRefresh,
 }: {
-  score: number;
-  trend: "improving" | "declining" | "stable";
-  lastUpdated: string;
+  score?: number;
+  trend?: "improving" | "declining" | "stable";
+  lastUpdated?: string;
   history?: number[];
+  /** When true, an empty-state illustration is shown instead of the gauge. */
+  isEmpty?: boolean;
+  /** Fired when the user clicks the "Check again" CTA on the empty state. */
+  onRefresh?: () => void;
 }) {
   const radius = 55;
   const cx = 80;
@@ -92,6 +100,24 @@ export function RiskGauge({
 
   const scoreFormatter = useMemo(() => new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 }), []);
 
+  // ── Empty state ──
+  if (isEmpty) {
+    return (
+      <EmptyState
+        illustration={<NoDataGraph />}
+        eyebrow="Risk Score"
+        title="No risk data available"
+        description="Your risk score will appear here once your credit profile has been analyzed."
+        tone="info"
+        primaryAction={
+          onRefresh
+            ? { label: "Check again", onClick: onRefresh }
+            : undefined
+        }
+      />
+    );
+  }
+
   const srDescription = `Risk score ${normalizedScore} of 850. Trend: ${trendLabel}.`;
 
   return (
@@ -145,6 +171,10 @@ export function RiskGauge({
             {fmtDate(lastUpdated)}
           </span>
         </div>
+      </div>
+      
+      <div className="risk-meta-item" style={{ marginTop: '0.75rem', justifyContent: 'center' }}>
+        <KbdHint keys={['?']} label="Explain Risk" description="Press question mark to open help overlay" />
       </div>
     </div>
   );
