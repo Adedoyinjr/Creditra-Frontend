@@ -962,3 +962,52 @@ function LoginForm() {
 }
 ```
 
+---
+
+## Component Specification: RepayPreviewModal
+
+### Overview
+`RepayPreviewModal` is a modal dialog designed for the GrantFox FWC26 campaign (#483) that allows borrowers to preview all financial, credit limit, interest savings, and wallet balance consequences of a proposed repayment before submitting.
+
+### Props Interface
+```typescript
+export interface RepaymentCreditLine {
+  id: string;
+  name: string;
+  limit: number;
+  utilized: number;
+  apr: number;
+  nextPaymentAmount?: number;
+}
+
+export interface RepayPreviewModalProps {
+  isOpen: boolean;
+  creditLine: RepaymentCreditLine;
+  walletBalance: number;
+  repayAmount: number;
+  onClose: () => void;
+  onConfirm: (amount: number) => void | Promise<void>;
+  triggerRef?: React.RefObject<HTMLElement | null>;
+  title?: string;
+  confirmLabel?: string;
+}
+```
+
+### Preview Features & Metrics Renders
+1. **Header**: Modal title, credit line badge, 44px close button.
+2. **Hero Section**: Proposed repayment amount display with Full Payoff / Partial Repayment status chips.
+3. **Debt & Credit Limit Grid**: Remaining debt calculation and restored available credit limit.
+4. **Repayment Allocation**: Principal reduction vs accrued interest breakdown.
+5. **Utilization Bar**: Visual progress track showing current vs. post-repayment utilization percentage.
+6. **Timeline & Interest Savings**: Months saved off payoff timeline and estimated total interest saved (`computePayoffProjection`).
+7. **Wallet Balance Impact**: Before vs. after wallet balance calculation with Low Wallet Reserve warning callout when remaining wallet balance drops below threshold.
+8. **Typed Confirmation Guard**: Integrates `requiresRepayConfirmation` to enforce exact typed amount confirmation for large repayments (`>= $5000`).
+
+### Accessibility (WCAG 2.1 AA)
+- `role="dialog"`, `aria-modal="true"`, `aria-labelledby`, `aria-describedby`.
+- Traps focus via `useFocusTrap` and returns focus to `triggerRef` upon close.
+- Escape key listener to close modal.
+- Tabular numbers (`.tabular-nums`) for currency formatting alignment.
+- Supports dark mode design tokens and high-contrast (`[data-contrast="high"]`) mode.
+
+

@@ -17,6 +17,7 @@ import {
   TypedAmountConfirmField,
 } from '@/components/TypedAmountConfirm';
 import { KbdHint } from '@/components/KbdHint';
+import { RepayPreviewModal } from '@/components/RepayPreviewModal';
 import { MOCK_CREDIT_LINES } from '@/data/mockData';
 import { motionClasses, useReducedMotion } from '@/context/ReducedMotionContext';
 import './RepayPage.css';
@@ -71,7 +72,9 @@ export default function RepayPage() {
   const [confirmAmountStr, setConfirmAmountStr] = useState('');
   const [isAutoSchedule, setIsAutoSchedule] = useState(false);
   const [isHelpOpen, setIsHelpOpen] = useState(false);
+  const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
   const helpTriggerRef = useRef<HTMLButtonElement>(null);
+  const previewTriggerRef = useRef<HTMLButtonElement>(null);
   const { isReducedMotionActive } = useReducedMotion();
 
   const creditLines = useMemo(
@@ -507,16 +510,27 @@ export default function RepayPage() {
                     </button>
                   </div>
 
-                  <button
-                    type="button"
-                    onClick={handleReview}
-                    disabled={isInvalid || amount <= 0}
-                    className={`mt-4 w-full rounded-lg bg-accent px-4 py-3 text-sm font-semibold text-background focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-50 ${motionClasses(isReducedMotionActive, 'transition-all hover:brightness-110')}`}
-                  >
-                    <span className="flex items-center justify-center gap-2">
-                      Review Repayment <KbdHint keys={['Enter']} />
-                    </span>
-                  </button>
+                  <div className="mt-4 flex flex-col gap-2">
+                    <button
+                      type="button"
+                      onClick={handleReview}
+                      disabled={isInvalid || amount <= 0}
+                      className={`w-full rounded-lg bg-accent px-4 py-3 text-sm font-semibold text-background focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-50 ${motionClasses(isReducedMotionActive, 'transition-all hover:brightness-110')}`}
+                    >
+                      <span className="flex items-center justify-center gap-2">
+                        Review Repayment <KbdHint keys={['Enter']} />
+                      </span>
+                    </button>
+                    <button
+                      ref={previewTriggerRef}
+                      type="button"
+                      onClick={() => setIsPreviewModalOpen(true)}
+                      disabled={isInvalid || amount <= 0}
+                      className={`w-full rounded-lg border border-accent/40 bg-accent/10 px-4 py-2.5 text-xs font-semibold text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-40 ${motionClasses(isReducedMotionActive, 'transition-all hover:bg-accent/20')}`}
+                    >
+                      Preview Consequences Modal
+                    </button>
+                  </div>
                 </div>
               </div>
 
@@ -710,6 +724,20 @@ export default function RepayPage() {
         onClose={() => setIsHelpOpen(false)}
         triggerRef={helpTriggerRef}
       />
+      {selectedLine && (
+        <RepayPreviewModal
+          isOpen={isPreviewModalOpen}
+          creditLine={selectedLine}
+          walletBalance={walletBalance}
+          repayAmount={amount}
+          onClose={() => setIsPreviewModalOpen(false)}
+          onConfirm={() => {
+            setIsPreviewModalOpen(false);
+            handleConfirm();
+          }}
+          triggerRef={previewTriggerRef}
+        />
+      )}
     </div>
   );
 }
