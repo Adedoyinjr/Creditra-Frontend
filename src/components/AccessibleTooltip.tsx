@@ -1,4 +1,4 @@
-import { useId } from 'react';
+import { useId, type ReactNode } from 'react';
 import './AccessibleTooltip.css';
 
 interface AccessibleTooltipProps {

@@ -10,6 +10,17 @@ expected to behave.
 
 ---
 
+### Command palette (Cmd/Ctrl+K)
+
+Global keyboard navigation overlay (`src/components/CommandPalette.tsx`):
+
+- **Open:** `Cmd/Ctrl+K` anywhere, or the header **Search ⌘K** button
+- **Navigate:** Arrow keys; **Enter** activates; **Esc** closes and restores focus
+- Uses `useFocusTrap`, `useBodyScrollLock`, and `useInertBackdrop` (same modal contract)
+- Default registry covers Dashboard, Transactions, Credit Lines, Repay, Draw, Linked Accounts, Help, and notification preferences
+
+---
+
 ## 1. Why AA, not A or AAA
 
 - **AA is the legal baseline** under most public-procurement, EU, and US accessibility
@@ -81,6 +92,40 @@ heading.
 - Example: `WalletButton.tsx` connected state — `aria-haspopup` and `aria-expanded` on the
   address chip, `role="menu"` on the dropdown.
 
+### Search combobox (TransactionHistory)
+
+The search field on the Transaction History page follows the **ARIA 1.2 combobox pattern**
+(single-select, list autocomplete). Implementation is in `src/pages/TransactionHistory.tsx`.
+
+| Attribute | Element | Value / purpose |
+| --- | --- | --- |
+| `role="combobox"` | `<input>` | Signals combined text-entry + popup to AT |
+| `aria-expanded` | `<input>` | `"true"` when suggestion listbox is visible |
+| `aria-controls` | `<input>` | ID of the `role="listbox"` element |
+| `aria-autocomplete="list"` | `<input>` | Completions appear in popup, not inline |
+| `aria-activedescendant` | `<input>` | ID of the currently keyboard-focused option |
+| `role="listbox"` | `<ul>` | Suggestion container |
+| `role="option"` | `<li>` | Individual suggestion |
+| `aria-selected` | `<li>` | `"true"` on the active (keyboard-navigated) option |
+| `aria-label="Clear search"` | `<button>` | ✕ clear button visible only when input is non-empty |
+
+Keyboard interaction:
+
+| Key | Behaviour |
+| --- | --- |
+| Arrow Down | Open list (if closed); move active option down (wraps) |
+| Arrow Up | Move active option up (wraps) |
+| Enter | Commit active option; if none active, close list |
+| Escape | Dismiss list, keep typed value |
+| Tab | Dismiss list, advance focus |
+
+Filtering is debounced (250 ms) to prevent layout thrashing on every keystroke; the raw
+input value drives the visible suggestion list immediately. The committed search query
+joins the existing AND-filter chain (type × date × amount × credit-line × status × search).
+
+`prefers-reduced-motion`: the listbox slide-in animation is suppressed via a
+`@media (prefers-reduced-motion: reduce)` block in `TransactionHistory.css`.
+
 ### Status badges and gauges
 
 - `StatusBadge` pairs a tinted pill with a single-letter glyph (`A | ! | X | C`). Color is
@@ -89,6 +134,43 @@ heading.
   arrow (`▲ | ▼ | ─`) plus the trend word as a sibling element so screen readers don't
   miss it.
 
+### Chart captions and SR-friendly table siblings
+
+Both `RepaymentVisualizer` and `RiskGauge` expose accessible descriptions at two levels:
+
+**Chart series patterns (RepaymentVisualizer)** — principal remaining and cumulative
+interest are distinguished by hatch direction (45° vs 135°) layered on the area
+gradients, with matching patterned legend swatches in `src/styles/patterns.css`
+(WCAG 1.4.1 — colour is not the only visual means of identification).
+
+**SVG-level label** — the `aria-label` / `aria-labelledby` on the `<svg role="img">` element
+is the first thing screen readers announce when the user focuses the chart.  Both components
+accept an optional prop to override the default description with a more specific one.
+
+**SR-only data table sibling** — a visually-hidden `<table className="sr-only">` is rendered
+adjacent to each chart so users who prefer table navigation get full data access without
+interacting with SVG arcs:
+
+| Component | SR table contents | Key attributes |
+| --- | --- | --- |
+| `RepaymentVisualizer` | Month-by-month principal/interest breakdown | `<caption>` auto-generated from term length + total interest; overridable via `caption` prop; `KbdHint` keyboard navigation (`←`/`→`/`Home`/`End`/`Esc`) |
+| `RiskGauge` | Three risk bands (High/Medium/Low) with score ranges | `aria-current="true"` on the row for the active band; rendered before the SVG so it appears first in reading order |
+
+These tables are always present in the accessibility tree (no `aria-hidden`) and follow
+the standard `<caption>` + `<th scope="col">` + `<td>` pattern.
+
+### Keyboard shortcut hints (`KbdHint`)
+
+The `KbdHint` component (`src/components/KbdHint.tsx`) provides standardized visual and screen-reader accessible keyboard shortcut hints.
+
+- Renders semantic `<kbd>` elements styled with design tokens (`var(--surface-raised)`, `var(--border)`, `var(--text)`).
+- Provides screen-reader accessible text via `.sr-only` element describing the shortcut action.
+- `RepaymentVisualizer` embeds `KbdHint` to indicate keyboard controls for chart inspection:
+  - `←` / `→`: Step backward / forward through schedule months
+  - `Home` / `End`: Jump to first / last repayment month
+  - `Esc`: Clear active data point inspection
+
+
 ### Live regions
 
 | Use | Politeness | Component |
@@ -96,6 +178,7 @@ heading.
 | Form field errors | `role="alert"` (assertive, debounced 300 ms) | `FormMessage` |
 | Copy-to-clipboard success | `aria-live="polite"` | `CopyToClipboard` |
 | Route changes | `role="status" aria-live="polite"` | `RouteAnnouncer` |
+| Transaction filter result count | `role="status" aria-live="polite" aria-atomic="true"` | `TransactionHistory` filter bar |
 | Browser connectivity (header) | Assertive on offline; polite on restore | `NetworkStatus` |
 | Post-action confirmation | `role="status" aria-live="polite"` | `SuccessState` |
 | Toast notifications | Polite `ToastContainer` live region for confirmations; individual error toasts escalate to `role="alert"` | `ToastContainer` |
@@ -103,6 +186,10 @@ heading.
 ### Focus management
 
 - Global `:focus-visible` rule in `src/index.css` is `outline: 2px solid var(--accent); outline-offset: 2px`.
+- `RepaymentVisualizer` applies `.repayment-visualizer-focus` to its interactive
+  chart, schedule disclosure, and row-expansion control. The class uses shared
+  focus tokens and `:focus-visible`, so keyboard users receive a consistent
+  outline without adding a focus ring on pointer clicks.
 - Active nav links keep focus styling distinct from active styling (see the comment block
   around `.header-nav-link.active` in `src/index.css`).
 - Modal close returns focus to the trigger via `useFocusTrap`'s `triggerRef`.
@@ -151,23 +238,26 @@ The table below is updated on every accessibility-impacting PR. Status legend:
 | `NotificationCenter` | Focus trap inside the panel; mobile Expand/Collapse snap controls for keyboard users | `role="dialog"`, category filters use `role="tab"` + `aria-selected`; iOS safe-area insets on bottom sheet | AA | reduced-motion disables snap transitions | OK |
 | `ToastContainer` | Tab/Esc to dismiss | `role="status"` / `role="alert"` per severity | AA | reduced-motion gated | OK |
 | `BannerAlert` | Tab/Enter on action & dismiss | `role="alert"` for warning/error | AA | n/a | OK |
-| `Dashboard` (risk gauge) | n/a | Score and trend exposed via `<title>` + polite `sr-only` sibling; arc animates on value change with reduced-motion fallback | AA | reduced-motion gated (CSS + JS `matchMedia`) | OK |
+| `Dashboard` (risk gauge) | Tab/Enter/Space on SVG root and individual sector bands; keyboard fires `onSectorActivate` | Score and trend exposed via `<title>` + polite `sr-only` sibling; arc animates on value change with reduced-motion fallback; `ariaLabel` prop overrides the auto-generated description; SR-only risk-band table sibling with `aria-current` on the active band; `showSRTable` prop | AA | reduced-motion gated (CSS + JS `matchMedia`) | OK |
+| `RepaymentVisualizer` | n/a (display chart) | `role="img"` SVG with `aria-label` (overridable via `chartAriaLabel` prop); principal/interest hatch patterns + legend swatches (not colour alone); SR-only data table with `<caption>` auto-generated from term + total interest (overridable via `caption` prop); visible schedule table with expand/collapse | AA | n/a | OK |
 | `Header` nav | Tab through links; Enter activates | `aria-current="page"` on active link | AA | n/a | OK |
 | `RepayModal` | Focus trap (canonical `{ isActive }` form) + return focus to trigger | `role="dialog"`, `aria-modal`, `aria-labelledby` | AA | n/a | OK |
-| `TransactionHistory` | Sortable headers via Enter/Space | `aria-sort` reflects column state | AA | n/a | OK |
+| `TransactionHistory` | Sortable headers via Enter/Space; search combobox fully keyboard navigable (ArrowDown/Up, Enter, Escape, Tab) | `aria-sort` reflects column state; search uses ARIA 1.2 combobox pattern (`role="combobox"`, `aria-expanded`, `aria-controls`, `aria-autocomplete="list"`, `aria-activedescendant`); result count in polite live region | AA | reduced-motion disables listbox animation | OK |
 | `HelpCenter` | Tab/Enter on sidebar anchor links; accordion buttons and transcript links keyboard reachable | Sidebar nav has `aria-label="Help topics"`; `aria-current="true"` on active section via IntersectionObserver | AA | `useReducedMotion()` gates smooth scroll | OK |
 | `SupportWidget` | Floating trigger, search field, FAQ toggles, and email handoff are keyboard reachable | `aria-expanded`, `aria-controls`, visible focus ring, non-modal `role="dialog"` shell | AA | n/a | OK |
 | `LandingPage` | Tab through CTAs and FAQ accordion | Framer Motion guarded by `useReducedMotion` | AA | reduced-motion gated | OK |
 | `ErrorBoundary` / `ErrorPage` | Tab through "Go back" and "Reload" | Semantic landmarks | AA | n/a | OK |
+| `LoginPage` | Tab through all inputs, checkbox, links, submit; Shift+Tab reverses | Both fields use `<FormField>` — `aria-describedby` always present on password input (`password-help`; `password-help password-error` on error), `aria-required="true"`, `aria-invalid` toggled by error state | AA | n/a | OK |
 
 ### Known gaps and target fix dates
 
 | ID | Component | Gap | Target |
 | --- | --- | --- | --- |
-| A11Y-001 | `OnboardingFlow` | Arrow-key step navigation not wired (today uses Next/Back buttons only) | next minor release |
+| ~~A11Y-001~~ | ~~`OnboardingFlow`~~ | ~~Arrow-key step navigation not wired (today uses Next/Back buttons only)~~ | **Fixed** — arrow keys now advance/back and Escape skips; regression tests added |
 | ~~A11Y-002~~ | ~~`RepayModal`~~ | ~~Focus-trap call site uses legacy boolean signature; needs migration to `useFocusTrap({ isActive })`~~ | **Fixed** — migrated to `{ isActive }` form; `triggerRef` wired; regression test added |
 | A11Y-003 | `NotificationCenter` | Filter tabs use `aria-pressed` but should additionally expose `role="tab"` + `aria-selected` for AT consistency | next minor release |
 | ~~A11Y-004~~ | ~~Tables~~ | ~~`aria-sort` is set but caption text describing the table is not yet announced~~ | **Closed** — `<caption>` added to TransactionHistory; `<section aria-label>` added to CreditLines; both update dynamically with filter state |
+| ~~A11Y-005~~ | ~~`LoginPage`~~ | ~~Password `<input>` had no `aria-describedby` in the non-error state because `FormField` was rendered without `helpText`, violating WCAG 2.1 SC 1.3.1~~ | **Fixed** — added `helpText="Enter the password for your account"` to the password `FormField`; the input now always carries `aria-describedby="password-help"` (or `"password-help password-error"` when an error is active); 16-test suite added |
 
 ---
 

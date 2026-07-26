@@ -2,16 +2,19 @@ import React, { useEffect, useRef } from 'react';
 import { useFocusTrap } from '../hooks/useFocusTrap';
 import { RISK_COLOR, COLOR } from '../utils/tokens';
 
-interface RiskBand {
+import { RiskBand, RiskBandLevel } from './RiskBand';
+
+interface RiskBandData {
   name: string;
   description: string;
   aprRange: string;
   limitGuidance: string;
   minScore: number;
   color: string;
+  level: RiskBandLevel;
 }
 
-const RISK_BANDS: RiskBand[] = [
+const RISK_BANDS: RiskBandData[] = [
   {
     name: 'Excellent',
     description: 'Highest tier of creditworthiness with optimal terms.',
@@ -19,6 +22,7 @@ const RISK_BANDS: RiskBand[] = [
     limitGuidance: 'Maximum available limits',
     minScore: 700,
     color: COLOR.success,
+    level: 'success',
   },
   {
     name: 'Good',
@@ -27,6 +31,7 @@ const RISK_BANDS: RiskBand[] = [
     limitGuidance: 'High to medium limits',
     minScore: 600,
     color: COLOR.warning,
+    level: 'warning',
   },
   {
     name: 'Caution',
@@ -35,6 +40,7 @@ const RISK_BANDS: RiskBand[] = [
     limitGuidance: 'Limited initial limits',
     minScore: 500,
     color: COLOR.danger,
+    level: 'danger',
   },
   {
     name: 'Recovery',
@@ -43,6 +49,7 @@ const RISK_BANDS: RiskBand[] = [
     limitGuidance: 'Minimum baseline limits',
     minScore: 0,
     color: COLOR.danger,
+    level: 'danger',
   },
 ];
 
@@ -162,15 +169,10 @@ export function RiskBandsPanel({ isOpen, onClose, triggerRef }: RiskBandsPanelPr
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             {RISK_BANDS.map(band => (
-              <div 
-                key={band.name} 
-                style={{ 
-                  padding: '1rem', 
-                  background: COLOR.bg, 
-                  border: `1px solid ${COLOR.border}`, 
-                  borderRadius: 8,
-                  borderLeft: `4px solid ${band.color}`
-                }}
+              <RiskBand 
+                key={band.name}
+                level={band.level}
+                style={{ marginBottom: '0.5rem' }}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
                   <span style={{ fontWeight: 600, color: COLOR.text, fontSize: '1rem' }}>{band.name}</span>
@@ -192,7 +194,7 @@ export function RiskBandsPanel({ isOpen, onClose, triggerRef }: RiskBandsPanelPr
                     <p style={{ margin: 0, fontSize: '0.85rem', color: COLOR.text, fontWeight: 500 }}>{band.limitGuidance}</p>
                   </div>
                 </div>
-              </div>
+              </RiskBand>
             ))}
           </div>
         </div>

@@ -1,0 +1,205 @@
+/*
+ * Shared empty-state surface
+ * ----------------------------------------------------------------------------
+ * Used by `<EmptyState />` and any direct consumer that still lays out an
+ * `<div class="empty-state">` block (TransactionHistory, CreditLines).
+ *
+ * NOTE: Some legacy consumers (TransactionHistory.css, Dashboard.css) ship
+ * a duplicated subset of these rules. That duplication is intentional for
+ * now — pulling them into this file would touch unrelated pages. Keep the
+ * two copies in sync if you change a shared property (radius, focus ring,
+ * accent tint).
+ *
+ * Layout: vertically centered column with generous vertical padding, an
+ * illustration on top, optional eyebrow, a heading, descriptive copy, and an
+ * action row. The component itself owns focus/aria concerns; this file is
+ * purely presentational.
+ *
+ * Theming: all colors reference design tokens declared in src/index.css so
+ * the empty state responds to the active theme (default / high-contrast).
+ */
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 1.5rem;
+  text-align: center;
+  gap: 0.75rem;
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+/* Optional eyebrow line above the heading */
+.empty-state__eyebrow {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 0;
+}
+
+.empty-state__title {
+  margin: 0.25rem 0 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.3;
+}
+
+.empty-state__description {
+  margin: 0.25rem 0 0;
+  font-size: 0.95rem;
+  color: var(--muted);
+  line-height: 1.55;
+  max-width: 40ch;
+}
+
+/* Action row: single CTA by default; flexes to a row when both buttons are
+   supplied. The first item is rendered on the left in LTR layouts and
+   stretches to fit content width by default. */
+
+.empty-state__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  justify-content: center;
+  margin-top: 1rem;
+}
+
+.empty-state-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0.625rem 1.25rem;
+  background: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  color: var(--bg);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  transition:
+    filter 0.15s ease,
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.empty-state-btn:hover {
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+}
+
+.empty-state-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.empty-state-btn:active {
+  transform: translateY(0);
+}
+
+/* Secondary CTA: lower-emphasis outline button */
+
+.empty-state-secondary-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0.625rem 1.25rem;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease;
+}
+
+.empty-state-secondary-btn:hover {
+  border-color: var(--accent);
+  background: rgba(88, 166, 255, 0.08);
+}
+
+.empty-state-secondary-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+/* Tone variants — tint the illustration + optional accent rule.
+   Tone is intentionally subtle so the page still feels neutral. The
+   accessibility cues live in the heading text + aria-live region, not the
+   colour alone. */
+
+.empty-state--success .empty-state__accent-rule {
+  background: var(--success);
+}
+
+.empty-state--info .empty-state__accent-rule {
+  background: var(--accent);
+}
+
+/* Decorative accent rule above the eyebrow — used to add visual weight
+   on wide screens without competing with the illustration. */
+
+.empty-state__accent-rule {
+  width: 36px;
+  height: 3px;
+  border-radius: 3px;
+  background: var(--accent);
+  margin-bottom: 0.5rem;
+  opacity: 0.7;
+}
+
+/* Responsive tweaks */
+
+@media (max-width: 480px) {
+  .empty-state {
+    padding: 2rem 1rem;
+  }
+
+  .empty-state__title {
+    font-size: 1.15rem;
+  }
+
+  .empty-state__description {
+    font-size: 0.9rem;
+  }
+
+  .empty-state__actions {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .empty-state-btn,
+  .empty-state-secondary-btn {
+    width: 100%;
+  }
+}
+
+/* High-contrast theme: bump borders + reduce muted text to meet 7:1 */
+
+[data-contrast="high"] .empty-state-btn {
+  outline: 1px solid var(--bg);
+}
+
+[data-contrast="high"] .empty-state-secondary-btn {
+  border-color: var(--border);
+}
+
+/* Reduced motion: drop micro-interactions */
+
+@media (prefers-reduced-motion: reduce) {
+  .empty-state-btn:hover,
+  .empty-state-secondary-btn:hover {
+    transform: none;
+  }
+}

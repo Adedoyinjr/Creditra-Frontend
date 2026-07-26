@@ -114,6 +114,40 @@
   border-radius: var(--focus-ring-radius);
 }
 
+/**
+ * .repay-focus-ring
+ * High-visibility focus indicator for RepayPage interactive controls:
+ * - Navigation back buttons
+ * - Credit line selection cards
+ * - Preset percentage chips & Smart Pay button
+ * - Repay amount input field
+ * - Action buttons (Review Repayment, Help, Cancel, Confirm)
+ */
+.repay-focus-ring {
+  outline: none;
+}
+
+.repay-focus-ring:focus-visible {
+  outline: var(--focus-ring-width, 2px) solid var(--focus-ring-color, var(--accent, #58a6ff));
+  outline-offset: var(--focus-ring-offset, 2px);
+  border-radius: var(--focus-ring-radius, 6px);
+}
+
+/**
+ * RepaymentVisualizer keyboard targets.
+ *
+ * Applied to the interactive SVG chart, schedule disclosure, and table
+ * expansion button. `:focus-visible` keeps pointer interactions unchanged,
+ * while the shared tokens preserve contrast across default, dark, and
+ * high-contrast themes.
+ */
+.repayment-visualizer-focus:focus-visible {
+  outline: var(--focus-ring-width, 2px) solid
+    var(--focus-ring-color, var(--accent, #58a6ff));
+  outline-offset: var(--focus-ring-offset, 3px);
+  border-radius: var(--focus-ring-radius, 6px);
+}
+
 /* ── Reduced-motion ──────────────────────────────────────────────────────── */
 /*
   Focus indicators must remain visible even under prefers-reduced-motion;
@@ -123,4 +157,75 @@
 */
 @media (prefers-reduced-motion: reduce) {
   /* Focus rings must NOT be suppressed — intentionally empty. */
+}
+
+/* ── Dashboard interactive elements ─────────────────────────────────────── */
+/*
+  GrantFox FWC26 (Stellar Wave) — "Visible focus outline on keyboard-only
+  nav for Dashboard" requirement.
+
+  Every interactive element on the Dashboard that is reachable via Tab must
+  show a visible focus ring on keyboard navigation (:focus-visible).
+
+  Covered here:
+    .qa-btn             — Quick-Action buttons / links
+    .risk-explainer-trigger — "Explain" button next to risk gauge
+    .view-all-link      — "View all credit lines →" anchor
+    .cl-row-select      — Per-credit-line compare checkbox label
+    .risk-explainer-dismiss — Dismiss button inside the explainer banner
+
+  All rules use :focus-visible so mouse/touch interactions are unaffected.
+  All colours reference design tokens so they respond to [data-contrast="high"].
+*/
+
+/**
+ * Quick-Action buttons (Draw Credit, Repay Credit, etc.)
+ * These render as both <button> and <Link> (via className="qa-btn"),
+ * so the selector targets the class rather than the tag.
+ */
+.qa-btn:focus-visible {
+  outline: var(--focus-ring-width, 2px) solid var(--focus-ring-color, #58a6ff);
+  outline-offset: var(--focus-ring-offset, 3px);
+  border-radius: var(--focus-ring-radius, 6px);
+}
+
+/**
+ * "Explain risk bands" trigger button.
+ * The button is rendered with inline styles but no focus class;
+ * this rule adds the keyboard ring without altering its inline styles.
+ */
+.risk-explainer-trigger:focus-visible {
+  outline: var(--focus-ring-width, 2px) solid var(--focus-ring-color, #58a6ff);
+  outline-offset: var(--focus-ring-offset, 3px);
+  border-radius: var(--focus-ring-radius, 6px);
+}
+
+/**
+ * "Dismiss" button inside the risk explainer banner.
+ */
+.risk-explainer-dismiss:focus-visible {
+  outline: var(--focus-ring-width, 2px) solid var(--focus-ring-color, #58a6ff);
+  outline-offset: var(--focus-ring-offset, 3px);
+  border-radius: var(--focus-ring-radius, 6px);
+}
+
+/**
+ * "View all credit lines →" link at the bottom of the credit-lines card.
+ */
+.view-all-link:focus-visible {
+  outline: var(--focus-ring-width, 2px) solid var(--focus-ring-color, #58a6ff);
+  outline-offset: var(--focus-ring-offset, 3px);
+  border-radius: var(--focus-ring-radius, 6px);
+}
+
+/**
+ * Per-credit-line comparison checkbox label wrapper.
+ * The real focusable target is the <input> inside; this outer label
+ * wrapper gets a supplementary ring so the 44×44 px touch target is visually
+ * indicated during keyboard navigation.
+ */
+.cl-row-select:focus-within {
+  outline: var(--focus-ring-width, 2px) solid var(--focus-ring-color, #58a6ff);
+  outline-offset: var(--focus-ring-offset, 3px);
+  border-radius: var(--focus-ring-radius, 6px);
 }

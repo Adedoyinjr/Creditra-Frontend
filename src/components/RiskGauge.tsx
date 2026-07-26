@@ -80,6 +80,32 @@ export interface RiskGaugeProps {
    * a purely presentational gauge (e.g. in print layouts).
    */
   showSectors?: boolean;
+  /**
+   * Override the accessible label for the gauge SVG element.
+   *
+   * By default the SVG's `<title>` (and the sibling `<p className="sr-only">`)
+   * read: "Risk score N out of 100. Trend: X. Last updated D."
+   *
+   * Supply a custom string when you need a more specific or branded
+   * description — e.g. "Creditra risk score: 78 (Excellent)".
+   *
+   * Note: this value replaces the auto-generated description in both the
+   * SVG title and the live-region paragraph, keeping them in sync.
+   */
+  ariaLabel?: string;
+  /**
+   * When true (default) a visually-hidden `<table>` sibling is rendered
+   * adjacent to the gauge SVG.  The table lists all three risk bands with
+   * their score ranges and marks the band the current score falls in.
+   *
+   * Screen readers announce this table when the gauge receives focus,
+   * giving users a structured breakdown without navigating the SVG
+   * arc sectors individually.
+   *
+   * Set to false only when the caller renders its own equivalent structure
+   * to avoid duplicate content for AT users.
+   */
+  showSRTable?: boolean;
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -274,6 +300,60 @@ function SectorGroup({ sector, isActive, onActivate, titleId }: SectorGroupProps
   );
 }
 
+// ─── SR table sibling ─────────────────────────────────────────────────────────
+
+/**
+ * RiskGaugeSRTable
+ *
+ * A visually-hidden `<table>` rendered as a sibling of the gauge SVG.
+ * It lists all three risk bands with their score ranges and marks the band
+ * that the current score falls in with `aria-current="true"`.
+ *
+ * This gives assistive-technology users a navigable, structured alternative
+ * to the arc visualisation without requiring them to interact with the SVG
+ * sectors individually.
+ *
+ * The table is hidden from sighted users with `.sr-only` and `aria-hidden`
+ * is NOT set — it should be read by screen readers.
+ */
+interface RiskGaugeSRTableProps {
+  normalizedScore: number;
+  activeSector: RiskSector;
+}
+
+function RiskGaugeSRTable({ normalizedScore, activeSector }: RiskGaugeSRTableProps) {
+  return (
+    <table
+      className="sr-only"
+      aria-label="Risk score band breakdown"
+      style={{ borderCollapse: 'collapse' }}
+    >
+      <caption className="sr-only">
+        Risk score bands. Current score: {normalizedScore} out of 100.
+      </caption>
+      <thead>
+        <tr>
+          <th scope="col">Band</th>
+          <th scope="col">Score range</th>
+          <th scope="col">Current score</th>
+        </tr>
+      </thead>
+      <tbody>
+        {SECTORS.map((sector) => {
+          const isCurrent = activeSector === sector.id;
+          return (
+            <tr key={sector.id} aria-current={isCurrent ? 'true' : undefined}>
+              <td>{sector.label}</td>
+              <td>{sector.range}</td>
+              <td>{isCurrent ? `Yes — ${normalizedScore}` : 'No'}</td>
+            </tr>
+          );
+        })}
+      </tbody>
+    </table>
+  );
+}
+
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export function RiskGauge({
@@ -282,6 +362,8 @@ export function RiskGauge({
   lastUpdated,
   onSectorActivate,
   showSectors = true,
+  ariaLabel,
+  showSRTable = true,
 }: RiskGaugeProps) {
   const normalizedScore = Math.min(100, Math.max(0, score));
   const offset = CIRCUMFERENCE - (normalizedScore / 100) * CIRCUMFERENCE;
@@ -329,8 +411,9 @@ export function RiskGauge({
 
   const srDescription = useMemo(
     () =>
+      ariaLabel ??
       `Risk score ${normalizedScore} out of 100. Trend: ${trendLabel}. Last updated ${formatDate(lastUpdated)}.`,
-    [normalizedScore, trendLabel, lastUpdated],
+    [ariaLabel, normalizedScore, trendLabel, lastUpdated],
   );
 
   /** Which sector does the current score fall in? */
@@ -362,6 +445,21 @@ export function RiskGauge({
       <p className="sr-only" aria-live="polite" aria-atomic="true">
         {srDescription}
       </p>
+
+      {/*
+        SR-only table listing the three risk bands with ranges.
+        Gives AT users a structured alternative to the arc sectors so they
+        can understand the full band context without interacting with SVG.
+        Hidden from sighted users via .sr-only; always present in the
+        accessibility tree (no aria-hidden).
+        Rendered before the SVG so it appears early in reading order.
+      */}
+      {showSRTable && (
+        <RiskGaugeSRTable
+          normalizedScore={normalizedScore}
+          activeSector={activeSector}
+        />
+      )}
 
       <svg
         className="risk-gauge-svg"

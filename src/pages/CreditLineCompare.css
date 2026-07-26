@@ -1,0 +1,573 @@
+/* ─── CreditLineCompare Page ───────────────────────────────────────────────── */
+
+.clc-page {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 1.5rem 3rem;
+}
+
+/* ─── Page Header ───────────────────────────────────────────────────────────── */
+
+.clc-page-header {
+  margin-bottom: var(--space-2xl);
+}
+
+.clc-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+  font-size: 0.85rem;
+  color: var(--muted);
+  text-decoration: none;
+  margin-bottom: var(--space-lg);
+  transition: color 0.15s;
+}
+
+.clc-back-link:hover,
+.clc-back-link:focus-visible {
+  color: var(--accent);
+}
+
+.clc-heading-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: var(--space-lg);
+  margin-bottom: var(--space-md);
+}
+
+.clc-heading {
+  margin: 0;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--text);
+  line-height: var(--lh-display);
+}
+
+.clc-heading-description {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--muted);
+  line-height: var(--lh-body);
+  max-width: 54rem;
+}
+
+.clc-header-actions {
+  display: flex;
+  gap: var(--space-md);
+  flex-wrap: wrap;
+}
+
+.clc-action-btn {
+  padding: 0.5rem 1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--text);
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  /* Touch target: min 44×44 px */
+  min-width: 44px;
+  min-height: 44px;
+}
+
+.clc-action-btn:hover,
+.clc-action-btn:focus-visible {
+  background: var(--surface-raised);
+  border-color: var(--accent);
+}
+
+.clc-action-btn--ghost {
+  background: transparent;
+  color: var(--muted);
+}
+
+.clc-action-btn--ghost:hover,
+.clc-action-btn--ghost:focus-visible {
+  background: var(--surface);
+  color: var(--text);
+}
+
+/* ─── Invalid Params Alert ─────────────────────────────────────────────────── */
+
+.clc-invalid-params {
+  padding: var(--space-lg);
+  margin-bottom: var(--space-2xl);
+  background: rgba(248, 81, 73, 0.12);
+  border: 1px solid rgba(248, 81, 73, 0.3);
+  border-radius: var(--radius-md);
+  color: var(--error);
+  font-size: 0.875rem;
+}
+
+.clc-invalid-params p {
+  margin: 0;
+  line-height: var(--lh-body);
+}
+
+.clc-invalid-params p + p {
+  margin-top: var(--space-sm);
+}
+
+.clc-invalid-params code {
+  padding: 0.125rem 0.375rem;
+  background: rgba(248, 81, 73, 0.2);
+  border-radius: var(--radius-sm);
+  font-family: ui-monospace, 'SF Mono', 'Cascadia Code', Menlo, monospace;
+  font-size: 0.85em;
+}
+
+/* ─── Line Picker ────────────────────────────────────────────────────────────── */
+
+.clc-picker {
+  max-width: 48rem;
+  margin: 0 auto;
+  padding: var(--space-2xl);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  text-align: center;
+}
+
+.clc-picker-heading {
+  margin: 0 0 var(--space-md);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text);
+  line-height: var(--lh-heading);
+}
+
+.clc-picker-description {
+  margin: 0 0 var(--space-2xl);
+  font-size: 0.9rem;
+  color: var(--muted);
+  line-height: var(--lh-body);
+}
+
+.clc-picker-selects {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: var(--space-xl);
+  align-items: center;
+  margin-bottom: var(--space-2xl);
+}
+
+@media (max-width: 700px) {
+  .clc-picker-selects {
+    grid-template-columns: 1fr;
+    gap: var(--space-lg);
+  }
+
+  .clc-picker-vs {
+    order: 1;
+  }
+}
+
+.clc-picker-vs {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.clc-picker-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  text-align: left;
+}
+
+.clc-picker-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.clc-picker-select {
+  padding: 0.625rem 0.875rem;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--text);
+  font-size: 0.9rem;
+  font-family: inherit;
+  cursor: pointer;
+  transition: border-color 0.15s;
+  /* Touch target */
+  min-height: 44px;
+}
+
+.clc-picker-select:hover,
+.clc-picker-select:focus-visible {
+  border-color: var(--accent);
+}
+
+.clc-compare-btn {
+  padding: 0.75rem 1.5rem;
+  background: var(--accent);
+  border: none;
+  border-radius: var(--radius-md);
+  color: var(--bg);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s;
+  /* Touch target */
+  min-height: 44px;
+  min-width: 120px;
+}
+
+.clc-compare-btn:hover:not(:disabled),
+.clc-compare-btn:focus-visible:not(:disabled) {
+  opacity: 0.9;
+}
+
+.clc-compare-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ─── Comparison Table ─────────────────────────────────────────────────────── */
+
+.clc-table-wrapper {
+  margin-bottom: var(--space-2xl);
+  overflow-x: auto;
+}
+
+.clc-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  font-size: 0.875rem;
+}
+
+.clc-table-caption {
+  padding: var(--space-lg);
+  text-align: left;
+  font-size: 0.8rem;
+  color: var(--muted);
+  line-height: var(--lh-body);
+  border-bottom: 1px solid var(--border);
+}
+
+/* ── Table Head ── */
+
+.clc-table thead {
+  background: var(--surface-raised);
+}
+
+.clc-th-label {
+  width: 20%;
+  min-width: 140px;
+}
+
+.clc-th {
+  padding: var(--space-lg);
+  text-align: left;
+  font-weight: 600;
+  color: var(--text);
+  border-bottom: 1px solid var(--border);
+}
+
+.clc-th-tag {
+  display: inline-block;
+  padding: 0.125rem 0.375rem;
+  background: var(--accent);
+  color: var(--bg);
+  border-radius: var(--radius-sm);
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  margin-right: var(--space-sm);
+  letter-spacing: 0.05em;
+}
+
+.clc-th--b .clc-th-tag {
+  background: var(--success);
+}
+
+.clc-th-name {
+  display: block;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: var(--space-xs);
+}
+
+.clc-th-id {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--muted);
+  font-weight: 400;
+}
+
+/* ── Group Headers ── */
+
+.clc-row-group-header td {
+  padding: var(--space-md) var(--space-lg);
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+  background: var(--bg);
+  border-top: 1px solid var(--border);
+}
+
+/* ── Data Rows ── */
+
+.clc-row {
+  transition: background 0.1s;
+}
+
+.clc-row:hover {
+  background: rgba(88, 166, 255, 0.04);
+}
+
+.clc-row-label {
+  padding: var(--space-md) var(--space-lg);
+  font-weight: 500;
+  color: var(--muted);
+  text-align: left;
+  vertical-align: middle;
+  border-bottom: 1px solid var(--border);
+}
+
+.clc-cell {
+  padding: var(--space-md) var(--space-lg);
+  vertical-align: middle;
+  border-bottom: 1px solid var(--border);
+  position: relative;
+}
+
+.clc-cell--a {
+  border-right: 2px solid transparent;
+}
+
+.clc-cell--b {
+  border-left: 2px solid transparent;
+}
+
+/* ── Diff Highlighting ── */
+
+.clc-row--diff {
+  background: rgba(88, 166, 255, 0.06);
+}
+
+.clc-row--diff:hover {
+  background: rgba(88, 166, 255, 0.1);
+}
+
+.clc-cell--winner {
+  border-color: var(--accent);
+  background: rgba(63, 185, 80, 0.08);
+}
+
+.clc-cell--winner .clc-value {
+  font-weight: 600;
+  color: var(--success);
+}
+
+/* ── Diff Indicator Icon ── */
+
+.clc-diff-indicator {
+  margin-left: var(--space-sm);
+  display: inline-flex;
+  align-items: center;
+  vertical-align: middle;
+}
+
+.clc-diff-indicator--b {
+  /* Right column mirror: visually balance the icon */
+  margin-left: var(--space-sm);
+}
+
+/* ── Cell Content ── */
+
+.clc-value {
+  color: var(--text);
+  font-weight: 500;
+}
+
+.clc-risk-score {
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.clc-util-bar {
+  margin-top: var(--space-sm);
+  width: 100%;
+  height: 6px;
+  background: var(--border);
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+}
+
+.clc-util-fill {
+  height: 100%;
+  border-radius: var(--radius-pill);
+  transition: width 0.3s;
+}
+
+/* ─── Scorecard ────────────────────────────────────────────────────────────── */
+
+.clc-scorecard {
+  max-width: 48rem;
+  margin: 0 auto var(--space-2xl);
+  padding: var(--space-2xl);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  text-align: center;
+}
+
+.clc-scorecard-heading {
+  margin: 0 0 var(--space-md);
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text);
+  line-height: var(--lh-heading);
+}
+
+.clc-scorecard-description {
+  margin: 0 0 var(--space-2xl);
+  font-size: 0.85rem;
+  color: var(--muted);
+  line-height: var(--lh-body);
+}
+
+.clc-scorecard-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-lg);
+}
+
+@media (max-width: 600px) {
+  .clc-scorecard-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.clc-scorecard-item {
+  padding: var(--space-lg);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  align-items: center;
+}
+
+.clc-scorecard-item--a {
+  border-left: 3px solid var(--accent);
+}
+
+.clc-scorecard-item--b {
+  border-left: 3px solid var(--success);
+}
+
+.clc-scorecard-item--ties {
+  border-left: 3px solid var(--muted);
+}
+
+.clc-scorecard-tag {
+  display: inline-block;
+  padding: 0.125rem 0.375rem;
+  background: var(--accent);
+  color: var(--bg);
+  border-radius: var(--radius-sm);
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.clc-scorecard-item--b .clc-scorecard-tag {
+  background: var(--success);
+}
+
+.clc-scorecard-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.clc-scorecard-wins {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ─── Responsive Adjustments ───────────────────────────────────────────────── */
+
+@media (max-width: 900px) {
+  .clc-table {
+    font-size: 0.8rem;
+  }
+
+  .clc-th,
+  .clc-cell,
+  .clc-row-label {
+    padding: var(--space-sm) var(--space-md);
+  }
+
+  .clc-th-name {
+    font-size: 0.85rem;
+  }
+
+  .clc-th-id {
+    font-size: 0.7rem;
+  }
+}
+
+/* ─── Focus Indicators ──────────────────────────────────────────────────────── */
+
+.clc-back-link:focus-visible,
+.clc-action-btn:focus-visible,
+.clc-picker-select:focus-visible,
+.clc-compare-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ─── Screen Reader Only ───────────────────────────────────────────────────── */
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* ─── High Contrast Enhancements ───────────────────────────────────────────── */
+
+[data-contrast="high"] .clc-cell--winner {
+  border-width: 3px;
+}
+
+[data-contrast="high"] .clc-row--diff {
+  background: rgba(88, 166, 255, 0.12);
+}
+
+[data-contrast="high"] .clc-action-btn,
+[data-contrast="high"] .clc-picker-select {
+  border-width: 2px;
+}
