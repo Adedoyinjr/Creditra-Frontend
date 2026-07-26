@@ -4,6 +4,9 @@ import { AlertCircle, AlertTriangle, CheckCircle, Info, ArrowLeft } from 'lucide
 import { PayoffProjection } from '@/components/PayoffProjection';
 import { RepaymentVisualizer } from '@/components/RepaymentVisualizer';
 import { InlineHelpOverlay } from '@/components/InlineHelpOverlay';
+import { ProgressBar } from '@/components/ProgressBar';
+import type { ProgressBarVariant } from '@/components/ProgressBar';
+
 import { EmptyState } from '@/components/EmptyState';
 import { NoOutstandingDebt } from '@/components/illustrations';
 import {
@@ -22,6 +25,13 @@ import { motionClasses, useReducedMotion } from '@/context/ReducedMotionContext'
 import './RepayPage.css';
 
 type RepayStep = 'input' | 'review' | 'success';
+
+function utilizationVariant(pct: number): ProgressBarVariant {
+  if (pct > 80) return 'danger';
+  if (pct > 50) return 'warning';
+  return 'success';
+}
+
 
 const SEVERITY_CONFIG = {
   info: {
@@ -251,18 +261,12 @@ export default function RepayPage() {
                       <p className="text-sm text-muted">{utilization}% utilized</p>
                     </div>
                   </div>
-                  <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-border">
-                    <div
-                      className={`h-full rounded-full ${
-                        utilization > 80
-                          ? 'bg-red-500'
-                          : utilization > 50
-                            ? 'bg-yellow-500'
-                            : 'bg-green-500'
-                      }`}
-                      style={{ width: `${utilization}%` }}
-                    />
-                  </div>
+                  <ProgressBar
+                    value={utilization}
+                    variant={utilizationVariant(utilization)}
+                    label={`${cl.name} utilization percentage`}
+                    size="md"
+                  />
                 </button>
               );
             })}
@@ -319,18 +323,12 @@ export default function RepayPage() {
               <p className="mt-1 text-3xl font-bold text-foreground">
                 {formatMoney(selectedLine.utilized)}
               </p>
-              <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-border">
-                <div
-                  className={`h-full rounded-full ${
-                    oldPct > 80
-                      ? 'bg-red-500'
-                      : oldPct > 50
-                        ? 'bg-yellow-500'
-                        : 'bg-green-500'
-                  }`}
-                  style={{ width: `${oldPct}%` }}
-                />
-              </div>
+              <ProgressBar
+                value={oldPct}
+                variant={utilizationVariant(oldPct)}
+                label={`Current utilization: ${oldPct}%`}
+                size="md"
+              />
               <p className="mt-1 text-xs text-muted">
                 {oldPct}% of {formatMoney(selectedLine.limit)} limit
               </p>
@@ -461,20 +459,18 @@ export default function RepayPage() {
                         </span>
                       </span>
                     </div>
-                    <div className="h-2 w-full overflow-hidden rounded-full bg-border">
-                      <div
-                        className="h-full rounded-full bg-red-500/30 transition-all motion-reduce:transition-none"
-                        style={{ width: `${oldPct}%` }}
-                      />
-                    </div>
-                    <div className="h-2 w-full overflow-hidden rounded-full bg-border">
-                      <div
-                        className={`h-full rounded-full transition-all motion-reduce:transition-none ${
-                          remainingDebt === 0 ? 'bg-green-500' : 'bg-yellow-500'
-                        } ${motionClasses(isReducedMotionActive, 'transition-all')}`}
-                        style={{ width: `${newPct}%` }}
-                      />
-                    </div>
+                    <ProgressBar
+                      value={oldPct}
+                      variant={utilizationVariant(oldPct)}
+                      label={`Previous utilization: ${oldPct}%`}
+                      size="md"
+                    />
+                    <ProgressBar
+                      value={newPct}
+                      variant={remainingDebt === 0 ? 'success' : 'warning'}
+                      label={`New utilization after repayment: ${newPct}%`}
+                      size="md"
+                    />
                   </div>
 
                   <div className="mt-6 flex items-center justify-between border-t border-border pt-4">
