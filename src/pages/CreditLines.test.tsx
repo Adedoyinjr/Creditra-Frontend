@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, within, fireEvent } from "@testing-library/react";
 import { MOCK_CREDIT_LINES } from "../data/mockData";
 import { MemoryRouter } from "react-router-dom";
 import { describe, it, expect } from "vitest";
@@ -123,6 +123,31 @@ describe("CreditLines — Defaulted row visual treatment (issue #223)", () => {
           name: /apr history for emergency reserve line/i,
         }),
       ).toBeInTheDocument();
+    });
+  });
+
+  describe("Empty State", () => {
+    it("renders the EmptyState component when no lines match the filter", () => {
+      renderCreditLines();
+
+      const selects = screen.getAllByRole("combobox");
+      // The first one is Status, the second is Sort By
+      const statusSelect = selects[0];
+
+      // Assuming there are no 'Closed' lines in mock data
+      fireEvent.change(statusSelect, { target: { value: "Closed" } });
+
+      // The EmptyState component uses role="status"
+      const emptyState = screen.getByRole("status");
+      expect(emptyState).toBeInTheDocument();
+      
+      // The heading should say "No matching credit lines"
+      const heading = within(emptyState).getByRole("heading", { level: 2 });
+      expect(heading).toHaveTextContent("No matching credit lines");
+      
+      // CTA button should be "Clear Filters"
+      const clearBtn = within(emptyState).getByRole("button", { name: "Clear Filters" });
+      expect(clearBtn).toBeInTheDocument();
     });
   });
 });

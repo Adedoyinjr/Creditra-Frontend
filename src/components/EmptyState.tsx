@@ -68,10 +68,10 @@ export interface EmptyStateProps
   title: string;
 
   /**
-   * Supporting body copy explaining the situation. Plain text; keep
-   * under ~2 short sentences so the card does not feel overwhelming.
+   * Supporting body copy explaining the situation. Keep under ~2 short sentences
+   * or a concise list so the card does not feel overwhelming.
    */
-  description: string;
+  description: React.ReactNode;
 
   /**
    * Optional eyebrow line rendered above the heading (e.g. "Repay
