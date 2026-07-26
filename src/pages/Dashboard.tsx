@@ -590,35 +590,68 @@ export function Dashboard() {
       <div className="summary-cards" data-tour-target="summaryCards" aria-busy={loading}>
         {loading ? (
           <>
-            {/* ── Summary-card skeletons ──────────────────────────────────────────
-                Heights and radii mirror the final rendered elements exactly so
-                first-paint geometry matches loaded-state geometry (CLS = 0).
-
-                Final .summary-card layout (min-height: 114px, padding: 1.25rem 1.5rem):
-                  .label  — 0.7rem text, line-height --lh-small (1.5) → ~16.8px
-                  .value  — 1.75rem text, line-height --lh-display (1.2) → ~33.6px
-                  .sub    — 0.75rem text, line-height --lh-small (1.5) → ~18px
-
-                Skeleton heights are set to the nearest even integer at 1× pixel
-                density.  Spacing (marginBottom) mirrors padding/gap in the card.
-            ─────────────────────────────────────────────────────────────────── */}
-            <div className="summary-card skeleton-card" aria-hidden="true">
-              {/* label placeholder — 0.7rem cap height ≈ 11px, block at 14px */}
-              <Skeleton width="60%" height={14} shape="rounded" style={{ marginBottom: 'var(--space-2, 8px)' }} />
-              {/* value placeholder — 1.75rem ≈ 28px, block at 32px */}
-              <Skeleton width="80%" height={32} shape="rectangular" style={{ marginBottom: 'var(--space-2, 8px)' }} />
-              {/* sub placeholder — 0.75rem cap height ≈ 12px, block at 12px */}
-              <Skeleton width="40%" height={12} shape="rounded" />
+            <div className="summary-card skeleton-card">
+              <Skeleton
+                style={{
+                  width: "60%",
+                  height: "var(--space-3)",
+                  marginBottom: "var(--space-4)",
+                  borderRadius: "var(--radius-sm)",
+                }}
+              />
+              <Skeleton
+                style={{
+                  width: "80%",
+                  height: "var(--space-8)",
+                  marginBottom: "var(--space-3)",
+                  borderRadius: "var(--radius-sm)",
+                }}
+              />
+              <Skeleton
+                style={{ width: "40%", height: "var(--space-3)", borderRadius: "var(--radius-sm)" }}
+              />
             </div>
-            <div className="summary-card skeleton-card" aria-hidden="true">
-              <Skeleton width="60%" height={14} shape="rounded" style={{ marginBottom: 'var(--space-2, 8px)' }} />
-              <Skeleton width="80%" height={32} shape="rectangular" style={{ marginBottom: 'var(--space-2, 8px)' }} />
-              <Skeleton width="40%" height={12} shape="rounded" />
+            <div className="summary-card skeleton-card">
+              <Skeleton
+                style={{
+                  width: "60%",
+                  height: "var(--space-3)",
+                  marginBottom: "var(--space-4)",
+                  borderRadius: "var(--radius-sm)",
+                }}
+              />
+              <Skeleton
+                style={{
+                  width: "80%",
+                  height: "var(--space-8)",
+                  marginBottom: "var(--space-3)",
+                  borderRadius: "var(--radius-sm)",
+                }}
+              />
+              <Skeleton
+                style={{ width: "40%", height: "var(--space-3)", borderRadius: "var(--radius-sm)" }}
+              />
             </div>
-            <div className="summary-card skeleton-card" aria-hidden="true">
-              <Skeleton width="60%" height={14} shape="rounded" style={{ marginBottom: 'var(--space-2, 8px)' }} />
-              <Skeleton width="80%" height={32} shape="rectangular" style={{ marginBottom: 'var(--space-2, 8px)' }} />
-              <Skeleton width="40%" height={12} shape="rounded" />
+            <div className="summary-card skeleton-card">
+              <Skeleton
+                style={{
+                  width: "60%",
+                  height: "var(--space-3)",
+                  marginBottom: "var(--space-4)",
+                  borderRadius: "var(--radius-sm)",
+                }}
+              />
+              <Skeleton
+                style={{
+                  width: "80%",
+                  height: "var(--space-8)",
+                  marginBottom: "var(--space-3)",
+                  borderRadius: "var(--radius-sm)",
+                }}
+              />
+              <Skeleton
+                style={{ width: "40%", height: "var(--space-3)", borderRadius: "var(--radius-sm)" }}
+              />
             </div>
           </>
         ) : (
@@ -699,7 +732,7 @@ export function Dashboard() {
                 {/* num-tabular: stable percentage display (FWC26) */}
                 <span
                   className="num-tabular"
-                  style={{ fontWeight: 600, color: UTIL_COLOR[overallLevel] }}
+                  style={{ fontWeight: "var(--font-semibold)", color: UTIL_COLOR[overallLevel] }}
                 >
                   {overallPct}%
                 </span>
@@ -763,10 +796,10 @@ export function Dashboard() {
                   data-testid="risk-explainer-trigger"
                   style={{
                     marginLeft: "auto",
-                    fontSize: "0.75rem",
-                    fontWeight: 600,
-                    padding: "0.25rem 0.6rem",
-                    borderRadius: 6,
+                    fontSize: "var(--text-xs)",
+                    fontWeight: "var(--font-semibold)",
+                    padding: "var(--space-1) var(--space-2)",
+                    borderRadius: "var(--radius-sm)",
                     background: "transparent",
                     border: "1px solid var(--border, #30363d)",
                     color: "var(--muted, #8b949e)",
@@ -826,7 +859,7 @@ export function Dashboard() {
              <h2>
                <span className="icon">💳</span> Active Credit Lines
                {!loading && (
-                 <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                 <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: "var(--space-3)" }}>
                    {activeLines.length >= 2 && (
                      <button
                        ref={compareTriggerRef}
@@ -835,10 +868,10 @@ export function Dashboard() {
                        disabled={selectedCompareLines.length !== 2}
                        className="focus-ring"
                        style={{
-                         padding: "0.35rem 0.75rem",
-                         fontSize: "0.75rem",
-                         fontWeight: 600,
-                         borderRadius: "4px",
+                         padding: "var(--space-1) var(--space-3)",
+                         fontSize: "var(--text-xs)",
+                         fontWeight: "var(--font-semibold)",
+                         borderRadius: "var(--radius-sm)",
                          background: selectedCompareLines.length === 2 ? "var(--accent)" : "rgba(139,148,158,0.12)",
                          color: selectedCompareLines.length === 2 ? "#0d1117" : "var(--muted)",
                          border: "none",
@@ -852,7 +885,7 @@ export function Dashboard() {
                    )}
                    <span
                      style={{
-                       fontSize: "0.75rem",
+                       fontSize: "var(--text-xs)",
                        fontWeight: 400,
                        color: COLOR.muted,
                      }}
@@ -877,46 +910,159 @@ export function Dashboard() {
                <>
                  <div className="cl-preview-item" aria-hidden="true">
                    <div style={{ flex: 1, minWidth: 0 }}>
-                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.4rem' }}>
-                       {/* .cl-preview-name — 0.875rem font / 14px */}
-                       <Skeleton width={100} height={14} shape="rounded" />
-                       {/* StatusBadge pill placeholder */}
-                       <Skeleton width={50} height={18} shape="pill" />
+                     <div
+                       style={{
+                         display: "flex",
+                         alignItems: "center",
+                         gap: "var(--space-2)",
+                         marginBottom: "var(--space-1)",
+                       }}
+                     >
+                       <Skeleton
+                         style={{
+                           width: "100px",
+                           height: "var(--space-3)",
+                           borderRadius: "2px",
+                         }}
+                       />
+                       <Skeleton
+                         style={{
+                           width: "50px",
+                           height: "var(--space-3)",
+                           borderRadius: "var(--radius-sm)",
+                         }}
+                       />
                      </div>
                      {/* .cl-preview-id — 0.7rem mono / 11px, block at 10px */}
                      <Skeleton width={120} height={10} shape="rounded" />
                    </div>
-                   <div className="cl-preview-right" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.4rem' }}>
-                     {/* .cl-preview-amount — 0.875rem / 14px */}
-                     <Skeleton width={80} height={14} shape="rounded" />
-                     {/* .cl-preview-bar — 80px × 3px */}
-                     <Skeleton width={80} height={3} shape="rounded" />
+                   <div
+                     className="cl-preview-right"
+                     style={{
+                       display: "flex",
+                       flexDirection: "column",
+                       alignItems: "flex-end",
+                       gap: "var(--space-1)",
+                     }}
+                   >
+                     <Skeleton
+                       style={{
+                         width: "80px",
+                         height: "var(--space-3)",
+                         borderRadius: "2px",
+                       }}
+                     />
+                     <Skeleton
+                       style={{
+                         width: "60px",
+                         height: "6px",
+                         borderRadius: "2px",
+                       }}
+                     />
                    </div>
                  </div>
                  <div className="cl-preview-item" aria-hidden="true">
                    <div style={{ flex: 1, minWidth: 0 }}>
-                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.4rem' }}>
-                       <Skeleton width={80} height={14} shape="rounded" />
-                       <Skeleton width={50} height={18} shape="pill" />
+                     <div
+                       style={{
+                         display: "flex",
+                         alignItems: "center",
+                         gap: "var(--space-2)",
+                         marginBottom: "var(--space-1)",
+                       }}
+                     >
+                       <Skeleton
+                         style={{
+                           width: "80px",
+                           height: "var(--space-3)",
+                           borderRadius: "2px",
+                         }}
+                       />
+                       <Skeleton
+                         style={{
+                           width: "50px",
+                           height: "var(--space-3)",
+                           borderRadius: "var(--radius-sm)",
+                         }}
+                       />
                      </div>
                      <Skeleton width={100} height={10} shape="rounded" />
                    </div>
-                   <div className="cl-preview-right" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.4rem' }}>
-                     <Skeleton width={70} height={14} shape="rounded" />
-                     <Skeleton width={80} height={3} shape="rounded" />
+                   <div
+                     className="cl-preview-right"
+                     style={{
+                       display: "flex",
+                       flexDirection: "column",
+                       alignItems: "flex-end",
+                       gap: "var(--space-1)",
+                     }}
+                   >
+                     <Skeleton
+                       style={{
+                         width: "70px",
+                         height: "var(--space-3)",
+                         borderRadius: "2px",
+                       }}
+                     />
+                     <Skeleton
+                       style={{
+                         width: "50px",
+                         height: "6px",
+                         borderRadius: "2px",
+                       }}
+                     />
                    </div>
                  </div>
                  <div className="cl-preview-item" aria-hidden="true">
                    <div style={{ flex: 1, minWidth: 0 }}>
-                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.4rem' }}>
-                       <Skeleton width={90} height={14} shape="rounded" />
-                       <Skeleton width={50} height={18} shape="pill" />
+                     <div
+                       style={{
+                         display: "flex",
+                         alignItems: "center",
+                         gap: "var(--space-2)",
+                         marginBottom: "var(--space-1)",
+                       }}
+                     >
+                       <Skeleton
+                         style={{
+                           width: "90px",
+                           height: "var(--space-3)",
+                           borderRadius: "2px",
+                         }}
+                       />
+                       <Skeleton
+                         style={{
+                           width: "50px",
+                           height: "var(--space-3)",
+                           borderRadius: "var(--radius-sm)",
+                         }}
+                       />
                      </div>
                      <Skeleton width={110} height={10} shape="rounded" />
                    </div>
-                   <div className="cl-preview-right" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.4rem' }}>
-                     <Skeleton width={60} height={14} shape="rounded" />
-                     <Skeleton width={80} height={3} shape="rounded" />
+                   <div
+                     className="cl-preview-right"
+                     style={{
+                       display: "flex",
+                       flexDirection: "column",
+                       alignItems: "flex-end",
+                       gap: "var(--space-1)",
+                     }}
+                   >
+                     <Skeleton
+                       style={{
+                         width: "60px",
+                         height: "var(--space-3)",
+                         borderRadius: "2px",
+                       }}
+                     />
+                     <Skeleton
+                       style={{
+                         width: "40px",
+                         height: "6px",
+                         borderRadius: "2px",
+                       }}
+                     />
                    </div>
                  </div>
                </>
@@ -958,7 +1104,7 @@ export function Dashboard() {
                          </div>
                        )}
                        <div style={{ flex: 1, minWidth: 0 }}>
-                         <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.2rem" }}>
+                         <div style={{ display: "flex", alignItems: "center", gap: "var(--space-2)", marginBottom: "0.2rem" }}>
                            <p className="cl-preview-name">{cl.name}</p>
                            <StatusBadge status={cl.status} />
                          </div>
@@ -967,18 +1113,11 @@ export function Dashboard() {
                        <div className="cl-preview-right">
                          {/* num-tabular: stable utilized/limit amounts (FWC26) */}
                          <div className="cl-preview-amount num-tabular">
-                           {fmt(cl.utilized)} <span style={{ color: COLOR.muted, fontWeight: 400, fontSize: "0.75rem" }}>/ {fmt(cl.limit)}</span>
-                         </div>                          <div className="cl-preview-bar">
-                            {/*
-                              v7 color-blind: per-line mini util bar also
-                              gets the util-fill--{level} overlay so the
-                              shape cue matches the headline bar above.
-                            */}
-                            <div
-                              className={`cl-preview-bar-fill util-fill--${level}`}
-                              style={{ width: `${pct}%`, background: UTIL_COLOR[level] }}
-                            />
-                          </div>
+                           {fmt(cl.utilized)} <span style={{ color: COLOR.muted, fontWeight: 400, fontSize: "var(--text-xs)" }}>/ {fmt(cl.limit)}</span>
+                         </div>
+                         <div className="cl-preview-bar">
+                           <div className="cl-preview-bar-fill" style={{ width: `${pct}%`, background: UTIL_COLOR[level] }} />
+                         </div>
                        </div>
                      </div>
                    );
@@ -1076,33 +1215,29 @@ export function Dashboard() {
                   Title and sub use text-line heights at their rendered caps.
                ────────────────────────────────────────────────────────────── */
                <>
-                 <div className="activity-item" aria-hidden="true">
-                   {/* .activity-icon — 28 × 28, border-radius: 6px ≈ --radius-sm */}
-                   <Skeleton width={28} height={28} shape="rectangular" className="activity-icon" />
-                   <div className="activity-content" style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                     {/* .activity-title — 0.825rem → 14px block */}
-                     <Skeleton width={120} height={14} shape="rounded" />
-                     {/* .activity-sub — 0.725rem → 10px block */}
-                     <Skeleton width={180} height={10} shape="rounded" />
+                 <div className="activity-item">
+                   <Skeleton className="activity-icon" style={{ borderRadius: "6px" }} />
+                   <div className="activity-content" style={{ display: "flex", flexDirection: "column", gap: "var(--space-1)" }}>
+                     <Skeleton style={{ width: "120px", height: "var(--space-3)", borderRadius: "2px" }} />
+                     <Skeleton style={{ width: "180px", height: "10px", borderRadius: "2px" }} />
                    </div>
-                   {/* .activity-amount — 0.825rem → 14px block */}
-                   <Skeleton width={60} height={14} shape="rounded" style={{ marginLeft: 'auto' }} />
+                   <Skeleton style={{ width: "60px", height: "var(--space-3)", marginLeft: "auto", borderRadius: "2px" }} />
                  </div>
-                 <div className="activity-item" aria-hidden="true">
-                   <Skeleton width={28} height={28} shape="rectangular" className="activity-icon" />
-                   <div className="activity-content" style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                     <Skeleton width={100} height={14} shape="rounded" />
-                     <Skeleton width={150} height={10} shape="rounded" />
+                 <div className="activity-item">
+                   <Skeleton className="activity-icon" style={{ borderRadius: "6px" }} />
+                   <div className="activity-content" style={{ display: "flex", flexDirection: "column", gap: "var(--space-1)" }}>
+                     <Skeleton style={{ width: "100px", height: "var(--space-3)", borderRadius: "2px" }} />
+                     <Skeleton style={{ width: "150px", height: "10px", borderRadius: "2px" }} />
                    </div>
-                   <Skeleton width={50} height={14} shape="rounded" style={{ marginLeft: 'auto' }} />
+                   <Skeleton style={{ width: "50px", height: "var(--space-3)", marginLeft: "auto", borderRadius: "2px" }} />
                  </div>
-                 <div className="activity-item" aria-hidden="true">
-                   <Skeleton width={28} height={28} shape="rectangular" className="activity-icon" />
-                   <div className="activity-content" style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                     <Skeleton width={140} height={14} shape="rounded" />
-                     <Skeleton width={160} height={10} shape="rounded" />
+                 <div className="activity-item">
+                   <Skeleton className="activity-icon" style={{ borderRadius: "6px" }} />
+                   <div className="activity-content" style={{ display: "flex", flexDirection: "column", gap: "var(--space-1)" }}>
+                     <Skeleton style={{ width: "140px", height: "var(--space-3)", borderRadius: "2px" }} />
+                     <Skeleton style={{ width: "160px", height: "10px", borderRadius: "2px" }} />
                    </div>
-                   <Skeleton width={70} height={14} shape="rounded" style={{ marginLeft: 'auto' }} />
+                   <Skeleton style={{ width: "70px", height: "var(--space-3)", marginLeft: "auto", borderRadius: "2px" }} />
                  </div>
                </>
              ) : recentActivity.length === 0 ? (
