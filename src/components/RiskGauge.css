@@ -270,6 +270,9 @@
   fill: var(--text);
   text-anchor: middle;
   dominant-baseline: middle;
+  /* Tabular numerals prevent digit-width wobble as score animates */
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
 }
 
 .risk-gauge-label {
