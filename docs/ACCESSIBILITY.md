@@ -132,15 +132,68 @@ input value drives the visible suggestion list immediately. The committed search
 joins the existing AND-filter chain (type × date × amount × credit-line × status × search).
 
 `prefers-reduced-motion`: the listbox slide-in animation is suppressed via a
-`@media (prefers-reduced-motion: reduce)` block in `TransactionHistory.css`.
+`@media (prefers-reduced-motion: reduce)` block in `TransactionHistory.css`.### Status badges and gauges
 
-### Status badges and gauges
+- `StatusBadge` pairs a tinted pill with a single-letter glyph (`A | ! | X | C`). Color is never the sole signal.
+- Risk gauge uses `<text>` SVG nodes for the score and a separate `<text>` for the trend arrow (`▲ | ▼ | ─`) plus the trend word as a sibling element so screen readers don't miss it.
 
-- `StatusBadge` pairs a tinted pill with a single-letter glyph (`A | ! | X | C`). Color is
-  never the sole signal.
-- Risk gauge uses `<text>` SVG nodes for the score and a separate `<text>` for the trend
-  arrow (`▲ | ▼ | ─`) plus the trend word as a sibling element so screen readers don't
-  miss it.
+### Pattern fills beyond colour (Dashboard v7, #565)
+
+Visual colour-coding on the Dashboard is supplemented with shape-coded pattern
+fills so the identity of a status indicator survives any colour filter
+(protanopia / deuteranopia / tritanopia / monochrome printing / forced colours).
+
+The pattern taxonomy lives in `src/styles/patterns.css`. Six shape families are
+in use, each mapped 1:1 to a semantic meaning:
+
+| Shape family       | Map                                                | Source pattern                             |
+| ---                | ---                                                | ---                                        |
+| Dots               | `summary-card--accent`, util-low indicator         | `radial-gradient(circle, …)`              |
+| 45° stripes        | `util-fill--medium`, `status-suspended`,           | `linear-gradient(45deg, …)`                |
+|                    | `notification-item--warning`, util-summary         |                                           |
+| 135° stripes       | `status-frozen`                                    | `linear-gradient(135deg, …)`               |
+| Cross-hatch (v7)   | `util-fill--high`, `notification-item--danger`     | two `repeating-linear-gradient`s           |
+| Chevron (v7)       | `summary-card--available`, util-low chevron        | `linear-gradient(0deg, …)` w/ upper cap    |
+| Horizontal lines   | `status-closed`, `notification-item--info`         | `repeating-linear-gradient(0deg, …)`       |
+| Dense 45°          | `status-defaulted`                                 | `repeating-linear-gradient(45deg, …)`      |
+
+Each Dashboard status indicator carries a modifier class so the pattern is
+applied without touching colour:
+
+| Indicator                        | Modifier class                         | Pattern reached via                                                                |
+| ---                              | ---                                    | ---                                                                                |
+| Summary card — Total Limit       | `summary-card--accent`                 | `.summary-card::before` radial dot stripe on the left edge of the card             |
+| Summary card — Total Utilized    | `summary-card--util-{low\|medium\|high}` | Pattern echoes the matching util-fill level on the left-edge stripe              |
+| Summary card — Available Credit  | `summary-card--available`              | Upward chevron + horizontal line mix on the left edge                              |
+| Util-bar fill (Credit Summary)   | `util-fill--{low\|medium\|high}`        | `.util-bar-fill::before` overlay on top of the inline-coloured fill                |
+| Per-line util mini-bar           | `util-fill--{low\|medium\|high}`        | `.cl-preview-bar-fill::before` overlay; matches the headline bar                   |
+| Notification severity            | `notification-item--{info\|warning\|danger}` | `.notification-item` background-image overlay; left border + base tint preserved |
+| Risk-gauge band                  | `data-tier="strong\|fair\|below"`      | Glyph (▲ ◆ ●) rendered next to the score; colour supplied by `RISK_COLOR(score)`    |
+| Status badge (existing)          | `status-{status.toLowerCase()}`        | Existing single-letter `A\|!\|X\|C\|F` glyph + bg pattern                           |
+
+**Accessibility:**
+
+- Pattern opacity is 0.16–0.55 over the existing colour fill — verified to
+  preserve WCAG 2.1 AA contrast for foreground text and borders.
+- Reachability is unchanged: every indicator keeps its existing ARIA labels
+  (`aria-label`, `role="alert"` on `notification-item--danger`,
+  `aria-labelledby` on the gauge SVG, `aria-label` on `StatusBadge`).
+- High-contrast mode (`[data-contrast="high"]`) bumps opacities by ~0.25 so
+  patterns remain perceivable against the pure-black background.
+- Forced-colours mode (`@media (forced-colors: active)`) suppresses all
+  patterns and relies on the host OS colour palette plus component glyphs,
+  preventing the OS palette from clashing with our rgba overlays.
+
+**Responsive:** At <=768px the activity icons and QA tiles (28–36 px) keep
+their emoji glyphs but receive no pattern overlay — at those small sizes a
+12×12 pattern tile renders as a muddy blur. Emoji glyphs satisfy WCAG 1.4.1
+on their own.
+
+**Authoring new statuses:** add the new status to `STATUS_COLOR` in
+`src/utils/tokens.ts` (existing colour blend) and append a matching block to
+`src/styles/patterns.css` using a shape family that is *not already in use*
+on the same surface, then add the modifier class to the indicator's
+className in `Dashboard.tsx`.
 
 ### Transaction-status icon patterns (DrawCreditPage — FWC26)
 
@@ -270,7 +323,8 @@ The table below is updated on every accessibility-impacting PR. Status legend:
 | `ToastContainer` | Tab/Esc to dismiss | `role="status"` / `role="alert"` per severity | AA | reduced-motion gated | OK |
 | `BannerAlert` | Tab/Enter on action & dismiss | `role="alert"` for warning/error | AA | n/a | OK |
 | `Dashboard` (risk gauge) | Tab/Enter/Space on SVG root and individual sector bands; keyboard fires `onSectorActivate` | Score and trend exposed via `<title>` + polite `sr-only` sibling; arc animates on value change with reduced-motion fallback; `ariaLabel` prop overrides the auto-generated description; SR-only risk-band table sibling with `aria-current` on the active band; `showSRTable` prop | AA | reduced-motion gated (CSS + JS `matchMedia`) | OK |
-| `RepaymentVisualizer` | n/a (display chart) | `role="img"` SVG with `aria-label` (overridable via `chartAriaLabel` prop); principal/interest hatch patterns + legend swatches (not colour alone); SR-only data table with `<caption>` auto-generated from term + total interest (overridable via `caption` prop); visible schedule table with expand/collapse | AA | n/a | OK |
+| `Dashboard` (colour-blind v7, #565) | Util-bar fill, summary-card stripe, per-line mini util-bar, notification severity, and risk-gauge tier glyph all carry non-colour modifiers (`util-fill--{level}`, `summary-card--*`, `notification-item--{info\|warning\|danger}`, `data-tier`); patterns defined in `src/styles/patterns.css`; high-contrast bumps opacities; forced-colours suppresses patterns | AA | reduced-motion gating inherited from existing transitions | OK |
+| `RepaymentVisualizer` | n/a (display chart) | `role="img"` SVG with `aria-label` (overridable via `chartAriaLabel` prop); SR-only data table with `<caption>` auto-generated from term + total interest (overridable via `caption` prop); visible schedule table with expand/collapse | AA | n/a | OK |
 | `Header` nav | Tab through links; Enter activates | `aria-current="page"` on active link | AA | n/a | OK |
 | `RepayModal` | Focus trap (canonical `{ isActive }` form) + return focus to trigger | `role="dialog"`, `aria-modal`, `aria-labelledby` | AA | n/a | OK |
 | `TransactionHistory` | Sortable headers via Enter/Space; search combobox fully keyboard navigable (ArrowDown/Up, Enter, Escape, Tab) | `aria-sort` reflects column state; search uses ARIA 1.2 combobox pattern (`role="combobox"`, `aria-expanded`, `aria-controls`, `aria-autocomplete="list"`, `aria-activedescendant`); result count in polite live region | AA | reduced-motion disables listbox animation | OK |

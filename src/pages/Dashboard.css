@@ -275,6 +275,40 @@
     letter-spacing: 0.08em;
 }
 
+/*
+ * v7 — color-blind tier glyph (closes #565):
+ *   ▲ ≥700    (strong  / "look up")
+ *   ◆ 600–699 (fair    / "watch")
+ *   ●   <600  (below   / "act now")
+ * Pattern shape alone communicates risk band for color-blind users; color
+ * is supplied by the inline `style={{ color: gaugeColor }}` set by
+ * RiskGauge so the glyph stays aligned with the band.
+ */
+.risk-gauge-tier-wrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  margin-top: 0.25rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  line-height: var(--lh-small);
+}
+
+.risk-gauge-tier-glyph {
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1;
+  display: inline-block;
+}
+
+.risk-gauge-tier-glyph[data-tier="strong"],
+.risk-gauge-tier-glyph[data-tier="fair"],
+.risk-gauge-tier-glyph[data-tier="below"] {
+  /* Shape alone communicates the band — no decorative translation shift. */
+  transform: none;
+}
+
 .risk-meta {
     display: flex;
     gap: 1.5rem;
@@ -559,7 +593,13 @@
 }
 
 /* ─── Notifications ─────────────────────────────────────────────────────────── */
-
+/*
+ * The base `.notification-item` paints a tinted background via `background:`
+ * (shorthand → background-image: none).  Patterns.css loads *after* this
+ * file via Dashboard.tsx, so its `.notification-item--{info|warning|danger}`
+ * `background-image` rule later sets the colour-blind pattern overlay on top
+ * of that tint.  Stacking order relies on the import order in Dashboard.tsx.
+ */
 .notification-item {
     display: flex;
     align-items: flex-start;

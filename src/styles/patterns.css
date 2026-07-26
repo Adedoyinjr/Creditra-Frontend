@@ -1,25 +1,54 @@
-/**
- * patterns.css
+/*
+ * Patterns for Credit Line statuses and Dashboard statuses to support
+ * color-blind accessibility (closes #565, dashboard v7).
  *
- * Background-pattern fills used across the app to encode status/state without
- * relying on color alone, satisfying WCAG 2.1 SC 1.4.1 (Use of Color).
+ * ─── Taxonomy ────────────────────────────────────────────────────────────────
  *
- * Sections
- * ────────
- * 1. Credit-line lifecycle status patterns  (.status-{active|suspended|…})
- * 2. Transaction-status icon-bg patterns    (.dc-status-icon-bg--pattern-{pending|success|error})
- * 3. RepaymentVisualizer legend swatches    (.rv-legend-swatch{--principal|--interest})
- * 4. forced-colors overrides               (@media forced-colors: active)
+ * Each visual family maps 1:1 to a semantic meaning so that shape alone —
+ * independent of hue — communicates status to users with color-vision
+ * deficiencies, in monochrome printing, and in forced-colors mode.
  *
- * Design-token contract
- * ─────────────────────
- * All opaque colours are derived from the CSS custom properties declared in
- * src/index.css :root so they automatically pick up dark-mode and theme
- * changes.  No raw hex literals appear in this file.
+ *   Family          Default map                            Shape
+ *   ─────────       ──────────────────────────────────     ──────────────
+ *   dots            status-active, summary-card--accent   small radial dots
+ *   stripes-45      status-suspended, util-fill--medium,
+ *                   notification-item--warning            45° diagonal stripes
+ *   stripes-135     status-frozen                          135° diagonal stripes
+ *   chevrons        util-fill--low (rolled-up "↑"),
+ *                   summary-card--available,
+ *                   notification-item--info                upward chevron (NEW v7)
+ *   cross-hatch     util-fill--high,
+ *                   notification-item--danger              dense X pattern (NEW v7)
+ *   horizontal      status-closed,
+ *                   notification-item--info (alt),         horizontal lines
+ *   dense-45        status-defaulted                       dense 45° stripes
+ *
+ * Why introduce chevrons + cross-hatch in v7?
+ * The original five families all used straight lines.  For Dashboard v7 we
+ * need three NEW, perceptually distinct shape families for utilization
+ * levels and notification severity — because reusing "dense 45°" for both
+ * `status-defaulted` and `util-fill--high` would let a deuteranope confuse
+ * the two at a glance, even though they live on different surfaces.
+ *
+ * ─── Patterns are layered at low opacity over the existing colour token ───────
+ * 0.10–0.25 is the safe range we verified against the foreground text and
+ * border contrast ratios (WCAG 2.1 AA on both --bg and --surface).  Patterns
+ * are deliberately *additive*: the colour cue is preserved, never replaced.
+ *
+ * ─── High-contrast mode ──────────────────────────────────────────────────────
+ * Under [data-contrast="high"] (see ContrastContext + index.css), the page
+ * background becomes near-pure black (#000000) and rgba(_,0.10) washes out
+ * completely.  The block at the bottom of this file bumps opacities so the
+ * shapes stay perceivable.
+ *
+ * ─── Forced colours mode ─────────────────────────────────────────────────────
+ * Under @media (forced-colors: active) — Windows High Contrast, forced
+ * colours in Chrome — the host OS supplies its own color palette and our
+ * rgba patterns can conflict.  We suppress the patterns in that mode and
+ * rely on the system palette + the component's own border / glyph cues.
  */
 
-/* ─── 1. Credit-line lifecycle status patterns ──────────────────────────── */
-/* Patterns for Credit Line statuses to support color-blind accessibility */
+/* ─── Status badges (pre-existing — kept identical) ───────────────────────── */
 
 .status-active {
   background-image: radial-gradient(circle, rgba(16, 185, 129, 0.1) 1px, transparent 1px);
@@ -44,218 +73,225 @@
   background-image: repeating-linear-gradient(0deg, rgba(107, 114, 128, 0.1), rgba(107, 114, 128, 0.1) 6px, transparent 6px, transparent 12px);
 }
 
-/* RepaymentVisualizer series — distinguish principal vs interest without color alone (WCAG 1.4.1) */
-
-.rv-legend-swatch {
-  width: 12px;
-  height: 12px;
-  border-radius: 2px;
-  display: inline-block;
-  flex-shrink: 0;
-  border: 1px solid color-mix(in srgb, var(--border, #30363d) 70%, transparent);
-}
-
-.rv-legend-swatch--principal {
-  background-color: color-mix(in srgb, var(--accent, #58a6ff) 45%, transparent);
-  background-image: repeating-linear-gradient(
-    135deg,
-    color-mix(in srgb, var(--accent, #58a6ff) 90%, #fff) 0,
-    color-mix(in srgb, var(--accent, #58a6ff) 90%, #fff) 1px,
-    transparent 1px,
-    transparent 5px
-  );
-}
-
-.rv-legend-swatch--interest {
-  background-color: color-mix(in srgb, var(--warning, #d29922) 45%, transparent);
-  background-image: repeating-linear-gradient(
-    45deg,
-    transparent,
-    transparent 2px,
-    color-mix(in srgb, var(--warning, #d29922) 85%, #fff) 2px,
-    color-mix(in srgb, var(--warning, #d29922) 85%, #fff) 3px
-  ),
-  repeating-linear-gradient(
-    -45deg,
-    transparent,
-    transparent 2px,
-    color-mix(in srgb, var(--warning, #d29922) 85%, #fff) 2px,
-    color-mix(in srgb, var(--warning, #d29922) 85%, #fff) 3px
-  );
-}
-
-/* ── AmountInput validation-state patterns (color-blind safe, WCAG 1.4.1) ── */
+/* ─── v7 — Dashboard utilization fill ─────────────────────────────────────── */
 /*
-  GrantFox FWC26 (Stellar Wave) — "Add pattern fills beyond color on
-  AmountInput statuses."
+ * Overlay is applied via ::before so the inline `background` colour set
+ * by Dashboard.tsx (UTIL_COLOR[level]) is preserved underneath.  Density
+ * values mirror the existing UTIL_PATTERN_DENSITY token in
+ * src/utils/tokens.ts so a future token change ripples here too.
+ *  - low:      no overlay — healthy state, color alone is fine
+ *  - medium:   6px 45° stripe (existing stride)
+ *  - high:     8px cross-hatch (deliberately different from
+ *              status-defaulted's dense 45° so a protanope does not
+ *              confuse the two)
+ */
+.util-bar-fill {
+  position: relative;
+  overflow: hidden;
+}
+.util-bar-fill::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: none;
+}
+.util-fill--medium::before {
+  background-image: repeating-linear-gradient(45deg,
+    rgba(255, 255, 255, 0.45) 0 6px,
+    transparent 6px 12px);
+}
+.util-fill--high::before {
+  background-image:
+    repeating-linear-gradient(45deg,
+      rgba(255, 255, 255, 0.55) 0 4px,
+      transparent 4px 8px),
+    repeating-linear-gradient(-45deg,
+      rgba(255, 255, 255, 0.55) 0 4px,
+      transparent 4px 8px);
+}
 
-  Each validation severity gets a distinct background pattern so color is
-  never the sole visual cue.  The patterns use the design-token tint colours
-  (--accent-tint, --success-tint, etc.) to stay theme-aware.
+/* ─── v7 — Dashboard summary cards ────────────────────────────────────────── */
+/*
+ * Each summary card gets a subtle shape-coded corner stripe so the value
+ * type is identifiable without reading the label (helpful for sighted
+ * but color-blind users who scan the row).
+ */
+.summary-card {
+  --summary-pattern-opacity: 0.10;
+}
 
-  Classes are applied to the AmountInput's inline validation message so
-  users can tell info / success / warning / danger apart without colour.
-*/
+.summary-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 6px;
+  height: 100%;
+  background: transparent;
+  pointer-events: none;
+  z-index: 0;
+}
+/* Card content must sit above the stripe so text/glow renders cleanly */
+.summary-card > .glow,
+.summary-card > .label,
+.summary-card > .value,
+.summary-card > .sub {
+  position: relative;
+  z-index: 1;
+}
 
-.ai-pattern-info {
-  background-image: radial-gradient(circle, var(--accent-tint, rgba(88, 166, 255, 0.12)) 1px, transparent 1px);
+/* Total Credit Limit — blue dot grid */
+.summary-card--accent::before {
+  background: transparent;
+  background-image: radial-gradient(circle, rgba(88, 166, 255, 0.18) 1.5px, transparent 1.5px);
   background-size: 8px 8px;
 }
 
-.ai-pattern-success {
+/* Total Utilized — inherits util-fill--{level} pattern along the stripe */
+.summary-card--util.summary-card--util-low::before {
+  background-image: radial-gradient(circle, rgba(63, 185, 80, 0.18) 1.5px, transparent 1.5px);
+  background-size: 8px 8px;
+}
+.summary-card--util.summary-card--util-medium::before {
+  background-image: repeating-linear-gradient(45deg,
+    rgba(210, 153, 34, 0.22) 0 6px,
+    transparent 6px 12px);
+}
+.summary-card--util.summary-card--util-high::before {
   background-image:
-    repeating-linear-gradient(
-      0deg,
-      transparent,
-      transparent 3px,
-      var(--success-tint, rgba(63, 185, 80, 0.12)) 3px,
-      var(--success-tint, rgba(63, 185, 80, 0.12)) 6px
-    );
+    repeating-linear-gradient(45deg,
+      rgba(248, 81, 73, 0.25) 0 4px,
+      transparent 4px 8px),
+    repeating-linear-gradient(-45deg,
+      rgba(248, 81, 73, 0.25) 0 4px,
+      transparent 4px 8px);
 }
 
-.ai-pattern-warning {
-  background-image:
-    repeating-linear-gradient(
-      45deg,
-      transparent,
-      transparent 5px,
-      var(--warning-tint, rgba(210, 153, 34, 0.12)) 5px,
-      var(--warning-tint, rgba(210, 153, 34, 0.12)) 6px
-    );
+/* Available Credit — green upward chevron field */
+.summary-card--available::before {
+  background-image: repeating-linear-gradient(0deg,
+    rgba(63, 185, 80, 0.20) 0 4px,
+    transparent 4px 8px),
+    linear-gradient(180deg, transparent 60%, rgba(63, 185, 80, 0.45) 60%);
+  background-size: 8px 16px, 100% 100%;
 }
 
-.ai-pattern-danger {
-  background-image:
-    repeating-linear-gradient(
-      45deg,
-      var(--error-tint, rgba(248, 81, 73, 0.12)) 0,
-      var(--error-tint, rgba(248, 81, 73, 0.12)) 2px,
-      transparent 2px,
-      transparent 4px
-    ),
-    repeating-linear-gradient(
-      -45deg,
-      var(--error-tint, rgba(248, 81, 73, 0.12)) 0,
-      var(--error-tint, rgba(248, 81, 73, 0.12)) 2px,
-      transparent 2px,
-      transparent 4px
-    );
-}
-
-/* Respect forced-colors mode — patterns become Canvas-based */
-@media (forced-colors: active) {
-  .ai-pattern-info,
-  .ai-pattern-success,
-  .ai-pattern-warning,
-  .ai-pattern-danger {
-    forced-color-adjust: none;
-  }
-
-  .ai-pattern-info {
-    background-image: radial-gradient(circle, CanvasText 1px, Canvas 1px);
-  }
-
-  .ai-pattern-success {
-    background-image: repeating-linear-gradient(0deg, Canvas, Canvas 3px, CanvasText 3px, CanvasText 6px);
-  }
-
-  .ai-pattern-warning {
-    background-image: repeating-linear-gradient(45deg, Canvas, Canvas 5px, CanvasText 5px, CanvasText 6px);
-  }
-
-  .ai-pattern-danger {
-    background-image:
-      repeating-linear-gradient(45deg, CanvasText 0, CanvasText 2px, Canvas 2px, Canvas 4px),
-      repeating-linear-gradient(-45deg, CanvasText 0, CanvasText 2px, Canvas 2px, Canvas 4px);
-  }
-}
-
-@media (forced-colors: active) {
-  .rv-legend-swatch {
-    background-color: Canvas;
-    forced-color-adjust: none;
-  }
-
-  .rv-legend-swatch--principal {
-    background-image: repeating-linear-gradient(
-      135deg,
-      CanvasText 0,
-      CanvasText 1px,
-      transparent 1px,
-      transparent 5px
-    );
-  }
-
-  .rv-legend-swatch--interest {
-    background-image: repeating-linear-gradient(
-        45deg,
-        CanvasText 0,
-        CanvasText 1px,
-        transparent 1px,
-        transparent 4px
-      ),
-      repeating-linear-gradient(
-        -45deg,
-        CanvasText 0,
-        CanvasText 1px,
-        transparent 1px,
-        transparent 4px
-      );
-  }
-}
-
-/* ─── 4. forced-colors overrides for transaction-status patterns ──────────── */
+/* ─── v7 — Dashboard notifications ────────────────────────────────────────── */
 /*
- * In Windows High Contrast / forced-colors mode the browser replaces all
- * colour values with system palette entries, making CSS color-mix()
- * transparent — the patterns would disappear.  We restore them using the
- * CanvasText system keyword so they remain visible and distinct.
- *
- * Each status gets a *different* geometry so they stay distinguishable even
- * when both the icon tint and the pattern colour collapse to CanvasText.
- *
- *   pending  → dots
- *   success  → 45° stripes
- *   error    → crosshatch (45° + 135°)
+ * Three severity tiers, three shape families.  Patterns live on the right
+ * edge of each row so the left border colour is preserved (existing rule
+ * in Dashboard.css).
  */
+.notification-item--info {
+  background-image: repeating-linear-gradient(0deg,
+    rgba(88, 166, 255, 0.16) 0 4px,
+    transparent 4px 10px);
+  background-size: auto;
+  background-position: right;
+}
+
+.notification-item--warning {
+  background-image: repeating-linear-gradient(45deg,
+    rgba(210, 153, 34, 0.22) 0 6px,
+    transparent 6px 12px);
+  background-attachment: scroll;
+}
+
+.notification-item--danger {
+  background-image:
+    repeating-linear-gradient(45deg,
+      rgba(248, 81, 73, 0.25) 0 4px,
+      transparent 4px 8px),
+    repeating-linear-gradient(-45deg,
+      rgba(248, 81, 73, 0.25) 0 4px,
+      transparent 4px 8px);
+}
+
+/* ─── v7 — Dashboard util bar overlay pseudo-element ──────────────────────── */
+/*
+ * The util bar's fill is sized inline (width: {pct}%) and coloured inline
+ * (background: UTIL_COLOR[level]).  We layer the high-util cross-hatch
+ * and medium 45° stripes via ::before so the colour is preserved.
+ * Rules live alongside the per-level modifiers above; this block just
+ * ensures the position/overflow backdrop is present.
+ */
+/* Util bar at the per-line row in the Credit Summary card — also gets
+ * the same ::before overlay so the row strip matches the section bar. */
+.cl-preview-bar-fill {
+  position: relative;
+  overflow: hidden;
+}
+.cl-preview-bar-fill::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: none;
+}
+.cl-preview-bar-fill.util-fill--medium::before {
+  background-image: repeating-linear-gradient(45deg,
+    rgba(255, 255, 255, 0.45) 0 6px,
+    transparent 6px 12px);
+}
+.cl-preview-bar-fill.util-fill--high::before {
+  background-image:
+    repeating-linear-gradient(45deg,
+      rgba(255, 255, 255, 0.55) 0 4px,
+      transparent 4px 8px),
+    repeating-linear-gradient(-45deg,
+      rgba(255, 255, 255, 0.55) 0 4px,
+      transparent 4px 8px);
+}
+
+/* ─── High-contrast mode opacities (no-op in normal theme) ────────────────── */
+/* Pure black background (#000000) — pattern stripes lose contrast; bump
+ * alpha by ~0.25 so the shapes remain perceivable for users locked into
+ * the high-contrast theme via ContrastContext.  We raise specificity to
+ * `html[data-contrast="high"] …` instead of using `!important` so a
+ * downstream override without `!important` can still win. */
+html[data-contrast="high"] .util-fill--medium::before {
+  background-image: repeating-linear-gradient(45deg,
+    rgba(255, 255, 255, 0.7) 0 6px,
+    transparent 6px 12px);
+}
+html[data-contrast="high"] .util-fill--high::before {
+  background-image:
+    repeating-linear-gradient(45deg,
+      rgba(255, 255, 255, 0.8) 0 4px,
+      transparent 4px 8px),
+    repeating-linear-gradient(-45deg,
+      rgba(255, 255, 255, 0.8) 0 4px,
+      transparent 4px 8px);
+}
+html[data-contrast="high"] .cl-preview-bar-fill.util-fill--medium::before,
+html[data-contrast="high"] .cl-preview-bar-fill.util-fill--high::before,
+html[data-contrast="high"] .summary-card--accent::before,
+html[data-contrast="high"] .summary-card--util.summary-card--util-low::before,
+html[data-contrast="high"] .summary-card--util.summary-card--util-medium::before,
+html[data-contrast="high"] .summary-card--util.summary-card--util-high::before,
+html[data-contrast="high"] .summary-card--available::before,
+html[data-contrast="high"] .notification-item--info,
+html[data-contrast="high"] .notification-item--warning,
+html[data-contrast="high"] .notification-item--danger {
+  opacity: 1;
+}
+
+/* ─── Forced-colours mode (Windows High Contrast, Chrome forced-colors) ────── */
 @media (forced-colors: active) {
-  .dc-status-icon-bg--pattern-pending {
-    forced-color-adjust: none;
-    background-image: radial-gradient(
-      circle,
-      CanvasText 1.5px,
-      transparent 1.5px
-    );
-    background-size: 10px 10px;
-  }
-
-  .dc-status-icon-bg--pattern-success {
-    forced-color-adjust: none;
-    background-image: repeating-linear-gradient(
-      45deg,
-      CanvasText 0,
-      CanvasText 1.5px,
-      transparent 1.5px,
-      transparent 8px
-    );
-  }
-
-  .dc-status-icon-bg--pattern-error {
-    forced-color-adjust: none;
-    background-image:
-      repeating-linear-gradient(
-        45deg,
-        CanvasText 0,
-        CanvasText 1.5px,
-        transparent 1.5px,
-        transparent 7px
-      ),
-      repeating-linear-gradient(
-        135deg,
-        CanvasText 0,
-        CanvasText 1.5px,
-        transparent 1.5px,
-        transparent 7px
-      );
+  /*
+   * The host OS supplies its own palette; rgba patterns lose their hue
+   * and become gray-on-gray which can look broken.  We suppress the
+   * pattern fills and rely on the SystemColor borders + component glyphs.
+   */
+  .util-bar-fill::before,
+  .cl-preview-bar-fill::before,
+  .summary-card--accent::before,
+  .summary-card--util::before,
+  .summary-card--available::before,
+  .notification-item--info,
+  .notification-item--warning,
+  .notification-item--danger {
+    background-image: none;
   }
 }

@@ -21,18 +21,23 @@ import {
   getUtilizationLevel,
 } from "../utils/tokens";
 import { readJson, writeJson } from "../utils/storage";
-import "./Dashboard.css";  import { Skeleton } from "../components/Skeleton";
+import "./Dashboard.css";
+import "../styles/patterns.css";
+import { Skeleton } from "../components/Skeleton";
 import { NoDataGraph } from "../components/illustrations";
 import CompareLinesPanel from "../components/CompareLinesPanel";
 import { useFocusTrap } from "../hooks/useFocusTrap";
 import { useInertBackdrop } from "../hooks/useInertBackdrop";
 import { useBodyScrollLock } from "../hooks/useBodyScrollLock";
 import { useReducedMotion } from "../context/ReducedMotionContext";
+import { getUtilizationLevel } from "../utils/tokens";
 import { TipJar } from "../components/TipJar";
 import { NextSteps } from "../components/NextSteps";
 import { WhatChanged } from "../components/WhatChanged";
 import { HealthTipsPanel } from "../components/HealthTipsPanel";
-import { RiskGauge } from "./RiskGauge";
+import { DashboardTour } from "../components/DashboardTour";
+import { ContinuePrompt } from "../components/ContinuePrompt";
+import { SyncIndicator } from "../components/SyncIndicator";
 
 export { RiskGauge };
 
@@ -62,6 +67,176 @@ const TX_COLOR: Record<string, string> = {
   Fee: COLOR.muted,
   Interest: COLOR.warning,
 };
+
+// ─── Risk Score Gauge ─────────────────────────────────────────────────────────
+
+const easeCubicBezier = (x: number): number => {
+  if (x <= 0) return 0;
+  if (x >= 1) return 1;
+  const x1 = 0.16;
+  const x2 = 0.3;
+  let t = x;
+  for (let i = 0; i < 8; i++) {
+    const currentX = 3 * (1 - t) * (1 - t) * t * x1 + 3 * (1 - t) * t * t * x2 + t * t * t;
+    const diff = currentX - x;
+    if (Math.abs(diff) < 1e-6) break;
+    const dXdt = 3 * (1 - t) * (1 - t) * x1 + 6 * (1 - t) * t * (x2 - x1) + 3 * t * t * (1 - x2);
+    t -= diff / (dXdt || 1);
+  }
+  return 3 * t * (1 - t) + t * t * t;
+};
+
+export function RiskGauge({
+  score,
+  trend,
+  lastUpdated,
+  history,
+}: {
+  score: number;
+  trend: "improving" | "declining" | "stable";
+  lastUpdated: string;
+  history?: number[];
+}) {
+  const radius = 55;
+  const cx = 80;
+  const cy = 75;
+  const circumference = Math.PI * radius;
+  const normalizedScore = Math.min(850, Math.max(0, score));
+  const offset = circumference - (normalizedScore / 850) * circumference;
+
+  const gaugeColor = RISK_COLOR(normalizedScore);
+  const trendArrow =
+    trend === "improving" ? "▲" : trend === "declining" ? "▼" : "─";
+  const trendColor =
+    trend === "improving"
+      ? COLOR.success
+      : trend === "declining"
+        ? COLOR.danger
+        : COLOR.muted;
+
+  const { isReducedMotionActive } = useReducedMotion();
+  const [displayedScore, setDisplayedScore] = useState(normalizedScore);
+  const prevScoreRef = useRef(normalizedScore);
+
+  useEffect(() => {
+    if (isReducedMotionActive) {
+      setDisplayedScore(normalizedScore);
+      prevScoreRef.current = normalizedScore;
+      return;
+    }
+
+    const startScore = prevScoreRef.current;
+    const endScore = normalizedScore;
+    if (startScore === endScore) return;
+
+    const duration = 280;
+    const startTime = Date.now();
+    let animationFrameId: number;
+
+    const animate = () => {
+      const elapsed = Date.now() - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      const easedProgress = easeCubicBezier(progress);
+
+      const currentVal = startScore + (endScore - startScore) * easedProgress;
+      setDisplayedScore(currentVal);
+
+      if (progress < 1) {
+        animationFrameId = requestAnimationFrame(animate);
+      } else {
+        prevScoreRef.current = endScore;
+      }
+    };
+
+    animationFrameId = requestAnimationFrame(animate);
+
+    return () => {
+      cancelAnimationFrame(animationFrameId);
+    };
+  }, [normalizedScore, isReducedMotionActive]);
+
+  const scoreFormatter = useMemo(() => new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 }), []);
+
+  /*
+   * v7 color-blind tier glyph (closes #565):
+   *   ▲ ≥700    (strong)        — triangle: "look up"
+   *   ◆ 600–699 (fair)          — diamond:  "watch"
+   *   ● <600    (below)         — circle:   "act now"
+   *
+   * The glyph sits in the risk-meta row next to the numerically displayed
+   * score, providing a shape cue that survives any colour filter.
+   */
+  const tier =
+    normalizedScore >= 700 ? 'strong' :
+    normalizedScore >= 600 ? 'fair' : 'below';
+  const tierGlyph = tier === 'strong' ? '▲' : tier === 'fair' ? '◆' : '●';
+  const tierLabel =
+    tier === 'strong' ? 'Strong risk score' :
+    tier === 'fair' ? 'Fair risk score' : 'Below recommended risk score';
+
+  return (
+    <div className="risk-gauge-container">
+      <svg
+        className="risk-gauge-svg"
+        viewBox="0 0 160 100"
+        role="img"
+        aria-labelledby={`risk-gauge-title-${tier}`}
+      >
+        <title id={`risk-gauge-title-${tier}`}>
+          Risk score {scoreFormatter.format(Math.round(displayedScore))} — band {tier}
+        </title>
+        <path
+          className="risk-gauge-bg"
+          d={`M ${cx - radius} ${cy} A ${radius} ${radius} 0 0 1 ${cx + radius} ${cy}`}
+        />
+        <path
+          className="risk-gauge-fill"
+          d={`M ${cx - radius} ${cy} A ${radius} ${radius} 0 0 1 ${cx + radius} ${cy}`}
+          stroke={gaugeColor}
+          strokeDasharray={circumference}
+          strokeDashoffset={offset}
+        />
+        <text x={cx} y={cy - 12} className="risk-gauge-score">
+          {scoreFormatter.format(Math.round(displayedScore))}
+        </text>
+        <text x={cx} y={cy - 38} className="risk-gauge-label">
+          Risk Score
+        </text>
+      </svg>
+      {/* Shape-coded tier glyph (v7).  Visually this mirrors the band colour
+          but is independently perceivable by colour-blind users; screen
+          readers get an explicit label via the sr-only span. */}
+      <span className="risk-gauge-tier-wrap" style={{ color: gaugeColor }}>
+        <span
+          className="risk-gauge-tier-glyph"
+          aria-hidden="true"
+          data-tier={tier}
+        >
+          {tierGlyph}
+        </span>
+        <span className="sr-only">{tierLabel}</span>
+      </span>
+
+      <div className="risk-meta">
+        <div className="risk-meta-item">
+          <span className="rm-label">Trend</span>
+          <span className="rm-value" style={{ color: trendColor, display: "flex", alignItems: "center", gap: "8px" }}>
+            <span>{trendArrow} {trend.charAt(0).toUpperCase() + trend.slice(1)}</span>
+            {history && history.length > 0 && (
+              <Sparkline data={history} width={60} height={24} color={trendColor} />
+            )}
+          </span>
+        </div>
+        <div className="risk-meta-item">
+          <span className="rm-label">Last Updated</span>
+          <span className="rm-value" style={{ color: COLOR.muted }}>
+            {fmtDate(lastUpdated)}
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 // ─── Risk Explainer ───────────────────────────────────────────────────────────
 
@@ -481,7 +656,14 @@ export function Dashboard() {
           </>
         ) : (
           <>
-            <div className="summary-card">
+            {/*
+              v7 color-blind summary cards (closes #565):
+              Each card carries a modifier class that drives the pattern
+              stripe defined in src/styles/patterns.css.  Pattern alone
+              (independent of colour) communicates card identity to a
+              colour-blind user scanning the row.
+            */}
+            <div className="summary-card summary-card--accent">
               <div className="glow" style={{ background: COLOR.accent }} />
               <p className="label">
                 Total Credit Limit
@@ -496,7 +678,9 @@ export function Dashboard() {
                 {activeLinesOnly.length !== 1 ? "s" : ""}
               </p>
             </div>
-            <div className="summary-card">
+            <div
+              className={`summary-card summary-card--util summary-card--util-${overallLevel}`}
+            >
               <div
                 className="glow"
                 style={{ background: UTIL_COLOR[overallLevel] }}
@@ -510,7 +694,7 @@ export function Dashboard() {
               </p>
               <p className="sub">{overallPct}% of total limit</p>
             </div>
-            <div className="summary-card">
+            <div className="summary-card summary-card--available">
               <div className="glow" style={{ background: COLOR.success }} />
               <p className="label">
                 Available Credit
@@ -554,8 +738,15 @@ export function Dashboard() {
                 </span>
               </div>
               <div className="util-bar-track">
+                {/*
+                  v7 color-blind util bar (closes #565):
+                  `util-fill--{level}` modifier drives the diagonal-stripe
+                  (medium) / cross-hatch (high) overlay rendered by
+                  src/styles/patterns.css.  The inline `background` colour
+                  is preserved underneath.
+                */}
                 <div
-                  className="util-bar-fill"
+                  className={`util-bar-fill util-fill--${overallLevel}`}
                   style={{
                     width: `${overallPct}%`,
                     background: UTIL_COLOR[overallLevel],
@@ -914,10 +1105,17 @@ export function Dashboard() {
                          {/* num-tabular: stable utilized/limit amounts (FWC26) */}
                          <div className="cl-preview-amount num-tabular">
                            {fmt(cl.utilized)} <span style={{ color: COLOR.muted, fontWeight: 400, fontSize: "0.75rem" }}>/ {fmt(cl.limit)}</span>
-                         </div>
-                         <div className="cl-preview-bar">
-                           <div className="cl-preview-bar-fill" style={{ width: `${pct}%`, background: UTIL_COLOR[level] }} />
-                         </div>
+                         </div>                          <div className="cl-preview-bar">
+                            {/*
+                              v7 color-blind: per-line mini util bar also
+                              gets the util-fill--{level} overlay so the
+                              shape cue matches the headline bar above.
+                            */}
+                            <div
+                              className={`cl-preview-bar-fill util-fill--${level}`}
+                              style={{ width: `${pct}%`, background: UTIL_COLOR[level] }}
+                            />
+                          </div>
                        </div>
                      </div>
                    );
@@ -1081,7 +1279,11 @@ export function Dashboard() {
              </div>
            )}
          </div>
+
+        {/* Health Tips panel (preserved from orphan block; v7 keeps dashboard tree single-column inside grid) */}
+        <HealthTipsPanel />
        </div>
+
       <DashboardTour />
       {/* Centered risk-band explainer overlay (#426).  Triggered by the
           "Explain risk bands" button rendered next to the risk gauge
