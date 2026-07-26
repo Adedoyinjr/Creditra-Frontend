@@ -31,3 +31,26 @@
     animation: none;
   }
 
+.skeleton-arc-shimmer {
+  fill: none;
+  stroke: rgba(255,255,255,0.2);
+  stroke-width: 10;
+  stroke-linecap: round;
+  stroke-dasharray: 172.79;
+  stroke-dashoffset: 172.79;
+  animation: arc-shimmer 1.5s infinite linear;
+}
+
+@keyframes arc-shimmer {
+  0% { stroke-dashoffset: 172.79; }
+  50% { stroke-dashoffset: 0; }
+  100% { stroke-dashoffset: -172.79; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton-arc-shimmer { animation: none; stroke: transparent; }
+}
+[data-motion="reduced"] .skeleton-arc-shimmer {
+  animation: none;
+  stroke: transparent;
+}

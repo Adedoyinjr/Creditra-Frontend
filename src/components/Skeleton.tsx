@@ -29,3 +29,30 @@ export const Skeleton: React.FC<SkeletonProps> = ({ width, height, style, classN
     {...rest}
   />
 );
+
+export const RiskGaugeSkeleton: React.FC = () => {
+  return (
+    <div className="risk-gauge-container skeleton-gauge" aria-label="Loading risk gauge" role="img">
+      <svg className="risk-gauge-svg" viewBox="0 0 160 100" aria-hidden="true" tabIndex={-1}>
+        <path
+          className="risk-gauge-bg"
+          d="M 25 75 A 55 55 0 0 1 135 75"
+        />
+        <path
+          className="skeleton-arc-shimmer"
+          d="M 25 75 A 55 55 0 0 1 135 75"
+        />
+      </svg>
+      <div className="risk-meta" aria-hidden="true">
+        <div className="risk-meta-item">
+          <Skeleton width={40} height={10} style={{ marginBottom: 4, borderRadius: 2 }} />
+          <Skeleton width={60} height={14} style={{ borderRadius: 2 }} />
+        </div>
+        <div className="risk-meta-item">
+          <Skeleton width={60} height={10} style={{ marginBottom: 4, borderRadius: 2 }} />
+          <Skeleton width={80} height={14} style={{ borderRadius: 2 }} />
+        </div>
+      </div>
+    </div>
+  );
+};
