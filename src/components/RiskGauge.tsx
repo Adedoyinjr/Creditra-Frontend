@@ -58,6 +58,7 @@
 import { useEffect, useMemo, useRef, type KeyboardEvent } from 'react';
 import { useReducedMotion } from '../context/ReducedMotionContext';
 import { LiveRegion } from './LiveRegion';
+import { RiskGaugeSkeleton } from './Skeleton';
 import './RiskGauge.css';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -66,6 +67,7 @@ import './RiskGauge.css';
 export type RiskSector = 'low' | 'medium' | 'high';
 
 export interface RiskGaugeProps {
+  loading?: boolean;
   /** Risk score 0–100. Values outside this range are clamped. */
   score: number;
   trend: 'improving' | 'declining' | 'stable';
@@ -358,6 +360,7 @@ function RiskGaugeSRTable({ normalizedScore, activeSector }: RiskGaugeSRTablePro
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export function RiskGauge({
+  loading,
   score,
   trend,
   lastUpdated,
@@ -366,6 +369,10 @@ export function RiskGauge({
   ariaLabel,
   showSRTable = true,
 }: RiskGaugeProps) {
+  if (loading) {
+    return <RiskGaugeSkeleton />;
+  }
+
   const normalizedScore = Math.min(100, Math.max(0, score));
   const offset = CIRCUMFERENCE - (normalizedScore / 100) * CIRCUMFERENCE;
   const colorVar = gaugeColorVar(normalizedScore);

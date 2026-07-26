@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 
 interface LiveRegionProps {
   message: string;
@@ -31,7 +31,6 @@ export function LiveRegion({
 
   return (
     <div
-      id={id}
       className="sr-only"
       role="status"
       aria-live={politeness}

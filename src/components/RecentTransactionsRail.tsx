@@ -8,7 +8,7 @@ type RichTransaction = Transaction & { lineName: string; lineId: string };
 
 interface RecentTransactionsRailProps {
   transactions: RichTransaction[];
-  loading?: boolean;
+  isLoading?: boolean;
 }
 
 const relativeTime = (iso: string): string => {
@@ -41,10 +41,10 @@ const TX_COLOR: Record<TransactionType, string> = {
 const fmtAmount = (type: TransactionType, amount: number) =>
   `${type === 'Repay' ? '+' : '-'}${fmt(amount)}`;
 
-export function RecentTransactionsRail({ transactions, loading = false }: RecentTransactionsRailProps) {
+export function RecentTransactionsRail({ transactions, isLoading = false }: RecentTransactionsRailProps) {
   return (
     <div className="recent-transactions-rail" role="region" aria-label="Recent transactions">
-      {loading ? (
+      {isLoading ? (
         <>
           <div className="activity-item">
             <Skeleton className="activity-icon" style={{ borderRadius: '6px' }} />

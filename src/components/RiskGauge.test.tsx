@@ -100,6 +100,12 @@ describe('RiskGauge', () => {
 
   // ── Original test suite ──────────────────────────────────────────────────
 
+  it('renders a skeleton when loading is true', () => {
+    renderGauge({ loading: true });
+    expect(screen.getByRole('img', { name: /loading risk gauge/i })).toBeInTheDocument();
+    expect(screen.getByTestId('skeleton-mock') || document.querySelector('.skeleton-gauge')).toBeInTheDocument();
+  });
+
   it('renders an SVG element with role="img"', () => {
     renderGauge();
     expect(screen.getByRole('img')).toBeInTheDocument();
