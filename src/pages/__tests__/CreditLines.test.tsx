@@ -4,25 +4,14 @@ import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 import CreditLines from '../CreditLines';
 
 function renderPage() {
-  const result = render(
+  return render(
     <BrowserRouter>
-      <CreditLines />
+      <CreditLines defaultLoading={false} />
     </BrowserRouter>
   );
-  act(() => {
-    vi.runAllTimers();
-  });
-  return result;
 }
 
 describe('CreditLines page', () => {
-  beforeEach(() => {
-    vi.useFakeTimers();
-  });
-
-  afterEach(() => {
-    vi.useRealTimers();
-  });
   it('renders the page header', () => {
     renderPage();
     expect(screen.getByText('Credit Lines')).toBeInTheDocument();
@@ -83,6 +72,14 @@ describe('CreditLines page', () => {
   });
 
   describe("skeleton loading state", () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
     it("renders credit lines skeletons during the loading phase", () => {
       const { container } = render(
         <BrowserRouter>

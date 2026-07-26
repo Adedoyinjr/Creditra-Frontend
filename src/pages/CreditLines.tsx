@@ -234,7 +234,7 @@ function CreditLineCard({
 
 // ─── Main Component ────────────────────────────────────────────────────────────
 
-export default function CreditLines() {
+export default function CreditLines({ defaultLoading = true }: { defaultLoading?: boolean }) {
   const navigate = useNavigate();
   const [sortField, setSortField] = useState<SortField>("updatedAt");
   const [sortDir, setSortDir] = useState<SortDirection>("desc");
@@ -245,13 +245,14 @@ export default function CreditLines() {
   const [creditLines, setCreditLines] = useState(MOCK_CREDIT_LINES);
   const hasCreditLines = creditLines.length > 0;
 
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(defaultLoading);
   useEffect(() => {
+    if (!defaultLoading) return;
     const timer = setTimeout(() => {
       setLoading(false);
     }, 500);
     return () => clearTimeout(timer);
-  }, []);
+  }, [defaultLoading]);
 
   const [showCompare, setShowCompare] = useState(false);
   const [selectedLines, setSelectedLines] = useState<string[]>([]);
