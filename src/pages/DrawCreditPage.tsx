@@ -273,45 +273,48 @@ export default function DrawCreditPage() {
 
 export function DrawCreditPageSkeleton() {
   return (
-    <main
-      className="min-h-screen bg-background px-4 pb-24 pt-6 max-md:pb-28 md:pb-8 sm:pt-8"
-      aria-busy="true"
-      aria-label="Loading draw credit page"
-    >
-      <div className="mx-auto w-full max-w-4xl space-y-5">
-        <header className="card" aria-hidden="true">
-          <div className="space-y-2">
-            <Skeleton width="120px" height="20px" />
-            <Skeleton width="60%" height="36px" className="max-w-[400px]" />
-          </div>
-          <div className="mt-6 grid gap-3 sm:grid-cols-4">
-            {[1, 2, 3, 4].map((i) => (
-              <div
-                key={i}
-                className="rounded-lg border border-border bg-background/60 px-3 py-3"
-              >
-                <Skeleton width="40px" height="16px" className="mb-1" />
-                <Skeleton width="80px" height="20px" />
-              </div>
-            ))}
-          </div>
-        </header>
-
-        <div className="card card-large" style={{ maxWidth: "none", margin: 0 }} aria-hidden="true">
-          <section>
-            <Skeleton width="200px" height="28px" className="mb-4" />
-            <div className="space-y-4">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="rounded-lg border border-border p-4">
-                  <div className="flex justify-between items-center mb-2">
-                    <Skeleton width="150px" height="24px" />
-                    <Skeleton width="80px" height="24px" />
-                  </div>
-                  <Skeleton width="100px" height="16px" />
-                </div>
-              ))}
+    <main className="dc-page" aria-busy="true" aria-label="Loading draw credit page">
+      <div className="dc-page__inner">
+        <div className="dc-page__card" aria-hidden="true">
+          <div className="dc-step">
+            <div>
+              <Skeleton width="200px" height="32px" className="mb-2" />
+              <Skeleton width="300px" height="24px" />
             </div>
-          </section>
+
+            <ul className="dc-credit-line-list" role="list">
+              {[1, 2, 3].map((i) => (
+                <li key={i}>
+                  <div className="dc-credit-line-item">
+                    <div className="dc-credit-line-item__inner w-full">
+                      <div className="dc-credit-line-item__body w-full">
+                        <Skeleton width="120px" height="24px" className="mb-3" />
+                        
+                        <div className="flex gap-6 mb-3">
+                          <div className="space-y-1">
+                            <Skeleton width="60px" height="14px" />
+                            <Skeleton width="80px" height="20px" />
+                          </div>
+                          <div className="space-y-1">
+                            <Skeleton width="70px" height="14px" />
+                            <Skeleton width="50px" height="20px" />
+                          </div>
+                        </div>
+
+                        <Skeleton width="100%" height="8px" shape="rounded" />
+                      </div>
+                      <div className="ml-4 flex-shrink-0 flex items-center justify-center">
+                        <Skeleton width="20px" height="20px" shape="circular" />
+                      </div>
+                    </div>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+        <div className="dc-page__footer flex justify-center mt-4">
+           <Skeleton width="250px" height="20px" />
         </div>
       </div>
     </main>
