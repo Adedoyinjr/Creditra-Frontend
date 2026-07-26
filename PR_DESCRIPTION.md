@@ -1,26 +1,33 @@
-# PR Description: Add aging tag for delinquent lines
+# PR Description: Add 'Terms updated' banner for GrantFox FWC26 campaign
 
 ## Summary
-Resolves #445. This PR introduces a new `AgingTag` component to visually surface the number of days a credit line is past due for delinquent accounts.
+Resolves #493. This PR introduces a new `TermsBanner` component to notify users of Terms of Service updates for the GrantFox FWC26 (Stellar Wave) campaign. It provides both inline acceptance, session-level dismissal, and a detailed review modal.
 
 ## What changed
-- Created `src/components/AgingTag.tsx` which renders a high-contrast danger badge containing a `Clock` icon and the text "X days past due".
-- Created `src/components/AgingTag.css` containing corresponding styles that adhere to the system's token-based architecture.
-- Added comprehensive unit tests in `src/components/AgingTag.test.tsx` (all edge cases covered, including rendering logic for 0 or negative days).
-- Updated `docs/DESIGN_SYSTEM.md` to catalog the newly added component under the *Status, feedback, success* category.
+- Created `src/components/TermsBanner.tsx` which renders a persistent page-level banner with actions to review or accept the updated terms. It also renders a modal overlay for reviewing detailed terms with full keyboard/a11y features.
+- Created `src/components/TermsBanner.css` containing corresponding styles that adhere to the system's token-based CSS variable architecture, including dark-mode, high-contrast override, and media query support for reduced motion and responsive breakpoints.
+- Imported and rendered `<TermsBanner />` in `src/App.tsx` directly above the routing view inside the `<main>` tag.
+- Added comprehensive unit tests in `src/components/TermsBanner.test.tsx` checking for initial render status, session storage dismissal, localStorage acceptance version checks, review modal toggles, and keyboard behavior.
+- Documented `TermsBanner` in `docs/DESIGN_SYSTEM.md`.
 
 ## Why
-Users and administrators need an immediate, high-contrast visual cue to indicate the severity of a delinquent line without requiring them to drill down into transaction history. This tag provides an accessible, clear signal aligned with the existing status badge design patterns.
+For the GrantFox FWC26 campaign, it's essential that users are notified of and accept the updated Terms of Service. This banner provides a non-intrusive yet prominent prompt with a complete, accessible terms review modal.
 
 ## Testing / Accessibility
-- Ran `npm test src/components/AgingTag.test.tsx` successfully.
-- Verified WCAG 2.1 AA compliance: The component utilizes the `STATUS_COLOR.Defaulted` palette to maintain strong contrast against the surface background.
-- Handled screen reader verbosity by marking the decorative `Clock` icon with `aria-hidden="true"`, allowing the visible text ("X days past due") to correctly serve as the accessible name.
+- Unit tests written under `src/components/TermsBanner.test.tsx` to verify core states.
+- Verified WCAG 2.1 AA compliance:
+  - Text colors have a contrast ratio of at least 4.5:1.
+  - Interactive controls have high contrast borders and custom focus indicators (`.focus-ring` using outline-offset).
+  - High-contrast override support via `[data-contrast="high"]` styling rules.
+  - Touch targets for all interactive actions (Accept, Review Terms, Cancel, Close, Dismiss) are styled with at least a `44px` size.
+  - The modal behaves as an accessible dialog (`role="dialog"` and `aria-modal="true"` with key listener for `Escape`).
+  - Screen readers are notified appropriately via semantic roles.
+  - Motion effects are suppressed when `prefers-reduced-motion` is active.
 
 ## Accessibility Check Checklist
 - [x] Keyboard navigation works (Tab, Shift+Tab, Enter, Escape)
-- [x] Focus indicators are clearly visible (2px outline, 2px offset)
+- [x] Focus indicators are clearly visible (2px outline, 3px offset)
 - [x] Contrast ratios meet WCAG AA (4.5:1 text, 3:1 large text/icons)
-- [x] Touch targets are at least 44×44 px (N/A — non-interactive UI component)
+- [x] Touch targets are at least 44×44 px (Accept, Review, Cancel, Close buttons)
 - [x] Semantic HTML and ARIA roles/labels are used
 - [x] `prefers-reduced-motion` is respected

@@ -28,6 +28,7 @@ import DataPrivacySettings from "./pages/settings/Data";
 import SessionsSettings from "./pages/settings/Sessions";
 import { Header } from "./layouts/Header";
 import CreditLineCompare from "./pages/CreditLineCompare";
+import { TermsBanner } from "./components/TermsBanner";
 
 const isEditableTarget = (target: EventTarget | null) => {
   if (!(target instanceof HTMLElement)) return false;
@@ -215,6 +216,7 @@ function App() {
                     non-blocking; only visible when reconnect takes > 8 s. */}
                 <WalletReconnectBanner />
                 <main className="main">
+                  <TermsBanner />
                   <NetworkMismatchBanner />
                   <Routes>
                     <Route path="/" element={<Dashboard />} />
