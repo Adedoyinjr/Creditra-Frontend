@@ -436,6 +436,136 @@
     );
 }
 
+/* ─── 2. RepayPage utilization progress bars ──────────────────────────────
+ *
+ * Three levels that map to UtilizationLevel: low / medium / high.
+ * Each class is applied to the filled <div> inside the progress track and
+ * uses a pattern (solid diagonal lines or dots) in addition to the token
+ * color so the level is distinguishable without relying on color alone.
+ *
+ * Token references:
+ *   low    → var(--success, #3fb950)  solid bar, dots indicate "all clear"
+ *   medium → var(--warning, #d29922)  diagonal stripes at 45° (caution)
+ *   high   → var(--error,   #f85149)  dense cross-hatch (urgent)
+ *
+ * The ghost bar (old utilization overlay) uses rp-progress--ghost and is
+ * always rendered at 30% opacity so it never competes with the live bar.
+ * ──────────────────────────────────────────────────────────────────────── */
+
+.rp-progress--low {
+  background-color: var(--success, #3fb950);
+  /* Subtle dot pattern: presence of dots = "healthy" */
+  background-image: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--success, #3fb950) 55%, #fff) 1px,
+    transparent 1px
+  );
+  background-size: 8px 8px;
+}
+
+.rp-progress--medium {
+  background-color: var(--warning, #d29922);
+  /* Single diagonal lines: 45° = caution stripe */
+  background-image: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 3px,
+    color-mix(in srgb, var(--warning, #d29922) 60%, #fff) 3px,
+    color-mix(in srgb, var(--warning, #d29922) 60%, #fff) 4px
+  );
+}
+
+.rp-progress--high {
+  background-color: var(--error, #f85149);
+  /* Cross-hatch pattern: two directions = urgent/critical */
+  background-image:
+    repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 2px,
+      color-mix(in srgb, var(--error, #f85149) 55%, #fff) 2px,
+      color-mix(in srgb, var(--error, #f85149) 55%, #fff) 3px
+    ),
+    repeating-linear-gradient(
+      -45deg,
+      transparent,
+      transparent 2px,
+      color-mix(in srgb, var(--error, #f85149) 55%, #fff) 2px,
+      color-mix(in srgb, var(--error, #f85149) 55%, #fff) 3px
+    );
+}
+
+/* Ghost bar — old utilization shown behind the new bar */
+.rp-progress--ghost {
+  background-color: var(--error, #f85149);
+  opacity: 0.30;
+}
+
+/* ─── 3. RepayPage severity feedback banners ──────────────────────────────
+ *
+ * Applied to the inline feedback <div> below the repay-amount input.
+ * Patterns are kept very lightweight because the feedback area is small —
+ * they appear as a faint repeating edge texture that reinforces the severity
+ * without obscuring the text.
+ *
+ * Token references:
+ *   info    → var(--accent,  #58a6ff)  horizontal rules (neutral/informational)
+ *   success → var(--success, #3fb950)  micro-dots (positive result)
+ *   warning → var(--warning, #d29922)  diagonal lines (caution)
+ *   danger  → var(--error,   #f85149)  cross-hatch (critical error)
+ * ──────────────────────────────────────────────────────────────────────── */
+
+.rp-severity--info {
+  /* Thin horizontal rules suggest "lines of information" */
+  background-image: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 10px,
+    color-mix(in srgb, var(--accent, #58a6ff) 12%, transparent) 10px,
+    color-mix(in srgb, var(--accent, #58a6ff) 12%, transparent) 11px
+  );
+}
+
+.rp-severity--success {
+  /* Micro-dot grid: "checkmarks scattered" / positive reading */
+  background-image: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--success, #3fb950) 18%, transparent) 1px,
+    transparent 1px
+  );
+  background-size: 10px 10px;
+}
+
+.rp-severity--warning {
+  /* Diagonal stripes at 45°: standard caution / hazard pattern */
+  background-image: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 6px,
+    color-mix(in srgb, var(--warning, #d29922) 15%, transparent) 6px,
+    color-mix(in srgb, var(--warning, #d29922) 15%, transparent) 7px
+  );
+}
+
+.rp-severity--danger {
+  /* Cross-hatch: strong urgency signal */
+  background-image:
+    repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 4px,
+      color-mix(in srgb, var(--error, #f85149) 14%, transparent) 4px,
+      color-mix(in srgb, var(--error, #f85149) 14%, transparent) 5px
+    ),
+    repeating-linear-gradient(
+      -45deg,
+      transparent,
+      transparent 4px,
+      color-mix(in srgb, var(--error, #f85149) 14%, transparent) 4px,
+      color-mix(in srgb, var(--error, #f85149) 14%, transparent) 5px
+    );
+}
+
 /* RepaymentVisualizer series — distinguish principal vs interest without color alone (WCAG 1.4.1) */
 
 .rv-legend-swatch {
