@@ -518,3 +518,15 @@
         grid-template-columns: 1fr;
     }
 }
+
+@media (prefers-reduced-motion: reduce) {
+    .cl-primary-btn,
+    .cl-filter-group select,
+    .cl-sort-dir,
+    .cl-card,
+    .cl-util-fill,
+    .cl-action-btn {
+        transition: none !important;
+    }
+}
+

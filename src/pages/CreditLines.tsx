@@ -30,56 +30,7 @@ import { useBodyScrollLock } from "../hooks/useBodyScrollLock";
 import CompareLinesPanel from "../components/CompareLinesPanel";
 import { CollateralSubstitutionModal } from "../components/CollateralSubstitutionModal";
 import { NoLines } from "../components/illustrations";
-import {
-  RepaymentSchedule,
-  buildRepaymentScheduleFromLines,
-} from "../components/RepaymentSchedule";
 import { EmptyState } from "../components/EmptyState";
-
-function NextAccrualChip({ target }: { target: string }) {
-  const [now, setNow] = useState(() => new Date());
-  const timerRef = { current: undefined as ReturnType<typeof setInterval> | undefined };
-
-  useEffect(() => {
-    const tick = () => setNow(new Date());
-
-    const handleVisibility = () => {
-      if (document.hidden) {
-        if (timerRef.current !== undefined) {
-          clearInterval(timerRef.current);
-          timerRef.current = undefined;
-        }
-      } else {
-        if (timerRef.current !== undefined) {
-          clearInterval(timerRef.current);
-        }
-        tick();
-        timerRef.current = setInterval(tick, 60000);
-      }
-    };
-
-    if (!document.hidden) {
-      timerRef.current = setInterval(tick, 60000);
-    }
-
-    document.addEventListener('visibilitychange', handleVisibility);
-    return () => {
-      if (timerRef.current !== undefined) {
-        clearInterval(timerRef.current);
-      }
-      document.removeEventListener('visibilitychange', handleVisibility);
-    };
-  }, []);
-
-  const label = formatCountdown(target, now);
-  const ariaLabel = getCountdownAriaLabel(target, now);
-
-  return (
-    <span className="cl-accrual-chip" aria-label={ariaLabel}>
-      {label}
-    </span>
-  );
-}
 
 // ─── Credit Line Card ────────────────────────────────────────────────────────
 
@@ -157,14 +108,14 @@ function CreditLineCard({
         <div className="cl-metrics">
           <div className="cl-metric">
             <span className="cl-metric-label">Limit</span>
-            <span className="cl-metric-value amount tabular-nums" style={{ color: COLOR.accent }}>
+            <span className="cl-metric-value tabular-nums" style={{ color: COLOR.accent }}>
               {fmt(line.limit)}
             </span>
           </div>
           <div className="cl-metric">
             <span className="cl-metric-label">Utilized</span>
             <span
-              className="cl-metric-value amount tabular-nums"
+              className="cl-metric-value tabular-nums"
               style={{ color: UTIL_COLOR[level] }}
             >
               {fmt(line.utilized)}
@@ -172,7 +123,7 @@ function CreditLineCard({
           </div>
           <div className="cl-metric">
             <span className="cl-metric-label">Available</span>
-            <span className="cl-metric-value amount tabular-nums" style={{ color: COLOR.success }}>
+            <span className="cl-metric-value tabular-nums" style={{ color: COLOR.success }}>
               {fmt(line.limit - line.utilized)}
             </span>
           </div>
@@ -181,9 +132,7 @@ function CreditLineCard({
         <div className="cl-util-bar">
           <div className="cl-util-header">
             <span>Utilization</span>
-            <span className="num-tabular" style={{ color: UTIL_COLOR[level] }}>
-              {pct}%
-            </span>
+            <span className="tabular-nums" style={{ color: UTIL_COLOR[level] }}>{pct}%</span>
           </div>
           <div className="cl-util-track">
             <div
@@ -196,11 +145,11 @@ function CreditLineCard({
         <div className="cl-details">
           <div className="cl-detail">
             <span className="label">APR</span>
-            <span className="value num-tabular">{line.apr}%</span>
+            <span className="value tabular-nums">{line.apr}%</span>
           </div>
           <div className="cl-detail">
             <span className="label">Risk Score</span>
-            <span className="value num-tabular">{line.riskScore}</span>
+            <span className="value tabular-nums">{line.riskScore}</span>
           </div>
           <div className="cl-detail">
             <span className="label">Opened</span>
@@ -520,6 +469,11 @@ export default function CreditLines({ defaultLoading = true }: { defaultLoading?
         </div>
       </div>
 
+      <div aria-live="polite" className="sr-only">
+        {filteredAndSorted.length} credit line{filteredAndSorted.length !== 1 ? 's' : ''} found
+        {statusFilter !== "all" ? ` with status ${statusFilter}` : ""}
+      </div>
+
       <div className="cl-filters">
         <div className="cl-filter-group">
           <label>Status</label>
@@ -594,79 +548,17 @@ export default function CreditLines({ defaultLoading = true }: { defaultLoading?
         </div>
       )}
 
-      {loading ? (
-        <div className="cl-grid" aria-busy="true" data-testid="creditlines-skeleton-grid">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="cl-card" style={{ minHeight: '380px' }}>
-              <div className="cl-card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.75rem', padding: '1.25rem 1.25rem 0' }}>
-                <div style={{ display: 'flex', gap: '0.75rem', width: '70%' }}>
-                  <Skeleton width="18px" height="18px" style={{ borderRadius: '4px', flexShrink: 0 }} />
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', flex: 1 }}>
-                    <Skeleton width="80%" height="18px" style={{ borderRadius: '4px' }} />
-                    <Skeleton width="60%" height="12px" style={{ borderRadius: '4px' }} />
-                  </div>
-                </div>
-                <Skeleton width="65px" height="20px" style={{ borderRadius: '4px', flexShrink: 0 }} />
-              </div>
-              <div className="cl-card-body" style={{ padding: '1rem 1.25rem' }}>
-                <div className="cl-metrics" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.75rem', marginBottom: '1rem' }}>
-                  <Skeleton height="54px" style={{ borderRadius: '6px' }} />
-                  <Skeleton height="54px" style={{ borderRadius: '6px' }} />
-                  <Skeleton height="54px" style={{ borderRadius: '6px' }} />
-                </div>
-                <div className="cl-util-bar" style={{ marginBottom: '1rem' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.35rem' }}>
-                    <Skeleton width="50px" height="10px" />
-                    <Skeleton width="30px" height="10px" />
-                  </div>
-                  <Skeleton height="6px" style={{ borderRadius: '3px' }} />
-                </div>
-                <div className="cl-details" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem', marginBottom: '1rem' }}>
-                  <Skeleton height="32px" style={{ borderRadius: '4px' }} />
-                  <Skeleton height="32px" style={{ borderRadius: '4px' }} />
-                  <Skeleton height="32px" style={{ borderRadius: '4px' }} />
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                  <Skeleton height="60px" style={{ borderRadius: '6px' }} />
-                  <Skeleton height="80px" style={{ borderRadius: '6px' }} />
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      ) : filteredAndSorted.length === 0 ? (
-        !hasCreditLines ? (
-          <EmptyState
-            illustration={<NoLines className="empty-state-illustration--muted" />}
-            title="Get started with Credit Lines"
-            description={
-              <>
-                Credit lines give you access to flexible capital when you need it.
-                Open your first line and unlock funding tailored to your business.
-                <ul className="cl-empty-features" style={{ marginTop: '1rem', textAlign: 'left', display: 'inline-block' }}>
-                  <li>Flexible funding up to $500K</li>
-                  <li>Competitive rates from 7.5% APR</li>
-                  <li>Quick approval with digital collateral</li>
-                </ul>
-              </>
-            }
-            primaryAction={{ label: 'Open Credit Line', to: '/open-credit' }}
-          />
-        ) : (
-          <EmptyState
-            illustration={<NoLines className="empty-state-illustration--muted" />}
-            title="No matching credit lines"
-            description="No credit lines match your current filter. Try a different status or adjust your sort to see more results."
-            primaryAction={{
-              label: 'Clear Filters',
-              onClick: () => {
-                setStatusFilter("all");
-                setSortField("updatedAt");
-                setSortDir("desc");
-              }
-            }}
-          />
-        )
+      {filteredAndSorted.length === 0 ? (
+        <EmptyState
+          icon={<NoLines className="empty-state-illustration--muted" />}
+          title="No credit lines found"
+          description="Apply for a credit line to get started"
+          action={
+            <Link to="/open-credit" className="cl-primary-btn">
+              Open Credit Line
+            </Link>
+          }
+        />
       ) : (
         <div className="cl-grid">
           {filteredAndSorted.map((line) => (
