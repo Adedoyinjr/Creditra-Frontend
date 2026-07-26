@@ -4,15 +4,9 @@
 @import "./styles/focus.css";
 @import "./styles/safe-area.css";
 @import "./components/FormField.css";
-
-/* ─── Design Tokens ─────────────────────────────────────────────────────────
-   All spacing, colour, radius and typography values used across the app
-   must reference one of these custom properties so dark-mode and theming
-   updates can be applied from a single location.
-   ────────────────────────────────────────────────────────────────────────── */
-
-:root {
-  /* Colour palette */
+@import "./styles/themes/high-contrast.css"; // High‑contrast overrides
+:root,
+.theme-default {
   --bg: #0d1117;
   --surface: #161b22;
   --border: #30363d;
