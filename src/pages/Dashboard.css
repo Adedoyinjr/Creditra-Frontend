@@ -873,18 +873,52 @@
 }
 
 /* ─── Skeleton Alignments and CLS Prevention ────────────────────────────────── */
+/*
+ * FWC26 — issue #690: Skeleton height/spacing/shape parity
+ * ──────────────────────────────────────────────────────────
+ * Each skeleton region is explicitly sized so the painted area matches
+ * the final rendered component.  This eliminates layout-shift (CLS) on
+ * first-paint.
+ *
+ * Rules below are the structural floor — they ensure the wrapping skeleton
+ * container never collapses to a smaller height than the real component,
+ * even before the Skeleton child widths/heights are applied.
+ */
 .summary-card.skeleton-card {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    min-height: 114px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  /*
+   * min-height matches the minimum rendered height of a real .summary-card:
+   *   padding-top (1.25rem) + label (14px) + gap (8px) + value (32px) +
+   *   gap (8px) + sub (12px) + padding-bottom (1.25rem) ≈ 114px
+   */
+  min-height: 114px;
 }
 
 .cl-preview-item {
-    min-height: 57px;
+  /*
+   * min-height matches the final .cl-preview-item rendered height:
+   *   padding (0.875rem × 2) + tallest content row (18px StatusBadge) ≈ 57px
+   */
+  min-height: 57px;
 }
 
 .activity-item {
-    min-height: 48px;
+  /*
+   * min-height matches the final .activity-item rendered height:
+   *   padding (0.75rem × 2) + icon (28px) ≈ 52px; floor at 48px.
+   */
+  min-height: 48px;
+}
+
+/*
+ * Risk-gauge skeleton container: preserve the 160:100 aspect ratio of the
+ * SVG viewBox so the placeholder and the live SVG occupy the same space.
+ * The .risk-gauge-container itself is flex-column centred; we just need the
+ * skeleton block inside it to hold its aspect ratio.
+ */
+.risk-gauge-container .skeleton[style*="aspect-ratio"] {
+  display: block;
 }
 
