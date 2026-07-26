@@ -270,6 +270,25 @@ describe('KycDrawer', () => {
     expect(onResume).toHaveBeenCalledWith('selfie');
   });
 
+  it('reveals the sticky action bar after the drawer body scrolls', () => {
+    primeStorage({ identity: 'completed', address: 'completed', documents: 'completed', selfie: 'in_progress' });
+    renderDrawer();
+
+    const footer = document.querySelector('.kyc-drawer__footer') as HTMLElement;
+    const scrollBody = document.querySelector('.kyc-drawer__body') as HTMLElement;
+
+    expect(footer).toHaveAttribute('data-sticky-visible', 'false');
+
+    Object.defineProperty(scrollBody, 'scrollTop', {
+      configurable: true,
+      value: 48,
+      writable: true,
+    });
+    fireEvent.scroll(scrollBody);
+
+    expect(footer).toHaveAttribute('data-sticky-visible', 'true');
+  });
+
   // ── Dismiss ───────────────────────────────────────────────────────────────
 
   it('calls onClose when the × button is clicked', () => {
