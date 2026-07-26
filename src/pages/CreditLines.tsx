@@ -1,6 +1,7 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { StatusBadge } from '../components/StatusBadge';
+import { AgingTag } from '../components/AgingTag';
 import { RepaymentPlanChart } from '../components/RepaymentPlanChart';
 import { Skeleton } from '../components/Skeleton';
 import { KbdHint } from '../components/KbdHint';
@@ -89,9 +90,22 @@ function CreditLineCard({
              <p className="cl-id">{line.id}</p>
            </div>
          </div>
-         <div className="flex items-center gap-2">
-           <StatusBadge status={line.status} />
-           <CreditLineRowMenu
+          <div className="flex items-center gap-2">
+            <StatusBadge status={line.status} />
+            {(() => {
+              if (line.status === 'Defaulted' || line.status === 'Suspended') {
+                const overdueEntry = line.statusHistory.find(
+                  (h) => h.status === 'Suspended' || h.status === 'Defaulted'
+                );
+                if (overdueEntry) {
+                  const diffTime = Math.abs(new Date().getTime() - new Date(overdueEntry.date).getTime());
+                  const days = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                  return <AgingTag daysPastDue={days} />;
+                }
+              }
+              return null;
+            })()}
+            <CreditLineRowMenu
              lineId={line.id}
              lineName={line.name}
              frozen={line.status === 'Frozen'}
@@ -404,12 +418,20 @@ export default function CreditLines({ defaultLoading = true }: { defaultLoading?
       } else if (e.key === 'n' || e.key === 'N') {
         e.preventDefault();
         navigate('/open-credit');
+      } else if (e.key === 'r' || e.key === 'R') {
+        const delinquentLine = creditLines.find(
+          (cl) => cl.status === 'Defaulted' || cl.status === 'Suspended'
+        );
+        if (delinquentLine) {
+          e.preventDefault();
+          handleRepay(delinquentLine.id);
+        }
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectedLines, showCompare, navigate]);
+  }, [selectedLines, showCompare, navigate, creditLines]);
 
   return (
     <div className="credit-lines-page">
