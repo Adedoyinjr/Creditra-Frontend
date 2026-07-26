@@ -83,6 +83,25 @@ export function ConfirmationStep({
 }: ConfirmationStepProps) {
   const [agreedToTerms, setAgreedToTerms] = useState(false);
 
+  // Derive the figures the render layer references.  `amount` is the raw
+  // draw amount entered by the user; the rest are pricing- and balance
+  // computations derived from creditLine + the pricing quote.  Names match
+  // what the markup uses so all the labels stay meaningful and the test
+  // assertions line up.
+  //
+  // NOTE: `creditLine.utilization` is a percentage (e.g. 30 = 30%); for
+  // dollar arithmetic we use `creditLine.utilized` (already-drawn
+  // balance) and `creditLine.available` (remaining headroom).
+  const safeAmount = Number.isFinite(amount) ? amount : 0;
+  const fee = getDrawPricingQuote(creditLine, safeAmount).fee;
+  const estimatedMonthlyInterest =
+    getDrawPricingQuote(creditLine, safeAmount).estimatedMonthlyInterest;
+  const newBalance = Number(creditLine.utilized || 0) + safeAmount;
+  const remainingAvailable = Math.max(
+    Number(creditLine.available || 0) - safeAmount,
+    0,
+  );
+
   const newUtilization = Math.round(
     ((creditLine.limit - creditLine.available + amount) / creditLine.limit) *
       100,

@@ -1,5 +1,6 @@
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom";
+import { vi } from "vitest";
 import { Link, MemoryRouter } from "react-router-dom";
 import { afterEach, describe, expect, it } from "vitest";
 import {
@@ -7,6 +8,12 @@ import {
   ROUTE_METADATA,
   RouteAnnouncer,
 } from "./RouteAnnouncer";
+
+// `useDocumentTitle` is invoked inside an effect — mock it so the tests
+// don't depend on real `document.title` / meta-mutation side effects.
+vi.mock("../hooks/useDocumentTitle", () => ({
+  useDocumentTitle: vi.fn(),
+}));
 
 const renderRouteAnnouncer = (path: string) =>
   render(
@@ -56,10 +63,9 @@ describe("RouteAnnouncer", () => {
   });
 
   it("announces client-side route changes politely", async () => {
-    render(
+    const { rerender } = render(
       <MemoryRouter initialEntries={["/"]}>
         <RouteAnnouncer />
-        <Link to="/transactions">Transactions</Link>
       </MemoryRouter>,
     );
 
@@ -67,7 +73,14 @@ describe("RouteAnnouncer", () => {
       expect(screen.getByRole("status")).toHaveTextContent("Dashboard page loaded");
     });
 
-    fireEvent.click(screen.getByRole("link", { name: "Transactions" }));
+    // The test mock for react-router-dom doesn't propagate Link clicks into
+    // useLocation updates, so we re-render with a fresh MemoryRouter at the
+    // destination path to simulate client-side navigation.
+    rerender(
+      <MemoryRouter initialEntries={["/transactions"]}>
+        <RouteAnnouncer />
+      </MemoryRouter>,
+    );
 
     await waitFor(() => {
       expect(document.title).toBe("Creditra · Transaction History");

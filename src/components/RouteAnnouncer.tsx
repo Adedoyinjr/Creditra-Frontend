@@ -8,6 +8,24 @@ import type { ReactNode, ReactElement } from "react";
 import { matchPath, useLocation } from "react-router-dom";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
 
+/**
+ * Default context value used when no `<RouteHeadProvider>` is mounted
+ * above `RouteAnnouncer` in the tree (e.g., in unit tests).
+ *
+ * Defined here so the context exists locally — the provider component is
+ * colocated in `App.tsx` so the docs comment about RouteHeadProvider /
+ * RouteAnnouncer pairing matches the runtime contract.
+ */
+const noopHead = {
+  head: null as null | { title?: string; description?: string },
+};
+
+const defaultRouteHeadContext = createContext<typeof noopHead>(noopHead);
+
+// Re-export under the documented name so `useRouteHead()` consumers and
+// `RouteAnnouncer` can share the same context instance.
+export const RouteHeadContext = defaultRouteHeadContext;
+
 type RouteMetadata = {
   path: string;
   pageName: string;

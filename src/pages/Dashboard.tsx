@@ -6,6 +6,7 @@ import { CopyLoanButton } from "../components/CopyLoanButton";
 import { StatusBadge } from "../components/StatusBadge";
 import { useWallet } from "../context/WalletContext";
 import { Sparkline } from "../components/Sparkline";
+import { DashboardTour } from "../components/DashboardTour";
 import { RiskBandsPanel } from "../components/RiskBandsPanel";
 import { WhatsChangedPanel } from "../components/WhatsChangedPanel";
 import { RiskExplainerOverlay } from "../components/RiskExplainerOverlay";
