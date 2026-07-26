@@ -16,6 +16,7 @@ import { startOfDay, startOfMonth, startOfWeek } from "../utils/dates";
 import { COLOR, fmt, fmtDate, fmtDateTime } from "../utils/tokens";
 import "./TransactionHistory.css";
 import { NoActivity, NoDataGraph, NoLines } from "../components/illustrations";
+import { TransactionHistorySkeleton } from "../components/TransactionHistorySkeleton";
 import { LiveRegion } from "../components/LiveRegion";
 
 /**
@@ -405,6 +406,27 @@ export function TransactionHistory() {
   const location = useLocation();
   const navigate = useNavigate();
   const { addToast } = useNotifications();
+
+  /**
+   * First-paint loading guard.
+   *
+   * `isLoading` starts as `true` and is cleared to `false` in a
+   * zero-delay `useEffect` (runs after the first committed render).
+   * This gives the browser one frame to paint the skeleton before the
+   * full component tree is committed, preventing a flash of unstyled
+   * content on initial navigation.
+   *
+   * In a real application this flag would be wired to an async data
+   * fetch; here it simulates that pattern against the static mock data.
+   */
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    // Simulate async data resolution on first mount.
+    // Replace with the real data-fetch completion signal when the API is wired up.
+    const id = setTimeout(() => setIsLoading(false), 0);
+    return () => clearTimeout(id);
+  }, []);
 
   // ─── Filter and UI State ───
   const [selectedLine, setSelectedLine] = useState<string>("all");
@@ -1078,6 +1100,10 @@ export function TransactionHistory() {
       return next;
     });
   };
+
+  if (isLoading) {
+    return <TransactionHistorySkeleton />;
+  }
 
   if (!hasLines) {
     return (
