@@ -10,7 +10,7 @@ function renderPage() {
     </BrowserRouter>
   );
   act(() => {
-    vi.advanceTimersByTime(500);
+    vi.runAllTimers();
   });
   return result;
 }
