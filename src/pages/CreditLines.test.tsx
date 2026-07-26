@@ -1,6 +1,6 @@
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, within, act } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import CreditLines from './CreditLines';
 
 // CL-2023-004 ("Emergency Reserve Line") is the only Defaulted entry in MOCK_CREDIT_LINES
@@ -10,12 +10,29 @@ const DEFAULTED_NAME = 'Emergency Reserve Line';
 // All non-defaulted IDs from mock data
 const NON_DEFAULTED_IDS = ['CL-2024-001', 'CL-2024-002', 'CL-2023-003', 'CL-2022-005', 'CL-2025-006'];
 
+beforeEach(() => {
+  vi.useFakeTimers();
+});
+
+afterEach(() => {
+  vi.useRealTimers();
+});
+
+// CreditLines shows a loading skeleton for the first 500ms (see the
+// useEffect/setTimeout in src/pages/CreditLines.tsx). Advance past it here
+// so every existing test below keeps seeing the already-loaded state it
+// expected before that skeleton was added, with no changes to the tests
+// themselves.
 function renderCreditLines() {
-  return render(
+  const result = render(
     <MemoryRouter>
       <CreditLines />
     </MemoryRouter>,
   );
+  act(() => {
+    vi.advanceTimersByTime(500);
+  });
+  return result;
 }
 
 describe('CreditLines — Defaulted row visual treatment (issue #223)', () => {
