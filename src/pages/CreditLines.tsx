@@ -31,6 +31,7 @@ import {
   RepaymentSchedule,
   buildRepaymentScheduleFromLines,
 } from "../components/RepaymentSchedule";
+import { EmptyState } from "../components/EmptyState";
 
 // ─── Credit Line Card ────────────────────────────────────────────────────────
 
@@ -529,37 +530,36 @@ export default function CreditLines() {
 
       {filteredAndSorted.length === 0 ? (
         !hasCreditLines ? (
-          <div className="cl-empty" role="region" aria-label="No credit lines">
-            <NoLines className="empty-state-illustration--muted" />
-            <h2 className="cl-empty-title">Get started with Credit Lines</h2>
-            <p className="cl-empty-desc">
-              Credit lines give you access to flexible capital when you need it.
-              Open your first line and unlock funding tailored to your business.
-            </p>
-            <ul className="cl-empty-features">
-              <li>Flexible funding up to $500K</li>
-              <li>Competitive rates from 7.5% APR</li>
-              <li>Quick approval with digital collateral</li>
-            </ul>
-            <Link to="/open-credit" className="cl-primary-btn">
-              Open Credit Line
-            </Link>
-          </div>
+          <EmptyState
+            illustration={<NoLines className="empty-state-illustration--muted" />}
+            title="Get started with Credit Lines"
+            description={
+              <>
+                Credit lines give you access to flexible capital when you need it.
+                Open your first line and unlock funding tailored to your business.
+                <ul className="cl-empty-features" style={{ marginTop: '1rem', textAlign: 'left', display: 'inline-block' }}>
+                  <li>Flexible funding up to $500K</li>
+                  <li>Competitive rates from 7.5% APR</li>
+                  <li>Quick approval with digital collateral</li>
+                </ul>
+              </>
+            }
+            primaryAction={{ label: 'Open Credit Line', to: '/open-credit' }}
+          />
         ) : (
-          <div className="cl-empty" role="region" aria-label="No matching credit lines">
-            <NoLines className="empty-state-illustration--muted" />
-            <h2 className="cl-empty-title">No matching credit lines</h2>
-            <p className="cl-empty-desc">
-              No credit lines match your current filter. Try a different status
-              or adjust your sort to see more results.
-            </p>
-            <button
-              className="cl-primary-btn"
-              onClick={() => { setStatusFilter("all"); setSortField("updatedAt"); setSortDir("desc"); }}
-            >
-              Clear Filters
-            </button>
-          </div>
+          <EmptyState
+            illustration={<NoLines className="empty-state-illustration--muted" />}
+            title="No matching credit lines"
+            description="No credit lines match your current filter. Try a different status or adjust your sort to see more results."
+            primaryAction={{
+              label: 'Clear Filters',
+              onClick: () => {
+                setStatusFilter("all");
+                setSortField("updatedAt");
+                setSortDir("desc");
+              }
+            }}
+          />
         )
       ) : (
         <div className="cl-grid">
