@@ -266,7 +266,8 @@ src/
 ├── hooks/
 │   ├── useFocusTrap.ts
 │   ├── useBodyScrollLock.ts
-│   └── useInertBackdrop.ts
+│   ├── useInertBackdrop.ts
+│   └── useScrollRestoration.ts   — saves/restores scrollY per route
 ├── utils/
 │   ├── tokens.ts        Color/spacing tokens + formatters
 │   ├── wallet.ts        Wallet provider glue
