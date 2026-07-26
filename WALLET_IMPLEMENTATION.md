@@ -202,6 +202,9 @@ import albedo from '@albedo-link/intent';
 ### State Management
 Uses React Context API for global wallet state. All components can access wallet info via `useWallet()` hook.
 
+### Auto-Reconnect UX
+When a remembered wallet reconnect is still in progress after the timeout window, the app shows a non-blocking banner with a retry action and a dismiss control. The banner is announced to assistive tech via an assertive live region and remains responsive while the reconnect continues in the background.
+
 ## Testing Checklist
 
 - [ ] Connect with Freighter wallet
