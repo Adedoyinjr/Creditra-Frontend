@@ -1,6 +1,8 @@
 
 import React, { useState } from 'react';
 import { DutchAuctionCard } from '../components/DutchAuctionCard';
+import { EmptyState } from '@/components/EmptyState';
+import { NoDataGraph } from '@/components/illustrations';
 import { MOCK_DUTCH_AUCTIONS } from '../data/mockDutchAuctions';
 import { COLOR } from '../utils/tokens';
 
@@ -51,9 +53,25 @@ export const DutchAuctions: React.FC = () => {
 
       <div>
         {filteredAuctions.length === 0 ? (
-          <p style={{ color: COLOR.muted, textAlign: 'center', padding: '2rem' }}>
-            No auctions found
-          </p>
+          <EmptyState
+            data-testid="auctions-empty-state"
+            illustration={<NoDataGraph className="empty-state-illustration--muted" />}
+            title={
+              filter === 'all'
+                ? 'No auctions right now'
+                : `No ${filter} auctions`
+            }
+            description={
+              filter === 'all'
+                ? 'Auctions appear here as soon as a sale is running. Check back later to catch the next price drop.'
+                : 'Nothing matches this filter at the moment. Show all auctions to see everything that is scheduled or finished.'
+            }
+            primaryAction={
+              filter === 'all'
+                ? undefined
+                : { label: 'Show all auctions', onClick: () => setFilter('all') }
+            }
+          />
         ) : (
           filteredAuctions.map(auction => (
             <DutchAuctionCard

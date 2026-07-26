@@ -1,7 +1,7 @@
 import { act, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { vi } from 'vitest';
-import { NotificationProvider } from '../../context/NotificationContext';
+import { NotificationProvider, useNotifications } from '../../context/NotificationContext';
 import { NotificationCenter } from './NotificationCenter';
 import { ToastContainer } from './ToastContainer';
 import type { Notification } from '../../types/notification';
@@ -34,26 +34,25 @@ function seedNotifications(notifications: Notification[]) {
   );
 }
 
+function OpenPanelHarness() {
+  const { openPanel } = useNotifications();
+  return (
+    <button type="button" onClick={openPanel}>
+      Open panel
+    </button>
+  );
+}
+
 function renderWithUndo() {
   render(
     <NotificationProvider>
       <ToastContainer />
       <div>
-        <button type="button">Dummy opener</button>
+        <OpenPanelHarness />
         <NotificationCenter />
       </div>
     </NotificationProvider>,
   );
-}
-
-function openPanel() {
-  const dialog = screen.queryByRole('dialog', { name: 'Notification center' });
-  if (!dialog || dialog.getAttribute('aria-hidden') === 'true') {
-    const button = screen.getByRole('button', { name: /open panel/i });
-    if (button) {
-      act(() => { vi.advanceTimersByTime(100); });
-    }
-  }
 }
 
 describe('UndoToast integration', () => {
@@ -192,11 +191,12 @@ describe('UndoToast integration', () => {
     const { unmount } = render(
       <NotificationProvider>
         <ToastContainer />
+        <OpenPanelHarness />
         <NotificationCenter />
       </NotificationProvider>,
     );
 
-    await user.click(screen.getByRole('button', { name: /mark all read/i }));
+    await user.click(screen.getByRole('button', { name: /open panel/i }));
     act(() => { vi.advanceTimersByTime(100); });
 
     const panel = screen.getByRole('dialog', { name: 'Notification center' });

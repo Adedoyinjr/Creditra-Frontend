@@ -16,6 +16,7 @@ import { startOfDay, startOfMonth, startOfWeek } from "../utils/dates";
 import { COLOR, fmt, fmtDate, fmtDateTime } from "../utils/tokens";
 import "./TransactionHistory.css";
 import { NoActivity, NoDataGraph, NoLines } from "../components/illustrations";
+import { LiveRegion } from "../components/LiveRegion";
 
 /**
  * TransactionHistory Page Component
@@ -443,6 +444,26 @@ export function TransactionHistory() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 15;
 
+  const [liveAnnouncement, setLiveAnnouncement] = useState("");
+  const isFirstRender = useRef(true);
+  const isResettingAllFilters = useRef(false);
+  const prevStates = useRef({
+    selectedLine,
+    selectedType,
+    selectedStatus,
+    selectedAmount,
+    dateRange,
+    presetRange,
+    customStartDate,
+    customEndDate,
+    selectedAmountRange,
+    isCustomAmountRangeActive,
+    customAmountMin,
+    customAmountMax,
+    searchQuery,
+    currentPage,
+  });
+
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const rangeParam = params.get("range");
@@ -495,6 +516,8 @@ export function TransactionHistory() {
     setSearchQuery(debouncedSearch);
     setCurrentPage(1);
   }, [debouncedSearch]);
+
+
 
   /**
    * Build a deduplicated list of suggestion strings from the full transaction
@@ -797,6 +820,151 @@ export function TransactionHistory() {
 
   const resultCountText = `${filteredTransactions.length} ${filteredTransactions.length === 1 ? "transaction" : "transactions"} shown`;
 
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      prevStates.current = {
+        selectedLine,
+        selectedType,
+        selectedStatus,
+        selectedAmount,
+        dateRange,
+        presetRange,
+        customStartDate,
+        customEndDate,
+        selectedAmountRange,
+        isCustomAmountRangeActive,
+        customAmountMin,
+        customAmountMax,
+        searchQuery,
+        currentPage,
+      };
+      return;
+    }
+
+    const wasResettingAllFilters = isResettingAllFilters.current;
+    isResettingAllFilters.current = false;
+
+    let message = "";
+
+    if (wasResettingAllFilters) {
+      message = `Filters cleared. ${resultCountText}.`;
+    } else if (currentPage !== prevStates.current.currentPage) {
+      message = `Page ${currentPage} of ${totalPages} loaded. ${resultCountText}.`;
+    } else if (selectedType !== prevStates.current.selectedType) {
+      const typeLabel = selectedType === "all" ? "All" : TX_TYPE_LABELS[selectedType];
+      message = `Filtered by transaction type ${typeLabel}. ${resultCountText}.`;
+    } else if (selectedLine !== prevStates.current.selectedLine) {
+      const lineLabel =
+        selectedLine === "all"
+          ? "All"
+          : MOCK_CREDIT_LINES.find((cl) => cl.id === selectedLine)?.name || selectedLine;
+      message = `Filtered by credit line ${lineLabel}. ${resultCountText}.`;
+    } else if (selectedStatus !== prevStates.current.selectedStatus) {
+      message = `Filtered by status ${selectedStatus === "all" ? "All" : selectedStatus}. ${resultCountText}.`;
+    } else if (selectedAmount !== prevStates.current.selectedAmount) {
+      const amountLabel =
+        selectedAmount === "all"
+          ? "All"
+          : AMOUNT_FILTER_OPTIONS.find((o) => o.value === selectedAmount)?.label || selectedAmount;
+      message = `Filtered by amount ${amountLabel}. ${resultCountText}.`;
+    } else if (selectedAmountRange !== prevStates.current.selectedAmountRange) {
+      const rangeLabels: Record<string, string> = {
+        all: "All",
+        "under-5k": "Under $5k",
+        "5k-25k": "$5k to $25k",
+        "25k-plus": "Over $25k",
+      };
+      const rangeLabel = rangeLabels[selectedAmountRange] || selectedAmountRange;
+      message = `Filtered by amount range ${rangeLabel}. ${resultCountText}.`;
+    } else if (
+      isCustomAmountRangeActive !== prevStates.current.isCustomAmountRangeActive ||
+      customAmountMin !== prevStates.current.customAmountMin ||
+      customAmountMax !== prevStates.current.customAmountMax
+    ) {
+      if (isCustomAmountRangeActive) {
+        const minVal = customAmountMin ? `$${customAmountMin}` : "any";
+        const maxVal = customAmountMax ? `$${customAmountMax}` : "any";
+        message = `Custom amount range filter applied: ${minVal} to ${maxVal}. ${resultCountText}.`;
+      } else if (prevStates.current.isCustomAmountRangeActive) {
+        message = `Custom amount range filter cleared. ${resultCountText}.`;
+      }
+    } else if (
+      dateRange !== prevStates.current.dateRange ||
+      presetRange !== prevStates.current.presetRange ||
+      customStartDate !== prevStates.current.customStartDate ||
+      customEndDate !== prevStates.current.customEndDate
+    ) {
+      if (presetRange !== "custom") {
+        const presetLabels: Record<string, string> = {
+          "this-week": "This Week",
+          "this-month": "This Month",
+          "all-time": "All Time",
+        };
+        message = `Filtered by date preset ${presetLabels[presetRange] || presetRange}. ${resultCountText}.`;
+      } else if (dateRange !== "custom") {
+        const dateLabels: Record<string, string> = {
+          today: "Today",
+          "7d": "Last 7 days",
+          "30d": "Last 30 days",
+          "90d": "Last 90 days",
+        };
+        message = `Filtered by date preset ${dateLabels[dateRange] || dateRange}. ${resultCountText}.`;
+      } else if (customStartDate || customEndDate) {
+        const startVal = customStartDate || "any";
+        const endVal = customEndDate || "any";
+        message = `Filtered by custom date range from ${startVal} to ${endVal}. ${resultCountText}.`;
+      } else {
+        message = `Date filter cleared. ${resultCountText}.`;
+      }
+    } else if (searchQuery !== prevStates.current.searchQuery) {
+      if (searchQuery) {
+        message = `Search query "${searchQuery}" applied. ${resultCountText}.`;
+      } else {
+        message = `Search query cleared. ${resultCountText}.`;
+      }
+    }
+
+    prevStates.current = {
+      selectedLine,
+      selectedType,
+      selectedStatus,
+      selectedAmount,
+      dateRange,
+      presetRange,
+      customStartDate,
+      customEndDate,
+      selectedAmountRange,
+      isCustomAmountRangeActive,
+      customAmountMin,
+      customAmountMax,
+      searchQuery,
+      currentPage,
+    };
+
+    if (message) {
+      setLiveAnnouncement(message);
+    }
+  }, [
+    selectedLine,
+    selectedType,
+    selectedStatus,
+    selectedAmount,
+    dateRange,
+    presetRange,
+    customStartDate,
+    customEndDate,
+    selectedAmountRange,
+    isCustomAmountRangeActive,
+    customAmountMin,
+    customAmountMax,
+    searchQuery,
+    currentPage,
+    resultCountText,
+    totalPages,
+    hasActiveFilters,
+  ]);
+
   /**
    * Accessible table caption (A11Y-004).
    *
@@ -885,6 +1053,7 @@ export function TransactionHistory() {
   };
 
   const clearFilters = () => {
+    isResettingAllFilters.current = true;
     setSelectedLine("all");
     setSelectedType("all");
     setSelectedStatus("all");
@@ -1519,6 +1688,7 @@ export function TransactionHistory() {
           </>
         )}
       </div>
+      <LiveRegion message={liveAnnouncement} />
     </div>
   );
 }

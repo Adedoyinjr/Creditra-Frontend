@@ -19,11 +19,39 @@ describe("TransactionHistory", () => {
   const originalCreateObjectURL = URL.createObjectURL;
   const originalRevokeObjectURL = URL.revokeObjectURL;
 
+  const mockLocalStorage = (() => {
+    let store: Record<string, string> = {};
+    return {
+      getItem: vi.fn((key: string) => store[key] || null),
+      setItem: vi.fn((key: string, value: string) => {
+        store[key] = value.toString();
+      }),
+      removeItem: vi.fn((key: string) => {
+        delete store[key];
+      }),
+      clear: vi.fn(() => {
+        store = {};
+      }),
+    };
+  })();
+
   beforeEach(() => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2025-02-20T12:00:00Z"));
     URL.createObjectURL = vi.fn(() => "blob:mock-url");
     URL.revokeObjectURL = vi.fn();
+    mockLocalStorage.clear();
+
+    Object.defineProperty(window, "localStorage", {
+      value: mockLocalStorage,
+      writable: true,
+      configurable: true,
+    });
+    Object.defineProperty(globalThis, "localStorage", {
+      value: mockLocalStorage,
+      writable: true,
+      configurable: true,
+    });
   });
 
   afterEach(() => {
@@ -100,7 +128,7 @@ describe("TransactionHistory", () => {
         .getByRole("button", { name: "Under $5k" })
         .getAttribute("aria-pressed"),
     ).toBe("true");
-    expect(screen.getByText("8 transactions shown")).toBeTruthy();
+    expect(screen.getByText("12 transactions shown")).toBeTruthy();
   });
 
   it("shows a no-results state with a reset filters action", () => {
@@ -141,7 +169,7 @@ describe("TransactionHistory", () => {
   it("renders amount range filter chips with correct aria-pressed states", () => {
     renderTransactionHistory();
 
-    const amountGroup = screen.getByRole("group", { name: /amount/i });
+    const amountGroup = screen.getByRole("group", { name: /^amount$/i });
 
     expect(
       within(amountGroup).getByRole("button", { name: "All Amounts" }),
@@ -603,6 +631,136 @@ describe("TransactionHistory", () => {
       const { container } = renderTransactionHistory();
       const lineIds = container.querySelectorAll(".tx-line-id");
       expect(lineIds.length).toBeGreaterThan(0);
+    });
+  });
+
+  describe("Aria-live announcements (v7)", () => {
+    const getLiveAnnouncementText = () => {
+      const liveRegions = document.querySelectorAll('[role="status"].sr-only');
+      const liveRegion = Array.from(liveRegions).find(
+        (el) => el.textContent && !el.textContent.includes("page loaded")
+      );
+      return liveRegion ? liveRegion.textContent : null;
+    };
+
+    it("announces when transaction type filter changes", () => {
+      renderTransactionHistory();
+      
+      const typeGroup = screen.getByRole("group", { name: /type/i });
+      fireEvent.click(within(typeGroup).getByRole("button", { name: "Draw" }));
+      
+      expect(getLiveAnnouncementText()).toMatch(/Filtered by transaction type Draw/i);
+      expect(getLiveAnnouncementText()).toMatch(/10 transactions shown/i);
+    });
+
+    it("announces when credit line filter changes", () => {
+      renderTransactionHistory();
+      
+      const selects = document.querySelectorAll("select");
+      const lineSelect = selects[0];
+      fireEvent.change(lineSelect, { target: { value: "CL-2024-001" } });
+      
+      expect(getLiveAnnouncementText()).toMatch(/Filtered by credit line Primary Business Line/i);
+      expect(getLiveAnnouncementText()).toMatch(/6 transactions shown/i);
+    });
+
+    it("announces when status filter changes", () => {
+      renderTransactionHistory();
+      
+      const selects = document.querySelectorAll("select");
+      const statusSelect = selects[1];
+      fireEvent.change(statusSelect, { target: { value: "Completed" } });
+      
+      expect(getLiveAnnouncementText()).toMatch(/Filtered by status Completed/i);
+      expect(getLiveAnnouncementText()).toMatch(/27 transactions shown/i);
+    });
+
+    it("announces when amount preset filter changes", () => {
+      renderTransactionHistory();
+      
+      const amountGroup = screen.getByRole("group", { name: /^amount$/i });
+      fireEvent.click(within(amountGroup).getByRole("button", { name: "<$100" }));
+      
+      expect(getLiveAnnouncementText()).toMatch(/Filtered by amount <\$100/i);
+      expect(getLiveAnnouncementText()).toMatch(/4 transactions shown/i);
+    });
+
+    it("announces when amount range preset changes", () => {
+      renderTransactionHistory();
+      
+      const amountRangeGroup = screen.getByRole("group", { name: /amount range/i });
+      fireEvent.click(within(amountRangeGroup).getByRole("button", { name: "Under $5k" }));
+      
+      expect(getLiveAnnouncementText()).toMatch(/Filtered by amount range Under \$5k/i);
+      expect(getLiveAnnouncementText()).toMatch(/12 transactions shown/i);
+    });
+
+    it("announces when date range preset changes", () => {
+      renderTransactionHistory();
+      
+      const dateRangeGroup = screen.getByRole("group", { name: /presets/i });
+      fireEvent.click(within(dateRangeGroup).getByRole("button", { name: "This Week" }));
+      
+      expect(getLiveAnnouncementText()).toMatch(/Filtered by date preset This Week/i);
+    });
+
+    it("announces when search query is applied", async () => {
+      renderTransactionHistory();
+      
+      const input = screen.getByRole("combobox", { name: /search transactions/i });
+      fireEvent.change(input, { target: { value: "equipment" } });
+      
+      await act(async () => {
+        vi.advanceTimersByTime(300);
+      });
+      
+      expect(getLiveAnnouncementText()).toMatch(/Search query "equipment" applied/i);
+      expect(getLiveAnnouncementText()).toMatch(/1 transaction shown/i);
+    });
+
+    it("announces when search query is cleared", async () => {
+      renderTransactionHistory();
+      
+      const input = screen.getByRole("combobox", { name: /search transactions/i });
+      fireEvent.change(input, { target: { value: "equipment" } });
+      
+      await act(async () => {
+        vi.advanceTimersByTime(300);
+      });
+
+      const clearBtn = screen.getByRole("button", { name: /clear search/i });
+      fireEvent.click(clearBtn);
+      
+      await act(async () => {
+        vi.advanceTimersByTime(300);
+      });
+      
+      expect(getLiveAnnouncementText()).toMatch(/Search query cleared/i);
+      expect(getLiveAnnouncementText()).toMatch(/28 transactions shown/i);
+    });
+
+    it("announces when filters are reset", () => {
+      renderTransactionHistory();
+      
+      const typeGroup = screen.getByRole("group", { name: /type/i });
+      fireEvent.click(within(typeGroup).getByRole("button", { name: "Fee" }));
+      const dateRangeGroup = screen.getByRole("group", { name: /date range/i });
+      fireEvent.click(within(dateRangeGroup).getByRole("button", { name: "Today" }));
+
+      fireEvent.click(screen.getByRole("button", { name: /reset all filters/i }));
+      
+      expect(getLiveAnnouncementText()).toMatch(/Filters cleared/i);
+      expect(getLiveAnnouncementText()).toMatch(/28 transactions shown/i);
+    });
+
+    it("announces when page changes", () => {
+      renderTransactionHistory();
+      
+      const nextBtn = screen.getByRole("button", { name: /next/i });
+      fireEvent.click(nextBtn);
+      
+      expect(getLiveAnnouncementText()).toMatch(/Page 2 of 2 loaded/i);
+      expect(getLiveAnnouncementText()).toMatch(/28 transactions shown/i);
     });
   });
 });

@@ -1,0 +1,45 @@
+/**
+ * RepayPage reduced-motion fallback (GrantFox FWC26, buffer #18 / issue #514)
+ *
+ * Suppresses transitions and animations when the user has
+ * `prefers-reduced-motion: reduce` active via their OS, or when the in-app
+ * ReducedMotionContext override (`data-motion="reduced"` on <html>) is set.
+ *
+ * This avoids disorientation for users who are sensitive to movement.
+ */
+
+/* ── OS-level detection ───────────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  .repay-page *,
+  .repay-page *::before,
+  .repay-page *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ── In-app override via ReducedMotionContext (data-motion="reduced") ─────── */
+
+[data-motion="reduced"] .repay-page *,
+[data-motion="reduced"] .repay-page *::before,
+[data-motion="reduced"] .repay-page *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}
+
+/* Explicitly remove the toggle thumb translate transform under reduced motion
+   so the switch snaps rather than sliding. */
+@media (prefers-reduced-motion: reduce) {
+  .repay-page .repay-page__toggle-thumb {
+    transition: none !important;
+  }
+}
+
+[data-motion="reduced"] .repay-page .repay-page__toggle-thumb {
+  transition: none !important;
+}
