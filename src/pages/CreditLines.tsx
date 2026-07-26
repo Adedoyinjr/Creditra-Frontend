@@ -5,6 +5,7 @@ import { RepaymentPlanChart } from '../components/RepaymentPlanChart';
 import { Skeleton } from '../components/Skeleton';
 import { KbdHint } from '../components/KbdHint';
 import { CreditLineRowMenu } from '../components/CreditLineRowMenu';
+import { formatCountdown, getCountdownAriaLabel } from '../utils/dates';
 import {
   HealthFactorChart,
   buildHealthHistory,
@@ -34,6 +35,51 @@ import {
   RepaymentSchedule,
   buildRepaymentScheduleFromLines,
 } from "../components/RepaymentSchedule";
+
+function NextAccrualChip({ target }: { target: string }) {
+  const [now, setNow] = useState(() => new Date());
+  const timerRef = { current: undefined as ReturnType<typeof setInterval> | undefined };
+
+  useEffect(() => {
+    const tick = () => setNow(new Date());
+
+    const handleVisibility = () => {
+      if (document.hidden) {
+        if (timerRef.current !== undefined) {
+          clearInterval(timerRef.current);
+          timerRef.current = undefined;
+        }
+      } else {
+        if (timerRef.current !== undefined) {
+          clearInterval(timerRef.current);
+        }
+        tick();
+        timerRef.current = setInterval(tick, 60000);
+      }
+    };
+
+    if (!document.hidden) {
+      timerRef.current = setInterval(tick, 60000);
+    }
+
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => {
+      if (timerRef.current !== undefined) {
+        clearInterval(timerRef.current);
+      }
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
+  }, []);
+
+  const label = formatCountdown(target, now);
+  const ariaLabel = getCountdownAriaLabel(target, now);
+
+  return (
+    <span className="cl-accrual-chip" aria-label={ariaLabel}>
+      {label}
+    </span>
+  );
+}
 
 // ─── Credit Line Card ────────────────────────────────────────────────────────
 
