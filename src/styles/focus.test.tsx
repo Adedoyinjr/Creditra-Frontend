@@ -197,3 +197,16 @@ describe('Dashboard — focus-ring classes on interactive elements (FWC26)', () 
     expect(indexCss).toMatch(/@import ["']\.\/styles\/focus\.css["']/);
   });
 });
+
+// ── CreditLines integration tests ─────────────────────────────────────────
+
+describe('CreditLines — focus-ring classes on interactive elements (FWC26)', () => {
+  it('defines CreditLines-specific focus rules in focus.css', () => {
+    const cssPath = resolve(__dirname, '../styles/focus.css');
+    const css = readFileSync(cssPath, 'utf-8');
+    expect(css).toContain('.cl-primary-btn:focus-visible');
+    expect(css).toContain('.cl-sort-dir:focus-visible');
+    expect(css).toContain('.cl-card:focus-visible');
+  });
+});
+

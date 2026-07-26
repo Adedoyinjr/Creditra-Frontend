@@ -116,10 +116,11 @@ function CreditLineCard({
 
   return (
     <div
-      className={`cl-card status-${line.status.toLowerCase()}${isDefaulted ? " cl-row--defaulted" : ""}`}
+      className={`cl-card status-${line.status.toLowerCase()}${isDefaulted ? " cl-row--defaulted" : ""} focus-ring`}
       aria-label={
         isDefaulted ? `Credit line ${line.id} is defaulted` : undefined
       }
+      tabIndex={0}
     >
        <div className="cl-card-header">
          <div className="cl-card-title-row">
