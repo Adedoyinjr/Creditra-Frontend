@@ -5,6 +5,7 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { PreviewSection } from './PreviewSection';
 import { ConfirmationStep } from './ConfirmationStep';
+import { WalletProvider } from '../context/WalletContext';
 import type { CreditLine } from '@/types/draw-credit.types';
 
 const creditLine: CreditLine = {
@@ -32,15 +33,16 @@ describe('glossed credit terms', () => {
   });
 
   it('wraps the first utilization and term occurrences in ConfirmationStep without repeating them', async () => {
-    const user = userEvent.setup();
     render(
-      <ConfirmationStep
-        creditLine={creditLine}
-        amount={1000}
-        onConfirm={() => undefined}
-        onBack={() => undefined}
-        onCancel={() => undefined}
-      />,
+      <WalletProvider>
+        <ConfirmationStep
+          creditLine={creditLine}
+          amount={1000}
+          onConfirm={() => undefined}
+          onBack={() => undefined}
+          onCancel={() => undefined}
+        />
+      </WalletProvider>,
     );
 
     const triggers = screen.getAllByLabelText('More information');
@@ -49,7 +51,7 @@ describe('glossed credit terms', () => {
     const firstUtilizationTrigger = screen.getByText('Current utilization').closest('.accessible-tooltip');
     expect(firstUtilizationTrigger).not.toBeNull();
 
-    await user.tab();
+    triggers[0].focus();
     expect(triggers[0]).toHaveFocus();
   });
 

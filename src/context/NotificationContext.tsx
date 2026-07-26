@@ -75,7 +75,8 @@ const PREFS_KEY = 'creditra_notification_prefs';
 
 // ─── Context ──────────────────────────────────────────────────────────────────
 
-const NotificationContext = createContext<NotificationContextValue | null>(null);
+/** Exported so NotificationBell can optionally consume without throwing. */
+export const NotificationContext = createContext<NotificationContextValue | null>(null);
 
 /**
  * App-wide notification provider.

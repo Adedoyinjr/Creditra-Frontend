@@ -1,7 +1,12 @@
-import { useState, useMemo, useRef } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { StatusBadge } from '../components/StatusBadge';
 import { RepaymentPlanChart } from '../components/RepaymentPlanChart';
+import {
+  HealthFactorChart,
+  buildHealthHistory,
+  deriveHealthFactor,
+} from '../components/HealthFactorChart';
 import { MOCK_CREDIT_LINES } from '../data/mockData';
 import type { CreditLineStatus, SortField, SortDirection } from '../types/creditLine';
 import {
@@ -102,14 +107,14 @@ function CreditLineCard({
         <div className="cl-metrics">
           <div className="cl-metric">
             <span className="cl-metric-label">Limit</span>
-            <span className="cl-metric-value" style={{ color: COLOR.accent }}>
+            <span className="cl-metric-value amount tabular-nums" style={{ color: COLOR.accent }}>
               {fmt(line.limit)}
             </span>
           </div>
           <div className="cl-metric">
             <span className="cl-metric-label">Utilized</span>
             <span
-              className="cl-metric-value"
+              className="cl-metric-value amount tabular-nums"
               style={{ color: UTIL_COLOR[level] }}
             >
               {fmt(line.utilized)}
@@ -117,7 +122,7 @@ function CreditLineCard({
           </div>
           <div className="cl-metric">
             <span className="cl-metric-label">Available</span>
-            <span className="cl-metric-value" style={{ color: COLOR.success }}>
+            <span className="cl-metric-value amount tabular-nums" style={{ color: COLOR.success }}>
               {fmt(line.limit - line.utilized)}
             </span>
           </div>
@@ -158,6 +163,17 @@ function CreditLineCard({
             <NextAccrualChip target={line.nextInterestAccrualDate} />
           </div>
         )}
+
+        {(() => {
+          const hf = deriveHealthFactor(line.limit, line.utilized);
+          return (
+            <HealthFactorChart
+              lineName={line.name}
+              current={hf}
+              data={buildHealthHistory(hf)}
+            />
+          );
+        })()}
       </div>
 
       <div className="cl-card-detail">
@@ -349,6 +365,38 @@ export default function CreditLines() {
     [creditLines, selectedLines],
   );
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement;
+      if (
+        target.tagName === 'INPUT' ||
+        target.tagName === 'SELECT' ||
+        target.tagName === 'TEXTAREA' ||
+        target.isContentEditable
+      ) {
+        return;
+      }
+
+      if (e.key === 'c' || e.key === 'C') {
+        if (selectedLines.length === 2 && !showCompare) {
+          e.preventDefault();
+          handleOpenCompare();
+        }
+      } else if (e.key === 'f' || e.key === 'F') {
+        if (selectedLines.length === 2) {
+          e.preventDefault();
+          navigate(`/compare-credit-lines?a=${selectedLines[0]}&b=${selectedLines[1]}`);
+        }
+      } else if (e.key === 'n' || e.key === 'N') {
+        e.preventDefault();
+        navigate('/open-credit');
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedLines, showCompare, navigate]);
+
   return (
     <div className="credit-lines-page">
       <div className="cl-page-header">
@@ -362,9 +410,10 @@ export default function CreditLines() {
             className="cl-primary-btn"
             onClick={handleOpenCompare}
             disabled={selectedLines.length !== 2}
-            style={{ opacity: selectedLines.length === 2 ? 1 : 0.6 }}
+            style={{ opacity: selectedLines.length === 2 ? 1 : 0.6, display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}
           >
-            Compare Selected ({selectedLines.length}/2)
+            <span>Compare Selected ({selectedLines.length}/2)</span>
+            <KbdHint keys={['C']} description="Compare Selected" />
           </button>
           {/* Full-page compare — only enabled when exactly 2 lines are selected */}
           <Link
@@ -386,13 +435,22 @@ export default function CreditLines() {
               color: selectedLines.length === 2 ? 'var(--text)' : 'var(--muted)',
               opacity: selectedLines.length === 2 ? 1 : 0.6,
               pointerEvents: selectedLines.length === 2 ? 'auto' : 'none',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.5rem'
             }}
             tabIndex={selectedLines.length === 2 ? 0 : -1}
           >
-            Full Compare →
+            <span>Full Compare →</span>
+            <KbdHint keys={['F']} description="Full Compare" />
           </Link>
-          <Link to="/open-credit" className="cl-primary-btn">
-            + Open New Line
+          <Link 
+            to="/open-credit" 
+            className="cl-primary-btn"
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}
+          >
+            <span>+ Open New Line</span>
+            <KbdHint keys={['N']} description="Open New Line" />
           </Link>
         </div>
       </div>

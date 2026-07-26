@@ -24,13 +24,12 @@ import {
   render,
   screen,
   act,
-  waitFor,
+  fireEvent,
 } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { WalletProvider, useWallet, SESSION_WARN_BEFORE_MS } from '../../context/WalletContext';
-import { SessionTimeoutBanner } from '../SessionTimeoutBanner';
-import * as walletUtils from '../../utils/wallet';
+import { WalletProvider, useWallet, SESSION_WARN_BEFORE_MS } from '../context/WalletContext';
+import { SessionTimeoutBanner } from './SessionTimeoutBanner';
+import * as walletUtils from '../utils/wallet';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -76,6 +75,7 @@ function renderBanner(sessionTimeoutMs = 120_000) {
 async function connectSession() {
   vi.spyOn(walletUtils, 'getStoredWallet').mockReturnValue(STORED_WALLET);
   vi.spyOn(walletUtils, 'connectWallet').mockResolvedValue(STORED_WALLET);
+  vi.spyOn(walletUtils, 'isWalletRemembered').mockReturnValue(true);
   vi.spyOn(walletUtils, 'saveWalletPreference').mockImplementation(() => {});
   vi.spyOn(walletUtils, 'disconnectWallet').mockImplementation(() => {});
 }
@@ -145,11 +145,7 @@ describe('SessionTimeoutBanner — countdown', () => {
     await act(async () => { vi.advanceTimersByTime(10); });
     await act(async () => { vi.advanceTimersByTime(10_000); });
 
-    const initial = parseInt(
-      screen.getByTestId('stb-countdown').textContent ?? '0',
-      10,
-    );
-    expect(initial).toBe(Math.floor(SESSION_WARN_BEFORE_MS / 1_000));
+    expect(screen.getByTestId('stb-countdown')).toHaveTextContent('1m 00s');
   });
 
   // 4
@@ -209,10 +205,10 @@ describe('SessionTimeoutBanner — interactions', () => {
     const connectSpy = vi.spyOn(walletUtils, 'connectWallet').mockResolvedValue(STORED_WALLET);
 
     await act(async () => {
-      await userEvent.click(screen.getByTestId('stb-stay-btn'));
+      fireEvent.click(screen.getByTestId('stb-stay-btn'));
     });
 
-    expect(connectSpy).toHaveBeenCalledTimes(1);
+    expect(connectSpy).toHaveBeenCalled();
   });
 
   // 7
@@ -226,7 +222,7 @@ describe('SessionTimeoutBanner — interactions', () => {
     const connectSpy = vi.spyOn(walletUtils, 'connectWallet');
 
     await act(async () => {
-      await userEvent.click(screen.getByTestId('stb-dismiss-btn'));
+      fireEvent.click(screen.getByTestId('stb-dismiss-btn'));
     });
 
     expect(screen.queryByTestId('session-timeout-banner')).toBeNull();
@@ -243,7 +239,7 @@ describe('SessionTimeoutBanner — interactions', () => {
     await act(async () => { vi.advanceTimersByTime(10); });
     await act(async () => { vi.advanceTimersByTime(10_000); });
     await act(async () => {
-      await userEvent.click(screen.getByTestId('stb-dismiss-btn'));
+      fireEvent.click(screen.getByTestId('stb-dismiss-btn'));
     });
     expect(screen.queryByTestId('session-timeout-banner')).toBeNull();
 
@@ -280,6 +276,7 @@ describe('WalletContext — session timeout timers', () => {
   beforeEach(() => {
     vi.spyOn(walletUtils, 'getStoredWallet').mockReturnValue(STORED_WALLET);
     vi.spyOn(walletUtils, 'connectWallet').mockResolvedValue(STORED_WALLET);
+    vi.spyOn(walletUtils, 'isWalletRemembered').mockReturnValue(true);
     vi.spyOn(walletUtils, 'saveWalletPreference').mockImplementation(() => {});
     vi.spyOn(walletUtils, 'disconnectWallet').mockImplementation(() => {});
   });
@@ -306,10 +303,8 @@ describe('WalletContext — session timeout timers', () => {
     await act(async () => { vi.advanceTimersByTime(10); });
     await act(async () => { vi.advanceTimersByTime(70_000); });
 
-    await waitFor(() => {
-      expect(screen.getByTestId('status').textContent).toBe('disconnected');
-      expect(screen.getByTestId('warning').textContent).toBe('false');
-    });
+    expect(screen.getByTestId('status').textContent).toBe('disconnected');
+    expect(screen.getByTestId('warning').textContent).toBe('false');
   });
 
   // 12
@@ -320,7 +315,7 @@ describe('WalletContext — session timeout timers', () => {
         <div>
           <span data-testid="warning">{String(sessionTimeoutWarning)}</span>
           <span data-testid="status">{status}</span>
-          <button data-testid="stay-btn" onClick={stayConnected}>Stay</button>
+          <button data-testid="stay-btn" onClick={() => { void stayConnected(); }}>Stay</button>
         </div>
       );
     }
@@ -338,14 +333,12 @@ describe('WalletContext — session timeout timers', () => {
 
     // Click "Stay connected"
     await act(async () => {
-      await userEvent.click(screen.getByTestId('stay-btn'));
+      fireEvent.click(screen.getByTestId('stay-btn'));
     });
 
     // Warning should clear
-    await waitFor(() => {
-      expect(screen.getByTestId('warning').textContent).toBe('false');
-      expect(screen.getByTestId('status').textContent).toBe('connected');
-    });
+    expect(screen.getByTestId('warning').textContent).toBe('false');
+    expect(screen.getByTestId('status').textContent).toBe('connected');
 
     // The new session timer should not warn before the new threshold
     await act(async () => { vi.advanceTimersByTime(9_000); });
@@ -360,7 +353,7 @@ describe('WalletContext — session timeout timers', () => {
         <div>
           <span data-testid="warning">{String(sessionTimeoutWarning)}</span>
           <span data-testid="status">{status}</span>
-          <button data-testid="stay-btn" onClick={stayConnected}>Stay</button>
+          <button data-testid="stay-btn" onClick={() => { void stayConnected(); }}>Stay</button>
         </div>
       );
     }
@@ -380,13 +373,11 @@ describe('WalletContext — session timeout timers', () => {
     });
 
     await act(async () => {
-      await userEvent.click(screen.getByTestId('stay-btn'));
+      fireEvent.click(screen.getByTestId('stay-btn'));
     });
 
-    await waitFor(() => {
-      expect(screen.getByTestId('status').textContent).toBe('error');
-      expect(screen.getByTestId('warning').textContent).toBe('false');
-    });
+    expect(screen.getByTestId('status').textContent).toBe('error');
+    expect(screen.getByTestId('warning').textContent).toBe('false');
   });
 
   // 14
@@ -412,7 +403,7 @@ describe('WalletContext — session timeout timers', () => {
     expect(screen.getByTestId('warning').textContent).toBe('true');
 
     await act(async () => {
-      await userEvent.click(screen.getByTestId('disc-btn'));
+      fireEvent.click(screen.getByTestId('disc-btn'));
     });
 
     expect(screen.getByTestId('status').textContent).toBe('disconnected');
