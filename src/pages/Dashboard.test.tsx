@@ -1,8 +1,9 @@
-import { render, screen, act, fireEvent } from '@testing-library/react';
+import { render, screen, act, fireEvent, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 import { Dashboard, RiskGauge } from './Dashboard';
 import { ReducedMotionProvider } from '../context/ReducedMotionContext';
+import '@testing-library/jest-dom';
 
 // Mock modules before imports
 vi.mock('../context/WalletContext', () => ({
@@ -55,6 +56,47 @@ function stubMatchMedia(matches: boolean) {
     Object.defineProperty(window, 'matchMedia', { writable: true, value: original });
   };
 }
+
+global.fetch = vi.fn();
+
+describe('Dashboard Accessibility', () => {
+  beforeEach(() => {
+    (global.fetch as any).mockResolvedValue({
+      ok: true,
+      json: async () => ({}),
+    });
+  });
+
+  it('announces the loading state to screen readers', () => {
+    render(<Dashboard />);
+    
+    const liveRegion = screen.getByText(/loading dashboard data/i);
+    expect(liveRegion).toBeInTheDocument();
+    expect(liveRegion.closest('[aria-live]')).toHaveAttribute('aria-live', 'polite');
+  });
+
+  it('announces the success state when data finishes loading', async () => {
+    render(<Dashboard />);
+    
+    await waitFor(() => {
+      const liveRegion = screen.getByText(/dashboard loaded successfully/i);
+      expect(liveRegion).toBeInTheDocument();
+      expect(liveRegion.closest('[aria-live]')).toHaveAttribute('aria-live', 'polite');
+    });
+  });
+
+  it('announces errors assertively when data fetching fails', async () => {
+    (global.fetch as any).mockRejectedValueOnce(new Error('Network error connecting to API'));
+    
+    render(<Dashboard />);
+    
+    await waitFor(() => {
+      const liveRegion = screen.getByText(/failed to load dashboard/i);
+      expect(liveRegion).toBeInTheDocument();
+      expect(liveRegion.closest('[aria-live]')).toHaveAttribute('aria-live', 'assertive');
+    });
+  });
+});
 
 describe('Dashboard component skeletons', () => {
   beforeEach(() => {

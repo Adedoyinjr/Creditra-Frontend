@@ -5,9 +5,6 @@ import { CopyToClipboard } from "../components/CopyToClipboard";
 import { CopyLoanButton } from "../components/CopyLoanButton";
 import { StatusBadge } from "../components/StatusBadge";
 import { useWallet } from "../context/WalletContext";
-import { Sparkline } from "../components/Sparkline";
-import { RiskBandsPanel } from "../components/RiskBandsPanel";
-import { WhatsChangedPanel } from "../components/WhatsChangedPanel";
 import { RiskExplainerOverlay } from "../components/RiskExplainerOverlay";
 import { MOCK_CREDIT_LINES } from "../data/mockData";
 import type { Transaction } from "../types/creditLine";
@@ -17,22 +14,19 @@ import {
   fmt,
   fmtDate,
   utilizationPct,
-  RISK_COLOR,
   getUtilizationLevel,
 } from "../utils/tokens";
-import { readJson, writeJson } from "../utils/storage";
-import "./Dashboard.css";  import { Skeleton } from "../components/Skeleton";
+import "./Dashboard.css";
+import { Skeleton } from "../components/Skeleton";
 import { NoDataGraph } from "../components/illustrations";
-import CompareLinesPanel from "../components/CompareLinesPanel";
-import { useFocusTrap } from "../hooks/useFocusTrap";
 import { useInertBackdrop } from "../hooks/useInertBackdrop";
 import { useBodyScrollLock } from "../hooks/useBodyScrollLock";
-import { useReducedMotion } from "../context/ReducedMotionContext";
-import { TipJar } from "../components/TipJar";
-import { NextSteps } from "../components/NextSteps";
 import { WhatChanged } from "../components/WhatChanged";
-import { HealthTipsPanel } from "../components/HealthTipsPanel";
 import { RiskGauge } from "./RiskGauge";
+import { LiveRegion } from "../components/LiveRegion";
+import { SyncIndicator } from "@/components/SyncIndicator";
+import { ContinuePrompt } from "@/components/ContinuePrompt";
+import { DashboardTour } from "@/components/DashboardTour";
 
 export { RiskGauge };
 
@@ -63,68 +57,21 @@ const TX_COLOR: Record<string, string> = {
   Interest: COLOR.warning,
 };
 
-// ─── Risk Explainer ───────────────────────────────────────────────────────────
-
-function RiskExplainer({ score, address }: { score: number; address?: string }) {
-  const [dismissed, setDismissed] = useState(() => {
-    if (!address) return true;
-    return readJson(`risk-explainer-dismissed-${address}`, false);
-  });
-
-  if (dismissed || !address) return null;
-
-  const band = RISK_COLOR(score);
-
-  const message = band === COLOR.success
-    ? 'Strong credit position \u2014 you\u2019re above the recommended threshold for new draws.'
-    : band === COLOR.warning
-    ? 'Fair credit position \u2014 within acceptable range, though keep an eye on your utilization.'
-    : 'Below the recommended threshold \u2014 consider improving your score before new draws.';
-
-  const handleDismiss = () => {
-    setDismissed(true);
-    writeJson(`risk-explainer-dismissed-${address}`, true);
-  };
-
-  return (
-    <div className="risk-explainer" role="status" style={{ borderLeftColor: band }}>
-      <p className="risk-explainer-text">{message}</p>
-      <button
-        className="risk-explainer-dismiss"
-        onClick={handleDismiss}
-        aria-label="Dismiss risk score explainer"
-        type="button"
-      >
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-          <path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-        </svg>
-      </button>
-    </div>
-  );
-}
-
 // ─── Dashboard Component ──────────────────────────────────────────────────────
 
 export function Dashboard() {
-  const { wallet, status } = useWallet();
+  const { wallet, status: walletStatus } = useWallet();
   const creditLines = MOCK_CREDIT_LINES;
 
   const [repayCount, setRepayCount] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [announcement, setAnnouncement] = useState<string>('');
   const [isExplainOpen, setIsExplainOpen] = useState(false);
-  // `isExplainOpen` now drives the centred RiskExplainerOverlay (#426).
-  // The slide-out panel (`RiskBandsPanel`) keeps its own local state and
-  // is unaffected.
 
   // ─── Sync timestamps ─────────────────────────────────────────────────────
   const [riskSyncedAt, setRiskSyncedAt] = useState<Date>(() => new Date());
   const [creditSyncedAt, setCreditSyncedAt] = useState<Date>(() => new Date());
   const [activitySyncedAt, setActivitySyncedAt] = useState<Date>(() => new Date());
-
-  const handleRiskRefresh = useCallback(async () => {
-    await new Promise<void>((r) => setTimeout(r, 600));
-    setRiskSyncedAt(new Date());
-  }, []);
 
   const handleCreditRefresh = useCallback(async () => {
     await new Promise<void>((r) => setTimeout(r, 600));
@@ -139,12 +86,6 @@ export function Dashboard() {
   const [selectedCompareLines, setSelectedCompareLines] = useState<string[]>([]);
   const [showCompare, setShowCompare] = useState(false);
   const compareTriggerRef = useRef<HTMLButtonElement>(null);
-
-
-  const handleCloseCompare = () => {
-    setShowCompare(false);
-    setSelectedCompareLines([]);
-  };
 
   const handleOpenCompare = () => {
     if (selectedCompareLines.length === 2) {
@@ -163,25 +104,37 @@ export function Dashboard() {
     });
   };
 
-  const comparePanelRef = useFocusTrap({
-    isActive: showCompare,
-    triggerRef: compareTriggerRef,
-    onEscape: handleCloseCompare,
-  });
-
   useInertBackdrop({ isInert: showCompare, modalId: "compare-lines-drawer-dashboard" });
   useBodyScrollLock({ isLocked: showCompare });
 
-  const selectedCreditLines = useMemo(
-    () => creditLines.filter((line) => selectedCompareLines.includes(line.id)),
-    [creditLines, selectedCompareLines],
-  );
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setLoading(false);
-    }, 500);
-    return () => clearTimeout(timer);
+    let isMounted = true;
+
+    const loadDashboard = async () => {
+      setStatus('loading');
+      setAnnouncement('Loading dashboard data...');
+      
+      try {
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        if (isMounted) {
+          setStatus('success');
+          setAnnouncement('Dashboard loaded successfully.');
+        }
+      } catch (err) {
+        if (isMounted) {
+          setStatus('error');
+          setAnnouncement('Failed to load dashboard. Please try again.');
+        }
+      }
+    };
+
+    loadDashboard();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const activeLines = useMemo(
@@ -300,15 +253,19 @@ export function Dashboard() {
 
   const hasLines = creditLines.length > 0;
   const hasUtilized = totalUtilized > 0;
-  const isConnected = status === "connected" && wallet;
+  const isConnected = walletStatus === "connected" && wallet;
 
   const truncAddr = wallet?.publicKey
     ? `${wallet.publicKey.slice(0, 6)}...${wallet.publicKey.slice(-4)}`
     : "";
 
-  if (!loading && !hasLines) {
+  if (status === 'success' && !hasLines) {
     return (
       <>
+        <LiveRegion 
+          message={announcement} 
+          aria-live={status === 'error' ? 'assertive' : 'polite'} 
+        />
         <div className="dashboard-header">
           <div>
             <h1>Dashboard</h1>
@@ -364,14 +321,13 @@ export function Dashboard() {
 
   return (
     <div
-      role="status"
-      aria-live="polite"
-      aria-busy={loading}
+      aria-busy={status === 'loading'}
       className="dashboard-root"
     >
-      <span className="sr-only">
-        {loading ? "Loading dashboard" : "Dashboard loaded"}
-      </span>
+      <LiveRegion 
+        message={announcement} 
+        aria-live={status === 'error' ? 'assertive' : 'polite'} 
+      />
 
       <div className="dashboard-header">
         <div>
@@ -412,8 +368,8 @@ export function Dashboard() {
       </div>
 
       {/* Summary Cards */}
-      <div className="summary-cards" data-tour-target="summaryCards" aria-busy={loading}>
-        {loading ? (
+      <div className="summary-cards" data-tour-target="summaryCards" aria-busy={status === 'loading'}>
+        {status === 'loading' ? (
           <>
             <div className="summary-card skeleton-card">
               <Skeleton
@@ -525,16 +481,16 @@ export function Dashboard() {
         )}
       </div>
 
-      {!loading && <ActivityFeed />}
+      {status === 'success' && <ActivityFeed />}
 
-      {!loading && hasLines && <ContinuePrompt creditLines={creditLines} />}
+      {status === 'success' && hasLines && <ContinuePrompt creditLines={creditLines} />}
 
       <div className="dashboard-grid">
         <div>
           <div className="card" style={{ animationDelay: "0.1s" }}>
             <h2>
               <span className="icon">📊</span> Credit Summary
-              {!loading && (
+              {status === 'success' && (
                 <SyncIndicator
                   lastSyncedAt={creditSyncedAt}
                   onRefresh={handleCreditRefresh}
@@ -590,10 +546,10 @@ export function Dashboard() {
           </div>
 
           {/* Risk Score */}
-          <div className="card" data-tour-target="riskGauge" style={{ animationDelay: '0.15s' }} aria-busy={loading}>
+          <div className="card" data-tour-target="riskGauge" style={{ animationDelay: '0.15s' }} aria-busy={status === 'loading'}>
             <h2>
               <span className="icon">🛡️</span> Risk Score
-              {!loading && (
+              {status === 'success' && (
                 <button
                   ref={explainTriggerRef}
                   type="button"
@@ -620,7 +576,7 @@ export function Dashboard() {
                 </button>
               )}
             </h2>
-            {loading ? (
+            {status === 'loading' ? (
               <div className="risk-gauge-container">
                 <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100px', width: '160px', marginBottom: '0.75rem' }}>
                   <Skeleton style={{ width: '80px', height: '80px', borderRadius: '50%' }} />
@@ -648,11 +604,11 @@ export function Dashboard() {
            <div
              className="card"
              style={{ animationDelay: "0.2s" }}
-             aria-busy={loading}
+             aria-busy={status === 'loading'}
            >
              <h2>
                <span className="icon">💳</span> Active Credit Lines
-               {!loading && (
+               {status === 'success' && (
                  <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: "0.75rem" }}>
                    {activeLines.length >= 2 && (
                      <button
@@ -689,7 +645,7 @@ export function Dashboard() {
                  </div>
                )}
              </h2>
-             {loading ? (
+             {status === 'loading' ? (
                <>
                  <div className="cl-preview-item">
                    <div style={{ flex: 1, minWidth: 0 }}>
@@ -991,10 +947,10 @@ export function Dashboard() {
              </div>
            </div>
  
-           <div className="card" style={{ animationDelay: "0.18s" }} aria-busy={loading}>
+           <div className="card" style={{ animationDelay: "0.18s" }} aria-busy={status === 'loading'}>
              <h2>
                <span className="icon">📝</span> Recent Activity
-               {!loading && (
+               {status === 'success' && (
                  <SyncIndicator
                    lastSyncedAt={activitySyncedAt}
                    onRefresh={handleActivityRefresh}
@@ -1002,7 +958,7 @@ export function Dashboard() {
                  />
                )}
              </h2>
-             {loading ? (
+             {status === 'loading' ? (
                <>
                  <div className="activity-item">
                    <Skeleton className="activity-icon" style={{ borderRadius: "6px" }} />
