@@ -19,11 +19,8 @@ import "./AmountInput.css";
 
 const STEP_AMOUNT = 100;
 
-function buildStepClasses(reducedMotion: boolean): string {
-  const base =
-    "flex items-center justify-center w-11 h-11 rounded-lg border border-border bg-background/60 text-foreground hover:bg-surface hover:border-accent/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-surface disabled:opacity-40 disabled:cursor-not-allowed";
-  return reducedMotion ? base : `${base} transition-all`;
-}
+const stepClasses =
+  "flex items-center justify-center w-10 h-10 xs:w-11 xs:h-11 rounded-lg border border-border bg-background/60 text-foreground hover:bg-surface hover:border-accent/50 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-surface disabled:opacity-40 disabled:cursor-not-allowed";
 
 const STEP_ICON_CLASS = "h-4 w-4 stroke-[2.5]";
 
@@ -349,7 +346,7 @@ export function AmountInput({
 
         {/* Input field with border styling based on validation state */}
         <div
-          className={`flex items-center gap-2 sm:gap-3 bg-surface p-3.5 sm:p-4 rounded-xl border-2 overflow-hidden ${reducedMotion ? "" : "transition-colors"} ${inputStateClassName}`}
+          className={`flex flex-wrap items-center gap-1.5 xs:gap-2 sm:gap-3 bg-surface p-3 xs:p-3.5 sm:p-4 rounded-xl border-2 overflow-hidden transition-colors ${inputStateClassName}`}
         >
           <button
             onClick={() => handleStep("down")}
@@ -399,7 +396,7 @@ export function AmountInput({
           {/* Max button for quick-fill with accessible label */}
           <button
             onClick={handleMaxClick}
-            className={`px-3 py-2 text-sm font-semibold text-accent hover:bg-accent/10 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-surface flex-shrink-0 min-h-[44px]${reducedMotion ? "" : " transition-colors"}`}
+            className="px-2 xs:px-3 py-2 text-xs xs:text-sm font-semibold text-accent hover:bg-accent/10 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-surface flex-shrink-0 min-h-[44px]"
             aria-label="Set amount to maximum available credit"
             type="button"
           >
@@ -484,7 +481,7 @@ export function AmountInput({
         <p className="text-sm font-semibold text-foreground mb-3 leading-[var(--lh-body)]">
           Quick amount
         </p>
-        <div className="grid grid-cols-4 gap-2">
+        <div className="grid grid-cols-2 xs:grid-cols-4 gap-2">
           {[25, 50, 75, 100].map((percent) => (
             <button
               key={percent}
@@ -504,7 +501,7 @@ export function AmountInput({
       </div>
 
       {/* Summary display showing available, requested, and remaining */}
-      <div className="bg-surface p-4 sm:p-5 rounded-xl border border-border space-y-3">
+      <div className="bg-surface p-3.5 xs:p-4 sm:p-5 rounded-xl border border-border space-y-2.5 xs:space-y-3">
         <div className="flex justify-between text-sm leading-[var(--lh-body)]">
           <span className="text-muted">Available:</span>
           <span className="font-semibold text-foreground tabular-nums">
@@ -528,10 +525,10 @@ export function AmountInput({
       </div>
 
       {/* Action buttons */}
-      <div className="flex gap-3 pt-4">
+      <div className="flex flex-col xs:flex-row gap-3 pt-4">
         <button
           onClick={onBack}
-          className={`flex-1 py-3 px-4 border-2 border-border text-foreground rounded-lg hover:bg-surface font-semibold text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background min-h-[44px]${reducedMotion ? "" : " transition-colors"}`}
+          className="flex-1 py-3 px-4 border-2 border-border text-foreground rounded-lg hover:bg-surface transition-colors font-semibold text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background min-h-[44px] w-full xs:w-auto"
           type="button"
         >
           Back
@@ -539,7 +536,7 @@ export function AmountInput({
         <button
           onClick={() => onNext(numAmount)}
           disabled={!isValid}
-          className={`flex-1 py-3 px-4 bg-accent text-background rounded-lg hover:bg-accent/90 font-semibold text-sm disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background min-h-[44px]${reducedMotion ? "" : " transition-all"}`}
+          className="flex-1 py-3 px-4 bg-accent text-background rounded-lg hover:bg-accent/90 transition-all font-semibold text-sm disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background min-h-[44px] w-full xs:w-auto"
           type="button"
         >
           Continue

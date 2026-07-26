@@ -627,4 +627,81 @@ describe("AmountInput", () => {
       expect(css).toContain("transition-duration: 0s");
     });
   });
+
+  describe("Responsive Breakpoints (v7)", () => {
+    it("uses grid-cols-2 on narrow viewports and xs:grid-cols-4 for preset chips", () => {
+      render(
+        <AmountInput
+          creditLine={creditLine}
+          onAmountChange={vi.fn()}
+          onNext={vi.fn()}
+          onBack={vi.fn()}
+        />,
+      );
+
+      const presetButton = screen.getByRole("button", { name: /25 percent/i });
+      const presetGrid = presetButton.closest(".grid");
+      expect(presetGrid).toHaveClass("grid-cols-2");
+      expect(presetGrid).toHaveClass("xs:grid-cols-4");
+    });
+
+    it("stacks action buttons vertically on narrow and row on wider viewports", () => {
+      render(
+        <AmountInput
+          creditLine={creditLine}
+          onAmountChange={vi.fn()}
+          onNext={vi.fn()}
+          onBack={vi.fn()}
+        />,
+      );
+
+      const backButton = screen.getByRole("button", { name: /back/i });
+      const actionRow = backButton.closest(".flex.flex-col");
+      expect(actionRow).toHaveClass("flex-col");
+      expect(actionRow).toHaveClass("xs:flex-row");
+    });
+
+    it("constraint cards use single-column grid on narrow viewports with sm:grid-cols-3", () => {
+      render(
+        <AmountInput
+          creditLine={creditLine}
+          onAmountChange={vi.fn()}
+        />,
+      );
+
+      const constraintsGrid = document.getElementById("draw-amount-constraints");
+      expect(constraintsGrid).toHaveClass("grid");
+      expect(constraintsGrid).toHaveClass("sm:grid-cols-3");
+    });
+
+    it("stepper buttons resize from w-10/h-10 on narrow to xs:w-11/xs:h-11", () => {
+      render(
+        <AmountInput
+          creditLine={creditLine}
+          onAmountChange={vi.fn()}
+          onNext={vi.fn()}
+          onBack={vi.fn()}
+        />,
+      );
+
+      const decreaseBtn = screen.getByRole("button", { name: /decrease amount/i });
+      expect(decreaseBtn).toHaveClass("w-10", "h-10");
+      expect(decreaseBtn).toHaveClass("xs:w-11", "xs:h-11");
+    });
+
+    it("action buttons are full width on narrow and auto on wider viewports", () => {
+      render(
+        <AmountInput
+          creditLine={creditLine}
+          onAmountChange={vi.fn()}
+          onNext={vi.fn()}
+          onBack={vi.fn()}
+        />,
+      );
+
+      const continueBtn = screen.getByRole("button", { name: /continue/i });
+      expect(continueBtn).toHaveClass("w-full");
+      expect(continueBtn).toHaveClass("xs:w-auto");
+    });
+  });
 });
