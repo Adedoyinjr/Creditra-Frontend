@@ -110,32 +110,39 @@ export function useParams() {
   return {};
 }
 
-/**
- * Minimal `matchPath` implementation that mirrors the subset of the real
- * react-router-dom v6 behaviour used by `RouteAnnouncer`:
- *
- *   matchPath({ path: '/credit-lines', end: true }, '/credit-lines')  → object
- *   matchPath({ path: '/', end: true }, '/credit-lines')             → null
- *
- * Supports the `end: true` modifier (exact match required) and a `path`
- * string (no param interpolation). Returns `{ params: {} }` on match so
- * callers that destructure `match.params` keep working.
- */
-export function matchPath(
-  options: { path: string; end?: boolean } | string,
-  pathname: string
-): { params: Record<string, string>; pathname: string; pattern: string } | null {
-  const path = typeof options === 'string' ? options : options.path;
-  const end = typeof options === 'string' ? false : options.end;
+// MemoryRouter — renders children directly (same as BrowserRouter)
+export function MemoryRouter({
+  children,
+  initialEntries,
+}: {
+  children: React.ReactNode;
+  initialEntries?: string[];
+}) {
+  // Expose the first entry via the search hook so useSearchParams works
+  const first = (initialEntries && initialEntries[0]) ?? "/";
+  const searchStr = first.includes("?") ? first.slice(first.indexOf("?")) : "";
+  _currentSearch = searchStr;
+  return createElement(Fragment, null, children);
+}
 
-  if (end) {
-    return path === pathname
-      ? { params: {}, pathname, pattern: path }
-      : null;
-  }
+// Internal store for the current search string so useSearchParams can read it
+let _currentSearch = "";
 
-  if (pathname === path || pathname.startsWith(path.endsWith('/') ? path : `${path}/`)) {
-    return { params: {}, pathname, pattern: path };
-  }
-  return null;
+// NavLink — same as Link but with optional activeClassName
+export function NavLink({
+  to,
+  children,
+  ...props
+}: {
+  to: string;
+  children: React.ReactNode;
+  [key: string]: unknown;
+}) {
+  return createElement("a", { href: to, ...props }, children);
+}
+
+// useSearchParams — parses the active MemoryRouter entry's search string
+export function useSearchParams(): [URLSearchParams, (params: URLSearchParams) => void] {
+  const params = new URLSearchParams(_currentSearch.replace(/^\?/, ""));
+  return [params, () => {}];
 }

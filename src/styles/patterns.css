@@ -1,52 +1,21 @@
-/*
- * Patterns for Credit Line statuses and Dashboard statuses to support
- * color-blind accessibility (closes #565, dashboard v7).
+/**
+ * patterns.css — color-blind-safe pattern fills (WCAG 1.4.1)
  *
- * ─── Taxonomy ────────────────────────────────────────────────────────────────
+ * All classes in this file pair a pattern texture with color so that
+ * status/severity information is conveyed by shape AND color rather than
+ * color alone.  The patterns are intentionally subtle — they reinforce the
+ * color signal without overpowering the UI.
  *
- * Each visual family maps 1:1 to a semantic meaning so that shape alone —
- * independent of hue — communicates status to users with color-vision
- * deficiencies, in monochrome printing, and in forced-colors mode.
- *
- *   Family          Default map                            Shape
- *   ─────────       ──────────────────────────────────     ──────────────
- *   dots            status-active, summary-card--accent   small radial dots
- *   stripes-45      status-suspended, util-fill--medium,
- *                   notification-item--warning            45° diagonal stripes
- *   stripes-135     status-frozen                          135° diagonal stripes
- *   chevrons        util-fill--low (rolled-up "↑"),
- *                   summary-card--available,
- *                   notification-item--info                upward chevron (NEW v7)
- *   cross-hatch     util-fill--high,
- *                   notification-item--danger              dense X pattern (NEW v7)
- *   horizontal      status-closed,
- *                   notification-item--info (alt),         horizontal lines
- *   dense-45        status-defaulted                       dense 45° stripes
- *
- * Why introduce chevrons + cross-hatch in v7?
- * The original five families all used straight lines.  For Dashboard v7 we
- * need three NEW, perceptually distinct shape families for utilization
- * levels and notification severity — because reusing "dense 45°" for both
- * `status-defaulted` and `util-fill--high` would let a deuteranope confuse
- * the two at a glance, even though they live on different surfaces.
- *
- * ─── Patterns are layered at low opacity over the existing colour token ───────
- * 0.10–0.25 is the safe range we verified against the foreground text and
- * border contrast ratios (WCAG 2.1 AA on both --bg and --surface).  Patterns
- * are deliberately *additive*: the colour cue is preserved, never replaced.
- *
- * ─── High-contrast mode ──────────────────────────────────────────────────────
- * Under [data-contrast="high"] (see ContrastContext + index.css), the page
- * background becomes near-pure black (#000000) and rgba(_,0.10) washes out
- * completely.  The block at the bottom of this file bumps opacities so the
- * shapes stay perceivable.
- *
- * ─── Forced colours mode ─────────────────────────────────────────────────────
- * Under @media (forced-colors: active) — Windows High Contrast, forced
- * colours in Chrome — the host OS supplies its own color palette and our
- * rgba patterns can conflict.  We suppress the patterns in that mode and
- * rely on the system palette + the component's own border / glyph cues.
+ * Sections:
+ *   1. Credit-line status cards (.status-*)
+ *   2. RepayPage utilization progress bars (.rp-progress-*)
+ *   3. RepayPage feedback severity banners (.rp-severity-*)
+ *   4. RepaymentVisualizer legend swatches (.rv-legend-swatch*)
+ *   5. Forced-colors (Windows High Contrast) overrides
  */
+
+/* ─── 1. Credit-line status cards ─────────────────────────────────────────── */
+/* Patterns for Credit Line statuses to support color-blind accessibility */
 
 /* ─── Status badges (pre-existing — kept identical) ───────────────────────── */
 
@@ -77,86 +46,135 @@
   background-image: repeating-linear-gradient(0deg, rgba(139, 148, 158, 0.2) 0, rgba(139, 148, 158, 0.2) 1.5px, transparent 1.5px, transparent 4px);
 }
 
-.status-pending,
-.status-pattern--pending {
-  background-image: repeating-linear-gradient(90deg, rgba(88, 166, 255, 0.2) 0, rgba(88, 166, 255, 0.2) 2px, transparent 2px, transparent 6px);
+/* ─── 2. RepayPage utilization progress bars ──────────────────────────────
+ *
+ * Three levels that map to UtilizationLevel: low / medium / high.
+ * Each class is applied to the filled <div> inside the progress track and
+ * uses a pattern (solid diagonal lines or dots) in addition to the token
+ * color so the level is distinguishable without relying on color alone.
+ *
+ * Token references:
+ *   low    → var(--success, #3fb950)  solid bar, dots indicate "all clear"
+ *   medium → var(--warning, #d29922)  diagonal stripes at 45° (caution)
+ *   high   → var(--error,   #f85149)  dense cross-hatch (urgent)
+ *
+ * The ghost bar (old utilization overlay) uses rp-progress--ghost and is
+ * always rendered at 30% opacity so it never competes with the live bar.
+ * ──────────────────────────────────────────────────────────────────────── */
+
+.rp-progress--low {
+  background-color: var(--success, #3fb950);
+  /* Subtle dot pattern: presence of dots = "healthy" */
+  background-image: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--success, #3fb950) 55%, #fff) 1px,
+    transparent 1px
+  );
+  background-size: 8px 8px;
 }
 
-/* LandingHero status chip component styling */
-
-.landing-hero-status-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  align-items: center;
-  margin-top: 1rem;
+.rp-progress--medium {
+  background-color: var(--warning, #d29922);
+  /* Single diagonal lines: 45° = caution stripe */
+  background-image: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 3px,
+    color-mix(in srgb, var(--warning, #d29922) 60%, #fff) 3px,
+    color-mix(in srgb, var(--warning, #d29922) 60%, #fff) 4px
+  );
 }
 
-.landing-hero-status-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.35rem 0.75rem;
-  border-radius: var(--radius-full, 9999px);
-  font-size: var(--text-xs, 0.75rem);
-  font-weight: 600;
-  border: 1px solid var(--border, #30363d);
-  color: var(--text, #e6edf3);
-  background-color: var(--surface, #161b22);
-  transition: all 0.2s ease;
-  cursor: pointer;
-  user-select: none;
+.rp-progress--high {
+  background-color: var(--error, #f85149);
+  /* Cross-hatch pattern: two directions = urgent/critical */
+  background-image:
+    repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 2px,
+      color-mix(in srgb, var(--error, #f85149) 55%, #fff) 2px,
+      color-mix(in srgb, var(--error, #f85149) 55%, #fff) 3px
+    ),
+    repeating-linear-gradient(
+      -45deg,
+      transparent,
+      transparent 2px,
+      color-mix(in srgb, var(--error, #f85149) 55%, #fff) 2px,
+      color-mix(in srgb, var(--error, #f85149) 55%, #fff) 3px
+    );
 }
 
-.landing-hero-status-chip:focus-visible {
-  outline: 2px solid var(--accent, #58a6ff);
-  outline-offset: 2px;
+/* Ghost bar — old utilization shown behind the new bar */
+.rp-progress--ghost {
+  background-color: var(--error, #f85149);
+  opacity: 0.30;
 }
 
-.landing-hero-status-chip--active {
-  background-color: color-mix(in srgb, var(--success, #3fb950) 15%, var(--surface, #161b22));
-  border-color: color-mix(in srgb, var(--success, #3fb950) 40%, transparent);
-  color: #3fb950;
+/* ─── 3. RepayPage severity feedback banners ──────────────────────────────
+ *
+ * Applied to the inline feedback <div> below the repay-amount input.
+ * Patterns are kept very lightweight because the feedback area is small —
+ * they appear as a faint repeating edge texture that reinforces the severity
+ * without obscuring the text.
+ *
+ * Token references:
+ *   info    → var(--accent,  #58a6ff)  horizontal rules (neutral/informational)
+ *   success → var(--success, #3fb950)  micro-dots (positive result)
+ *   warning → var(--warning, #d29922)  diagonal lines (caution)
+ *   danger  → var(--error,   #f85149)  cross-hatch (critical error)
+ * ──────────────────────────────────────────────────────────────────────── */
+
+.rp-severity--info {
+  /* Thin horizontal rules suggest "lines of information" */
+  background-image: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 10px,
+    color-mix(in srgb, var(--accent, #58a6ff) 12%, transparent) 10px,
+    color-mix(in srgb, var(--accent, #58a6ff) 12%, transparent) 11px
+  );
 }
 
-.landing-hero-status-chip--suspended {
-  background-color: color-mix(in srgb, var(--warning, #d29922) 15%, var(--surface, #161b22));
-  border-color: color-mix(in srgb, var(--warning, #d29922) 40%, transparent);
-  color: #d29922;
+.rp-severity--success {
+  /* Micro-dot grid: "checkmarks scattered" / positive reading */
+  background-image: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--success, #3fb950) 18%, transparent) 1px,
+    transparent 1px
+  );
+  background-size: 10px 10px;
 }
 
-.landing-hero-status-chip--frozen {
-  background-color: color-mix(in srgb, var(--accent, #58a6ff) 15%, var(--surface, #161b22));
-  border-color: color-mix(in srgb, var(--accent, #58a6ff) 40%, transparent);
-  color: #58a6ff;
+.rp-severity--warning {
+  /* Diagonal stripes at 45°: standard caution / hazard pattern */
+  background-image: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 6px,
+    color-mix(in srgb, var(--warning, #d29922) 15%, transparent) 6px,
+    color-mix(in srgb, var(--warning, #d29922) 15%, transparent) 7px
+  );
 }
 
-.landing-hero-status-chip--defaulted {
-  background-color: color-mix(in srgb, var(--error, #f85149) 15%, var(--surface, #161b22));
-  border-color: color-mix(in srgb, var(--error, #f85149) 40%, transparent);
-  color: #f85149;
+.rp-severity--danger {
+  /* Cross-hatch: strong urgency signal */
+  background-image:
+    repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 4px,
+      color-mix(in srgb, var(--error, #f85149) 14%, transparent) 4px,
+      color-mix(in srgb, var(--error, #f85149) 14%, transparent) 5px
+    ),
+    repeating-linear-gradient(
+      -45deg,
+      transparent,
+      transparent 4px,
+      color-mix(in srgb, var(--error, #f85149) 14%, transparent) 4px,
+      color-mix(in srgb, var(--error, #f85149) 14%, transparent) 5px
+    );
 }
-
-.landing-hero-status-chip--closed {
-  background-color: color-mix(in srgb, var(--muted, #8b949e) 15%, var(--surface, #161b22));
-  border-color: color-mix(in srgb, var(--muted, #8b949e) 40%, transparent);
-  color: #8b949e;
-}
-
-.landing-hero-status-chip__cue {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 1.1rem;
-  height: 1.1rem;
-  border-radius: 50%;
-  border: 1px solid currentColor;
-  font-size: 0.65rem;
-  font-weight: 700;
-  line-height: 1;
-  flex-shrink: 0;
-}
-
 
 /* RepaymentVisualizer series — distinguish principal vs interest without color alone (WCAG 1.4.1) */
 
@@ -337,19 +355,111 @@ html[data-contrast="high"] .notification-item--danger {
 
 /* ─── Forced-colours mode (Windows High Contrast, Chrome forced-colors) ────── */
 @media (forced-colors: active) {
-  /*
-   * The host OS supplies its own palette; rgba patterns lose their hue
-   * and become gray-on-gray which can look broken.  We suppress the
-   * pattern fills and rely on the SystemColor borders + component glyphs.
-   */
-  .util-bar-fill::before,
-  .cl-preview-bar-fill::before,
-  .summary-card--accent::before,
-  .summary-card--util::before,
-  .summary-card--available::before,
-  .notification-item--info,
-  .notification-item--warning,
-  .notification-item--danger {
+  /* ── rv-legend-swatch overrides ── */
+  .rv-legend-swatch {
+    background-color: Canvas;
+    forced-color-adjust: none;
+  }
+
+  .rv-legend-swatch--principal {
+    background-image: repeating-linear-gradient(
+      135deg,
+      CanvasText 0,
+      CanvasText 1px,
+      transparent 1px,
+      transparent 5px
+    );
+  }
+
+  .rv-legend-swatch--interest {
+    background-image: repeating-linear-gradient(
+        45deg,
+        CanvasText 0,
+        CanvasText 1px,
+        transparent 1px,
+        transparent 4px
+      ),
+      repeating-linear-gradient(
+        -45deg,
+        CanvasText 0,
+        CanvasText 1px,
+        transparent 1px,
+        transparent 4px
+      );
+  }
+
+  /* ── rp-progress overrides — keep patterns, map colors to system tokens ── */
+  .rp-progress--low,
+  .rp-progress--medium,
+  .rp-progress--high,
+  .rp-progress--ghost {
+    forced-color-adjust: none;
+    background-color: Highlight;
+  }
+
+  .rp-progress--low {
+    background-image: radial-gradient(circle, CanvasText 1px, transparent 1px);
+    background-size: 8px 8px;
+  }
+
+  .rp-progress--medium {
+    background-image: repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 3px,
+      CanvasText 3px,
+      CanvasText 4px
+    );
+  }
+
+  .rp-progress--high {
+    background-image:
+      repeating-linear-gradient(45deg, transparent, transparent 2px, CanvasText 2px, CanvasText 3px),
+      repeating-linear-gradient(-45deg, transparent, transparent 2px, CanvasText 2px, CanvasText 3px);
+  }
+
+  .rp-progress--ghost {
+    background-color: GrayText;
     background-image: none;
+    opacity: 0.4;
+  }
+
+  /* ── rp-severity overrides ── */
+  .rp-severity--info,
+  .rp-severity--success,
+  .rp-severity--warning,
+  .rp-severity--danger {
+    forced-color-adjust: none;
+  }
+
+  .rp-severity--info {
+    background-image: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 10px,
+      CanvasText 10px,
+      CanvasText 11px
+    );
+  }
+
+  .rp-severity--success {
+    background-image: radial-gradient(circle, CanvasText 1px, transparent 1px);
+    background-size: 10px 10px;
+  }
+
+  .rp-severity--warning {
+    background-image: repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 6px,
+      CanvasText 6px,
+      CanvasText 7px
+    );
+  }
+
+  .rp-severity--danger {
+    background-image:
+      repeating-linear-gradient(45deg, transparent, transparent 4px, CanvasText 4px, CanvasText 5px),
+      repeating-linear-gradient(-45deg, transparent, transparent 4px, CanvasText 4px, CanvasText 5px);
   }
 }
