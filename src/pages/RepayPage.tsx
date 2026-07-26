@@ -29,13 +29,6 @@ import './RepayPage.css';
 
 type RepayStep = 'input' | 'review';
 
-function utilizationVariant(pct: number): ProgressBarVariant {
-  if (pct > 80) return 'danger';
-  if (pct > 50) return 'warning';
-  return 'success';
-}
-
-
 /**
  * SEVERITY_CONFIG — token-pinned colours for the inline feedback banner.
  *
