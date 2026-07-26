@@ -1,4 +1,10 @@
-import { useEffect, useState } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
+import type { ReactNode, ReactElement } from "react";
 import { matchPath, useLocation } from "react-router-dom";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
 
@@ -74,12 +80,14 @@ export const NOT_FOUND_METADATA: Omit<RouteMetadata, "path"> = {
 const titleFor = (pageName: string) => `Creditra · ${pageName}`;
 
 const getRouteMetadata = (pathname: string) =>
-  ROUTE_METADATA.find(route =>
+  ROUTE_METADATA.find((route) =>
     matchPath({ path: route.path, end: true }, pathname),
   ) ?? NOT_FOUND_METADATA;
 
 export function RouteAnnouncer() {
   const location = useLocation();
+  const headCtx = useContext(RouteHeadContext);
+  const override = headCtx?.head;
   const [announcement, setAnnouncement] = useState("");
 
   useEffect(() => {

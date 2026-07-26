@@ -1,0 +1,224 @@
+.repayment-plan {
+  display: grid;
+  gap: 1rem;
+  margin-top: 1.25rem;
+  padding: 1.25rem;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+}
+
+.repayment-plan__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.repayment-plan__header h4 {
+  margin: 0 0 0.35rem;
+  font-size: 1rem;
+  color: var(--text);
+}
+
+.repayment-plan__header p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+
+.repayment-plan__summary {
+  display: inline-flex;
+  flex-direction: column;
+  padding: 0.75rem 0.9rem;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  min-width: 180px;
+}
+
+.repayment-plan__summary span {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+}
+
+.repayment-plan__summary strong {
+  font-size: 1rem;
+  color: var(--text);
+}
+
+.repayment-plan__controls {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.repayment-plan__preset {
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  padding: 0.45rem 0.75rem;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.repayment-plan__preset.is-active {
+  background: color-mix(in srgb, var(--accent) 16%, var(--bg));
+  border-color: var(--accent);
+}
+
+.repayment-plan__body {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: minmax(0, 1.4fr) minmax(280px, 0.9fr);
+}
+
+.repayment-plan__chart-card,
+.repayment-plan__table-card {
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg);
+}
+
+.repayment-plan__legend {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.repayment-plan__legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--text);
+  font-size: 0.85rem;
+}
+
+.repayment-plan__legend-swatch {
+  width: 0.8rem;
+  height: 0.8rem;
+  display: inline-block;
+  border-radius: 999px;
+}
+
+.repayment-plan__chart {
+  width: 100%;
+  height: auto;
+}
+
+.repayment-plan__axis {
+  stroke: var(--border);
+  stroke-width: 0.75;
+}
+
+.repayment-plan__grid-line {
+  stroke: var(--border);
+  stroke-width: 0.45;
+  stroke-dasharray: 2 2;
+}
+
+.repayment-plan__axis-label {
+  fill: var(--muted);
+  font-size: 3px;
+}
+
+.repayment-plan__area {
+  opacity: 0.95;
+  stroke: transparent;
+  transform-origin: center;
+  animation: repayment-plan-enter 360ms ease-out;
+}
+
+.repayment-plan__area--principal {
+  fill: var(--success);
+}
+
+.repayment-plan__area--interest {
+  fill: var(--warning);
+}
+
+.repayment-plan__chart.is-reduced-motion .repayment-plan__area {
+  animation: none;
+}
+
+.repayment-plan__table-card h5 {
+  margin: 0 0 0.75rem;
+  font-size: 0.95rem;
+  color: var(--text);
+}
+
+.repayment-plan__table-card table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.repayment-plan__table-card th,
+.repayment-plan__table-card td {
+  padding: 0.55rem 0.4rem;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+}
+
+.repayment-plan__table-card th {
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.repayment-plan__table-card td {
+  color: var(--text);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@keyframes repayment-plan-enter {
+  from {
+    opacity: 0;
+    transform: scaleY(0.96);
+  }
+  to {
+    opacity: 0.95;
+    transform: scaleY(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .repayment-plan__area {
+    animation: none;
+  }
+}
+
+@media (forced-colors: active) {
+  .repayment-plan__legend-swatch {
+    border: 1px solid CanvasText;
+  }
+
+  .repayment-plan__area--principal {
+    fill: url(#principal-hatch);
+  }
+
+  .repayment-plan__area--interest {
+    fill: url(#interest-hatch);
+  }
+}
+
+@media (max-width: 900px) {
+  .repayment-plan__body {
+    grid-template-columns: 1fr;
+  }
+}

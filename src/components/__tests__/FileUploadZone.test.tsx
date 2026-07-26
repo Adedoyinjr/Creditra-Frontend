@@ -108,11 +108,16 @@ describe('FileUploadZone', () => {
     render(<FileUploadZone onFilesUploaded={mockOnFilesUploaded} />);
     
     const file = new File(['pasted content'], 'pasted.pdf', { type: 'application/pdf' });
-    const dataTransfer = new DataTransfer();
-    dataTransfer.items.add(file);
     
     fireEvent.paste(window, {
-      clipboardData: dataTransfer,
+      clipboardData: {
+        items: [
+          {
+            kind: 'file',
+            getAsFile: () => file,
+          },
+        ],
+      },
     });
     
     await waitFor(() => {

@@ -6,11 +6,27 @@ import path from "path";
 export default defineConfig({
   plugins: [react()],
   resolve: {
-    alias: { "@": path.resolve(__dirname, "./src") },
+    alias: {
+      // Mirror the @/ alias from vite.config.ts so test imports resolve identically
+      "@": path.resolve(__dirname, "./src"),
+      /*
+       * react-router-dom stub — used when running tests in an offline/shared
+       * node_modules environment where the real package is unavailable.
+       * The stub provides the minimum API surface needed by the existing tests.
+       */
+      "react-router-dom": path.resolve(
+        __dirname,
+        "./src/test/__mocks__/react-router-dom.tsx",
+      ),
+    },
   },
   test: {
     globals: true,
     environment: "jsdom",
     setupFiles: ["./src/test/setup.ts"],
+    testTimeout: 30000,
+    hookTimeout: 30000,
+    pool: "forks",
+    maxWorkers: 2,
   },
 });

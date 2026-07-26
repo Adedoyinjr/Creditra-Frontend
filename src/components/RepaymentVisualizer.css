@@ -1,0 +1,98 @@
+/**
+ * RepaymentVisualizer — animation & reduced-motion styles
+ *
+ * Default state  : animated (draw-on + fade-in for chart paths, fade-in for
+ *                  axis labels and legend).
+ * Reduced-motion : all motion is removed. Areas appear instantly at full
+ *                  opacity; no transforms are applied.
+ *
+ * Two independent mechanisms suppress motion:
+ *   1. The OS/browser `prefers-reduced-motion: reduce` media query.
+ *   2. The `[data-reduced-motion="true"]` attribute set by the React component
+ *      when `useReducedMotion()` reports `isReducedMotionActive === true`
+ *      (this covers the in-app override toggle on the Settings page).
+ *
+ * Animation tokens align with `--motion-duration-*` properties defined in
+ * `src/index.css`. The fallback literals here are only used when the custom
+ * properties are not in scope.
+ */
+
+/* ─── Draw-on keyframe ──────────────────────────────────────────────────────── */
+
+/**
+ * `.rv-area-animate`
+ *
+ * Fades the area paths in from transparent. A scale transform on the Y axis
+ * gives a "grow upward" feel that mirrors data appearing on the chart.
+ * The transform-origin is set to the bottom of the chart area so the growth
+ * originates from the baseline rather than the centre.
+ */
+@keyframes rv-area-in {
+  from {
+    opacity: 0;
+    transform: scaleY(0.6);
+    transform-origin: bottom center;
+  }
+  to {
+    opacity: 1;
+    transform: scaleY(1);
+    transform-origin: bottom center;
+  }
+}
+
+@keyframes rv-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* ─── Animated state (default) ─────────────────────────────────────────────── */
+
+.rv-area-animate {
+  animation: rv-area-in var(--motion-duration-enter, 600ms)
+    cubic-bezier(0.16, 1, 0.3, 1) both;
+  transform-box: fill-box;
+  transform-origin: bottom center;
+}
+
+/* Interest area draws in slightly after principal for a staggered look */
+.rv-area-animate--interest {
+  animation-delay: var(--motion-delay-stagger, 80ms);
+}
+
+.rv-legend-animate {
+  animation: rv-fade-in var(--motion-duration-enter, 400ms)
+    ease-out var(--motion-delay-legend, 300ms) both;
+}
+
+/* ─── Static state — OS reduced-motion preference ───────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  .rv-area-animate,
+  .rv-area-animate--interest,
+  .rv-legend-animate {
+    animation: none;
+    /* Ensure paths are fully visible immediately */
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ─── Static state — in-app reduced-motion override ─────────────────────────── */
+/*
+ * The SVG root receives `data-reduced-motion="true"` from React when
+ * `isReducedMotionActive` is true. Because SVG children can't be targeted by
+ * an ancestor attribute selector in the usual way, we use the class on the
+ * wrapping <div> instead (see `.rv-chart-wrap[data-reduced-motion="true"]`).
+ */
+
+.rv-chart-wrap[data-reduced-motion='true'] .rv-area-animate,
+.rv-chart-wrap[data-reduced-motion='true'] .rv-area-animate--interest,
+.rv-chart-wrap[data-reduced-motion='true'] .rv-legend-animate {
+  animation: none;
+  opacity: 1;
+  transform: none;
+}

@@ -100,16 +100,30 @@ loaded; this keeps CLS at zero and removes a third-party request.
 #### Utility: tabular numerals
 
 ```css
-.num-tabular { font-variant-numeric: tabular-nums; }
+.num-tabular,
+.tabular-nums,
+.amount,
+[data-amount] {
+  font-variant-numeric: tabular-nums;
+}
 ```
 
 Apply to any cell that displays money, percentages, or APR so digit widths are fixed and
-columns stay visually stable as values change. Currently used on:
+columns stay visually stable as values change. Defined in `src/styles/typography.css` and
+used on:
 
-- `TransactionHistory` — `tx-amount` column cells, `th-stat-value` summary cards, and the
-  Amount row in the expanded detail panel.
-- `CreditLines` — `cl-metric-value` (Limit / Utilized / Available), utilization percentage,
-  APR, and Risk Score cells.
+- `AmountInput` — draw field, available limit, validation metrics (`.tabular-nums.amount`)
+- `TransactionHistory` — `tx-amount` / `th-stat-value` via `.num-tabular`
+- `CreditLines` — Limit / Utilized / Available metric values
+- `ConfirmationStep`, `RepayModal`, `RepaySuccessShareCard` — amount summaries
+- Dashboard summary cards via `.num-display` / `.num-tabular`
+
+#### Utility: per-account color stripe
+
+`src/utils/colorFromId.ts` maps a stable account id to a palette color via a djb2 hash.
+Use `colorFromId(id)` for the hex token and `accountStripeStyle(id)` for a 3 px absolute
+left-edge stripe. LinkedAccounts provider cards render the stripe + an inline swatch so
+identity survives monochrome / forced-colors viewing (WCAG 1.4.1).
 
 ### Motion
 
@@ -143,6 +157,7 @@ Every component below lives in `src/components/`.
 | `FormField` | Labelled input/textarea/custom child with help and error slots | `htmlFor` linkage, `aria-describedby`, `aria-invalid`, `aria-required` set automatically; required indicator announced |
 | `FormMessage` | Tone-coded helper/error text | `role="alert"` for `danger`; live region wrapping for transient feedback |
 | `AmountInput` | Currency input with preset chips (25/50/75/100%) and per-severity feedback | `aria-describedby` aggregates helper + constraint + status + error IDs |
+| `HealthFactorChart` | Per-credit-line health-factor trend (SVG + SR table) | `role="img"` + labelledby; band label pairs colour with text |
 | `PendingButton` | Submit button with inline spinner | `aria-busy="true"` while loading; spinner `aria-hidden` so label-change communicates state |
 
 ### Status, feedback, success
@@ -150,6 +165,7 @@ Every component below lives in `src/components/`.
 | Component | Purpose | Notes |
 | --- | --- | --- |
 | `StatusBadge` | Pill for `CreditLineStatus` | Color + glyph cue (`A`, `!`, `X`, `C`) so meaning survives monochrome screenshots |
+| `AgingTag` | Flag for delinquent lines | High-contrast danger style + Clock icon, text is self-labelling for screen readers |
 | `Skeleton` | Shimmer placeholder | Animation respects `prefers-reduced-motion` |
 | `SuccessState` | Post-action confirmation | `role="status" aria-live="polite"` |
 | `TransactionStatus` | Pending / success / failure for draws and repays | Step indicator + retry CTA |
@@ -265,9 +281,15 @@ Touch targets stay at 44×44 px regardless of density (see [`ACCESSIBILITY.md`](
 
 Implemented inline in `src/pages/Dashboard.tsx` as an SVG semicircle. A 180° arc from
 `(cx - r, cy)` to `(cx + r, cy)` is drawn twice — a muted background path and a coloured
-foreground path. The foreground's `strokeDashoffset` is computed from the normalised
 score (`0–100`). The colour comes from `RISK_COLOR(score)` and the trend arrow is
 `▲ | ▼ | ─` paired with `improving | declining | stable` text — never colour alone.
+
+### Risk bands
+
+`RiskBand` pairs a colored background with a secondary visual pattern to distinguish risk levels without relying solely on color (WCAG 1.4.1).
+- **Excellent/Success**: Minimal dotted pattern (`radial-gradient`).
+- **Good/Warning**: Diagonal stripes.
+- **Caution & Recovery/Danger**: Crosshatch pattern.
 
 ### Status badge
 
@@ -294,3 +316,172 @@ layout exactly.
 The modal backdrop is `--surface-overlay` (a 72 %-alpha layer over `--bg`) so the page
 behind remains legible but de-emphasised. Background content is also marked `inert` so
 assistive tech skips it entirely.
+
+---
+
+## 8. Safe-area insets (iOS PWA)
+
+When the app runs as a PWA (or in Safari with `viewport-fit=cover`), iOS exposes four
+[CSS environment variables](https://developer.apple.com/documentation/safari-developer-tools/css-env-variables)
+that describe how much of the display is hidden behind the notch, home indicator, and
+rounded corners.
+
+### Prerequisite
+
+`index.html` must include `viewport-fit=cover` in the viewport meta tag:
+
+```html
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+```
+
+Without this, `env(safe-area-inset-*)` always returns `0`.
+
+### Tokens (`src/styles/safe-area.css`)
+
+Four shorthand tokens are declared on `:root` and updated automatically:
+
+| Token | Maps to | Typical device value |
+| --- | --- | --- |
+| `--sat` | `env(safe-area-inset-top, 0px)` | 47–59 px on Face ID iPhones |
+| `--sar` | `env(safe-area-inset-right, 0px)` | 0 px portrait / ~44 px landscape |
+| `--sab` | `env(safe-area-inset-bottom, 0px)` | 34 px (home-indicator models) |
+| `--sal` | `env(safe-area-inset-left, 0px)` | 0 px portrait / ~44 px landscape |
+
+Fallback is `0px` on browsers that do not support `env()` (desktop Chrome/Firefox, JSDOM).
+
+### Utility classes
+
+| Class | Effect |
+| --- | --- |
+| `.safe-top` | `padding-top: var(--sat)` |
+| `.safe-bottom` | `padding-bottom: var(--sab)` |
+| `.safe-left` | `padding-left: var(--sal)` |
+| `.safe-right` | `padding-right: var(--sar)` |
+| `.safe-x` | left + right |
+| `.safe-y` | top + bottom |
+| `.safe-all` | all four sides |
+| `.fixed-safe-top` | `position:fixed; top:0; padding-top: var(--sat)` |
+| `.fixed-safe-bottom` | `position:fixed; bottom:0; padding-bottom: var(--sab)` |
+| `.mt-safe / .mr-safe / .mb-safe / .ml-safe` | margin variants |
+| `.scroll-pb-safe` | `padding-bottom: calc(var(--sab) + var(--scroll-pb-extra))` |
+
+### Bespoke usage (calc)
+
+When you need to combine an existing base padding with the safe-area inset, use `calc()`:
+
+```css
+/* Good — preserves the 0.75rem base and adds the inset on top */
+padding-top: calc(0.75rem + var(--sat, 0px));
+
+/* Avoid — overwrites the base padding entirely */
+padding-top: var(--sat);
+```
+
+### Components already using these tokens
+
+| Component | Token | Why |
+| --- | --- | --- |
+| `.header` (`index.css`) | `--sat` | Clears status bar in standalone mode |
+| `DrawSummaryBar` | `--sab` | Clears home indicator at bottom |
+| `NotificationCenter` (mobile sheet) | `--sat`, `--sab` | Full-height bottom sheet |
+| `ToastContainer` (mobile) | `--sat`, `--sar` | Top-right corner on notched devices |
+| `KycDrawer` | `--sat`, `--sab` | Right-side drawer, full height |
+| `OfflineBanner` | `--sab` | Fixed banner above home indicator |
+
+### Testing
+
+`src/styles/safe-area.test.ts` contains 38 unit tests.  Because JSDOM does not implement
+`env()`, the tests verify:
+
+1. The CSS source text contains the correct token declarations and utility rules.
+2. CSS custom properties set via `el.style.setProperty()` are readable via
+   `getComputedStyle(el).getPropertyValue('--sat')`.
+3. `index.html` contains `viewport-fit=cover`.
+4. `index.css` imports `safe-area.css`.
+5. Every affected component CSS file references the relevant `--sat`/`--sar`/`--sab`/`--sal` token.
+
+Live `env()` resolution on a physical iOS device is validated by the Playwright E2E suite.
+
+---
+
+## 8. Safe-area insets (iOS PWA)
+
+When the app runs as a PWA (or in Safari with `viewport-fit=cover`), iOS exposes four
+[CSS environment variables](https://developer.apple.com/documentation/safari-developer-tools/css-env-variables)
+that describe how much of the display is hidden behind the notch, home indicator, and
+rounded corners.
+
+### Prerequisite
+
+`index.html` must include `viewport-fit=cover` in the viewport meta tag:
+
+```html
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+```
+
+Without this, `env(safe-area-inset-*)` always returns `0`.
+
+### Tokens (`src/styles/safe-area.css`)
+
+Four shorthand tokens are declared on `:root` and cascade to all components:
+
+| Token | Maps to | Typical device value |
+| --- | --- | --- |
+| `--sat` | `env(safe-area-inset-top, 0px)` | 47–59 px on Face ID iPhones |
+| `--sar` | `env(safe-area-inset-right, 0px)` | 0 px portrait / ~44 px landscape |
+| `--sab` | `env(safe-area-inset-bottom, 0px)` | 34 px (home-indicator models) |
+| `--sal` | `env(safe-area-inset-left, 0px)` | 0 px portrait / ~44 px landscape |
+
+Fallback is `0px` on browsers that do not support `env()` (desktop Chrome/Firefox, JSDOM).
+
+### Utility classes
+
+| Class | Effect |
+| --- | --- |
+| `.safe-top` | `padding-top: var(--sat)` |
+| `.safe-bottom` | `padding-bottom: var(--sab)` |
+| `.safe-left` | `padding-left: var(--sal)` |
+| `.safe-right` | `padding-right: var(--sar)` |
+| `.safe-x` | left + right |
+| `.safe-y` | top + bottom |
+| `.safe-all` | all four sides |
+| `.fixed-safe-top` | `position:fixed; top:0; padding-top: var(--sat)` |
+| `.fixed-safe-bottom` | `position:fixed; bottom:0; padding-bottom: var(--sab)` |
+| `.mt-safe / .mr-safe / .mb-safe / .ml-safe` | margin variants |
+| `.scroll-pb-safe` | `padding-bottom: calc(var(--sab) + var(--scroll-pb-extra))` |
+
+### Bespoke usage (calc)
+
+When you need to combine an existing base padding with the safe-area inset, use `calc()`:
+
+```css
+/* Good — preserves the 0.75rem base and adds the inset on top */
+padding-top: calc(0.75rem + var(--sat, 0px));
+
+/* Avoid — overwrites base padding entirely */
+padding-top: var(--sat);
+```
+
+### Components using these tokens
+
+| Component | Token(s) | Reason |
+| --- | --- | --- |
+| `.header` (`index.css`) | `--sat` | Clears status bar / notch in standalone mode |
+| `DrawSummaryBar` | `--sab` | Clears home indicator at bottom |
+| `NotificationCenter` (mobile sheet) | `--sat`, `--sab` | Full-height bottom sheet |
+| `ToastContainer` (mobile) | `--sat`, `--sar` | Top-right corner on notched devices |
+| `KycDrawer` | `--sat`, `--sab` | Right-side drawer spans full height |
+| `OfflineBanner` | `--sab` | Fixed banner above home indicator |
+
+### Testing
+
+`src/styles/safe-area.test.ts` — 38 unit tests. Because JSDOM does not implement
+`env()`, the tests verify:
+
+1. The CSS source text contains the correct token declarations and utility class rules.
+2. Custom properties set via `el.style.setProperty()` are readable via `getPropertyValue()`.
+3. `index.html` contains `viewport-fit=cover`.
+4. `index.css` imports `safe-area.css`.
+5. Every affected component CSS file references the relevant `--sa*` token.
+
+Live `env()` resolution on a physical iOS device is validated by the Playwright E2E suite.

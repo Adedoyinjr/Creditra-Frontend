@@ -1,0 +1,233 @@
+/* ─── Mobile-first bottom navigation ─────────────────────────────────────────
+ *
+ * Design tokens from `src/index.css` and `src/utils/tokens.ts`.
+ * Responsive: hidden above 768 px (`--bp-mobile`), fixed to viewport bottom.
+ *
+ * Accessibility:
+ * - All touch targets ≥ 44 × 44 px (WCAG 2.5.5).
+ * - Active state uses colour + top-border + icon weight (not colour alone).
+ * - Focus-visible ring uses the shared `--focus-ring-color` token.
+ * - `aria-current="page"` is set on the active link by NavLink.
+ *
+ * Reduced motion:
+ * - The slide-up entrance animation is suppressed under
+ *   `@media (prefers-reduced-motion: reduce)` and
+ *   `[data-motion="reduced"]`.
+ */
+
+/* ── Config ──────────────────────────────────────────────────────────────── */
+
+:root {
+  --bottom-nav-height: 64px;
+  --bottom-nav-bg: var(--surface, #161b22);
+  --bottom-nav-border: var(--border, #30363d);
+  --bottom-nav-accent: var(--accent, #58a6ff);
+  --bottom-nav-text: var(--muted, #8b949e);
+  --bottom-nav-text-active: var(--text, #e6edf3);
+}
+
+/* ── Nav bar ─────────────────────────────────────────────────────────────── */
+
+.bottom-nav {
+  /* hidden on desktop by default; shown via media query */
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 900;
+  height: var(--bottom-nav-height);
+  padding: 0 env(safe-area-inset-right, 0) env(safe-area-inset-bottom, 0) env(safe-area-inset-left, 0);
+  background: var(--bottom-nav-bg);
+  border-top: 1px solid var(--bottom-nav-border);
+  box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.25);
+
+  /* Flex layout for evenly spaced items */
+  display: flex;
+  align-items: stretch;
+  justify-content: space-around;
+
+  /* Entrance animation */
+  animation: bottom-nav-enter 0.3s ease-out both;
+}
+
+/* Show only on viewports ≤ 768 px */
+@media (min-width: 769px) {
+  .bottom-nav {
+    display: none !important;
+  }
+}
+
+/* ── Nav link ────────────────────────────────────────────────────────────── */
+
+.bottom-nav__link {
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-height: 44px;               /* WCAG 2.5.5 touch target */
+  min-width: 44px;
+  padding: 4px 6px;
+  text-decoration: none;
+  color: var(--bottom-nav-text);
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  position: relative;              /* positioning context for the active ::before indicator */
+  border-radius: 0;
+  transition: color 0.2s ease, background 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.bottom-nav__link:hover {
+  color: var(--bottom-nav-text-active);
+  background: rgba(88, 166, 255, 0.06);
+}
+
+.bottom-nav__link:active {
+  transform: translateY(1px);
+}
+
+/* Focus ring — matches the shared .focus-ring pattern */
+.bottom-nav__link:focus-visible {
+  outline: 2px solid var(--focus-ring-color, var(--accent, #58a6ff));
+  outline-offset: -3px;           /* inset so it's visible inside the bar */
+  border-radius: 4px;
+}
+
+/* ── Active state ────────────────────────────────────────────────────────── */
+
+.bottom-nav__link--active {
+  color: var(--bottom-nav-accent);
+}
+
+.bottom-nav__link--active::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 24px;
+  height: 2px;
+  background: var(--bottom-nav-accent);
+  border-radius: 0 0 2px 2px;
+}
+
+/* ── Icon ────────────────────────────────────────────────────────────────── */
+
+.bottom-nav__icon {
+  display: block;
+  flex-shrink: 0;
+  transition: stroke-width 0.2s ease;
+}
+
+/* ── Label ───────────────────────────────────────────────────────────────── */
+
+.bottom-nav__label {
+  font-size: 0.65rem;
+  font-weight: 500;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+/* ── Animation ────────────────────────────────────────────────────────────── */
+
+@keyframes bottom-nav-enter {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* ── Reduced motion ──────────────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  .bottom-nav {
+    animation: none;
+  }
+
+  .bottom-nav__link {
+    transition: none;
+  }
+
+  .bottom-nav__icon {
+    transition: none;
+  }
+}
+
+/* Reduced Motion Override (set via ReducedMotionContext) */
+[data-motion="reduced"] .bottom-nav {
+  animation: none;
+}
+
+[data-motion="reduced"] .bottom-nav__link {
+  transition: none;
+}
+
+[data-motion="reduced"] .bottom-nav__icon {
+  transition: none;
+}
+
+/* ── High contrast override ──────────────────────────────────────────────── */
+
+[data-contrast="high"] .bottom-nav {
+  border-top-width: 2px;
+  border-top-color: var(--border, #ffffff);
+  box-shadow: none;
+}
+
+[data-contrast="high"] .bottom-nav__link--active::before {
+  height: 3px;
+  background: var(--accent, #7dd3fc);
+}
+
+/* ── Forced-colours mode (Windows High Contrast) ─────────────────────────── */
+
+@media (forced-colors: active) {
+  .bottom-nav {
+    border-top: 2px solid ButtonText;
+  }
+
+  .bottom-nav__link--active::before {
+    background: Highlight;
+  }
+}
+
+/* ── Compact screens (≤ 480 px) — hide labels, show only icons ──────────── */
+
+@media (max-width: 480px) {
+  .bottom-nav__label {
+    display: none;
+  }
+
+  .bottom-nav__link {
+    gap: 0;
+  }
+}
+
+/* ── Landscape phones ────────────────────────────────────────────────────── */
+
+@media (max-height: 480px) and (orientation: landscape) {
+  :root {
+    --bottom-nav-height: 52px;
+  }
+
+  .bottom-nav__link {
+    flex-direction: row;
+    gap: 4px;
+    min-height: 40px;
+  }
+
+  .bottom-nav__label {
+    display: inline;
+    font-size: 0.7rem;
+  }
+}
