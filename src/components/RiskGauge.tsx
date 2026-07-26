@@ -58,6 +58,7 @@
 import { useEffect, useMemo, useRef, type KeyboardEvent } from 'react';
 import { useReducedMotion } from '../context/ReducedMotionContext';
 import './RiskGauge.css';
+import '../styles/patterns.css';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -277,7 +278,7 @@ function SectorGroup({ sector, isActive, onActivate, titleId }: SectorGroupProps
 
       {/* The visible sector arc band */}
       <path
-        className="risk-gauge-sector-arc"
+        className={`risk-gauge-sector-arc risk-gauge-pattern--${sector.id}`}
         d={sectorPath}
         stroke={sector.colorVar}
         aria-hidden="true"
