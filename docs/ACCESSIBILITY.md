@@ -196,14 +196,15 @@ The `KbdHint` component (`src/components/KbdHint.tsx`) provides standardized vis
 
 ### Anchor/sidebar nav (HelpCenter)
 
-`HelpCenter.tsx` uses an anchor-link sidebar with `aria-current="true"` on the link whose
-target section intersects the viewport.
+`HelpCenter.tsx` uses an anchor-link sidebar and direct FAQ anchor links with `aria-current="true"` on active sections and open or deep-linked FAQ items.
 
-- The active section is detected via `IntersectionObserver` (`src/hooks/useActiveSection.ts`).
+- The active sidebar section is detected via `IntersectionObserver` (`src/hooks/useActiveSection.ts`).
   The observer uses a `-80px 0px -60% 0px` root margin so the active link updates slightly
   before the section reaches the top of the viewport, and a multi-threshold `[0, 0.25, 0.5, 0.75, 1]`
   so the most-visible section wins when multiple overlap.
-- Only one nav link carries `aria-current="true"` at any time. The attribute is absent on all
+- Each FAQ item features a direct anchor link (`<a href={`#${item.id}`}>`) and accordion control.
+  When an FAQ is opened or deep-linked via URL hash, `aria-current="true"` is applied to its anchor link and accordion control.
+- Only active/open nav and FAQ links carry `aria-current="true"`. The attribute is absent on all
   other links.
 - Clicking an anchor calls `target.scrollIntoView({ behavior: 'smooth', block: 'start' })`.
   Reduced-motion state is read from `useReducedMotion()` — when active, behavior switches to
@@ -243,7 +244,7 @@ The table below is updated on every accessibility-impacting PR. Status legend:
 | `Header` nav | Tab through links; Enter activates | `aria-current="page"` on active link | AA | n/a | OK |
 | `RepayModal` | Focus trap (canonical `{ isActive }` form) + return focus to trigger | `role="dialog"`, `aria-modal`, `aria-labelledby` | AA | n/a | OK |
 | `TransactionHistory` | Sortable headers via Enter/Space; search combobox fully keyboard navigable (ArrowDown/Up, Enter, Escape, Tab) | `aria-sort` reflects column state; search uses ARIA 1.2 combobox pattern (`role="combobox"`, `aria-expanded`, `aria-controls`, `aria-autocomplete="list"`, `aria-activedescendant`); result count in polite live region | AA | reduced-motion disables listbox animation | OK |
-| `HelpCenter` | Tab/Enter on sidebar anchor links; accordion buttons and transcript links keyboard reachable | Sidebar nav has `aria-label="Help topics"`; `aria-current="true"` on active section via IntersectionObserver | AA | `useReducedMotion()` gates smooth scroll | OK |
+| `HelpCenter` | Tab/Enter on sidebar anchor links and FAQ anchor buttons; accordion buttons and transcript links keyboard reachable | Sidebar nav has `aria-label="Help topics"`; `aria-current="true"` on active section via IntersectionObserver and active/deep-linked FAQ anchors | AA | `useReducedMotion()` gates smooth scroll | OK |
 | `SupportWidget` | Floating trigger, search field, FAQ toggles, and email handoff are keyboard reachable | `aria-expanded`, `aria-controls`, visible focus ring, non-modal `role="dialog"` shell | AA | n/a | OK |
 | `LandingPage` | Tab through CTAs and FAQ accordion | Framer Motion guarded by `useReducedMotion` | AA | reduced-motion gated | OK |
 | `ErrorBoundary` / `ErrorPage` | Tab through "Go back" and "Reload" | Semantic landmarks | AA | n/a | OK |
