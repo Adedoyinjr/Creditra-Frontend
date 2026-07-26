@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { Sparkline } from "../components/Sparkline";
+import { KbdHint } from "../components/KbdHint";
 import { COLOR, RISK_COLOR, fmtDate } from "../utils/tokens";
 import { useReducedMotion } from "../context/ReducedMotionContext";
 
@@ -145,6 +146,10 @@ export function RiskGauge({
             {fmtDate(lastUpdated)}
           </span>
         </div>
+      </div>
+      
+      <div className="risk-meta-item" style={{ marginTop: '0.75rem', justifyContent: 'center' }}>
+        <KbdHint keys={['?']} label="Explain Risk" description="Press question mark to open help overlay" />
       </div>
     </div>
   );

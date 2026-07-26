@@ -235,6 +235,16 @@ describe('RiskGauge inline component from Dashboard', () => {
     expect(container.firstChild).toMatchSnapshot();
   });
 
+  it('renders KbdHint for risk explanation shortcut', () => {
+    render(
+      <ReducedMotionProvider>
+        <RiskGauge score={580} trend="stable" lastUpdated="2025-01-01T00:00:00Z" />
+      </ReducedMotionProvider>
+    );
+    expect(screen.getByText('?')).toBeInTheDocument();
+    expect(screen.getByText('Explain Risk')).toBeInTheDocument();
+  });
+
   it('matches snapshot at score 660', () => {
     const { container } = render(
       <ReducedMotionProvider>

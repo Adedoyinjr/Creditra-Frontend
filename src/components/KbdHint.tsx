@@ -53,7 +53,6 @@ export function KbdHint({
       aria-label={ariaLabel ?? srText}
       role="group"
     >
-      <span className="sr-only">{srText}</span>
       <span className="kbd-hint-group" aria-hidden="true">
         {keyList.map((key, index) => (
           <React.Fragment key={`${key}-${index}`}>
