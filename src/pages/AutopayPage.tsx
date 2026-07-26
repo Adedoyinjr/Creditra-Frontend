@@ -6,6 +6,7 @@ import {
   AutopaySchedule,
   type AutopayFrequency,
 } from '../components/AutopaySchedule';
+import { AutoPayCard } from './AutoPayCard';
 import { fmt } from '../utils/tokens';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -361,27 +362,13 @@ export default function AutopayPage() {
 
         {/* ── Preview column ──────────────────────────────────────────────── */}
         <div className="autopay-page__preview-col">
-          <div className="card autopay-page__preview-card">
-            {hasValidPreview ? (
-              <AutopaySchedule
-                amount={parsedAmount}
-                frequency={form.frequency}
-                startDate={form.startDate}
-                endDate={form.endDate || undefined}
-                maxRows={8}
-              />
-            ) : (
-              <div className="autopay-page__preview-placeholder" aria-live="polite">
-                <span className="autopay-page__preview-placeholder-icon" aria-hidden="true">
-                  📅
-                </span>
-                <p className="autopay-page__preview-placeholder-text">
-                  Fill in an amount and start date to see your upcoming payment
-                  schedule.
-                </p>
-              </div>
-            )}
-          </div>
+          <AutoPayCard
+            hasValidPreview={hasValidPreview}
+            parsedAmount={parsedAmount}
+            frequency={form.frequency}
+            startDate={form.startDate}
+            endDate={form.endDate || undefined}
+          />
         </div>
       </div>
     </div>

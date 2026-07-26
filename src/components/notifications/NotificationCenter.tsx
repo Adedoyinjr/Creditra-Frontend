@@ -1,7 +1,15 @@
 /**
- * NotificationCenter - 6-second undo toast support for mark-all-read and clear-all
+ * NotificationCenter
+ *
+ * Desktop: right-side slide-in panel (380 px wide).
+ * Mobile (≤ 640px): full-height bottom sheet with drag handle and
+ * keyboard-accessible expand/collapse controls that snap between a
+ * "half" (50vh) and "full" (90vh) height.
+ *
+ * 6-second undo toast support for mark-all-read, clear-all, and
+ * individual mark-as-read actions.
  */
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNotifications } from '../../context/NotificationContext';
 import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
@@ -11,6 +19,48 @@ import { CATEGORY_ICON, TYPE_COLOR, TYPE_ICON } from './notificationIcons';
 import './NotificationCenter.css';
 
 const PANEL_ID = 'notification-center';
+
+/** Viewport width (px) below which the panel becomes a bottom sheet. */
+export const NOTIFICATION_CENTER_MD_BREAKPOINT = 640;
+
+/** Fraction of viewport height for each mobile sheet snap point. */
+export const SHEET_SNAP_RATIOS = {
+  half: 0.5,
+  full: 0.9,
+} as const;
+
+export type SheetSnapPoint = keyof typeof SHEET_SNAP_RATIOS;
+type SheetSnapResult = SheetSnapPoint | 'dismiss';
+
+/**
+ * Resolve a drag/height ratio (0–1 of viewport height) to a target
+ * mobile sheet snap point. Ratios below the lower threshold dismiss
+ * the sheet entirely; the remaining range splits between the two
+ * snap points.
+ */
+export function resolveSheetSnapFromRatio(ratio: number): SheetSnapResult {
+  if (ratio < 0.35) return 'dismiss';
+  if (ratio < 0.7) return 'half';
+  return 'full';
+}
+
+/** True when the viewport is narrow enough to use the bottom-sheet layout. */
+function useMobileSheetActive(): boolean {
+  const query = `(max-width: ${NOTIFICATION_CENTER_MD_BREAKPOINT - 1}px)`;
+  const [matches, setMatches] = useState(() =>
+    typeof window !== 'undefined' ? window.matchMedia(query).matches : false,
+  );
+
+  useEffect(() => {
+    const mql = window.matchMedia(query);
+    setMatches(mql.matches);
+    const handler = (e: MediaQueryListEvent) => setMatches(e.matches);
+    mql.addEventListener('change', handler);
+    return () => mql.removeEventListener('change', handler);
+  }, [query]);
+
+  return matches;
+}
 
 const CATEGORIES: { value: NotificationCategory | 'all'; label: string }[] = [
   { value: 'all',         label: 'All' },
@@ -55,6 +105,11 @@ export function NotificationCenter({ triggerRef }: NotificationCenterProps = {})
 
   const [activeFilter, setActiveFilter] = useState<NotificationCategory | 'all'>('all');
   const [showPrefs, setShowPrefs] = useState(false);
+  const [announcement, setAnnouncement] = useState('');
+  const announcementTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const isMobileSheet = useMobileSheetActive();
+  const [snapPoint, setSnapPoint] = useState<SheetSnapPoint>('half');
 
   const panelRef = useFocusTrap({
     isActive: isPanelOpen,
@@ -64,6 +119,18 @@ export function NotificationCenter({ triggerRef }: NotificationCenterProps = {})
 
   useBodyScrollLock({ isLocked: isPanelOpen });
   useInertBackdrop({ isInert: isPanelOpen, modalId: PANEL_ID });
+
+  // Reset to the half snap point every time the sheet is (re)opened.
+  useEffect(() => {
+    if (isPanelOpen) setSnapPoint('half');
+  }, [isPanelOpen]);
+
+  // Clear the pending announcement-clear timer on unmount.
+  useEffect(() => {
+    return () => {
+      if (announcementTimerRef.current) clearTimeout(announcementTimerRef.current);
+    };
+  }, []);
 
   const filtered = filterByCategory(activeFilter);
   const dragStartY = useRef<number | null>(null);
@@ -90,6 +157,19 @@ export function NotificationCenter({ triggerRef }: NotificationCenterProps = {})
     if (panelElRef.current) {
       panelElRef.current.style.transform = '';
     }
+
+    if (isMobileSheet) {
+      const startRatio = SHEET_SNAP_RATIOS[snapPoint];
+      const newRatio = startRatio - delta / window.innerHeight;
+      const resolved = resolveSheetSnapFromRatio(newRatio);
+      if (resolved === 'dismiss') {
+        closePanel();
+      } else {
+        setSnapPoint(resolved);
+      }
+      return;
+    }
+
     if (delta > 80) {
       closePanel();
     }
@@ -100,8 +180,15 @@ export function NotificationCenter({ triggerRef }: NotificationCenterProps = {})
     (panelRef as React.MutableRefObject<HTMLDivElement | null>).current = el;
   };
 
+  const announce = useCallback((count: number) => {
+    setAnnouncement(`${count} notification${count !== 1 ? 's' : ''} marked as read`);
+    if (announcementTimerRef.current) clearTimeout(announcementTimerRef.current);
+    announcementTimerRef.current = setTimeout(() => setAnnouncement(''), 3000);
+  }, []);
+
   const handleMarkAllAsRead = useCallback(() => {
     const prior = [...notifications];
+    const count = unreadCount;
     const toastId = addToast({
       type: 'success',
       title: 'Marked all as read',
@@ -117,7 +204,8 @@ export function NotificationCenter({ triggerRef }: NotificationCenterProps = {})
       saveToHistory: false,
     });
     markAllAsRead();
-  }, [notifications, unreadCount, addToast, dismissToast, undoRead, markAllAsRead]);
+    announce(count);
+  }, [notifications, unreadCount, addToast, dismissToast, undoRead, markAllAsRead, announce]);
 
   const handleClearAll = useCallback(() => {
     const prior = [...notifications];
@@ -138,6 +226,29 @@ export function NotificationCenter({ triggerRef }: NotificationCenterProps = {})
     clearAll();
   }, [notifications, addToast, dismissToast, restoreNotifications, clearAll]);
 
+  const handleItemClick = useCallback((notification: Notification) => {
+    if (notification.read) {
+      markAsRead(notification.id);
+      return;
+    }
+
+    markAsRead(notification.id);
+    const toastId = addToast({
+      type: 'success',
+      title: 'Marked as read',
+      message: notification.title,
+      action: {
+        label: 'Undo',
+        onClick: () => {
+          undoRead([notification.id]);
+          dismissToast(toastId);
+        },
+      },
+      duration: 5500,
+      saveToHistory: false,
+    });
+  }, [markAsRead, addToast, dismissToast, undoRead]);
+
   return (
     <>
       {isPanelOpen && (
@@ -151,7 +262,11 @@ export function NotificationCenter({ triggerRef }: NotificationCenterProps = {})
       <div
         ref={setRefs}
         id={PANEL_ID}
-        className={`nc-panel ${isPanelOpen ? 'nc-panel-open' : ''}`}
+        className={[
+          'nc-panel',
+          isPanelOpen ? 'nc-panel-open' : '',
+          isMobileSheet ? `nc-panel-snap-${snapPoint}` : '',
+        ].filter(Boolean).join(' ')}
         role="dialog"
         aria-modal={isPanelOpen}
         aria-label="Notification center"
@@ -168,6 +283,27 @@ export function NotificationCenter({ triggerRef }: NotificationCenterProps = {})
         >
           <div className="nc-drag-handle" />
         </div>
+
+        {isMobileSheet && isPanelOpen && (
+          <div className="nc-sheet-controls">
+            <button
+              type="button"
+              className="nc-sheet-control-btn"
+              onClick={() => setSnapPoint('full')}
+              aria-label="Expand notification panel to full height"
+            >
+              ⌃
+            </button>
+            <button
+              type="button"
+              className="nc-sheet-control-btn"
+              onClick={() => setSnapPoint('half')}
+              aria-label="Collapse notification panel to half height"
+            >
+              ⌄
+            </button>
+          </div>
+        )}
 
         <div className="nc-header">
           <div className="nc-header-left">
@@ -271,7 +407,7 @@ export function NotificationCenter({ triggerRef }: NotificationCenterProps = {})
                   key={n.id}
                   className={`nc-item ${!n.read ? 'nc-item-unread' : ''}`}
                   aria-label={`${n.title}${!n.read ? ', unread' : ''}`}
-                  onClick={() => markAsRead(n.id)}
+                  onClick={() => handleItemClick(n)}
                 >
                   <span
                     className="nc-item-icon"
@@ -311,6 +447,17 @@ export function NotificationCenter({ triggerRef }: NotificationCenterProps = {})
             })
           )}
         </div>
+
+        {announcement && (
+          <div
+            className="sr-only"
+            role="status"
+            aria-live="polite"
+            aria-atomic="true"
+          >
+            {announcement}
+          </div>
+        )}
       </div>
     </>
   );

@@ -47,11 +47,13 @@ exports[`RiskGauge inline component from Dashboard > matches snapshot at score 5
       </span>
       <span
         class="rm-value"
-        style="color: rgb(139, 148, 158);"
+        style="color: rgb(139, 148, 158); display: flex; align-items: center; gap: 8px;"
       >
-        ─
-         
-        Stable
+        <span>
+          ─
+           
+          Stable
+        </span>
       </span>
     </div>
     <div
@@ -120,11 +122,13 @@ exports[`RiskGauge inline component from Dashboard > matches snapshot at score 6
       </span>
       <span
         class="rm-value"
-        style="color: rgb(139, 148, 158);"
+        style="color: rgb(139, 148, 158); display: flex; align-items: center; gap: 8px;"
       >
-        ─
-         
-        Stable
+        <span>
+          ─
+           
+          Stable
+        </span>
       </span>
     </div>
     <div
@@ -193,11 +197,13 @@ exports[`RiskGauge inline component from Dashboard > matches snapshot at score 7
       </span>
       <span
         class="rm-value"
-        style="color: rgb(139, 148, 158);"
+        style="color: rgb(139, 148, 158); display: flex; align-items: center; gap: 8px;"
       >
-        ─
-         
-        Stable
+        <span>
+          ─
+           
+          Stable
+        </span>
       </span>
     </div>
     <div
