@@ -1,17 +1,28 @@
 import { render, screen } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 import CreditLines from '../CreditLines';
 
 function renderPage() {
-  return render(
+  const result = render(
     <BrowserRouter>
       <CreditLines />
     </BrowserRouter>
   );
+  act(() => {
+    vi.advanceTimersByTime(500);
+  });
+  return result;
 }
 
 describe('CreditLines page', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
   it('renders the page header', () => {
     renderPage();
     expect(screen.getByText('Credit Lines')).toBeInTheDocument();
@@ -73,7 +84,11 @@ describe('CreditLines page', () => {
 
   describe("skeleton loading state", () => {
     it("renders credit lines skeletons during the loading phase", () => {
-      const { container } = renderPage();
+      const { container } = render(
+        <BrowserRouter>
+          <CreditLines />
+        </BrowserRouter>
+      );
       
       // Initially, it should be in loading state
       const skeletonGrid = screen.getByTestId("creditlines-skeleton-grid");
@@ -85,8 +100,11 @@ describe('CreditLines page', () => {
     });
 
     it("removes skeletons after loading completes", async () => {
-      vi.useFakeTimers();
-      const { container } = renderPage();
+      const { container } = render(
+        <BrowserRouter>
+          <CreditLines />
+        </BrowserRouter>
+      );
 
       // Check skeletons exist initially
       expect(screen.getByTestId("creditlines-skeleton-grid")).toBeInTheDocument();
@@ -99,8 +117,6 @@ describe('CreditLines page', () => {
       // Skeletons should be replaced by real credit lines content
       expect(screen.queryByTestId("creditlines-skeleton-grid")).not.toBeInTheDocument();
       expect(screen.getAllByText("Primary Business Line")[0]).toBeInTheDocument();
-
-      vi.useRealTimers();
     });
   });
 });
