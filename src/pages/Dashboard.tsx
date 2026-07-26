@@ -4,6 +4,7 @@ import ActivityFeed from "../components/ActivityFeed";
 import { CopyToClipboard } from "../components/CopyToClipboard";
 import { CopyLoanButton } from "../components/CopyLoanButton";
 import { StatusBadge } from "../components/StatusBadge";
+import { DashboardTour } from "../components/DashboardTour";
 import { useWallet } from "../context/WalletContext";
 import { Sparkline } from "../components/Sparkline";
 import { RiskBandsPanel } from "../components/RiskBandsPanel";
