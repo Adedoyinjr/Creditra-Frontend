@@ -1,6 +1,7 @@
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { AlertCircle, AlertTriangle, CheckCircle, Info, ArrowLeft } from 'lucide-react';
+import { Skeleton } from '@/components/Skeleton';
 import { PayoffProjection } from '@/components/PayoffProjection';
 import { RepaymentVisualizer } from '@/components/RepaymentVisualizer';
 import { InlineHelpOverlay } from '@/components/InlineHelpOverlay';
@@ -72,7 +73,7 @@ export default function RepayPage() {
   const [confirmAmountStr, setConfirmAmountStr] = useState('');
   const [isAutoSchedule, setIsAutoSchedule] = useState(false);
   const [isHelpOpen, setIsHelpOpen] = useState(false);
-  const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const helpTriggerRef = useRef<HTMLButtonElement>(null);
   const previewTriggerRef = useRef<HTMLButtonElement>(null);
   const { isReducedMotionActive } = useReducedMotion();
@@ -173,6 +174,13 @@ export default function RepayPage() {
   }, [step, preselectedId, navigate]);
 
   useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 800);
+    return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
         if (e.key === 'Escape') {
@@ -225,7 +233,30 @@ export default function RepayPage() {
           </h1>
         </header>
 
-        {creditLines.length === 0 ? (
+        {isLoading ? (
+          <div className="space-y-3" aria-busy="true" aria-live="polite" data-testid="repay-loading-skeleton">
+            {[1, 2, 3].map((i) => (
+              <div
+                key={i}
+                className="w-full rounded-lg border border-border bg-surface p-4"
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Skeleton width={120} height={20} className="mb-1" />
+                    <Skeleton width={80} height={16} />
+                  </div>
+                  <div className="flex flex-col items-end">
+                    <Skeleton width={90} height={20} className="mb-1" />
+                    <Skeleton width={70} height={16} />
+                  </div>
+                </div>
+                <div className="mt-3">
+                  <Skeleton width="100%" height={8} shape="rounded" />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : creditLines.length === 0 ? (
           <EmptyState
             data-testid="repay-empty-state"
             tone="success"
