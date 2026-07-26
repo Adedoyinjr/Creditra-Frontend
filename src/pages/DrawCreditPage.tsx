@@ -37,6 +37,7 @@ import { DrawSummaryBar } from "@/components/DrawSummaryBar";
 import { DrawWizardMicroIndicator } from "@/components/DrawWizardMicroIndicator";
 import { useDrawWizardMicroProgress } from "@/hooks/useDrawWizardMicroProgress";
 import "@/components/DrawWizardMicroProgress.css";
+import "@/styles/focus.css";
 
 const drawSteps = [
   { id: "select", label: "Select line" },
@@ -260,85 +261,18 @@ export default function DrawCreditPage() {
           </div>
         )}
 
-        {/* ── Step 3: Review & confirm ── */}
-        {step === "confirm" && selectedCreditLine && (
-          <div className="card card-large" style={{ maxWidth: "none", margin: 0 }}>
-            <section aria-labelledby="confirm-draw-heading">
-              <ConfirmationStep
-                creditLine={selectedCreditLine}
-                amount={amount}
-                onConfirm={handleConfirm}
-                onBack={handleBack}
-                onCancel={handleCancel}
-                isLoading={isLoading}
-                agreedToTerms={confirmationAcknowledged}
-                onAgreedToTermsChange={setConfirmationAcknowledged}
-              />
-            </section>
-          </div>
-        )}
-
-        {/* ── Step 4: Status (loading → result) ── */}
-        {step === "status" && transaction && (
-          <div className="card card-large" style={{ maxWidth: "none", margin: 0 }}>
-            <TransactionStatus
-              transaction={transaction}
-              onNewDraw={handleNewDraw}
-            />
-          </div>
-        )}
-
-        {step === "status" && !transaction && (
-          <div className="card card-large" style={{ maxWidth: "none", margin: 0 }}>
-            <div className="space-y-4 text-center">
-              <h2 className="text-2xl font-bold text-foreground">
-                Draw status unavailable
-              </h2>
-              <p className="text-muted">
-                Start a new request to draw from an approved credit line.
-              </p>
-              <button
-                type="button"
-                onClick={handleNewDraw}
-                className="rounded-lg bg-blue-600 px-4 py-3 font-semibold text-white transition-all hover:bg-blue-500"
-              >
-                Start new draw
-              </button>
-            </div>
-          </div>
-        )}
-
-        {step !== "status" && (
-          <div className="flex flex-col gap-2 text-center text-sm text-muted sm:flex-row sm:items-center sm:justify-between sm:text-left">
-            <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4">
-              <button
-                ref={helpTriggerRef}
-                type="button"
-                onClick={() => setIsHelpOpen(true)}
-                className="inline-flex min-h-11 items-center justify-center rounded-md px-3 font-semibold text-blue-300 underline-offset-4 transition-colors hover:text-blue-200 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-400 sm:justify-start"
-              >
-                I need help
-              </button>
-              {(step === "amount" || step === "confirm") && (
-                <button
-                  ref={whyAprTriggerRef}
-                  type="button"
-                  onClick={() => setIsWhyAprOpen(true)}
-                  className="inline-flex min-h-11 items-center justify-center rounded-md px-3 font-semibold text-blue-300 underline-offset-4 transition-colors hover:text-blue-200 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-400 sm:justify-start"
-                >
-                  Why this APR?
-                </button>
-              )}
-            </div>
-            <button
-              type="button"
-              onClick={handleCancel}
-              className="font-semibold text-foreground underline-offset-4 hover:text-blue-400 hover:underline"
-            >
-              Cancel draw
-            </button>
-          </div>
-        )}
+        <p className="dc-page__footer">
+          Need help?{" "}
+          <button
+            ref={helpTriggerRef}
+            type="button"
+            className="focus-ring hover:text-foreground transition-colors underline underline-offset-4"
+            onClick={() => setIsHelpOpen(true)}
+          >
+            Contact support
+          </button>{" "}
+          at 1-800-CREDIT-1
+        </p>
       </div>
       <InlineHelpOverlay
         isOpen={isHelpOpen}

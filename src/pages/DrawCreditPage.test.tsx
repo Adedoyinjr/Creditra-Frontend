@@ -289,4 +289,13 @@ describe("DrawCreditPage — step navigation & token audit", () => {
 
     randomSpy.mockRestore();
   });
+
+  // ── 12. Focus styling applies correctly ──────────────────────────────────
+  it("12. interactive elements should have focus-visible styling (FWC26)", () => {
+    const { user } = setup();
+    // The help button in the footer is rendered immediately
+    const helpBtn = screen.getByRole("button", { name: /contact support/i });
+    expect(helpBtn).toBeInTheDocument();
+    expect(helpBtn).toHaveClass("focus-ring");
+  });
 });
