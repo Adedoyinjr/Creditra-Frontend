@@ -50,6 +50,8 @@ export function RiskGauge({
   const { isReducedMotionActive } = useReducedMotion();
   const [displayedScore, setDisplayedScore] = useState(normalizedScore);
   const prevScoreRef = useRef(normalizedScore);
+  const titleId = useRef(`risk-gauge-title-${Math.random().toString(36).slice(2)}`).current;
+  const trendLabel = trend.charAt(0).toUpperCase() + trend.slice(1);
 
   useEffect(() => {
     if (isReducedMotionActive) {
@@ -90,9 +92,24 @@ export function RiskGauge({
 
   const scoreFormatter = useMemo(() => new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 }), []);
 
+  const srDescription = `Risk score ${normalizedScore} of 850. Trend: ${trendLabel}.`;
+
   return (
     <div className="risk-gauge-container">
-      <svg className="risk-gauge-svg" viewBox="0 0 160 100" preserveAspectRatio="xMidYMid meet">
+      {/* Screen-reader description outside the SVG for AT that skip inline <title>. */}
+      <p className="sr-only" aria-live="polite" aria-atomic="true">
+        {srDescription}
+      </p>
+      <svg
+        className="risk-gauge-svg"
+        viewBox="0 0 160 100"
+        preserveAspectRatio="xMidYMid meet"
+        role="img"
+        aria-label={srDescription}
+        data-testid="risk-gauge-svg"
+        data-reduced-motion={isReducedMotionActive ? "true" : "false"}
+      >
+        <title id={titleId}>{srDescription}</title>
         <path
           className="risk-gauge-bg"
           d={`M ${cx - radius} ${cy} A ${radius} ${radius} 0 0 1 ${cx + radius} ${cy}`}

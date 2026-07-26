@@ -1,5 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
+import { readFileSync } from 'fs';
+import { resolve } from 'path';
 import { RepaymentVisualizer } from '../RepaymentVisualizer';
 import * as ReducedMotionContext from '../../context/ReducedMotionContext';
 
@@ -39,6 +41,30 @@ describe('RepaymentVisualizer', () => {
     const svg = screen.getByRole('img');
     expect(svg).toBeInTheDocument();
     expect(svg).toHaveAttribute('tabindex', '0');
+  });
+
+  it('marks every keyboard target with the tokenized focus-visible class', () => {
+    render(<RepaymentVisualizer {...BASE} maxMonths={24} />);
+
+    expect(screen.getByRole('img')).toHaveClass('repayment-visualizer-focus');
+    expect(screen.getByText(/Schedule table/i)).toHaveClass('repayment-visualizer-focus');
+
+    fireEvent.click(screen.getByText(/Schedule table/i));
+    expect(screen.getByRole('button', { name: /Show all 24 months/i })).toHaveClass(
+      'repayment-visualizer-focus',
+    );
+  });
+
+  it('uses the shared focus tokens only for keyboard-visible focus', () => {
+    const css = readFileSync(resolve(__dirname, '../../styles/focus.css'), 'utf-8');
+    const selectorIndex = css.indexOf('.repayment-visualizer-focus:focus-visible');
+    expect(selectorIndex).toBeGreaterThanOrEqual(0);
+
+    const rule = css.slice(selectorIndex, css.indexOf('}', selectorIndex) + 1);
+    expect(rule).toContain('--focus-ring-width');
+    expect(rule).toContain('--focus-ring-color');
+    expect(rule).toContain('--focus-ring-offset');
+    expect(css).not.toMatch(/\.repayment-visualizer-focus:focus(?!-visible)/);
   });
 
   it('renders term and total interest summary', () => {

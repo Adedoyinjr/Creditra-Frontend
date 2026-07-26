@@ -1,23 +1,20 @@
 import "@testing-library/jest-dom";
 import "../index.css";
-import { beforeEach } from "vitest";
+import { beforeEach, vi } from "vitest";
 
-// jsdom does not implement window.matchMedia. Stub it so components that
-// call matchMedia (e.g. usePrefersReducedMotion, RepaymentVisualizer) do
-// not throw in the test environment.
-if (typeof window !== "undefined" && !window.matchMedia) {
+beforeEach(() => {
   Object.defineProperty(window, "matchMedia", {
     writable: true,
-    value: (query: string) => ({
+    configurable: true,
+    value: vi.fn().mockImplementation((query: string) => ({
       matches: false,
       media: query,
       onchange: null,
-      addListener: () => {},
-      removeListener: () => {},
-      addEventListener: () => {},
-      removeEventListener: () => {},
-      dispatchEvent: () => false,
-    }),
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    })),
   });
-}
-
+});
