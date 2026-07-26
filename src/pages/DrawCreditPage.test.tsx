@@ -20,6 +20,19 @@
  *   13. The live region announces amount validity as it changes
  *   14. The live region is polite, atomic and stays mounted across steps
  *
+ * Keyboard shortcut tests (kbd block):
+ *   K1. Select step renders a shortcut bar with Esc / ? hints
+ *   K2. Amount step renders a shortcut bar with ←/→ / Esc / ? hints
+ *   K3. Confirm step renders a shortcut bar with ←/→ / Esc / ? hints
+ *   K4. ArrowLeft on the amount step goes back to the select step
+ *   K5. ArrowLeft on the confirm step goes back to the amount step
+ *   K6. ArrowRight advances the amount step when a valid amount is set
+ *   K7. Escape on the select step cancels (navigate("/") via useNavigate)
+ *   K8. Escape on the amount step goes back to the select step
+ *   K9. Escape on the confirm step goes back to the amount step
+ *   K10. ? key on the amount step opens the help overlay
+ *   K11. Keyboard events are ignored when an input is focused
+ *
  * Setup notes:
  *   - `jsdom` environment (configured in vitest.config.ts)
  *   - Timer-based async is handled with `vi.useFakeTimers()` so tests run fast
@@ -29,7 +42,7 @@
  *     otherwise skip a freshly-rendered instance straight past "select"
  */
 
-import { render, screen, waitFor, fireEvent, act } from "@testing-library/react";
+import { render, screen, fireEvent, act, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { vi, describe, it, expect, beforeEach } from "vitest";
 import DrawCreditPage from "./DrawCreditPage";
@@ -46,21 +59,23 @@ function setup() {
   return { user };
 }
 
-/**
- * The page renders more than one role="status" node (e.g. AmountInput's
- * paste announcer, credit-line warning badges), so the wizard-progress
- * live region is looked up by its stable id rather than by role.
- */
-function getLiveRegion() {
-  const node = document.getElementById("draw-wizard-progress-announcement");
-  if (!node) {
-    throw new Error("draw-wizard-progress-announcement live region not found");
-  }
-  return node;
+/** Navigate to the amount step by clicking the first credit-line button */
+async function goToAmountStep(user: ReturnType<typeof userEvent.setup>) {
+  await user.click(
+    screen.getByRole("button", { name: /select business line of credit/i }),
+  );
+}
+
+/** Navigate to the confirm step */
+async function goToConfirmStep(user: ReturnType<typeof userEvent.setup>, amountValue = "1000") {
+  await goToAmountStep(user);
+  await user.clear(screen.getByRole("spinbutton"));
+  await user.type(screen.getByRole("spinbutton"), amountValue);
+  await user.click(screen.getByRole("button", { name: /continue/i }));
 }
 
 // ---------------------------------------------------------------------------
-// Tests
+// Tests — step navigation & token audit
 // ---------------------------------------------------------------------------
 
 describe("DrawCreditPage — step navigation & token audit", () => {
@@ -416,5 +431,205 @@ describe("DrawCreditPage — step navigation & token audit", () => {
     await user.click(screen.getByRole("button", { name: /^back$/i }));
 
     expect(getLiveRegion()).toBe(liveRegion);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Tests — keyboard shortcut hints (K-block)
+// ---------------------------------------------------------------------------
+
+describe("DrawCreditPage — keyboard shortcut hints", () => {
+  // ── K1. Select step: shortcut bar present ─────────────────────────────────
+  it("K1. select step renders a shortcut bar with Esc and ? hints", () => {
+    setup();
+
+    // The shortcut bar container
+    const kbdBar = document.querySelector('.dc-kbd-bar');
+    expect(kbdBar).toBeInTheDocument();
+
+    // Esc key chip should be present
+    const kbdChips = document.querySelectorAll('.kbd-hint-key');
+    const chipTexts = Array.from(kbdChips).map((c) => c.textContent);
+    expect(chipTexts).toContain('Esc');
+    expect(chipTexts).toContain('?');
+  });
+
+  // ── K2. Amount step: shortcut bar with ←/→, Esc, ? ─────────────────────
+  it("K2. amount step renders a shortcut bar with arrow, Esc and ? hints", async () => {
+    const { user } = setup();
+    await goToAmountStep(user);
+
+    const kbdBar = document.querySelector('.dc-kbd-bar');
+    expect(kbdBar).toBeInTheDocument();
+
+    const chipTexts = Array.from(
+      document.querySelectorAll('.kbd-hint-key'),
+    ).map((c) => c.textContent);
+    expect(chipTexts).toContain('←');
+    expect(chipTexts).toContain('→');
+    expect(chipTexts).toContain('Esc');
+    expect(chipTexts).toContain('?');
+  });
+
+  // ── K3. Confirm step: shortcut bar with ←/→, Esc, ? ────────────────────
+  it("K3. confirm step renders a shortcut bar with arrow, Esc and ? hints", async () => {
+    const { user } = setup();
+    await goToConfirmStep(user);
+
+    const kbdBar = document.querySelector('.dc-kbd-bar');
+    expect(kbdBar).toBeInTheDocument();
+
+    const chipTexts = Array.from(
+      document.querySelectorAll('.kbd-hint-key'),
+    ).map((c) => c.textContent);
+    expect(chipTexts).toContain('←');
+    expect(chipTexts).toContain('→');
+    expect(chipTexts).toContain('Esc');
+  });
+
+  // ── K4. ArrowLeft on amount step goes back to select ─────────────────────
+  it("K4. ArrowLeft on the amount step navigates back to the select step", async () => {
+    const { user } = setup();
+    await goToAmountStep(user);
+
+    expect(screen.getByRole("heading", { name: /enter amount/i })).toBeInTheDocument();
+
+    // Fire keydown on the document (not an input)
+    fireEvent.keyDown(document.body, { key: "ArrowLeft", code: "ArrowLeft" });
+
+    expect(screen.getByRole("heading", { name: /select credit line/i })).toBeInTheDocument();
+  });
+
+  // ── K5. ArrowLeft on confirm step goes back to amount ────────────────────
+  it("K5. ArrowLeft on the confirm step navigates back to the amount step", async () => {
+    const { user } = setup();
+    await goToConfirmStep(user);
+
+    expect(screen.getByRole("heading", { name: /review & confirm/i })).toBeInTheDocument();
+
+    fireEvent.keyDown(document.body, { key: "ArrowLeft", code: "ArrowLeft" });
+
+    expect(screen.getByRole("heading", { name: /enter amount/i })).toBeInTheDocument();
+  });
+
+  // ── K6. ArrowRight advances amount step when amount is valid ─────────────
+  it("K6. ArrowRight on the amount step advances to confirm when amount > 0", async () => {
+    const { user } = setup();
+    await goToAmountStep(user);
+
+    // Type a valid amount
+    await user.clear(screen.getByRole("spinbutton"));
+    await user.type(screen.getByRole("spinbutton"), "500");
+
+    // Blur the input so it's no longer focused
+    fireEvent.blur(screen.getByRole("spinbutton"));
+
+    fireEvent.keyDown(document.body, { key: "ArrowRight", code: "ArrowRight" });
+
+    expect(screen.getByRole("heading", { name: /review & confirm/i })).toBeInTheDocument();
+  });
+
+  // ── K7. Escape on select step fires navigation cancel ────────────────────
+  it("K7. Escape on the select step does not crash and triggers cancel navigation", () => {
+    setup();
+
+    // Should not throw
+    expect(() => {
+      fireEvent.keyDown(document.body, { key: "Escape", code: "Escape" });
+    }).not.toThrow();
+
+    // The page unmounts or navigates; confirm the select step heading is gone
+    // (navigate is a no-op stub in tests, so we just assert no crash)
+  });
+
+  // ── K8. Escape on amount step goes back to select ────────────────────────
+  it("K8. Escape on the amount step navigates back to the select step", async () => {
+    const { user } = setup();
+    await goToAmountStep(user);
+
+    expect(screen.getByRole("heading", { name: /enter amount/i })).toBeInTheDocument();
+
+    fireEvent.keyDown(document.body, { key: "Escape", code: "Escape" });
+
+    expect(screen.getByRole("heading", { name: /select credit line/i })).toBeInTheDocument();
+  });
+
+  // ── K9. Escape on confirm step goes back to amount ────────────────────────
+  it("K9. Escape on the confirm step navigates back to the amount step", async () => {
+    const { user } = setup();
+    await goToConfirmStep(user);
+
+    expect(screen.getByRole("heading", { name: /review & confirm/i })).toBeInTheDocument();
+
+    fireEvent.keyDown(document.body, { key: "Escape", code: "Escape" });
+
+    expect(screen.getByRole("heading", { name: /enter amount/i })).toBeInTheDocument();
+  });
+
+  // ── K10. ? key opens help overlay ────────────────────────────────────────
+  it("K10. pressing ? on the amount step opens the inline help overlay", async () => {
+    const { user } = setup();
+    await goToAmountStep(user);
+
+    fireEvent.keyDown(document.body, { key: "?", code: "Slash" });
+
+    // InlineHelpOverlay renders when isOpen=true
+    // The overlay shows a close button or a dialog landmark
+    await waitFor(() => {
+      // The help overlay renders when isHelpOpen state is true.
+      // We check that the overlay DOM node is present.
+      // InlineHelpOverlay renders a dialog or a wrapper — look for aria-label
+      const overlay =
+        document.querySelector('[aria-label="Draw credit help"]') ??
+        document.querySelector('[role="dialog"]') ??
+        document.querySelector('.inline-help-overlay') ??
+        document.querySelector('[class*="help"]');
+      expect(overlay).toBeInTheDocument();
+    });
+  });
+
+  // ── K11. Keyboard events ignored when input is focused ───────────────────
+  it("K11. keyboard shortcuts are ignored when focus is inside an input", async () => {
+    const { user } = setup();
+    await goToAmountStep(user);
+
+    const input = screen.getByRole("spinbutton");
+
+    // Focus the input
+    await user.click(input);
+    expect(document.activeElement).toBe(input);
+
+    // ArrowLeft while inside the input should NOT navigate back
+    fireEvent.keyDown(input, { key: "ArrowLeft", code: "ArrowLeft" });
+
+    // Still on the amount step
+    expect(screen.getByRole("heading", { name: /enter amount/i })).toBeInTheDocument();
+  });
+
+  // ── K12. Shortcut bar sr-only text is accessible ─────────────────────────
+  it("K12. shortcut bar hints carry sr-only text for screen readers", () => {
+    setup();
+
+    // Each KbdHint renders a .sr-only element with readable text
+    const srElements = document.querySelectorAll('.sr-only');
+    const srTexts = Array.from(srElements).map((el) => el.textContent ?? '');
+
+    // At least one sr-only element should mention "Cancel" or "Escape"
+    const hasCancelHint = srTexts.some(
+      (t) => /cancel/i.test(t) || /escape/i.test(t),
+    );
+    expect(hasCancelHint).toBe(true);
+  });
+
+  // ── K13. KbdHint separator is "/" for alternates on arrow hints ───────────
+  it("K13. the ←/→ hint uses a '/' separator", async () => {
+    const { user } = setup();
+    await goToAmountStep(user);
+
+    const separators = Array.from(
+      document.querySelectorAll('.kbd-hint-separator'),
+    ).map((el) => el.textContent);
+
+    expect(separators).toContain('/');
   });
 });

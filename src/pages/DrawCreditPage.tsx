@@ -17,13 +17,18 @@
  *   - <main> labelled with aria-label for screen-reader landmark navigation
  *   - Loading state wrapped in role="status" + aria-live="polite"
  *   - Spinner has aria-label describing the in-progress action
- *   - A persistent, visually-hidden <LiveRegion> announces wizard
- *     state changes (line selected, amount validity, preview readiness,
- *     confirmation acknowledgement) as the user progresses, via the
- *     debounced announcement string from `useDrawWizardMicroProgress`
+ *
+ * Keyboard shortcuts:
+ *   Escape  — cancel (select step) / go back (amount & confirm steps)
+ *   ArrowLeft  — go back (amount & confirm steps)
+ *   ArrowRight — advance (amount step when valid; confirm step when acknowledged)
+ *   ?       — open the keyboard shortcut help overlay
+ *
+ * The keyboard handler is only active when the focused element is not an
+ * editable input / textarea, preventing shortcut interference while typing.
  */
 
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect, useCallback } from "react";
 import { Skeleton } from "@/components/Skeleton";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useReducedMotion } from "@/context/ReducedMotionContext";
@@ -34,7 +39,7 @@ import { PreviewSection } from "@/components/PreviewSection";
 import { ConfirmationStep } from "@/components/ConfirmationStep";
 import { TransactionStatus } from "@/components/TransactionStatus";
 import { InlineHelpOverlay } from "@/components/InlineHelpOverlay";
-import { LiveRegion } from "@/components/LiveRegion";
+import { KbdHint } from "@/components/KbdHint";
 import { CreditLine, DrawStep, Transaction } from "@/types/draw-credit.types";
 import { mockCreditLines } from "@/lib/draw-credit-mock-data";
 import { WhyApr } from "@/components/WhyApr";
@@ -52,6 +57,15 @@ const drawSteps = [
 ] as const;
 
 type ProgressStep = (typeof drawSteps)[number]["id"];
+
+/** Returns true if the currently focused element can receive text input. */
+function isFocusedOnInput(): boolean {
+  const el = document.activeElement;
+  if (!el) return false;
+  const tag = (el as HTMLElement).tagName.toLowerCase();
+  if (tag === "input" || tag === "textarea" || tag === "select") return true;
+  return (el as HTMLElement).isContentEditable;
+}
 
 export default function DrawCreditPage() {
   const navigate = useNavigate();
@@ -73,6 +87,7 @@ export default function DrawCreditPage() {
       saveDraft({ step, selectedCreditLine, amount });
     }
   }, [step, selectedCreditLine, amount]);
+
   const [isLoading, setIsLoading] = useState(false);
   const [isHelpOpen, setIsHelpOpen] = useState(false);
   const helpTriggerRef = useRef<HTMLButtonElement>(null);
@@ -91,6 +106,8 @@ export default function DrawCreditPage() {
       confirmationAcknowledged,
       isOnConfirmStep: step === "confirm",
     });
+
+  // ── Step handlers ─────────────────────────────────────────────────────────
 
   const handleSelectCreditLine = (creditLine: CreditLine) => {
     setSelectedCreditLine(creditLine);
@@ -141,7 +158,7 @@ export default function DrawCreditPage() {
     setTransaction(null);
   };
 
-  const handleBack = () => {
+  const handleBack = useCallback(() => {
     if (step === "amount") {
       setStep("select");
       setSelectedCreditLine(null);
@@ -150,17 +167,78 @@ export default function DrawCreditPage() {
       setStep("amount");
       setConfirmationAcknowledged(false);
     }
-  };
+  }, [step]);
 
-  const handleCancel = () => {
+  const handleCancel = useCallback(() => {
     navigate("/");
-  };
+  }, [navigate]);
+
+  // ── Global keyboard handler ───────────────────────────────────────────────
+  //
+  // Only fires when focus is NOT on an editable element to avoid swallowing
+  // normal typing.  The handler is re-registered whenever the step or amount
+  // state changes so stale closure values never leak.
+
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      // Never intercept when user is typing
+      if (isFocusedOnInput()) return;
+
+      switch (e.key) {
+        case "Escape":
+          if (step === "select") {
+            e.preventDefault();
+            handleCancel();
+          } else if (step === "amount" || step === "confirm") {
+            e.preventDefault();
+            handleBack();
+          }
+          break;
+
+        case "ArrowLeft":
+          if (step === "amount" || step === "confirm") {
+            e.preventDefault();
+            handleBack();
+          }
+          break;
+
+        case "ArrowRight":
+          // Amount step: advance only when a valid (> 0) amount is set
+          if (step === "amount" && amount > 0) {
+            e.preventDefault();
+            handleAmountNext(amount);
+          }
+          // Confirm step: advance only when terms are acknowledged
+          if (step === "confirm" && confirmationAcknowledged) {
+            e.preventDefault();
+            handleConfirm();
+          }
+          break;
+
+        case "?":
+          // Open the help overlay
+          e.preventDefault();
+          setIsHelpOpen(true);
+          break;
+
+        default:
+          break;
+      }
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [step, amount, confirmationAcknowledged, handleBack, handleCancel]);
+
+  // ── Progress step derivation ──────────────────────────────────────────────
 
   const currentProgressStep: ProgressStep =
     step === "confirm" ? "confirm" : step === "amount" ? "preview" : "select";
   const activeStepIndex = drawSteps.findIndex(
     (drawStep) => drawStep.id === currentProgressStep,
   );
+
+  // ── Render ────────────────────────────────────────────────────────────────
 
   return (
     /*
@@ -183,51 +261,28 @@ export default function DrawCreditPage() {
         {/* Card uses dc-page__card (token-backed padding + radius) — no inline style override */}
         <div className="dc-page__card">
 
-                return (
-                  <li
-                    key={drawStep.id}
-                    className={`rounded-lg border px-3 py-3 ${
-                      isActive
-                        ? "border-blue-400 bg-blue-500/10"
-                        : isComplete
-                          ? "border-green-500/40 bg-green-500/10"
-                          : "border-border bg-background/60"
-                    }`}
-                    aria-current={isActive ? "step" : undefined}
-                  >
-                    <span className="text-xs font-semibold uppercase text-muted">
-                      Step {index + 1}
-                    </span>
-                    <p className="mt-1 text-sm font-semibold text-foreground">
-                      {drawStep.label}
-                    </p>
-                    {microStep && (
-                      <DrawWizardMicroIndicator
-                        stepId={microStep.id}
-                        tone={microStep.tone}
-                        label={microStep.label}
-                      />
-                    )}
-                  </li>
-                );
-              })}
-            </ol>
-            {/*
-              Polite live region for micro-progress updates — one announcer
-              for the whole header so AT users hear validity changes without
-              four competing regions.
-            */}
-            <span
-              className="sr-only"
-              role="status"
-              aria-live="polite"
-              aria-atomic="true"
-              data-testid="draw-micro-progress-live"
-            >
-              {microProgressAnnouncement}
-            </span>
-          </header>
-        )}
+          {/* ── Step 1: Select a credit line ── */}
+          {step === "select" && (
+            <>
+              <CreditLineSelector
+                creditLines={mockCreditLines}
+                onSelect={handleSelectCreditLine}
+              />
+              {/* Shortcut bar for the select step */}
+              <div className="dc-kbd-bar" aria-label="Keyboard shortcuts">
+                <KbdHint
+                  keys="Esc"
+                  label="Cancel"
+                  description="Press Escape to cancel and go back to the dashboard"
+                />
+                <KbdHint
+                  keys="?"
+                  label="Help"
+                  description="Press ? to open keyboard shortcut help"
+                />
+              </div>
+            </>
+          )}
 
         {/* ── Step 1: Select a credit line ── */}
         {step === "select" && (
@@ -252,13 +307,95 @@ export default function DrawCreditPage() {
                 onNext={handleAmountNext}
                 onBack={handleBack}
               />
-              {/* Drawing limit indicator */}
-              {selectedCreditLine && (
-                <div className="mt-6 border-t border-border pt-6">
-                  <DrawingLimit
-                    drawnAmount={selectedCreditLine.limit - selectedCreditLine.available}
-                    totalLimit={selectedCreditLine.limit}
-                  />
+              {/* Separator uses dc-separator (border-top with space-8 padding — token-backed) */}
+              <div className="dc-separator">
+                <PreviewSection
+                  creditLine={selectedCreditLine}
+                  amount={amount}
+                />
+              </div>
+              {/* Shortcut bar for the amount step */}
+              <div className="dc-kbd-bar" aria-label="Keyboard shortcuts">
+                <KbdHint
+                  keys={["←", "→"]}
+                  label="Back / Continue"
+                  separator="/"
+                  description="Use left and right arrow keys to go back or continue"
+                />
+                <KbdHint
+                  keys="Esc"
+                  label="Back"
+                  description="Press Escape to go back to the previous step"
+                />
+                <KbdHint
+                  keys="?"
+                  label="Help"
+                  description="Press ? to open keyboard shortcut help"
+                />
+              </div>
+            </div>
+          )}
+
+          {/* ── Step 3: Review & confirm ── */}
+          {step === "confirm" && selectedCreditLine && (
+            <>
+              <ConfirmationStep
+                creditLine={selectedCreditLine}
+                amount={amount}
+                onConfirm={handleConfirm}
+                onBack={handleBack}
+                isLoading={isLoading}
+              />
+              {/* Shortcut bar for the confirm step */}
+              <div className="dc-kbd-bar" aria-label="Keyboard shortcuts">
+                <KbdHint
+                  keys={["←", "→"]}
+                  label="Back / Confirm"
+                  separator="/"
+                  description="Use left arrow to go back; right arrow to confirm when terms are accepted"
+                />
+                <KbdHint
+                  keys="Esc"
+                  label="Back"
+                  description="Press Escape to go back to the previous step"
+                />
+                <KbdHint
+                  keys="?"
+                  label="Help"
+                  description="Press ? to open keyboard shortcut help"
+                />
+              </div>
+            </>
+          )}
+
+          {/* ── Step 4: Status (loading → result) ── */}
+          {step === "status" && (isLoading || transaction) && (
+            <>
+              {isLoading && (
+                /*
+                 * role="status" + aria-live="polite" announce the loading state
+                 * to screen readers without interrupting the user.
+                 * aria-label on the spinner ring itself provides a text
+                 * alternative for the animated element.
+                 */
+                <div
+                  className="dc-spinner-wrap"
+                  role="status"
+                  aria-live="polite"
+                  aria-label="Processing your draw request"
+                >
+                  <div className="dc-spinner-ring-bg">
+                    <div
+                      className="dc-spinner-ring"
+                      aria-hidden="true"
+                    />
+                  </div>
+                  <div>
+                    <h2 className="dc-step__title">Processing</h2>
+                    <p className="dc-step__subtitle">
+                      Your draw request is being processed.
+                    </p>
+                  </div>
                 </div>
               )}
             </section>
