@@ -15,9 +15,18 @@
  *   - <main> labelled with aria-label for screen-reader landmark navigation
  *   - Loading state wrapped in role="status" + aria-live="polite"
  *   - Spinner has aria-label describing the in-progress action
+ *
+ * Keyboard shortcuts:
+ *   Escape  — cancel (select step) / go back (amount & confirm steps)
+ *   ArrowLeft  — go back (amount & confirm steps)
+ *   ArrowRight — advance (amount step when valid; confirm step when acknowledged)
+ *   ?       — open the keyboard shortcut help overlay
+ *
+ * The keyboard handler is only active when the focused element is not an
+ * editable input / textarea, preventing shortcut interference while typing.
  */
 
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect, useCallback } from "react";
 import { Skeleton } from "@/components/Skeleton";
 import { useLocation, useNavigate } from "react-router-dom";
 import { loadDraft, saveDraft, clearDraft } from "@/state/wizardDraft";
@@ -27,6 +36,7 @@ import { PreviewSection } from "@/components/PreviewSection";
 import { ConfirmationStep } from "@/components/ConfirmationStep";
 import { TransactionStatus } from "@/components/TransactionStatus";
 import { InlineHelpOverlay } from "@/components/InlineHelpOverlay";
+import { KbdHint } from "@/components/KbdHint";
 import { CreditLine, DrawStep, Transaction } from "@/types/draw-credit.types";
 import { mockCreditLines } from "@/lib/draw-credit-mock-data";
 import { WhyApr } from "@/components/WhyApr";
@@ -44,6 +54,15 @@ const drawSteps = [
 ] as const;
 
 type ProgressStep = (typeof drawSteps)[number]["id"];
+
+/** Returns true if the currently focused element can receive text input. */
+function isFocusedOnInput(): boolean {
+  const el = document.activeElement;
+  if (!el) return false;
+  const tag = (el as HTMLElement).tagName.toLowerCase();
+  if (tag === "input" || tag === "textarea" || tag === "select") return true;
+  return (el as HTMLElement).isContentEditable;
+}
 
 export default function DrawCreditPage() {
   const navigate = useNavigate();
@@ -65,6 +84,7 @@ export default function DrawCreditPage() {
       saveDraft({ step, selectedCreditLine, amount });
     }
   }, [step, selectedCreditLine, amount]);
+
   const [isLoading, setIsLoading] = useState(false);
   const [isHelpOpen, setIsHelpOpen] = useState(false);
   const helpTriggerRef = useRef<HTMLButtonElement>(null);
@@ -83,6 +103,8 @@ export default function DrawCreditPage() {
       confirmationAcknowledged,
       isOnConfirmStep: step === "confirm",
     });
+
+  // ── Step handlers ─────────────────────────────────────────────────────────
 
   const handleSelectCreditLine = (creditLine: CreditLine) => {
     setSelectedCreditLine(creditLine);
@@ -133,7 +155,7 @@ export default function DrawCreditPage() {
     setTransaction(null);
   };
 
-  const handleBack = () => {
+  const handleBack = useCallback(() => {
     if (step === "amount") {
       setStep("select");
       setSelectedCreditLine(null);
@@ -142,17 +164,78 @@ export default function DrawCreditPage() {
       setStep("amount");
       setConfirmationAcknowledged(false);
     }
-  };
+  }, [step]);
 
-  const handleCancel = () => {
+  const handleCancel = useCallback(() => {
     navigate("/");
-  };
+  }, [navigate]);
+
+  // ── Global keyboard handler ───────────────────────────────────────────────
+  //
+  // Only fires when focus is NOT on an editable element to avoid swallowing
+  // normal typing.  The handler is re-registered whenever the step or amount
+  // state changes so stale closure values never leak.
+
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      // Never intercept when user is typing
+      if (isFocusedOnInput()) return;
+
+      switch (e.key) {
+        case "Escape":
+          if (step === "select") {
+            e.preventDefault();
+            handleCancel();
+          } else if (step === "amount" || step === "confirm") {
+            e.preventDefault();
+            handleBack();
+          }
+          break;
+
+        case "ArrowLeft":
+          if (step === "amount" || step === "confirm") {
+            e.preventDefault();
+            handleBack();
+          }
+          break;
+
+        case "ArrowRight":
+          // Amount step: advance only when a valid (> 0) amount is set
+          if (step === "amount" && amount > 0) {
+            e.preventDefault();
+            handleAmountNext(amount);
+          }
+          // Confirm step: advance only when terms are acknowledged
+          if (step === "confirm" && confirmationAcknowledged) {
+            e.preventDefault();
+            handleConfirm();
+          }
+          break;
+
+        case "?":
+          // Open the help overlay
+          e.preventDefault();
+          setIsHelpOpen(true);
+          break;
+
+        default:
+          break;
+      }
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [step, amount, confirmationAcknowledged, handleBack, handleCancel]);
+
+  // ── Progress step derivation ──────────────────────────────────────────────
 
   const currentProgressStep: ProgressStep =
     step === "confirm" ? "confirm" : step === "amount" ? "preview" : "select";
   const activeStepIndex = drawSteps.findIndex(
     (drawStep) => drawStep.id === currentProgressStep,
   );
+
+  // ── Render ────────────────────────────────────────────────────────────────
 
   return (
     /*
@@ -166,10 +249,25 @@ export default function DrawCreditPage() {
 
           {/* ── Step 1: Select a credit line ── */}
           {step === "select" && (
-            <CreditLineSelector
-              creditLines={mockCreditLines}
-              onSelect={handleSelectCreditLine}
-            />
+            <>
+              <CreditLineSelector
+                creditLines={mockCreditLines}
+                onSelect={handleSelectCreditLine}
+              />
+              {/* Shortcut bar for the select step */}
+              <div className="dc-kbd-bar" aria-label="Keyboard shortcuts">
+                <KbdHint
+                  keys="Esc"
+                  label="Cancel"
+                  description="Press Escape to cancel and go back to the dashboard"
+                />
+                <KbdHint
+                  keys="?"
+                  label="Help"
+                  description="Press ? to open keyboard shortcut help"
+                />
+              </div>
+            </>
           )}
 
           {/* ── Step 2: Enter amount + live preview ── */}
@@ -188,18 +286,58 @@ export default function DrawCreditPage() {
                   amount={amount}
                 />
               </div>
+              {/* Shortcut bar for the amount step */}
+              <div className="dc-kbd-bar" aria-label="Keyboard shortcuts">
+                <KbdHint
+                  keys={["←", "→"]}
+                  label="Back / Continue"
+                  separator="/"
+                  description="Use left and right arrow keys to go back or continue"
+                />
+                <KbdHint
+                  keys="Esc"
+                  label="Back"
+                  description="Press Escape to go back to the previous step"
+                />
+                <KbdHint
+                  keys="?"
+                  label="Help"
+                  description="Press ? to open keyboard shortcut help"
+                />
+              </div>
             </div>
           )}
 
           {/* ── Step 3: Review & confirm ── */}
           {step === "confirm" && selectedCreditLine && (
-            <ConfirmationStep
-              creditLine={selectedCreditLine}
-              amount={amount}
-              onConfirm={handleConfirm}
-              onBack={handleBack}
-              isLoading={isLoading}
-            />
+            <>
+              <ConfirmationStep
+                creditLine={selectedCreditLine}
+                amount={amount}
+                onConfirm={handleConfirm}
+                onBack={handleBack}
+                isLoading={isLoading}
+              />
+              {/* Shortcut bar for the confirm step */}
+              <div className="dc-kbd-bar" aria-label="Keyboard shortcuts">
+                <KbdHint
+                  keys={["←", "→"]}
+                  label="Back / Confirm"
+                  separator="/"
+                  description="Use left arrow to go back; right arrow to confirm when terms are accepted"
+                />
+                <KbdHint
+                  keys="Esc"
+                  label="Back"
+                  description="Press Escape to go back to the previous step"
+                />
+                <KbdHint
+                  keys="?"
+                  label="Help"
+                  description="Press ? to open keyboard shortcut help"
+                />
+              </div>
+            </>
           )}
 
           {/* ── Step 4: Status (loading → result) ── */}
@@ -317,4 +455,3 @@ export function DrawCreditPageSkeleton() {
     </main>
   );
 }
-
