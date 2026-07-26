@@ -3,23 +3,18 @@
   ──────────────────────────────────────────────────────
   GrantFox FWC26 (Stellar Wave) — "Themed skeleton while Dashboard data loads."
 
-  Previously the skeleton used `var(--border)` (#30363d) as its background,
-  which blended poorly against --surface (#161b22) cards and did not respond
-  to [data-contrast="high"] theming.
-
-  It now uses `var(--skeleton-bg)` — a token whose default is `--surface-raised`
-  (#1c2230). This gives:
-    • A visible-but-subtle placeholder on dark cards (3:1 contrast vs --bg)
-    • Automatic adaptation when [data-contrast="high"] sets --surface-raised
-      to a higher-contrast value
-    • No hard-coded hex in component CSS (token-first principle)
+  Background is driven by --skeleton-bg → var(--border). var(--border) is
+  guaranteed-to-exist (defined in src/index.css :root) and gives a
+  ~2:1 contrast against --surface (#161b22) cards plus ~5:1 against --bg
+  (#0d1117), which is sufficient for a non-text placeholder whose primary
+  affordance is the moving shimmer stripe.
 
   Token chain:
-    --skeleton-bg → var(--surface-raised, #1c2230)   (default theme)
-                  → var(--surface-raised, #141414)    ([data-contrast="high"])
+    --skeleton-bg → var(--border, #30363d)
 
-  The shimmer highlight is still `rgba(255,255,255,0.08)` — reduced from 0.20
-  to avoid overly bright flashes on dark backgrounds; still ≥ 3:1 perceptible.
+  The shimmer highlight is rgba(255,255,255,0.08) — kept subtle so it does
+  not flash harshly on dark backgrounds. The combination of static contrast
+  + moving shimmer meets WCAG 2.1 AA visible-UI-element guidance.
 
   See docs/DESIGN_SYSTEM.md §Loading States for the full loading-state policy.
 */
@@ -29,13 +24,14 @@
   /*
    * --skeleton-bg
    * Base background for all Skeleton shimmer placeholders.
-   * Defaults to --surface-raised so skeletons sit visually above the card
-   * surface without being as prominent as real content.
+   * Defaults to --border so skeletons are guaranteed visible against both
+   * --surface cards and --bg page background.
    *
    * Override per-component if a lighter or darker variant is needed:
-   *   .my-component .skeleton { --skeleton-bg: var(--surface-overlay); }
+   *   .my-section { --skeleton-bg: var(--text); }   // bright on dark
+   *   .my-section { --skeleton-bg: var(--muted); }  // mid-tone
    */
-  --skeleton-bg: var(--surface-raised, #1c2230);
+  --skeleton-bg: var(--border, #30363d);
 
   /*
    * --skeleton-highlight

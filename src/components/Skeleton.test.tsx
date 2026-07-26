@@ -19,11 +19,10 @@ describe('Skeleton.css — themed tokens (FWC26)', () => {
   const cssPath = resolve(__dirname, './Skeleton.css');
   const css = readFileSync(cssPath, 'utf-8');
 
-  it('declares --skeleton-bg token using var(--surface-raised) (not --border)', () => {
+  it('declares --skeleton-bg token using var(--border) (visible against surface)', () => {
     expect(css).toContain('--skeleton-bg');
-    expect(css).toContain('var(--surface-raised');
-    // Must NOT fall back to --border for the base background
-    expect(css).not.toMatch(/background(-color)?:\s*var\(--border\)/);
+    expect(css).toContain('--skeleton-bg: var(--border');
+    expect(css).not.toMatch(/--skeleton-bg:\s*var\(--surface-raised/);
   });
 
   it('uses --skeleton-bg as the background-color (not a hard-coded hex)', () => {

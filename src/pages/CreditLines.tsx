@@ -31,6 +31,7 @@ import {
   RepaymentSchedule,
   buildRepaymentScheduleFromLines,
 } from "../components/RepaymentSchedule";
+import { Skeleton } from "../components/Skeleton";
 
 // ─── Credit Line Card ────────────────────────────────────────────────────────
 
@@ -194,6 +195,7 @@ export default function CreditLines() {
   );
 
   const [creditLines, setCreditLines] = useState(MOCK_CREDIT_LINES);
+  const [isLoading, setIsLoading] = useState(true);
   const hasCreditLines = creditLines.length > 0;
 
   const [showCompare, setShowCompare] = useState(false);
@@ -366,6 +368,14 @@ export default function CreditLines() {
   );
 
   useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setIsLoading(false);
+    }, 600);
+
+    return () => window.clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement;
       if (
@@ -396,6 +406,63 @@ export default function CreditLines() {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [selectedLines, showCompare, navigate]);
+
+  if (isLoading) {
+    return (
+      <div className="credit-lines-page" role="status" aria-live="polite" aria-busy="true" aria-label="Loading credit lines">
+        <div className="cl-page-header">
+          <div>
+            <Skeleton width="180px" height="2rem" className="cl-skeleton-title" />
+            <Skeleton width="220px" height="1rem" className="cl-skeleton-subtitle" />
+          </div>
+          <div className="cl-skeleton-actions">
+            <Skeleton width="180px" height="2.75rem" className="cl-skeleton-pill" />
+            <Skeleton width="172px" height="2.75rem" className="cl-skeleton-pill" />
+          </div>
+        </div>
+
+        <div className="cl-filters cl-filters--skeleton">
+          <div className="cl-filter-group">
+            <Skeleton width="72px" height="0.8rem" />
+            <Skeleton width="150px" height="2.4rem" />
+          </div>
+          <div className="cl-filter-group">
+            <Skeleton width="64px" height="0.8rem" />
+            <Skeleton width="150px" height="2.4rem" />
+          </div>
+          <Skeleton width="42px" height="2.4rem" />
+        </div>
+
+        <div className="cl-grid cl-grid--skeleton" aria-hidden="true">
+          {Array.from({ length: 3 }).map((_, index) => (
+            <div key={index} className="cl-card cl-card--skeleton">
+              <div className="cl-card-header">
+                <div style={{ width: "100%" }}>
+                  <Skeleton width="72%" height="1.1rem" className="cl-skeleton-card-title" />
+                  <Skeleton width="45%" height="0.8rem" className="cl-skeleton-card-subtitle" />
+                </div>
+                <Skeleton width="96px" height="1.95rem" />
+              </div>
+              <div className="cl-card-body">
+                <div className="cl-metrics">
+                  <Skeleton width="100%" height="3.25rem" />
+                  <Skeleton width="100%" height="3.25rem" />
+                  <Skeleton width="100%" height="3.25rem" />
+                </div>
+                <Skeleton width="100%" height="0.7rem" className="cl-skeleton-block" />
+                <Skeleton width="70%" height="0.7rem" className="cl-skeleton-block" />
+                <div className="cl-details">
+                  <Skeleton width="100%" height="2.25rem" />
+                  <Skeleton width="100%" height="2.25rem" />
+                  <Skeleton width="100%" height="2.25rem" />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="credit-lines-page">
