@@ -435,6 +435,8 @@ Inventory of CSS files with reduced motion overrides:
 - `src/components/WalletConnectionModal.css`
 - `src/components/FormField.css`
 - `src/components/LandingPage.css`
+- `src/pages/DrawCreditPage.css` — `.dc-page` scoped reset + static spinner fallback
+- `src/pages/RepayPage.css` — `.repay-page` scoped reset
 
 JS-driven animations (Framer Motion) call `useReducedMotion()` from the context and switch to instant
 state changes. The landing hero in `src/components/LandingPage.tsx` and risk gauge in `src/components/RiskGauge.tsx` are canonical examples.

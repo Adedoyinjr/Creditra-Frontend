@@ -18,7 +18,7 @@
  *   - Loading state wrapped in role="status" + aria-live="polite"
  *   - Spinner has aria-label describing the in-progress action
  *
- * Reduced-motion strategy (GrantFox FWC26):
+ * Reduced-motion strategy (GrantFox FWC26 / issue #693):
  *   - DrawCreditPage.css suppresses all animations and transitions on
  *     `.dc-page` descendants via @media (prefers-reduced-motion: reduce)
  *     and the in-app [data-motion="reduced"] attribute override.
@@ -122,7 +122,11 @@ export default function DrawCreditPage() {
   };
 
   const handleConfirm = async () => {
+    // Move to the status step immediately so the loading indicator
+    // (animated spinner or static reduced-motion fallback) is visible
+    // while the request is in flight.
     setIsLoading(true);
+    setStep("status");
 
     // Simulate API call
     await new Promise((resolve) => setTimeout(resolve, 2000));
@@ -374,9 +378,9 @@ export default function DrawCreditPage() {
                   <div className="dc-spinner-ring-bg">
                     {isReducedMotionActive ? (
                       /*
-                       * Static fallback: a simple hourglass/clock SVG icon at
-                       * the same 4rem size as the spinner ring, using the
-                       * accent colour token.  No animation.
+                       * Static fallback: a simple clock SVG at the same 4rem
+                       * size as the spinner ring, using the accent colour
+                       * token. No animation.
                        */
                       <div className="dc-spinner-static" aria-hidden="true">
                         <svg
@@ -387,7 +391,6 @@ export default function DrawCreditPage() {
                           height="64"
                           aria-hidden="true"
                         >
-                          {/* Clock face */}
                           <circle
                             cx="32"
                             cy="32"
@@ -396,7 +399,6 @@ export default function DrawCreditPage() {
                             strokeWidth="4"
                             strokeLinecap="round"
                           />
-                          {/* Hour hand pointing to 12 */}
                           <line
                             x1="32"
                             y1="32"
@@ -406,7 +408,6 @@ export default function DrawCreditPage() {
                             strokeWidth="4"
                             strokeLinecap="round"
                           />
-                          {/* Minute hand pointing to 3 */}
                           <line
                             x1="32"
                             y1="32"
