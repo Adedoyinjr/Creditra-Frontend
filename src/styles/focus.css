@@ -238,8 +238,53 @@
 
 .cl-primary-btn:focus-visible,
 .cl-sort-dir:focus-visible,
-.cl-card:focus-visible {
+.cl-card:focus-visible,
+.cl-filters select:focus-visible {
   outline: var(--focus-ring-width, 2px) solid var(--focus-ring-color, #58a6ff);
   outline-offset: var(--focus-ring-offset, 3px);
   border-radius: var(--focus-ring-radius, 6px);
+}
+
+/* ── DrawCreditPage interactive elements ─────────────────────────────────── */
+/*
+  GrantFox FWC26 (Stellar Wave) — "Visible focus outline on keyboard-only
+  nav for DrawCreditPage" requirement (issue #592).
+
+  Scoped under `.dc-page` so rings only apply inside the draw wizard.
+  Selectors cover credit-line cards, action buttons, presets, terms
+  checkbox, sticky summary bar, and AmountInput stepper / Max / preset
+  controls. `:focus-visible` keeps pointer interactions unchanged while
+  shared tokens preserve contrast across default, dark, and high-contrast.
+*/
+
+.dc-page .dc-credit-line-item:focus-visible,
+.dc-page .dc-btn:focus-visible,
+.dc-page .dc-preset-btn:focus-visible,
+.dc-page .dc-terms-label__checkbox:focus-visible,
+.dc-page .draw-summary-bar:focus-visible,
+.dc-page button[aria-label="Decrease amount"]:focus-visible,
+.dc-page button[aria-label="Increase amount"]:focus-visible,
+.dc-page button[aria-label="Set amount to maximum available credit"]:focus-visible,
+.dc-page button[aria-label^="Set amount to"]:focus-visible {
+  outline: var(--focus-ring-width, 2px) solid
+    var(--focus-ring-color, var(--accent, #58a6ff)) !important;
+  outline-offset: var(--focus-ring-offset, 3px) !important;
+  box-shadow: none !important;
+}
+
+.dc-page .dc-credit-line-item:focus-visible,
+.dc-page .dc-preset-btn:focus-visible,
+.dc-page .dc-btn:focus-visible {
+  border-radius: var(--radius-lg, 12px);
+}
+
+.dc-page button[aria-label="Decrease amount"]:focus-visible,
+.dc-page button[aria-label="Increase amount"]:focus-visible,
+.dc-page button[aria-label="Set amount to maximum available credit"]:focus-visible,
+.dc-page button[aria-label^="Set amount to"]:focus-visible {
+  border-radius: var(--radius-md, 8px);
+}
+
+.dc-page .dc-terms-label__checkbox:focus-visible {
+  border-radius: var(--radius-sm, 4px);
 }
