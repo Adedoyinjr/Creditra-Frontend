@@ -20,13 +20,7 @@ import { ShortcutHelpOverlay } from "./components/ShortcutHelpOverlay";
 import { DutchAuctions } from "./pages/DutchAuctions";
 import RepayPage from "./pages/RepayPage";
 import { LinkedAccounts } from "./pages/LinkedAccounts";
-import NotificationPreferences from "./pages/NotificationPreferences";
-import { WalletReconnectBanner } from "./components/WalletReconnectBanner";
-import { SessionTimeoutBanner } from "./components/SessionTimeoutBanner";
-import { NetworkMismatchBanner } from "./components/notifications/NetworkMismatchBanner";
-import DataPrivacySettings from "./pages/settings/Data";
-import SessionsSettings from "./pages/settings/Sessions";
-import SettingsAccount from "./pages/SettingsAccount";
+import AnalyticsSettings from "./pages/settings/Analytics";
 import { Header } from "./layouts/Header";
 import CreditLineCompare from "./pages/CreditLineCompare";
 
@@ -234,6 +228,7 @@ function App() {
                     {/* Issue #581: Repay flow (now reachable from header /
                         the "Repay" action on Credit Lines). */}
                     <Route path="/repay" element={<RepayPage />} />
+                    <Route path="/settings/analytics" element={<AnalyticsSettings />} />
                     <Route path="*" element={<NotFound />} />
                   </Routes>
                 </main>
