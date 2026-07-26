@@ -230,21 +230,21 @@
   border-radius: var(--focus-ring-radius, 6px);
 }
 
-/* ── Draw Credit AmountInput ─────────────────────────────────────────────── */
-/*
-  GrantFox FWC26 (Stellar Wave) — "Visible focus outline on keyboard-only
-  nav for AmountInput" requirement.
+/* ── CreditLines interactive elements ─────────────────────────────────────── */
+.cl-primary-btn:focus-visible {
+  outline: var(--focus-ring-width, 2px) solid var(--focus-ring-color, #58a6ff);
+  outline-offset: var(--focus-ring-offset, 3px);
+  border-radius: var(--focus-ring-radius, 6px);
+}
 
-  The number input inside the AmountInput receives a visible focus ring
-  on :focus-visible via the Tailwind ring utilities applied inline.
+.cl-filters select:focus-visible {
+  outline: var(--focus-ring-width, 2px) solid var(--focus-ring-color, #58a6ff);
+  outline-offset: var(--focus-ring-offset, 3px);
+  border-radius: var(--focus-ring-radius, 6px);
+}
 
-  This rule provides a CSS-only fallback for consumers that may not go
-  through the Tailwind-purged output; it matches the same ring color/width
-  tokens used across the rest of the product.
-*/
-
-.amount-input-focus:focus-visible {
-  outline: var(--focus-ring-width, 2px) solid var(--focus-ring-color, var(--accent, #58a6ff));
-  outline-offset: var(--focus-ring-offset, 2px);
-  border-radius: var(--focus-ring-radius, 4px);
+.cl-sort-dir:focus-visible {
+  outline: var(--focus-ring-width, 2px) solid var(--focus-ring-color, #58a6ff);
+  outline-offset: var(--focus-ring-offset, 3px);
+  border-radius: var(--focus-ring-radius, 6px);
 }

@@ -2,6 +2,10 @@ import { useState, useMemo, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { StatusBadge } from '../components/StatusBadge';
 import { RepaymentPlanChart } from '../components/RepaymentPlanChart';
+import { Skeleton } from '../components/Skeleton';
+import { KbdHint } from '../components/KbdHint';
+import { CreditLineRowMenu } from '../components/CreditLineRowMenu';
+import { formatCountdown, getCountdownAriaLabel } from '../utils/dates';
 import {
   HealthFactorChart,
   buildHealthHistory,
@@ -31,6 +35,51 @@ import {
   buildRepaymentScheduleFromLines,
 } from "../components/RepaymentSchedule";
 import { EmptyState } from "../components/EmptyState";
+
+function NextAccrualChip({ target }: { target: string }) {
+  const [now, setNow] = useState(() => new Date());
+  const timerRef = { current: undefined as ReturnType<typeof setInterval> | undefined };
+
+  useEffect(() => {
+    const tick = () => setNow(new Date());
+
+    const handleVisibility = () => {
+      if (document.hidden) {
+        if (timerRef.current !== undefined) {
+          clearInterval(timerRef.current);
+          timerRef.current = undefined;
+        }
+      } else {
+        if (timerRef.current !== undefined) {
+          clearInterval(timerRef.current);
+        }
+        tick();
+        timerRef.current = setInterval(tick, 60000);
+      }
+    };
+
+    if (!document.hidden) {
+      timerRef.current = setInterval(tick, 60000);
+    }
+
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => {
+      if (timerRef.current !== undefined) {
+        clearInterval(timerRef.current);
+      }
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
+  }, []);
+
+  const label = formatCountdown(target, now);
+  const ariaLabel = getCountdownAriaLabel(target, now);
+
+  return (
+    <span className="cl-accrual-chip" aria-label={ariaLabel}>
+      {label}
+    </span>
+  );
+}
 
 // ─── Credit Line Card ────────────────────────────────────────────────────────
 
@@ -191,7 +240,7 @@ function CreditLineCard({
 
 // ─── Main Component ────────────────────────────────────────────────────────────
 
-export default function CreditLines() {
+export default function CreditLines({ defaultLoading = true }: { defaultLoading?: boolean }) {
   const navigate = useNavigate();
   const [sortField, setSortField] = useState<SortField>("updatedAt");
   const [sortDir, setSortDir] = useState<SortDirection>("desc");
@@ -201,6 +250,15 @@ export default function CreditLines() {
 
   const [creditLines, setCreditLines] = useState(MOCK_CREDIT_LINES);
   const hasCreditLines = creditLines.length > 0;
+
+  const [loading, setLoading] = useState(defaultLoading);
+  useEffect(() => {
+    if (!defaultLoading) return;
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [defaultLoading]);
 
   const [showCompare, setShowCompare] = useState(false);
   const [selectedLines, setSelectedLines] = useState<string[]>([]);
@@ -413,7 +471,7 @@ export default function CreditLines() {
         <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
           <button
             ref={triggerRef}
-            className="cl-primary-btn"
+            className="cl-primary-btn focus-ring"
             onClick={handleOpenCompare}
             disabled={selectedLines.length !== 2}
             style={{ opacity: selectedLines.length === 2 ? 1 : 0.6, display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}
@@ -428,7 +486,7 @@ export default function CreditLines() {
                 ? `/compare-credit-lines?a=${selectedLines[0]}&b=${selectedLines[1]}`
                 : '#'
             }
-            className="cl-primary-btn"
+            className="cl-primary-btn focus-ring"
             aria-disabled={selectedLines.length !== 2}
             aria-label={
               selectedLines.length === 2
@@ -452,7 +510,7 @@ export default function CreditLines() {
           </Link>
           <Link 
             to="/open-credit" 
-            className="cl-primary-btn"
+            className="cl-primary-btn focus-ring"
             style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}
           >
             <span>+ Open New Line</span>
@@ -465,6 +523,7 @@ export default function CreditLines() {
         <div className="cl-filter-group">
           <label>Status</label>
           <select
+            className="focus-ring"
             value={statusFilter}
             onChange={(e) =>
               setStatusFilter(e.target.value as CreditLineStatus | "all")
@@ -481,6 +540,7 @@ export default function CreditLines() {
         <div className="cl-filter-group">
           <label>Sort By</label>
           <select
+            className="focus-ring"
             value={sortField}
             onChange={(e) => handleSort(e.target.value as SortField)}
           >
@@ -493,7 +553,7 @@ export default function CreditLines() {
           </select>
         </div>
         <button
-          className="cl-sort-dir"
+          className="cl-sort-dir focus-ring"
           onClick={() => setSortDir((d) => (d === "asc" ? "desc" : "asc"))}
         >
           {sortDir === "asc" ? "↑" : "↓"}
@@ -533,7 +593,47 @@ export default function CreditLines() {
         </div>
       )}
 
-      {filteredAndSorted.length === 0 ? (
+      {loading ? (
+        <div className="cl-grid" aria-busy="true" data-testid="creditlines-skeleton-grid">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="cl-card" style={{ minHeight: '380px' }}>
+              <div className="cl-card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.75rem', padding: '1.25rem 1.25rem 0' }}>
+                <div style={{ display: 'flex', gap: '0.75rem', width: '70%' }}>
+                  <Skeleton width="18px" height="18px" style={{ borderRadius: '4px', flexShrink: 0 }} />
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', flex: 1 }}>
+                    <Skeleton width="80%" height="18px" style={{ borderRadius: '4px' }} />
+                    <Skeleton width="60%" height="12px" style={{ borderRadius: '4px' }} />
+                  </div>
+                </div>
+                <Skeleton width="65px" height="20px" style={{ borderRadius: '4px', flexShrink: 0 }} />
+              </div>
+              <div className="cl-card-body" style={{ padding: '1rem 1.25rem' }}>
+                <div className="cl-metrics" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.75rem', marginBottom: '1rem' }}>
+                  <Skeleton height="54px" style={{ borderRadius: '6px' }} />
+                  <Skeleton height="54px" style={{ borderRadius: '6px' }} />
+                  <Skeleton height="54px" style={{ borderRadius: '6px' }} />
+                </div>
+                <div className="cl-util-bar" style={{ marginBottom: '1rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.35rem' }}>
+                    <Skeleton width="50px" height="10px" />
+                    <Skeleton width="30px" height="10px" />
+                  </div>
+                  <Skeleton height="6px" style={{ borderRadius: '3px' }} />
+                </div>
+                <div className="cl-details" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem', marginBottom: '1rem' }}>
+                  <Skeleton height="32px" style={{ borderRadius: '4px' }} />
+                  <Skeleton height="32px" style={{ borderRadius: '4px' }} />
+                  <Skeleton height="32px" style={{ borderRadius: '4px' }} />
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  <Skeleton height="60px" style={{ borderRadius: '6px' }} />
+                  <Skeleton height="80px" style={{ borderRadius: '6px' }} />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : filteredAndSorted.length === 0 ? (
         !hasCreditLines ? (
           <EmptyState
             illustration={<NoLines className="empty-state-illustration--muted" />}

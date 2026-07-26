@@ -4,6 +4,7 @@ import ActivityFeed from "../components/ActivityFeed";
 import { CopyToClipboard } from "../components/CopyToClipboard";
 import { CopyLoanButton } from "../components/CopyLoanButton";
 import { StatusBadge } from "../components/StatusBadge";
+import { DashboardTour } from "../components/DashboardTour";
 import { useWallet } from "../context/WalletContext";
 import { Sparkline } from "../components/Sparkline";
 import { RiskBandsPanel } from "../components/RiskBandsPanel";
@@ -22,8 +23,8 @@ import {
 } from "../utils/tokens";
 import { readJson, writeJson } from "../utils/storage";
 import "./Dashboard.css";
-import "../styles/patterns.css";
 import { Skeleton } from "../components/Skeleton";
+import { EmptyState } from "../components/EmptyState";
 import { NoDataGraph } from "../components/illustrations";
 import CompareLinesPanel from "../components/CompareLinesPanel";
 import { useFocusTrap } from "../hooks/useFocusTrap";
@@ -521,18 +522,15 @@ export function Dashboard() {
             </div>
           )}
         </div>
-        <div className="empty-state">
-          <NoDataGraph className="empty-state-illustration--muted" />
-          <h2>No credit lines yet</h2>
-          <p>
-            Start your credit journey by requesting a credit evaluation. We'll
-            analyze your on-chain activity to determine your credit limit and
-            terms.
-          </p>
-          <Link to="/open-credit" className="empty-state-btn">
-            Request Credit Evaluation
-          </Link>
-        </div>
+        <EmptyState
+          illustration={<NoDataGraph className="empty-state-illustration--muted" />}
+          title="No credit lines yet"
+          description="Start your credit journey by requesting a credit evaluation. We'll analyze your on-chain activity to determine your credit limit and terms."
+          primaryAction={{
+            label: "Request Credit Evaluation",
+            to: "/open-credit",
+          }}
+        />
       </>
     );
   }

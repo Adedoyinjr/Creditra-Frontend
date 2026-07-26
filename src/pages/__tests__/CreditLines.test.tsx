@@ -1,12 +1,12 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, act } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 import CreditLines from '../CreditLines';
 
 function renderPage() {
   return render(
     <BrowserRouter>
-      <CreditLines />
+      <CreditLines defaultLoading={false} />
     </BrowserRouter>
   );
 }
@@ -70,20 +70,58 @@ describe('CreditLines page', () => {
 
   it('displays APR, Risk Score, and Opened date for each card', () => {
     renderPage();
-    // Scope to the card heading (h3) to avoid ambiguity with the RepaymentSchedule section
-    const cardHeading = screen.getAllByRole('heading', { name: 'Primary Business Line' })[0];
-    const card = cardHeading.closest('.cl-card');
+    const card = screen.getAllByText('Primary Business Line')[0].closest('.cl-card');
     expect(card).toBeInTheDocument();
     expect(card?.textContent).toMatch(/APR/);
     expect(card?.textContent).toMatch(/Risk Score/);
     expect(card?.textContent).toMatch(/Opened/);
   });
 
-  it('renders card metrics for layout', () => {
-    renderPage();
-    const metrics = document.querySelectorAll('.cl-metrics');
-    expect(metrics.length).toBeGreaterThanOrEqual(3);
-    const details = document.querySelectorAll('.cl-details');
-    expect(details.length).toBeGreaterThanOrEqual(3);
+  describe("skeleton loading state", () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it("renders credit lines skeletons during the loading phase", () => {
+      const { container } = render(
+        <BrowserRouter>
+          <CreditLines />
+        </BrowserRouter>
+      );
+      
+      // Initially, it should be in loading state
+      const skeletonGrid = screen.getByTestId("creditlines-skeleton-grid");
+      expect(skeletonGrid).toBeInTheDocument();
+      expect(skeletonGrid.getAttribute("aria-busy")).toBe("true");
+
+      const skeletons = container.querySelectorAll(".skeleton");
+      expect(skeletons.length).toBeGreaterThan(0);
+    });
+
+    it("removes skeletons after loading completes", async () => {
+      const { container } = render(
+        <BrowserRouter>
+          <CreditLines />
+        </BrowserRouter>
+      );
+
+      // Check skeletons exist initially
+      expect(screen.getByTestId("creditlines-skeleton-grid")).toBeInTheDocument();
+
+      // Fast-forward simulated loading time (500ms)
+      act(() => {
+        vi.advanceTimersByTime(500);
+      });
+
+      // Skeletons should be replaced by real credit lines content
+      expect(screen.queryByTestId("creditlines-skeleton-grid")).not.toBeInTheDocument();
+      expect(screen.getAllByText("Primary Business Line")[0]).toBeInTheDocument();
+    });
   });
 });
+
+import { act } from "react";

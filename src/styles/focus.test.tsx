@@ -101,6 +101,18 @@ describe('focus.css — design tokens and utility classes', () => {
     expect(css).toContain('.view-all-link:focus-visible');
   });
 
+  it('defines CreditLines-specific .cl-primary-btn focus rule', () => {
+    expect(css).toContain('.cl-primary-btn:focus-visible');
+  });
+
+  it('defines CreditLines-specific .cl-filters select focus rule', () => {
+    expect(css).toContain('.cl-filters select:focus-visible');
+  });
+
+  it('defines CreditLines-specific .cl-sort-dir focus rule', () => {
+    expect(css).toContain('.cl-sort-dir:focus-visible');
+  });
+
   it('does NOT suppress focus rings under prefers-reduced-motion', () => {
     // The reduced-motion block must not contain any outline or box-shadow rule
     const rmIdx = css.indexOf('@media (prefers-reduced-motion: reduce)');
