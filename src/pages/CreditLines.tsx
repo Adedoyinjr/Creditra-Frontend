@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { StatusBadge } from '../components/StatusBadge';
 import { RepaymentPlanChart } from '../components/RepaymentPlanChart';
 import { Skeleton } from '../components/Skeleton';
+import { KbdHint } from '../components/KbdHint';
 import {
   HealthFactorChart,
   buildHealthHistory,
