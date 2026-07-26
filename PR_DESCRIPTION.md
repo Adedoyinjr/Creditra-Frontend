@@ -1,33 +1,62 @@
-# PR Description: Add 'Terms updated' banner for GrantFox FWC26 campaign
+# feat: scroll restoration on route change
 
 ## Summary
-Resolves #493. This PR introduces a new `TermsBanner` component to notify users of Terms of Service updates for the GrantFox FWC26 (Stellar Wave) campaign. It provides both inline acceptance, session-level dismissal, and a detailed review modal.
 
-## What changed
-- Created `src/components/TermsBanner.tsx` which renders a persistent page-level banner with actions to review or accept the updated terms. It also renders a modal overlay for reviewing detailed terms with full keyboard/a11y features.
-- Created `src/components/TermsBanner.css` containing corresponding styles that adhere to the system's token-based CSS variable architecture, including dark-mode, high-contrast override, and media query support for reduced motion and responsive breakpoints.
-- Imported and rendered `<TermsBanner />` in `src/App.tsx` directly above the routing view inside the `<main>` tag.
-- Added comprehensive unit tests in `src/components/TermsBanner.test.tsx` checking for initial render status, session storage dismissal, localStorage acceptance version checks, review modal toggles, and keyboard behavior.
-- Documented `TermsBanner` in `docs/DESIGN_SYSTEM.md`.
+Adds `useScrollRestoration` — a hook that saves and restores the vertical scroll position (`window.scrollY`) when navigating between routes in the SPA. The hook is mounted once in `App.tsx` inside `<BrowserRouter>` and requires no per-page configuration.
 
-## Why
-For the GrantFox FWC26 campaign, it's essential that users are notified of and accept the updated Terms of Service. This banner provides a non-intrusive yet prominent prompt with a complete, accessible terms review modal.
+## Changes
 
-## Testing / Accessibility
-- Unit tests written under `src/components/TermsBanner.test.tsx` to verify core states.
-- Verified WCAG 2.1 AA compliance:
-  - Text colors have a contrast ratio of at least 4.5:1.
-  - Interactive controls have high contrast borders and custom focus indicators (`.focus-ring` using outline-offset).
-  - High-contrast override support via `[data-contrast="high"]` styling rules.
-  - Touch targets for all interactive actions (Accept, Review Terms, Cancel, Close, Dismiss) are styled with at least a `44px` size.
-  - The modal behaves as an accessible dialog (`role="dialog"` and `aria-modal="true"` with key listener for `Escape`).
-  - Screen readers are notified appropriately via semantic roles.
-  - Motion effects are suppressed when `prefers-reduced-motion` is active.
+### New files
 
-## Accessibility Check Checklist
-- [x] Keyboard navigation works (Tab, Shift+Tab, Enter, Escape)
-- [x] Focus indicators are clearly visible (2px outline, 3px offset)
-- [x] Contrast ratios meet WCAG AA (4.5:1 text, 3:1 large text/icons)
-- [x] Touch targets are at least 44×44 px (Accept, Review, Cancel, Close buttons)
-- [x] Semantic HTML and ARIA roles/labels are used
-- [x] `prefers-reduced-motion` is respected
+- **`src/hooks/useScrollRestoration.ts`** — The hook implementation:
+  - Saves the previous route's scroll position to a `sessionStorage`-backed map on every navigation.
+  - Restores the current route's saved position (if any) via `window.scrollTo({ top, behavior: "instant" })` on the next animation frame.
+  - Tracks user scroll while on a page (rAF-throttled) so the saved position stays current.
+  - Excludes the URL hash from the route key so native hash-anchor scrolling is unaffected.
+  - Includes each `pathname + search` combination as a separate entry, so filtered/paginated views (`/transactions?page=2`) get their own scroll positions.
+  - Supports an `enabled` parameter (defaults to `true`) to disable the feature entirely.
+
+- **`src/hooks/__tests__/useScrollRestoration.test.tsx`** — 9 focused tests covering:
+  - No-op on initial mount when no saved position exists
+  - No-op when `enabled=false` even with pre-populated storage
+  - Saving previous route's scroll on navigation
+  - Restoring saved scroll when navigating back
+  - Threshold guard (`MIN_SAVED_Y = 4px`)
+  - Updating saved position while scrolling on the same route
+  - Cleaning up event listeners on unmount
+  - Saving current scroll position on unmount
+  - Saving scroll position for routes with search params
+
+### Modified files
+
+- **`src/App.tsx`** — Imports and calls `useScrollRestoration()` at the top of the `App` component.
+- **`src/test/__mocks__/react-router-dom.tsx`** — Exports `__setMockLocation(pathname, search)` test helper so tests can simulate client-side navigation.
+- **`docs/ARCHITECTURE.md`** — Lists `useScrollRestoration` in the hooks folder map.
+
+## How it works
+
+1. On mount (and every location change), the hook saves the *previous* route's `scrollY` into a `sessionStorage`-backed `Map<string, number>`.
+2. It then checks whether the *current* route has a saved scroll position. If yes, it calls `window.scrollTo(0, savedY)` on the next animation frame so the DOM has had a chance to lay out.
+3. While the user is on a page, scroll events are captured (rAF-throttled) so the saved position stays up to date.
+4. `sessionStorage` is written whenever the map changes, so back/forward navigation works even after a full page refresh.
+
+## Edge cases handled
+
+- **Hash-only changes** (`#section1` → `#section2` on the same path): Not treated as a route change; native hash-scroll takes over.
+- **Same-path navigations via search** (`?page=1` → `?page=2`): Each search combination gets its own entry.
+- **Reduced motion**: Scroll restoration is always instant (`behavior: "instant"`), so `prefers-reduced-motion` is irrelevant.
+- **Disabled mode**: When `enabled=false` the cache is cleared and no scroll positions are recorded or restored.
+
+## Test results
+
+```
+ ✓ src/hooks/__tests__/useScrollRestoration.test.tsx (9 tests)
+ ✓ src/hooks/__tests__/useScrollCollapse.test.ts (4 tests)
+ ✓ src/hooks/__tests__/useDebounceValue.test.ts (3 tests)
+ ✓ src/hooks/__tests__/useFocusTrap.test.tsx (5 tests)
+
+ Test Files  4 passed (4)
+      Tests  21 passed (21)
+```
+
+No regressions in existing tests.

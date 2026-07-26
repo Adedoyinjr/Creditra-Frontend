@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { BrowserRouter, Route, Routes, Link, NavLink } from "react-router-dom";
+import { useScrollRestoration } from "./hooks/useScrollRestoration";
 import { Dashboard } from "./pages/Dashboard";
 import {
   RouteAnnouncer,
@@ -86,6 +87,9 @@ function App() {
 
   const [isPaletteOpen, setIsPaletteOpen] = useState(false);
   const paletteTriggerRef = useRef<HTMLElement | null>(null);
+
+  // Restore scroll position on route navigation.
+  useScrollRestoration();
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
