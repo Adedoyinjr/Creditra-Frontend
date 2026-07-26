@@ -95,10 +95,21 @@
             [data-contrast="high"] override → #ffffff on #000000 = 21:1 ✓
 */
 .risk-gauge-svg:focus-visible {
+  /*
+    Use shared design tokens from focus.css for consistent focus appearance
+    across all components. The double box-shadow creates the visual equivalent
+    of outline + outline-offset.
+
+    Layer 1 (2px, --bg)          → gap between element edge and ring
+    Layer 2 (2px + 3px offset)   → the visible focus ring
+
+    Using var(--focus-ring-width) and var(--focus-ring-offset) from
+    :root in focus.css ensures consistency with other components.
+  */
   box-shadow:
-    0 0 0 2px var(--bg, #0d1117),
-    0 0 0 5px var(--focus-ring-color, var(--accent, #58a6ff));
-  border-radius: 8px;
+    0 0 0 var(--focus-ring-width, 2px) var(--bg, #0d1117),
+    0 0 0 calc(var(--focus-ring-width, 2px) + var(--focus-ring-offset, 3px)) var(--focus-ring-color, var(--accent, #58a6ff));
+  border-radius: var(--focus-ring-radius, 6px);
 }
 
 /* ── Track (background arc) ──────────────────────────────────────────────── */
@@ -229,9 +240,14 @@
     Chrome 86+, Firefox 85+, Safari 15.4+.
   For older browsers the ring gracefully degrades to invisible (no worse
   than the pre-existing state).
+
+  Uses shared design tokens from focus.css:
+    --focus-ring-color (defaults to --accent)
+    --focus-ring-width (defaults to 2px)
 */
 .risk-gauge-sector:focus-visible .risk-gauge-sector-focus-rect {
   stroke: var(--focus-ring-color, var(--accent, #58a6ff));
+  stroke-width: var(--focus-ring-width, 2px);
   /* A second, wider shadow-like stroke gives the "glow" appearance */
   filter: drop-shadow(0 0 3px var(--focus-ring-color, var(--accent, #58a6ff)));
 }

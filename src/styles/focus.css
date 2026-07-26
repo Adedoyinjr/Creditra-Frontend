@@ -243,3 +243,49 @@
   outline-offset: var(--focus-ring-offset, 3px);
   border-radius: var(--focus-ring-radius, 6px);
 }
+
+/* ── RiskGauge interactive elements ──────────────────────────────────────── */
+/*
+  GrantFox FWC26 (Stellar Wave) — "Visible focus outline on keyboard-only
+  nav for RiskGauge" requirement.
+
+  The RiskGauge component has two types of focus targets:
+    1. The SVG root element (.risk-gauge-svg) — for whole-gauge focus
+    2. Sector groups (.risk-gauge-sector) — for per-band focus
+
+  Both use :focus-visible so mouse/touch interactions are unaffected.
+  Colors reference design tokens so they respond to [data-contrast="high"].
+*/
+
+/**
+ * Whole-gauge focus ring.
+ * Applied to the SVG root when it receives keyboard focus (tabIndex=0).
+ * Uses box-shadow instead of outline for consistent SVG support.
+ */
+.risk-gauge-svg:focus-visible {
+  box-shadow:
+    0 0 0 var(--focus-ring-width, 2px) var(--bg, #0d1117),
+    0 0 0 calc(var(--focus-ring-width, 2px) + var(--focus-ring-offset, 3px)) var(--focus-ring-color, var(--accent, #58a6ff));
+  border-radius: var(--focus-ring-radius, 6px);
+}
+
+/**
+ * Per-sector focus ring.
+ * Applied to the sector <g> element when focused via keyboard navigation.
+ * The focus rect is an SVG <rect> that becomes visible only on :focus-visible.
+ */
+.risk-gauge-sector:focus-visible {
+  outline: none;
+}
+
+/**
+ * Active sector dot indicator.
+ * The dot should remain visible when the sector is focused (even if not active
+ * score-wise) to indicate keyboard focus. This rule ensures the dot is
+ * styled consistently with the focus ring color.
+ */
+.risk-gauge-sector:focus-visible .risk-gauge-sector-dot {
+  fill: var(--focus-ring-color, var(--accent, #58a6ff));
+  filter: drop-shadow(0 0 2px var(--focus-ring-color, var(--accent, #58a6ff)));
+}
+
