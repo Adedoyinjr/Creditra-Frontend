@@ -142,6 +142,28 @@ joins the existing AND-filter chain (type × date × amount × credit-line × st
   arrow (`▲ | ▼ | ─`) plus the trend word as a sibling element so screen readers don't
   miss it.
 
+### Transaction-status icon patterns (DrawCreditPage — FWC26)
+
+Step 4 of the draw-credit wizard renders `TransactionStatus` whose outcome circle uses
+**both** a color-tint class (`.dc-status-icon-bg--{accent|success|error}`) **and** a
+pattern-fill class (`.dc-status-icon-bg--pattern-{pending|success|error}` from
+`src/styles/patterns.css`).
+
+| Status | Color token | Pattern geometry | CSS class |
+| --- | --- | --- | --- |
+| pending | `--accent` (blue) | Concentric dots | `.dc-status-icon-bg--pattern-pending` |
+| success | `--success` (green) | Diagonal stripes 45° | `.dc-status-icon-bg--pattern-success` |
+| error | `--error` (red) | Crosshatch 45°+135° | `.dc-status-icon-bg--pattern-error` |
+
+The three geometries remain visually distinct even when all colours collapse to the same
+system colour in forced-colours (Windows High Contrast) mode.  A `@media (forced-colors:
+active)` block in `patterns.css` replaces the `color-mix()` fill with `CanvasText` so
+the stripes and dots remain visible.
+
+In addition to the pattern, the outcome heading ("Draw Successful", "Draw Failed",
+"Processing") and the `data-status` attribute on the icon circle provide text-level
+identification independent of both color and pattern.
+
 ### Chart captions and SR-friendly table siblings
 
 Both `RepaymentVisualizer` and `RiskGauge` expose accessible descriptions at two levels:
@@ -237,6 +259,7 @@ The table below is updated on every accessibility-impacting PR. Status legend:
 | `FormMessage` | n/a (text only) | `role="alert"` on error | AA | reduced-motion gated | OK |
 | `AmountInput` | Native input + preset buttons; Tab in order | `aria-describedby` aggregates helper/constraint/status/error | AA | n/a | OK |
 | `PendingButton` | Disabled during pending; Enter submits | `aria-busy="true"` while pending | AA | n/a | OK |
+| `TransactionStatus` | n/a (auto-rendered at end of draw flow) | `role="status"` + `aria-live="polite"` so the result is announced when it replaces the loading spinner; status icon is `aria-hidden`; outcome heading + pattern fill provide dual-channel identification (WCAG 1.4.1) | AA | n/a | OK |
 | `StatusBadge` | n/a (display) | `aria-label="Credit line status: …"` | AA | n/a | OK |
 | `Skeleton` | n/a | n/a | n/a | reduced-motion gated | OK |
 | `CopyToClipboard` | Real `<button>`; Enter copies | Specific `aria-label`; polite live region announces "Copied" | AA | n/a | OK |
