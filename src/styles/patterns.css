@@ -84,73 +84,91 @@
   );
 }
 
-/* ─── 2. Transaction-status icon-bg patterns ────────────────────────────── */
+/* ── AmountInput validation-state patterns (color-blind safe, WCAG 1.4.1) ── */
 /*
- * These modifier classes are applied alongside the colour-tint classes
- * (.dc-status-icon-bg--accent/success/error) so each outcome is identifiable
- * by *both* hue *and* fill geometry.  Pattern opacity is kept low (0.18–0.22)
- * so it doesn't obscure the icon rendered on top.
- *
- * Pattern vocabulary:
- *   pending  → concentric circles  (clockwise "processing" motion cue)
- *   success  → diagonal stripes /  (upward sweep, positive direction)
- *   error    → crosshatch × ×      (dense warning texture)
- *
- * The background-size values are chosen so that at the 4 rem circle used by
- * .dc-status-icon-bg the pattern has 2–4 visible repeats — enough to read
- * the texture without visual noise.
- */
+  GrantFox FWC26 (Stellar Wave) — "Add pattern fills beyond color on
+  AmountInput statuses."
 
-/**
- * Pending — concentric dot ring pattern.
- * Uses var(--accent) = #58a6ff (blue) — matches --dc-status-icon-bg--accent.
- */
-.dc-status-icon-bg--pattern-pending {
-  background-image: radial-gradient(
-    circle,
-    color-mix(in srgb, var(--accent, #58a6ff) 22%, transparent) 1.5px,
-    transparent 1.5px
-  );
-  background-size: 10px 10px;
+  Each validation severity gets a distinct background pattern so color is
+  never the sole visual cue.  The patterns use the design-token tint colours
+  (--accent-tint, --success-tint, etc.) to stay theme-aware.
+
+  Classes are applied to the AmountInput's inline validation message so
+  users can tell info / success / warning / danger apart without colour.
+*/
+
+.ai-pattern-info {
+  background-image: radial-gradient(circle, var(--accent-tint, rgba(88, 166, 255, 0.12)) 1px, transparent 1px);
+  background-size: 8px 8px;
 }
 
-/**
- * Success — diagonal stripes (bottom-left → top-right, 45°).
- * Uses var(--success) = #3fb950 (green) — matches dc-status-icon-bg--success.
- */
-.dc-status-icon-bg--pattern-success {
-  background-image: repeating-linear-gradient(
-    45deg,
-    color-mix(in srgb, var(--success, #3fb950) 20%, transparent) 0,
-    color-mix(in srgb, var(--success, #3fb950) 20%, transparent) 1.5px,
-    transparent 1.5px,
-    transparent 8px
-  );
-}
-
-/**
- * Error — crosshatch (45° + 135°).
- * Uses var(--error) = #f85149 (red) — matches dc-status-icon-bg--error.
- */
-.dc-status-icon-bg--pattern-error {
+.ai-pattern-success {
   background-image:
     repeating-linear-gradient(
-      45deg,
-      color-mix(in srgb, var(--error, #f85149) 18%, transparent) 0,
-      color-mix(in srgb, var(--error, #f85149) 18%, transparent) 1.5px,
-      transparent 1.5px,
-      transparent 7px
-    ),
-    repeating-linear-gradient(
-      135deg,
-      color-mix(in srgb, var(--error, #f85149) 18%, transparent) 0,
-      color-mix(in srgb, var(--error, #f85149) 18%, transparent) 1.5px,
-      transparent 1.5px,
-      transparent 7px
+      0deg,
+      transparent,
+      transparent 3px,
+      var(--success-tint, rgba(63, 185, 80, 0.12)) 3px,
+      var(--success-tint, rgba(63, 185, 80, 0.12)) 6px
     );
 }
 
-/* ─── 3. RepaymentVisualizer legend swatches ────────────────────────────── */
+.ai-pattern-warning {
+  background-image:
+    repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 5px,
+      var(--warning-tint, rgba(210, 153, 34, 0.12)) 5px,
+      var(--warning-tint, rgba(210, 153, 34, 0.12)) 6px
+    );
+}
+
+.ai-pattern-danger {
+  background-image:
+    repeating-linear-gradient(
+      45deg,
+      var(--error-tint, rgba(248, 81, 73, 0.12)) 0,
+      var(--error-tint, rgba(248, 81, 73, 0.12)) 2px,
+      transparent 2px,
+      transparent 4px
+    ),
+    repeating-linear-gradient(
+      -45deg,
+      var(--error-tint, rgba(248, 81, 73, 0.12)) 0,
+      var(--error-tint, rgba(248, 81, 73, 0.12)) 2px,
+      transparent 2px,
+      transparent 4px
+    );
+}
+
+/* Respect forced-colors mode — patterns become Canvas-based */
+@media (forced-colors: active) {
+  .ai-pattern-info,
+  .ai-pattern-success,
+  .ai-pattern-warning,
+  .ai-pattern-danger {
+    forced-color-adjust: none;
+  }
+
+  .ai-pattern-info {
+    background-image: radial-gradient(circle, CanvasText 1px, Canvas 1px);
+  }
+
+  .ai-pattern-success {
+    background-image: repeating-linear-gradient(0deg, Canvas, Canvas 3px, CanvasText 3px, CanvasText 6px);
+  }
+
+  .ai-pattern-warning {
+    background-image: repeating-linear-gradient(45deg, Canvas, Canvas 5px, CanvasText 5px, CanvasText 6px);
+  }
+
+  .ai-pattern-danger {
+    background-image:
+      repeating-linear-gradient(45deg, CanvasText 0, CanvasText 2px, Canvas 2px, Canvas 4px),
+      repeating-linear-gradient(-45deg, CanvasText 0, CanvasText 2px, Canvas 2px, Canvas 4px);
+  }
+}
 
 @media (forced-colors: active) {
   .rv-legend-swatch {

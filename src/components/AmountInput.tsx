@@ -453,38 +453,30 @@ export function AmountInput({
           </div>
         </div>
 
+        {/* Inline validation message with color-blind-safe pattern */}
         <div
-          className="flex items-start gap-2 rounded-lg border border-accent/30 bg-accent/10 px-3 py-3"
-          role="note"
+          className={`rounded-lg overflow-hidden ${
+            validation.feedback.severity === "info"
+              ? "ai-pattern-info"
+              : validation.feedback.severity === "success"
+                ? "ai-pattern-success"
+                : validation.feedback.severity === "warning"
+                  ? "ai-pattern-warning"
+                  : validation.feedback.severity === "danger"
+                    ? "ai-pattern-danger"
+                    : ""
+          }`}
         >
-          <Info
-            className="mt-0.5 h-4 w-4 shrink-0 text-accent"
-            aria-hidden="true"
+          <FormMessage
+            id={errorId}
+            title={validation.feedback.title}
+            message={validation.feedback.message}
+            type={getMessageType()}
+            tone="inline"
+            reserveSpace={true}
+            minHeight={60}
           />
-          <div className="space-y-1">
-            <p className="text-sm font-semibold text-foreground">
-              Suggested buffer
-            </p>
-            <p className="text-sm text-muted leading-[var(--lh-body)]">
-              Keep a small safety buffer in reserve for fees and urgent
-              liquidity.
-            </p>
-            <p className="text-sm font-medium text-foreground tabular-nums">
-              Recommended reserve: {formatMoney(validation.recommendedReserve)}
-            </p>
-          </div>
         </div>
-
-        {/* Inline validation message - displayed only when there's content */}
-        <FormMessage
-          id={errorId}
-          title={validation.feedback.title}
-          message={validation.feedback.message}
-          type={getMessageType()}
-          tone="inline"
-          reserveSpace={true}
-          minHeight={60}
-        />
       </div>
 
       {/* Polite live region for validation status announcements */}
