@@ -73,7 +73,7 @@ describe('CreditLines page', () => {
 
   describe("skeleton loading state", () => {
     it("renders credit lines skeletons during the loading phase", () => {
-      const { container } = renderCreditLines();
+      const { container } = renderPage();
       
       // Initially, it should be in loading state
       const skeletonGrid = screen.getByTestId("creditlines-skeleton-grid");
@@ -86,7 +86,7 @@ describe('CreditLines page', () => {
 
     it("removes skeletons after loading completes", async () => {
       vi.useFakeTimers();
-      const { container } = renderCreditLines();
+      const { container } = renderPage();
 
       // Check skeletons exist initially
       expect(screen.getByTestId("creditlines-skeleton-grid")).toBeInTheDocument();
