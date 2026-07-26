@@ -1,9 +1,11 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 interface LiveRegionProps {
   message: string;
   politeness?: "polite" | "assertive";
   atomic?: boolean;
+  /** Optional id, useful when a page renders more than one live region. */
+  id?: string;
 }
 
 /**
@@ -17,6 +19,7 @@ export function LiveRegion({
   message,
   politeness = "polite",
   atomic = true,
+  id,
 }: LiveRegionProps) {
   const [announcement, setAnnouncement] = useState("");
 
@@ -28,6 +31,7 @@ export function LiveRegion({
 
   return (
     <div
+      id={id}
       className="sr-only"
       role="status"
       aria-live={politeness}
