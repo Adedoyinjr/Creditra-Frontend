@@ -64,7 +64,7 @@ describe('CreditLines page', () => {
 
   it('displays APR, Risk Score, and Opened date for each card', () => {
     renderPage();
-    const card = screen.getByText('Primary Business Line').closest('.cl-card');
+    const card = screen.getAllByText('Primary Business Line')[0].closest('.cl-card');
     expect(card).toBeInTheDocument();
     expect(card?.textContent).toMatch(/APR/);
     expect(card?.textContent).toMatch(/Risk Score/);
@@ -98,7 +98,7 @@ describe('CreditLines page', () => {
 
       // Skeletons should be replaced by real credit lines content
       expect(screen.queryByTestId("creditlines-skeleton-grid")).not.toBeInTheDocument();
-      expect(screen.getByText("Primary Business Line")).toBeInTheDocument();
+      expect(screen.getAllByText("Primary Business Line")[0]).toBeInTheDocument();
 
       vi.useRealTimers();
     });
