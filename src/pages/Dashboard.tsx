@@ -419,63 +419,63 @@ export function Dashboard() {
               <Skeleton
                 style={{
                   width: "60%",
-                  height: "14px",
-                  marginBottom: "16px",
-                  borderRadius: "4px",
+                  height: "var(--space-3)",
+                  marginBottom: "var(--space-4)",
+                  borderRadius: "var(--radius-sm)",
                 }}
               />
               <Skeleton
                 style={{
                   width: "80%",
-                  height: "32px",
-                  marginBottom: "12px",
-                  borderRadius: "4px",
+                  height: "var(--space-8)",
+                  marginBottom: "var(--space-3)",
+                  borderRadius: "var(--radius-sm)",
                 }}
               />
               <Skeleton
-                style={{ width: "40%", height: "12px", borderRadius: "4px" }}
+                style={{ width: "40%", height: "var(--space-3)", borderRadius: "var(--radius-sm)" }}
               />
             </div>
             <div className="summary-card skeleton-card">
               <Skeleton
                 style={{
                   width: "60%",
-                  height: "14px",
-                  marginBottom: "16px",
-                  borderRadius: "4px",
+                  height: "var(--space-3)",
+                  marginBottom: "var(--space-4)",
+                  borderRadius: "var(--radius-sm)",
                 }}
               />
               <Skeleton
                 style={{
                   width: "80%",
-                  height: "32px",
-                  marginBottom: "12px",
-                  borderRadius: "4px",
+                  height: "var(--space-8)",
+                  marginBottom: "var(--space-3)",
+                  borderRadius: "var(--radius-sm)",
                 }}
               />
               <Skeleton
-                style={{ width: "40%", height: "12px", borderRadius: "4px" }}
+                style={{ width: "40%", height: "var(--space-3)", borderRadius: "var(--radius-sm)" }}
               />
             </div>
             <div className="summary-card skeleton-card">
               <Skeleton
                 style={{
                   width: "60%",
-                  height: "14px",
-                  marginBottom: "16px",
-                  borderRadius: "4px",
+                  height: "var(--space-3)",
+                  marginBottom: "var(--space-4)",
+                  borderRadius: "var(--radius-sm)",
                 }}
               />
               <Skeleton
                 style={{
                   width: "80%",
-                  height: "32px",
-                  marginBottom: "12px",
-                  borderRadius: "4px",
+                  height: "var(--space-8)",
+                  marginBottom: "var(--space-3)",
+                  borderRadius: "var(--radius-sm)",
                 }}
               />
               <Skeleton
-                style={{ width: "40%", height: "12px", borderRadius: "4px" }}
+                style={{ width: "40%", height: "var(--space-3)", borderRadius: "var(--radius-sm)" }}
               />
             </div>
           </>
@@ -548,7 +548,7 @@ export function Dashboard() {
                 {/* num-tabular: stable percentage display (FWC26) */}
                 <span
                   className="num-tabular"
-                  style={{ fontWeight: 600, color: UTIL_COLOR[overallLevel] }}
+                  style={{ fontWeight: "var(--font-semibold)", color: UTIL_COLOR[overallLevel] }}
                 >
                   {overallPct}%
                 </span>
@@ -605,10 +605,10 @@ export function Dashboard() {
                   data-testid="risk-explainer-trigger"
                   style={{
                     marginLeft: "auto",
-                    fontSize: "0.75rem",
-                    fontWeight: 600,
-                    padding: "0.25rem 0.6rem",
-                    borderRadius: 6,
+                    fontSize: "var(--text-xs)",
+                    fontWeight: "var(--font-semibold)",
+                    padding: "var(--space-1) var(--space-2)",
+                    borderRadius: "var(--radius-sm)",
                     background: "transparent",
                     border: "1px solid var(--border, #30363d)",
                     color: "var(--muted, #8b949e)",
@@ -653,7 +653,7 @@ export function Dashboard() {
              <h2>
                <span className="icon">💳</span> Active Credit Lines
                {!loading && (
-                 <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                 <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: "var(--space-3)" }}>
                    {activeLines.length >= 2 && (
                      <button
                        ref={compareTriggerRef}
@@ -662,10 +662,10 @@ export function Dashboard() {
                        disabled={selectedCompareLines.length !== 2}
                        className="focus-ring"
                        style={{
-                         padding: "0.35rem 0.75rem",
-                         fontSize: "0.75rem",
-                         fontWeight: 600,
-                         borderRadius: "4px",
+                         padding: "var(--space-1) var(--space-3)",
+                         fontSize: "var(--text-xs)",
+                         fontWeight: "var(--font-semibold)",
+                         borderRadius: "var(--radius-sm)",
                          background: selectedCompareLines.length === 2 ? "var(--accent)" : "rgba(139,148,158,0.12)",
                          color: selectedCompareLines.length === 2 ? "#0d1117" : "var(--muted)",
                          border: "none",
@@ -679,7 +679,7 @@ export function Dashboard() {
                    )}
                    <span
                      style={{
-                       fontSize: "0.75rem",
+                       fontSize: "var(--text-xs)",
                        fontWeight: 400,
                        color: COLOR.muted,
                      }}
@@ -697,22 +697,22 @@ export function Dashboard() {
                        style={{
                          display: "flex",
                          alignItems: "center",
-                         gap: "0.5rem",
-                         marginBottom: "0.4rem",
+                         gap: "var(--space-2)",
+                         marginBottom: "var(--space-1)",
                        }}
                      >
                        <Skeleton
                          style={{
                            width: "100px",
-                           height: "14px",
+                           height: "var(--space-3)",
                            borderRadius: "2px",
                          }}
                        />
                        <Skeleton
                          style={{
                            width: "50px",
-                           height: "14px",
-                           borderRadius: "4px",
+                           height: "var(--space-3)",
+                           borderRadius: "var(--radius-sm)",
                          }}
                        />
                      </div>
@@ -730,13 +730,13 @@ export function Dashboard() {
                        display: "flex",
                        flexDirection: "column",
                        alignItems: "flex-end",
-                       gap: "0.4rem",
+                       gap: "var(--space-1)",
                      }}
                    >
                      <Skeleton
                        style={{
                          width: "80px",
-                         height: "14px",
+                         height: "var(--space-3)",
                          borderRadius: "2px",
                        }}
                      />
@@ -755,22 +755,22 @@ export function Dashboard() {
                        style={{
                          display: "flex",
                          alignItems: "center",
-                         gap: "0.5rem",
-                         marginBottom: "0.4rem",
+                         gap: "var(--space-2)",
+                         marginBottom: "var(--space-1)",
                        }}
                      >
                        <Skeleton
                          style={{
                            width: "80px",
-                           height: "14px",
+                           height: "var(--space-3)",
                            borderRadius: "2px",
                          }}
                        />
                        <Skeleton
                          style={{
                            width: "50px",
-                           height: "14px",
-                           borderRadius: "4px",
+                           height: "var(--space-3)",
+                           borderRadius: "var(--radius-sm)",
                          }}
                        />
                      </div>
@@ -788,13 +788,13 @@ export function Dashboard() {
                        display: "flex",
                        flexDirection: "column",
                        alignItems: "flex-end",
-                       gap: "0.4rem",
+                       gap: "var(--space-1)",
                      }}
                    >
                      <Skeleton
                        style={{
                          width: "70px",
-                         height: "14px",
+                         height: "var(--space-3)",
                          borderRadius: "2px",
                        }}
                      />
@@ -813,22 +813,22 @@ export function Dashboard() {
                        style={{
                          display: "flex",
                          alignItems: "center",
-                         gap: "0.5rem",
-                         marginBottom: "0.4rem",
+                         gap: "var(--space-2)",
+                         marginBottom: "var(--space-1)",
                        }}
                      >
                        <Skeleton
                          style={{
                            width: "90px",
-                           height: "14px",
+                           height: "var(--space-3)",
                            borderRadius: "2px",
                          }}
                        />
                        <Skeleton
                          style={{
                            width: "50px",
-                           height: "14px",
-                           borderRadius: "4px",
+                           height: "var(--space-3)",
+                           borderRadius: "var(--radius-sm)",
                          }}
                        />
                      </div>
@@ -846,13 +846,13 @@ export function Dashboard() {
                        display: "flex",
                        flexDirection: "column",
                        alignItems: "flex-end",
-                       gap: "0.4rem",
+                       gap: "var(--space-1)",
                      }}
                    >
                      <Skeleton
                        style={{
                          width: "60px",
-                         height: "14px",
+                         height: "var(--space-3)",
                          borderRadius: "2px",
                        }}
                      />
@@ -904,7 +904,7 @@ export function Dashboard() {
                          </div>
                        )}
                        <div style={{ flex: 1, minWidth: 0 }}>
-                         <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.2rem" }}>
+                         <div style={{ display: "flex", alignItems: "center", gap: "var(--space-2)", marginBottom: "0.2rem" }}>
                            <p className="cl-preview-name">{cl.name}</p>
                            <StatusBadge status={cl.status} />
                          </div>
@@ -913,7 +913,7 @@ export function Dashboard() {
                        <div className="cl-preview-right">
                          {/* num-tabular: stable utilized/limit amounts (FWC26) */}
                          <div className="cl-preview-amount num-tabular">
-                           {fmt(cl.utilized)} <span style={{ color: COLOR.muted, fontWeight: 400, fontSize: "0.75rem" }}>/ {fmt(cl.limit)}</span>
+                           {fmt(cl.utilized)} <span style={{ color: COLOR.muted, fontWeight: 400, fontSize: "var(--text-xs)" }}>/ {fmt(cl.limit)}</span>
                          </div>
                          <div className="cl-preview-bar">
                            <div className="cl-preview-bar-fill" style={{ width: `${pct}%`, background: UTIL_COLOR[level] }} />
@@ -1006,27 +1006,27 @@ export function Dashboard() {
                <>
                  <div className="activity-item">
                    <Skeleton className="activity-icon" style={{ borderRadius: "6px" }} />
-                   <div className="activity-content" style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
-                     <Skeleton style={{ width: "120px", height: "14px", borderRadius: "2px" }} />
+                   <div className="activity-content" style={{ display: "flex", flexDirection: "column", gap: "var(--space-1)" }}>
+                     <Skeleton style={{ width: "120px", height: "var(--space-3)", borderRadius: "2px" }} />
                      <Skeleton style={{ width: "180px", height: "10px", borderRadius: "2px" }} />
                    </div>
-                   <Skeleton style={{ width: "60px", height: "14px", marginLeft: "auto", borderRadius: "2px" }} />
+                   <Skeleton style={{ width: "60px", height: "var(--space-3)", marginLeft: "auto", borderRadius: "2px" }} />
                  </div>
                  <div className="activity-item">
                    <Skeleton className="activity-icon" style={{ borderRadius: "6px" }} />
-                   <div className="activity-content" style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
-                     <Skeleton style={{ width: "100px", height: "14px", borderRadius: "2px" }} />
+                   <div className="activity-content" style={{ display: "flex", flexDirection: "column", gap: "var(--space-1)" }}>
+                     <Skeleton style={{ width: "100px", height: "var(--space-3)", borderRadius: "2px" }} />
                      <Skeleton style={{ width: "150px", height: "10px", borderRadius: "2px" }} />
                    </div>
-                   <Skeleton style={{ width: "50px", height: "14px", marginLeft: "auto", borderRadius: "2px" }} />
+                   <Skeleton style={{ width: "50px", height: "var(--space-3)", marginLeft: "auto", borderRadius: "2px" }} />
                  </div>
                  <div className="activity-item">
                    <Skeleton className="activity-icon" style={{ borderRadius: "6px" }} />
-                   <div className="activity-content" style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
-                     <Skeleton style={{ width: "140px", height: "14px", borderRadius: "2px" }} />
+                   <div className="activity-content" style={{ display: "flex", flexDirection: "column", gap: "var(--space-1)" }}>
+                     <Skeleton style={{ width: "140px", height: "var(--space-3)", borderRadius: "2px" }} />
                      <Skeleton style={{ width: "160px", height: "10px", borderRadius: "2px" }} />
                    </div>
-                   <Skeleton style={{ width: "70px", height: "14px", marginLeft: "auto", borderRadius: "2px" }} />
+                   <Skeleton style={{ width: "70px", height: "var(--space-3)", marginLeft: "auto", borderRadius: "2px" }} />
                  </div>
                </>
              ) : recentActivity.length === 0 ? (

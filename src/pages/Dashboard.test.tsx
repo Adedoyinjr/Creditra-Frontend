@@ -143,6 +143,22 @@ describe('RiskExplainer', () => {
     vi.useRealTimers();
   });
 
+  it('trigger button uses design tokens for styling', () => {
+    vi.useFakeTimers();
+    const { container } = render(
+      <BrowserRouter>
+        <Dashboard />
+      </BrowserRouter>
+    );
+    act(() => { vi.advanceTimersByTime(500); });
+
+    const trigger = container.querySelector('[data-testid="risk-explainer-trigger"]') as HTMLElement;
+    expect(trigger?.style.fontSize).toBe('var(--text-xs)');
+    expect(trigger?.style.padding).toBe('var(--space-1) var(--space-2)');
+    expect(trigger?.style.borderRadius).toBe('var(--radius-sm)');
+    vi.useRealTimers();
+  });
+
   it('trigger button has type="button"', () => {
     vi.useFakeTimers();
     const { container } = render(
