@@ -558,6 +558,11 @@ describe('gauge-sweep CSS scoping', () => {
     const pattern = /\.risk-gauge-fill\s*\{[^}]*transition:\s*stroke-dashoffset/;
     expect(css).toMatch(pattern);
   });
+
+  it('.risk-gauge-score has tabular-nums to prevent digit-width wobble during animation', () => {
+    const pattern = /\.risk-gauge-score\s*\{[^}]*font-variant-numeric:\s*tabular-nums/;
+    expect(css).toMatch(pattern);
+  });
 });
 
 describe('in-app reduced-motion toggle ([data-motion="reduced"])', () => {
