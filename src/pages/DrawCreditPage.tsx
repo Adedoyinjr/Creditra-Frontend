@@ -18,14 +18,13 @@
  *   - Loading state wrapped in role="status" + aria-live="polite"
  *   - Spinner has aria-label describing the in-progress action
  *
- * Keyboard shortcuts:
- *   Escape  — cancel (select step) / go back (amount & confirm steps)
- *   ArrowLeft  — go back (amount & confirm steps)
- *   ArrowRight — advance (amount step when valid; confirm step when acknowledged)
- *   ?       — open the keyboard shortcut help overlay
- *
- * The keyboard handler is only active when the focused element is not an
- * editable input / textarea, preventing shortcut interference while typing.
+ * Reduced-motion strategy (GrantFox FWC26):
+ *   - DrawCreditPage.css suppresses all animations and transitions on
+ *     `.dc-page` descendants via @media (prefers-reduced-motion: reduce)
+ *     and the in-app [data-motion="reduced"] attribute override.
+ *   - The animated `dc-spinner-ring` is replaced with a static SVG icon
+ *     (dc-spinner-static) when `isReducedMotionActive` is true, giving
+ *     a meaningful visual fallback rather than a frozen rotation frame.
  */
 
 import { useRef, useState, useEffect, useCallback } from "react";
@@ -46,8 +45,9 @@ import { WhyApr } from "@/components/WhyApr";
 import { DrawingLimit } from "@/components/DrawingLimit";
 import { DrawSummaryBar } from "@/components/DrawSummaryBar";
 import { useDrawWizardMicroProgress } from "@/hooks/useDrawWizardMicroProgress";
+import { useReducedMotion } from "@/context/ReducedMotionContext";
 import "@/components/DrawWizardMicroProgress.css";
-import "@/styles/focus.css";
+import "./DrawCreditPage.css";
 
 const drawSteps = [
   { id: "select", label: "Select line" },
@@ -107,7 +107,7 @@ export default function DrawCreditPage() {
       isOnConfirmStep: step === "confirm",
     });
 
-  // ── Step handlers ─────────────────────────────────────────────────────────
+  const { isReducedMotionActive } = useReducedMotion();
 
   const handleSelectCreditLine = (creditLine: CreditLine) => {
     setSelectedCreditLine(creditLine);
@@ -375,8 +375,15 @@ export default function DrawCreditPage() {
                 /*
                  * role="status" + aria-live="polite" announce the loading state
                  * to screen readers without interrupting the user.
-                 * aria-label on the spinner ring itself provides a text
-                 * alternative for the animated element.
+                 *
+                 * Reduced-motion strategy:
+                 *   When isReducedMotionActive is true, the animated
+                 *   dc-spinner-ring is replaced with a static SVG clock icon.
+                 *   This gives a meaningful visual cue without triggering
+                 *   vestibular discomfort from continuous rotation.
+                 *   DrawCreditPage.css additionally suppresses the dc-spin
+                 *   keyframe via @media (prefers-reduced-motion: reduce) and
+                 *   [data-motion="reduced"] as a belt-and-suspenders fallback.
                  */
                 <div
                   className="dc-spinner-wrap"
@@ -385,10 +392,58 @@ export default function DrawCreditPage() {
                   aria-label="Processing your draw request"
                 >
                   <div className="dc-spinner-ring-bg">
-                    <div
-                      className="dc-spinner-ring"
-                      aria-hidden="true"
-                    />
+                    {isReducedMotionActive ? (
+                      /*
+                       * Static fallback: a simple hourglass/clock SVG icon at
+                       * the same 4rem size as the spinner ring, using the
+                       * accent colour token.  No animation.
+                       */
+                      <div className="dc-spinner-static" aria-hidden="true">
+                        <svg
+                          viewBox="0 0 64 64"
+                          fill="none"
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="64"
+                          height="64"
+                          aria-hidden="true"
+                        >
+                          {/* Clock face */}
+                          <circle
+                            cx="32"
+                            cy="32"
+                            r="28"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                            strokeLinecap="round"
+                          />
+                          {/* Hour hand pointing to 12 */}
+                          <line
+                            x1="32"
+                            y1="32"
+                            x2="32"
+                            y2="14"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                            strokeLinecap="round"
+                          />
+                          {/* Minute hand pointing to 3 */}
+                          <line
+                            x1="32"
+                            y1="32"
+                            x2="46"
+                            y2="32"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                            strokeLinecap="round"
+                          />
+                        </svg>
+                      </div>
+                    ) : (
+                      <div
+                        className="dc-spinner-ring"
+                        aria-hidden="true"
+                      />
+                    )}
                   </div>
                   <div>
                     <h2 className="dc-step__title">Processing</h2>
