@@ -394,7 +394,7 @@ export function AmountInput({
             onPaste={handlePaste}
             onKeyDown={handleKeyDown}
             ref={inputRef}
-            className="text-xl sm:text-2xl font-bold bg-transparent outline-none flex-1 text-foreground placeholder:text-muted/50 min-w-0 tabular-nums amount leading-[var(--lh-display)]"
+            className="text-xl sm:text-2xl font-bold bg-transparent outline-none flex-1 text-foreground placeholder:text-muted/50 min-w-0 tabular-nums amount leading-[var(--lh-display)] focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-1 focus-visible:rounded"
             min={validation.minAmount}
             max={creditLine.available}
             step={STEP_AMOUNT}

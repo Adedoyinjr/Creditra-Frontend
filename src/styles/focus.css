@@ -230,40 +230,21 @@
   border-radius: var(--focus-ring-radius, 6px);
 }
 
-/* -- DrawCreditPage interactive elements ---------------------------------- */
+/* ── Draw Credit AmountInput ─────────────────────────────────────────────── */
 /*
-  GrantFox FWC26 (Stellar Wave) � "Visible focus outline on keyboard-only
-  nav for DrawCreditPage" requirement.
+  GrantFox FWC26 (Stellar Wave) — "Visible focus outline on keyboard-only
+  nav for AmountInput" requirement.
+
+  The number input inside the AmountInput receives a visible focus ring
+  on :focus-visible via the Tailwind ring utilities applied inline.
+
+  This rule provides a CSS-only fallback for consumers that may not go
+  through the Tailwind-purged output; it matches the same ring color/width
+  tokens used across the rest of the product.
 */
 
-.dc-page .dc-credit-line-item:focus-visible,
-.dc-page .dc-btn:focus-visible,
-.dc-page .dc-preset-btn:focus-visible,
-.dc-page .dc-terms-label__checkbox:focus-visible,
-.dc-page .draw-summary-bar:focus-visible,
-.dc-page button[aria-label="Decrease amount"]:focus-visible,
-.dc-page button[aria-label="Increase amount"]:focus-visible,
-.dc-page button[aria-label="Set amount to maximum available credit"]:focus-visible,
-.dc-page button[aria-label^="Set amount to"]:focus-visible {
-  outline: var(--focus-ring-width, 2px) solid var(--focus-ring-color, var(--accent, #58a6ff)) !important;
-  outline-offset: var(--focus-ring-offset, 3px) !important;
-  box-shadow: none !important;
+.amount-input-focus:focus-visible {
+  outline: var(--focus-ring-width, 2px) solid var(--focus-ring-color, var(--accent, #58a6ff));
+  outline-offset: var(--focus-ring-offset, 2px);
+  border-radius: var(--focus-ring-radius, 4px);
 }
-
-.dc-page .dc-credit-line-item:focus-visible,
-.dc-page .dc-preset-btn:focus-visible,
-.dc-page .dc-btn:focus-visible {
-  border-radius: var(--radius-lg, 12px);
-}
-
-.dc-page button[aria-label="Decrease amount"]:focus-visible,
-.dc-page button[aria-label="Increase amount"]:focus-visible,
-.dc-page button[aria-label="Set amount to maximum available credit"]:focus-visible,
-.dc-page button[aria-label^="Set amount to"]:focus-visible {
-  border-radius: 8px;
-}
-
-.dc-page .dc-terms-label__checkbox:focus-visible {
-  border-radius: var(--radius-sm, 4px);
-}
-
