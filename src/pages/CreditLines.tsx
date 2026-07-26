@@ -416,7 +416,7 @@ export default function CreditLines() {
         <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
           <button
             ref={triggerRef}
-            className="cl-primary-btn"
+            className="cl-primary-btn focus-ring"
             onClick={handleOpenCompare}
             disabled={selectedLines.length !== 2}
             style={{ opacity: selectedLines.length === 2 ? 1 : 0.6, display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}
@@ -431,7 +431,7 @@ export default function CreditLines() {
                 ? `/compare-credit-lines?a=${selectedLines[0]}&b=${selectedLines[1]}`
                 : '#'
             }
-            className="cl-primary-btn"
+            className="cl-primary-btn focus-ring"
             aria-disabled={selectedLines.length !== 2}
             aria-label={
               selectedLines.length === 2
@@ -455,7 +455,7 @@ export default function CreditLines() {
           </Link>
           <Link 
             to="/open-credit" 
-            className="cl-primary-btn"
+            className="cl-primary-btn focus-ring"
             style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}
           >
             <span>+ Open New Line</span>
@@ -468,6 +468,7 @@ export default function CreditLines() {
         <div className="cl-filter-group">
           <label>Status</label>
           <select
+            className="focus-ring"
             value={statusFilter}
             onChange={(e) =>
               setStatusFilter(e.target.value as CreditLineStatus | "all")
@@ -484,6 +485,7 @@ export default function CreditLines() {
         <div className="cl-filter-group">
           <label>Sort By</label>
           <select
+            className="focus-ring"
             value={sortField}
             onChange={(e) => handleSort(e.target.value as SortField)}
           >
@@ -496,7 +498,7 @@ export default function CreditLines() {
           </select>
         </div>
         <button
-          className="cl-sort-dir"
+          className="cl-sort-dir focus-ring"
           onClick={() => setSortDir((d) => (d === "asc" ? "desc" : "asc"))}
         >
           {sortDir === "asc" ? "↑" : "↓"}

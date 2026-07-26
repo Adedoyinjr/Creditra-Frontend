@@ -229,3 +229,22 @@
   outline-offset: var(--focus-ring-offset, 3px);
   border-radius: var(--focus-ring-radius, 6px);
 }
+
+/* ── CreditLines interactive elements ─────────────────────────────────────── */
+.cl-primary-btn:focus-visible {
+  outline: var(--focus-ring-width, 2px) solid var(--focus-ring-color, #58a6ff);
+  outline-offset: var(--focus-ring-offset, 3px);
+  border-radius: var(--focus-ring-radius, 6px);
+}
+
+.cl-filters select:focus-visible {
+  outline: var(--focus-ring-width, 2px) solid var(--focus-ring-color, #58a6ff);
+  outline-offset: var(--focus-ring-offset, 3px);
+  border-radius: var(--focus-ring-radius, 6px);
+}
+
+.cl-sort-dir:focus-visible {
+  outline: var(--focus-ring-width, 2px) solid var(--focus-ring-color, #58a6ff);
+  outline-offset: var(--focus-ring-offset, 3px);
+  border-radius: var(--focus-ring-radius, 6px);
+}
