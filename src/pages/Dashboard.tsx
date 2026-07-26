@@ -6,9 +6,6 @@ import { CopyLoanButton } from "../components/CopyLoanButton";
 import { StatusBadge } from "../components/StatusBadge";
 import { DashboardTour } from "../components/DashboardTour";
 import { useWallet } from "../context/WalletContext";
-import { Sparkline } from "../components/Sparkline";
-import { RiskBandsPanel } from "../components/RiskBandsPanel";
-import { WhatsChangedPanel } from "../components/WhatsChangedPanel";
 import { RiskExplainerOverlay } from "../components/RiskExplainerOverlay";
 import { MOCK_CREDIT_LINES } from "../data/mockData";
 import type { Transaction } from "../types/creditLine";
@@ -18,27 +15,19 @@ import {
   fmt,
   fmtDate,
   utilizationPct,
-  RISK_COLOR,
   getUtilizationLevel,
 } from "../utils/tokens";
-import { readJson, writeJson } from "../utils/storage";
 import "./Dashboard.css";
 import { Skeleton } from "../components/Skeleton";
-import { EmptyState } from "../components/EmptyState";
 import { NoDataGraph } from "../components/illustrations";
-import CompareLinesPanel from "../components/CompareLinesPanel";
-import { useFocusTrap } from "../hooks/useFocusTrap";
 import { useInertBackdrop } from "../hooks/useInertBackdrop";
 import { useBodyScrollLock } from "../hooks/useBodyScrollLock";
-import { useReducedMotion } from "../context/ReducedMotionContext";
-import { getUtilizationLevel } from "../utils/tokens";
-import { TipJar } from "../components/TipJar";
-import { NextSteps } from "../components/NextSteps";
 import { WhatChanged } from "../components/WhatChanged";
-import { HealthTipsPanel } from "../components/HealthTipsPanel";
-import { DashboardTour } from "../components/DashboardTour";
-import { ContinuePrompt } from "../components/ContinuePrompt";
-import { SyncIndicator } from "../components/SyncIndicator";
+import { RiskGauge } from "./RiskGauge";
+import { LiveRegion } from "../components/LiveRegion";
+import { SyncIndicator } from "@/components/SyncIndicator";
+import { ContinuePrompt } from "@/components/ContinuePrompt";
+import { DashboardTour } from "@/components/DashboardTour";
 
 export { RiskGauge };
 
@@ -69,238 +58,21 @@ const TX_COLOR: Record<string, string> = {
   Interest: COLOR.warning,
 };
 
-// ─── Risk Score Gauge ─────────────────────────────────────────────────────────
-
-const easeCubicBezier = (x: number): number => {
-  if (x <= 0) return 0;
-  if (x >= 1) return 1;
-  const x1 = 0.16;
-  const x2 = 0.3;
-  let t = x;
-  for (let i = 0; i < 8; i++) {
-    const currentX = 3 * (1 - t) * (1 - t) * t * x1 + 3 * (1 - t) * t * t * x2 + t * t * t;
-    const diff = currentX - x;
-    if (Math.abs(diff) < 1e-6) break;
-    const dXdt = 3 * (1 - t) * (1 - t) * x1 + 6 * (1 - t) * t * (x2 - x1) + 3 * t * t * (1 - x2);
-    t -= diff / (dXdt || 1);
-  }
-  return 3 * t * (1 - t) + t * t * t;
-};
-
-export function RiskGauge({
-  score,
-  trend,
-  lastUpdated,
-  history,
-}: {
-  score: number;
-  trend: "improving" | "declining" | "stable";
-  lastUpdated: string;
-  history?: number[];
-}) {
-  const radius = 55;
-  const cx = 80;
-  const cy = 75;
-  const circumference = Math.PI * radius;
-  const normalizedScore = Math.min(850, Math.max(0, score));
-  const offset = circumference - (normalizedScore / 850) * circumference;
-
-  const gaugeColor = RISK_COLOR(normalizedScore);
-  const trendArrow =
-    trend === "improving" ? "▲" : trend === "declining" ? "▼" : "─";
-  const trendColor =
-    trend === "improving"
-      ? COLOR.success
-      : trend === "declining"
-        ? COLOR.danger
-        : COLOR.muted;
-
-  const { isReducedMotionActive } = useReducedMotion();
-  const [displayedScore, setDisplayedScore] = useState(normalizedScore);
-  const prevScoreRef = useRef(normalizedScore);
-
-  useEffect(() => {
-    if (isReducedMotionActive) {
-      setDisplayedScore(normalizedScore);
-      prevScoreRef.current = normalizedScore;
-      return;
-    }
-
-    const startScore = prevScoreRef.current;
-    const endScore = normalizedScore;
-    if (startScore === endScore) return;
-
-    const duration = 280;
-    const startTime = Date.now();
-    let animationFrameId: number;
-
-    const animate = () => {
-      const elapsed = Date.now() - startTime;
-      const progress = Math.min(elapsed / duration, 1);
-      const easedProgress = easeCubicBezier(progress);
-
-      const currentVal = startScore + (endScore - startScore) * easedProgress;
-      setDisplayedScore(currentVal);
-
-      if (progress < 1) {
-        animationFrameId = requestAnimationFrame(animate);
-      } else {
-        prevScoreRef.current = endScore;
-      }
-    };
-
-    animationFrameId = requestAnimationFrame(animate);
-
-    return () => {
-      cancelAnimationFrame(animationFrameId);
-    };
-  }, [normalizedScore, isReducedMotionActive]);
-
-  const scoreFormatter = useMemo(() => new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 }), []);
-
-  /*
-   * v7 color-blind tier glyph (closes #565):
-   *   ▲ ≥700    (strong)        — triangle: "look up"
-   *   ◆ 600–699 (fair)          — diamond:  "watch"
-   *   ● <600    (below)         — circle:   "act now"
-   *
-   * The glyph sits in the risk-meta row next to the numerically displayed
-   * score, providing a shape cue that survives any colour filter.
-   */
-  const tier =
-    normalizedScore >= 700 ? 'strong' :
-    normalizedScore >= 600 ? 'fair' : 'below';
-  const tierGlyph = tier === 'strong' ? '▲' : tier === 'fair' ? '◆' : '●';
-  const tierLabel =
-    tier === 'strong' ? 'Strong risk score' :
-    tier === 'fair' ? 'Fair risk score' : 'Below recommended risk score';
-
-  return (
-    <div className="risk-gauge-container">
-      <svg
-        className="risk-gauge-svg"
-        viewBox="0 0 160 100"
-        role="img"
-        aria-labelledby={`risk-gauge-title-${tier}`}
-      >
-        <title id={`risk-gauge-title-${tier}`}>
-          Risk score {scoreFormatter.format(Math.round(displayedScore))} — band {tier}
-        </title>
-        <path
-          className="risk-gauge-bg"
-          d={`M ${cx - radius} ${cy} A ${radius} ${radius} 0 0 1 ${cx + radius} ${cy}`}
-        />
-        <path
-          className="risk-gauge-fill"
-          d={`M ${cx - radius} ${cy} A ${radius} ${radius} 0 0 1 ${cx + radius} ${cy}`}
-          stroke={gaugeColor}
-          strokeDasharray={circumference}
-          strokeDashoffset={offset}
-        />
-        <text x={cx} y={cy - 12} className="risk-gauge-score">
-          {scoreFormatter.format(Math.round(displayedScore))}
-        </text>
-        <text x={cx} y={cy - 38} className="risk-gauge-label">
-          Risk Score
-        </text>
-      </svg>
-      {/* Shape-coded tier glyph (v7).  Visually this mirrors the band colour
-          but is independently perceivable by colour-blind users; screen
-          readers get an explicit label via the sr-only span. */}
-      <span className="risk-gauge-tier-wrap" style={{ color: gaugeColor }}>
-        <span
-          className="risk-gauge-tier-glyph"
-          aria-hidden="true"
-          data-tier={tier}
-        >
-          {tierGlyph}
-        </span>
-        <span className="sr-only">{tierLabel}</span>
-      </span>
-
-      <div className="risk-meta">
-        <div className="risk-meta-item">
-          <span className="rm-label">Trend</span>
-          <span className="rm-value" style={{ color: trendColor, display: "flex", alignItems: "center", gap: "8px" }}>
-            <span>{trendArrow} {trend.charAt(0).toUpperCase() + trend.slice(1)}</span>
-            {history && history.length > 0 && (
-              <Sparkline data={history} width={60} height={24} color={trendColor} />
-            )}
-          </span>
-        </div>
-        <div className="risk-meta-item">
-          <span className="rm-label">Last Updated</span>
-          <span className="rm-value" style={{ color: COLOR.muted }}>
-            {fmtDate(lastUpdated)}
-          </span>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ─── Risk Explainer ───────────────────────────────────────────────────────────
-
-function RiskExplainer({ score, address }: { score: number; address?: string }) {
-  const [dismissed, setDismissed] = useState(() => {
-    if (!address) return true;
-    return readJson(`risk-explainer-dismissed-${address}`, false);
-  });
-
-  if (dismissed || !address) return null;
-
-  const band = RISK_COLOR(score);
-
-  const message = band === COLOR.success
-    ? 'Strong credit position \u2014 you\u2019re above the recommended threshold for new draws.'
-    : band === COLOR.warning
-    ? 'Fair credit position \u2014 within acceptable range, though keep an eye on your utilization.'
-    : 'Below the recommended threshold \u2014 consider improving your score before new draws.';
-
-  const handleDismiss = () => {
-    setDismissed(true);
-    writeJson(`risk-explainer-dismissed-${address}`, true);
-  };
-
-  return (
-    <div className="risk-explainer" role="status" style={{ borderLeftColor: band }}>
-      <p className="risk-explainer-text">{message}</p>
-      <button
-        className="risk-explainer-dismiss"
-        onClick={handleDismiss}
-        aria-label="Dismiss risk score explainer"
-        type="button"
-      >
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-          <path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-        </svg>
-      </button>
-    </div>
-  );
-}
-
 // ─── Dashboard Component ──────────────────────────────────────────────────────
 
 export function Dashboard() {
-  const { wallet, status } = useWallet();
+  const { wallet, status: walletStatus } = useWallet();
   const creditLines = MOCK_CREDIT_LINES;
 
   const [repayCount, setRepayCount] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [announcement, setAnnouncement] = useState<string>('');
   const [isExplainOpen, setIsExplainOpen] = useState(false);
-  // `isExplainOpen` now drives the centred RiskExplainerOverlay (#426).
-  // The slide-out panel (`RiskBandsPanel`) keeps its own local state and
-  // is unaffected.
 
   // ─── Sync timestamps ─────────────────────────────────────────────────────
   const [riskSyncedAt, setRiskSyncedAt] = useState<Date>(() => new Date());
   const [creditSyncedAt, setCreditSyncedAt] = useState<Date>(() => new Date());
   const [activitySyncedAt, setActivitySyncedAt] = useState<Date>(() => new Date());
-
-  const handleRiskRefresh = useCallback(async () => {
-    await new Promise<void>((r) => setTimeout(r, 600));
-    setRiskSyncedAt(new Date());
-  }, []);
 
   const handleCreditRefresh = useCallback(async () => {
     await new Promise<void>((r) => setTimeout(r, 600));
@@ -315,12 +87,6 @@ export function Dashboard() {
   const [selectedCompareLines, setSelectedCompareLines] = useState<string[]>([]);
   const [showCompare, setShowCompare] = useState(false);
   const compareTriggerRef = useRef<HTMLButtonElement>(null);
-
-
-  const handleCloseCompare = () => {
-    setShowCompare(false);
-    setSelectedCompareLines([]);
-  };
 
   const handleOpenCompare = () => {
     if (selectedCompareLines.length === 2) {
@@ -339,25 +105,37 @@ export function Dashboard() {
     });
   };
 
-  const comparePanelRef = useFocusTrap({
-    isActive: showCompare,
-    triggerRef: compareTriggerRef,
-    onEscape: handleCloseCompare,
-  });
-
   useInertBackdrop({ isInert: showCompare, modalId: "compare-lines-drawer-dashboard" });
   useBodyScrollLock({ isLocked: showCompare });
 
-  const selectedCreditLines = useMemo(
-    () => creditLines.filter((line) => selectedCompareLines.includes(line.id)),
-    [creditLines, selectedCompareLines],
-  );
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setLoading(false);
-    }, 500);
-    return () => clearTimeout(timer);
+    let isMounted = true;
+
+    const loadDashboard = async () => {
+      setStatus('loading');
+      setAnnouncement('Loading dashboard data...');
+      
+      try {
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        if (isMounted) {
+          setStatus('success');
+          setAnnouncement('Dashboard loaded successfully.');
+        }
+      } catch (err) {
+        if (isMounted) {
+          setStatus('error');
+          setAnnouncement('Failed to load dashboard. Please try again.');
+        }
+      }
+    };
+
+    loadDashboard();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const activeLines = useMemo(
@@ -476,15 +254,19 @@ export function Dashboard() {
 
   const hasLines = creditLines.length > 0;
   const hasUtilized = totalUtilized > 0;
-  const isConnected = status === "connected" && wallet;
+  const isConnected = walletStatus === "connected" && wallet;
 
   const truncAddr = wallet?.publicKey
     ? `${wallet.publicKey.slice(0, 6)}...${wallet.publicKey.slice(-4)}`
     : "";
 
-  if (!loading && !hasLines) {
+  if (status === 'success' && !hasLines) {
     return (
       <>
+        <LiveRegion 
+          message={announcement} 
+          aria-live={status === 'error' ? 'assertive' : 'polite'} 
+        />
         <div className="dashboard-header">
           <div>
             <h1>Dashboard</h1>
@@ -537,14 +319,13 @@ export function Dashboard() {
 
   return (
     <div
-      role="status"
-      aria-live="polite"
-      aria-busy={loading}
+      aria-busy={status === 'loading'}
       className="dashboard-root"
     >
-      <span className="sr-only">
-        {loading ? "Loading dashboard" : "Dashboard loaded"}
-      </span>
+      <LiveRegion 
+        message={announcement} 
+        aria-live={status === 'error' ? 'assertive' : 'polite'} 
+      />
 
       <div className="dashboard-header">
         <div>
@@ -585,8 +366,8 @@ export function Dashboard() {
       </div>
 
       {/* Summary Cards */}
-      <div className="summary-cards" data-tour-target="summaryCards" aria-busy={loading}>
-        {loading ? (
+      <div className="summary-cards" data-tour-target="summaryCards" aria-busy={status === 'loading'}>
+        {status === 'loading' ? (
           <>
             <div className="summary-card skeleton-card">
               <Skeleton
@@ -707,16 +488,16 @@ export function Dashboard() {
         )}
       </div>
 
-      {!loading && <ActivityFeed />}
+      {status === 'success' && <ActivityFeed />}
 
-      {!loading && hasLines && <ContinuePrompt creditLines={creditLines} />}
+      {status === 'success' && hasLines && <ContinuePrompt creditLines={creditLines} />}
 
       <div className="dashboard-grid">
         <div>
           <div className="card" style={{ animationDelay: "0.1s" }}>
             <h2>
               <span className="icon">📊</span> Credit Summary
-              {!loading && (
+              {status === 'success' && (
                 <SyncIndicator
                   lastSyncedAt={creditSyncedAt}
                   onRefresh={handleCreditRefresh}
@@ -779,10 +560,10 @@ export function Dashboard() {
           </div>
 
           {/* Risk Score */}
-          <div className="card" data-tour-target="riskGauge" style={{ animationDelay: '0.15s' }} aria-busy={loading}>
+          <div className="card" data-tour-target="riskGauge" style={{ animationDelay: '0.15s' }} aria-busy={status === 'loading'}>
             <h2>
               <span className="icon">🛡️</span> Risk Score
-              {!loading && (
+              {status === 'success' && (
                 <button
                   ref={explainTriggerRef}
                   type="button"
@@ -809,24 +590,11 @@ export function Dashboard() {
                 </button>
               )}
             </h2>
-            {loading ? (
-              /* ── Risk-gauge skeleton ─────────────────────────────────────────
-                 The final RiskGauge renders:
-                   <svg viewBox="0 0 160 100" max-width:160px; height:auto>
-                   Two .risk-meta-item rows side-by-side (label + value)
-
-                 The skeleton mirrors the SVG's 160:100 aspect ratio with a
-                 rounded-rectangle placeholder (not a circle — the arc spans
-                 the full width).  Meta items use text-line heights matching
-                 .rm-label (0.65rem) and .rm-value (0.85rem).
-              ─────────────────────────────────────────────────────────────── */
-              <div className="risk-gauge-container" aria-hidden="true">
-                {/* SVG arc placeholder: 160px wide × 100px tall, rounded to match card radius */}
-                <Skeleton
-                  width="100%"
-                  style={{ maxWidth: '160px', aspectRatio: '160 / 100', marginBottom: '0.75rem' }}
-                  shape="rounded"
-                />
+            {status === 'loading' ? (
+              <div className="risk-gauge-container">
+                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100px', width: '160px', marginBottom: '0.75rem' }}>
+                  <Skeleton style={{ width: '80px', height: '80px', borderRadius: '50%' }} />
+                </div>
                 <div className="risk-meta" style={{ width: '100%' }}>
                   <div className="risk-meta-item" style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.375rem' }}>
                     {/* .rm-label — 0.65rem ≈ 10px cap height, block at 10px */}
@@ -852,12 +620,12 @@ export function Dashboard() {
            <div
              className="card"
              style={{ animationDelay: "0.2s" }}
-             aria-busy={loading}
+             aria-busy={status === 'loading'}
            >
              <h2>
                <span className="icon">💳</span> Active Credit Lines
-               {!loading && (
-                 <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: "var(--space-3)" }}>
+               {status === 'success' && (
+                 <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: "0.75rem" }}>
                    {activeLines.length >= 2 && (
                      <button
                        ref={compareTriggerRef}
@@ -893,18 +661,7 @@ export function Dashboard() {
                  </div>
                )}
              </h2>
-             {loading ? (
-               /* ── Credit-line preview skeletons ──────────────────────────────
-                  Final .cl-preview-item layout (min-height: 57px):
-                    Left:  .cl-preview-name (0.875rem / 14px) + StatusBadge chip
-                           .cl-preview-id   (0.7rem monospace / 11px)
-                    Right: .cl-preview-amount (0.875rem / 14px)
-                           .cl-preview-bar   (80px wide × 3px tall)
-
-                  StatusBadge renders as a full-pill chip → shape="pill".
-                  Name/amount/id rows use shape="rounded" text-line heights.
-                  The mini utilisation bar is 3px tall → rounded bar.
-               ────────────────────────────────────────────────────────────── */
+             {status === 'loading' ? (
                <>
                  <div className="cl-preview-item" aria-hidden="true">
                    <div style={{ flex: 1, minWidth: 0 }}>
@@ -1189,10 +946,10 @@ export function Dashboard() {
              </div>
            </div>
  
-           <div className="card" style={{ animationDelay: "0.18s" }} aria-busy={loading}>
+           <div className="card" style={{ animationDelay: "0.18s" }} aria-busy={status === 'loading'}>
              <h2>
                <span className="icon">📝</span> Recent Activity
-               {!loading && (
+               {status === 'success' && (
                  <SyncIndicator
                    lastSyncedAt={activitySyncedAt}
                    onRefresh={handleActivityRefresh}
@@ -1200,18 +957,7 @@ export function Dashboard() {
                  />
                )}
              </h2>
-             {loading ? (
-               /* ── Activity-item skeletons ───────────────────────────────────
-                  Final .activity-item layout (min-height: 48px):
-                    .activity-icon   — 28px × 28px, border-radius: 6px
-                    .activity-title  — 0.825rem / 13px text
-                    .activity-sub    — 0.725rem / 11px text
-                    .activity-amount — 0.825rem / 13px text, right-aligned
-
-                  Icon is 28×28 with 6px radius → shape="rectangular" (not
-                  circular — final icons are square with rounded corners).
-                  Title and sub use text-line heights at their rendered caps.
-               ────────────────────────────────────────────────────────────── */
+             {status === 'loading' ? (
                <>
                  <div className="activity-item">
                    <Skeleton className="activity-icon" style={{ borderRadius: "6px" }} />
