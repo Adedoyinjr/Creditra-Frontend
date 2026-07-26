@@ -1,3 +1,19 @@
+/**
+ * CreditLines — sortable list of the user's credit facilities.
+ *
+ * Motion gating (issue #574 / GrantFox FWC26):
+ *  - All CSS animations and transitions are gated by
+ *    `@media (prefers-reduced-motion: reduce)` (OS-level signal) AND
+ *    `[data-motion="reduced"]` (in-app toggle from ReducedMotionContext).
+ *  - The root element carries a `data-reduced-motion` attribute that mirrors
+ *    the current state so other tooling, tests, and downstream CSS layers can
+ *    single-source the override.
+ *
+ * WCAG 2.1 SC 2.3.3 (Animation from Interactions) is satisfied by collapsing
+ * the entrance animation (`clFadeInUp` on `.cl-empty`), hover lift transforms
+ * (`.cl-card:hover`), and 600 ms width tweens (`.cl-util-fill`) to instant
+ * state changes under reduced-motion.
+ */
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { StatusBadge } from '../components/StatusBadge';
@@ -26,11 +42,16 @@ import { useInertBackdrop } from "../hooks/useInertBackdrop";
 import { useBodyScrollLock } from "../hooks/useBodyScrollLock";
 import CompareLinesPanel from "../components/CompareLinesPanel";
 import { CollateralSubstitutionModal } from "../components/CollateralSubstitutionModal";
+import { CreditLineRowMenu } from "../components/CreditLineRowMenu";
+import { KbdHint } from "../components/KbdHint";
+import { NextAccrualChip } from "../components/NextAccrualChip";
 import { NoLines } from "../components/illustrations";
 import {
   RepaymentSchedule,
   buildRepaymentScheduleFromLines,
 } from "../components/RepaymentSchedule";
+import { useReducedMotion } from "../context/ReducedMotionContext";
+import type { CollateralAsset } from "../types/collateral";
 
 // ─── Credit Line Card ────────────────────────────────────────────────────────
 
@@ -187,6 +208,10 @@ function CreditLineCard({
 
 export default function CreditLines() {
   const navigate = useNavigate();
+  // Track both the OS-level prefers-reduced-motion signal AND the in-app
+  // override (ReducedMotionContext toggle).  Exposed as a data-attribute on
+  // the page root so CSS / tests / dev-tools can single-source the override.
+  const { isReducedMotionActive } = useReducedMotion();
   const [sortField, setSortField] = useState<SortField>("updatedAt");
   const [sortDir, setSortDir] = useState<SortDirection>("desc");
   const [statusFilter, setStatusFilter] = useState<CreditLineStatus | "all">(
@@ -398,7 +423,10 @@ export default function CreditLines() {
   }, [selectedLines, showCompare, navigate]);
 
   return (
-    <div className="credit-lines-page">
+    <div
+      className="credit-lines-page"
+      data-reduced-motion={isReducedMotionActive ? "true" : "false"}
+    >
       <div className="cl-page-header">
         <div>
           <h1>Credit Lines</h1>

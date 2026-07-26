@@ -484,6 +484,94 @@
   line-height: var(--lh-body);
 }
 
+/*
+ * ─── Static Fallbacks: prefers-reduced-motion ───────────────────────────────
+ *
+ * Mirrors the pattern established in Dashboard.css.  The global rule in
+ * src/index.css already short-circuits all animation/transition durations
+ * via `*` selector, but the named-element rules below are belt-and-suspenders:
+ * they make the intent explicit at the component level, and they also zero
+ * out `transform` (hover-lift) and `box-shadow` transitions which the global
+ * rule does not cover.
+ *
+ * Pattern:
+ *  - @media (prefers-reduced-motion: reduce)  — OS/browser signal
+ *  - [data-motion="reduced"]                  — in-app toggle override
+ *    (set on <html> by ReducedMotionContext when the user picks "reduced" in
+ *    Settings regardless of OS preference)
+ *
+ * WCAG 2.1 SC 2.3.3 (Animation from Interactions, AAA) and the stricter
+ * interpretation of SC 1.4.3 (visual signal must not rely on motion alone)
+ * motivation for zeroing out these properties.
+ */
+@media (prefers-reduced-motion: reduce) {
+    /* Cards: disable entrance animation and hover lift transform/shadow */
+    .cl-card {
+        animation: none;
+        transition: none;
+    }
+    .cl-card:hover {
+        transform: none;
+        box-shadow: none;
+    }
+
+    /* Utilization bar: snap to final width immediately (so users still see
+       the final value, just without a 600 ms tween) */
+    .cl-util-fill {
+        transition: none;
+    }
+
+    /* Filter / sort controls: drop the border-color fade so focus/hover
+       state changes are still visible but instant */
+    .cl-filter-group select {
+        transition: none;
+    }
+    .cl-sort-dir {
+        transition: none;
+    }
+
+    /* Primary CTA buttons: drop the opacity hover transition (border-color
+       still changes via .cl-primary-btn:hover via the static style) */
+    .cl-primary-btn {
+        transition: none;
+    }
+
+    /* Foot-of-card action buttons: drop the all-properties transition */
+    .cl-action-btn {
+        transition: none;
+    }
+
+    /* Empty-state entrance animation (clFadeInUp): the content is still
+       fully readable in its final state — we just skip the 400 ms fade */
+    .cl-empty {
+        animation: none;
+    }
+}
+
+[data-motion="reduced"] .cl-card {
+    animation: none !important;
+    transition: none !important;
+}
+[data-motion="reduced"] .cl-card:hover {
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+[data-motion="reduced"] .cl-util-fill {
+    transition: none !important;
+}
+
+[data-motion="reduced"] .cl-filter-group select,
+[data-motion="reduced"] .cl-sort-dir,
+[data-motion="reduced"] .cl-primary-btn,
+[data-motion="reduced"] .cl-action-btn {
+    transition: none !important;
+}
+
+[data-motion="reduced"] .cl-empty {
+    animation: none !important;
+}
+
 /* ─── Responsive ─────────────────────────────────────────────────────────────── */
 
 @media (max-width: 480px) {
