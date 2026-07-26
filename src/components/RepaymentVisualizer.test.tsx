@@ -17,7 +17,7 @@ describe('RepaymentVisualizer', () => {
     expect(screen.getByText('Repayment Plan')).toBeInTheDocument();
   });
 
-  it('renders EmptyState when inputs are missing or zero', () => {
+  it('renders themed EmptyState when inputs are missing or zero', () => {
     render(
       <ReducedMotionProvider>
         <RepaymentVisualizer
@@ -27,6 +27,8 @@ describe('RepaymentVisualizer', () => {
         />
       </ReducedMotionProvider>
     );
-    expect(screen.getByText('Enter a valid principal, APR, and monthly payment to see the repayment plan.')).toBeInTheDocument();
+    expect(screen.getByTestId('repayment-visualizer-empty')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'No repayment data yet' })).toBeInTheDocument();
+    expect(screen.getByText(/Enter a valid principal, APR, and monthly payment/)).toBeInTheDocument();
   });
 });

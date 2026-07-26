@@ -29,6 +29,8 @@ import React, { useState, useRef, useCallback, useId } from 'react';
 import { COLOR } from '@/utils/tokens';
 import { KbdHint } from './KbdHint';
 import { useReducedMotion } from '@/context/ReducedMotionContext';
+import { EmptyState } from './EmptyState';
+import { NoDataGraph } from './illustrations';
 import './RepaymentVisualizer.css';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -581,14 +583,15 @@ function VisibleTable({ schedule, limit = 12 }: VisibleTableProps) {
 
 // ─── Empty state ───────────────────────────────────────────────────────────────
 
-function EmptyState() {
+function EmptyStatePrompt() {
   return (
-    <p
-      className="text-center p-4 sm:p-8"
-      style={{ color: `var(--muted, ${COLOR.muted})`, fontSize: 'var(--text-sm)' }}
-    >
-      Enter a valid principal, APR, and monthly payment to see the repayment plan.
-    </p>
+    <EmptyState
+      data-testid="repayment-visualizer-empty"
+      illustration={<NoDataGraph />}
+      eyebrow="Repayment Plan"
+      title="No repayment data yet"
+      description="Enter a valid principal, APR, and monthly payment to see your projected repayment plan, including monthly breakdowns and interest calculations."
+    />
   );
 }
 
@@ -699,7 +702,7 @@ export function RepaymentVisualizer({
       </header>
 
       {schedule.length === 0 ? (
-        <EmptyState />
+        <EmptyStatePrompt />
       ) : (
         <>
           {/* Chart wrapper — carries data-reduced-motion for CSS targeting */}
