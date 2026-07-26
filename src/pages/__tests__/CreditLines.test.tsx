@@ -70,4 +70,39 @@ describe('CreditLines page', () => {
     expect(card?.textContent).toMatch(/Risk Score/);
     expect(card?.textContent).toMatch(/Opened/);
   });
+
+  describe("skeleton loading state", () => {
+    it("renders credit lines skeletons during the loading phase", () => {
+      const { container } = renderCreditLines();
+      
+      // Initially, it should be in loading state
+      const skeletonGrid = screen.getByTestId("creditlines-skeleton-grid");
+      expect(skeletonGrid).toBeInTheDocument();
+      expect(skeletonGrid.getAttribute("aria-busy")).toBe("true");
+
+      const skeletons = container.querySelectorAll(".skeleton");
+      expect(skeletons.length).toBeGreaterThan(0);
+    });
+
+    it("removes skeletons after loading completes", async () => {
+      vi.useFakeTimers();
+      const { container } = renderCreditLines();
+
+      // Check skeletons exist initially
+      expect(screen.getByTestId("creditlines-skeleton-grid")).toBeInTheDocument();
+
+      // Fast-forward simulated loading time (500ms)
+      act(() => {
+        vi.advanceTimersByTime(500);
+      });
+
+      // Skeletons should be replaced by real credit lines content
+      expect(screen.queryByTestId("creditlines-skeleton-grid")).not.toBeInTheDocument();
+      expect(screen.getByText("Primary Business Line")).toBeInTheDocument();
+
+      vi.useRealTimers();
+    });
+  });
 });
+
+import { act } from "react";

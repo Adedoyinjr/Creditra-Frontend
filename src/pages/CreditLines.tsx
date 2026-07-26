@@ -2,6 +2,7 @@ import { useState, useMemo, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { StatusBadge } from '../components/StatusBadge';
 import { RepaymentPlanChart } from '../components/RepaymentPlanChart';
+import { Skeleton } from '../components/Skeleton';
 import {
   HealthFactorChart,
   buildHealthHistory,
@@ -195,6 +196,14 @@ export default function CreditLines() {
 
   const [creditLines, setCreditLines] = useState(MOCK_CREDIT_LINES);
   const hasCreditLines = creditLines.length > 0;
+
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, []);
 
   const [showCompare, setShowCompare] = useState(false);
   const [selectedLines, setSelectedLines] = useState<string[]>([]);
@@ -527,7 +536,47 @@ export default function CreditLines() {
         </div>
       )}
 
-      {filteredAndSorted.length === 0 ? (
+      {loading ? (
+        <div className="cl-grid" aria-busy="true" data-testid="creditlines-skeleton-grid">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="cl-card" style={{ minHeight: '380px' }}>
+              <div className="cl-card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.75rem', padding: '1.25rem 1.25rem 0' }}>
+                <div style={{ display: 'flex', gap: '0.75rem', width: '70%' }}>
+                  <Skeleton width="18px" height="18px" style={{ borderRadius: '4px', flexShrink: 0 }} />
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', flex: 1 }}>
+                    <Skeleton width="80%" height="18px" style={{ borderRadius: '4px' }} />
+                    <Skeleton width="60%" height="12px" style={{ borderRadius: '4px' }} />
+                  </div>
+                </div>
+                <Skeleton width="65px" height="20px" style={{ borderRadius: '4px', flexShrink: 0 }} />
+              </div>
+              <div className="cl-card-body" style={{ padding: '1rem 1.25rem' }}>
+                <div className="cl-metrics" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.75rem', marginBottom: '1rem' }}>
+                  <Skeleton height="54px" style={{ borderRadius: '6px' }} />
+                  <Skeleton height="54px" style={{ borderRadius: '6px' }} />
+                  <Skeleton height="54px" style={{ borderRadius: '6px' }} />
+                </div>
+                <div className="cl-util-bar" style={{ marginBottom: '1rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.35rem' }}>
+                    <Skeleton width="50px" height="10px" />
+                    <Skeleton width="30px" height="10px" />
+                  </div>
+                  <Skeleton height="6px" style={{ borderRadius: '3px' }} />
+                </div>
+                <div className="cl-details" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem', marginBottom: '1rem' }}>
+                  <Skeleton height="32px" style={{ borderRadius: '4px' }} />
+                  <Skeleton height="32px" style={{ borderRadius: '4px' }} />
+                  <Skeleton height="32px" style={{ borderRadius: '4px' }} />
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  <Skeleton height="60px" style={{ borderRadius: '6px' }} />
+                  <Skeleton height="80px" style={{ borderRadius: '6px' }} />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : filteredAndSorted.length === 0 ? (
         !hasCreditLines ? (
           <div className="cl-empty" role="region" aria-label="No credit lines">
             <NoLines className="empty-state-illustration--muted" />
