@@ -846,6 +846,7 @@
 
     .wallet-info {
         flex-wrap: wrap;
+        gap: 0.5rem;
     }
 }
 
@@ -856,6 +857,31 @@
 
     .summary-card:last-child {
         grid-column: auto;
+    }
+}
+
+@media (max-width: 480px) {
+    .wallet-info {
+        flex-direction: column;
+        align-items: flex-start;
+        width: 100%;
+    }
+
+    .cl-preview-item {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.5rem;
+        padding: 1rem 0;
+    }
+
+    .cl-preview-right {
+        text-align: left;
+    }
+
+    .cl-preview-bar {
+        margin-left: 0;
+        width: 100%;
+        margin-top: 0.25rem;
     }
 }
 
