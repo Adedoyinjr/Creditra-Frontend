@@ -17,6 +17,10 @@
  *   - <main> labelled with aria-label for screen-reader landmark navigation
  *   - Loading state wrapped in role="status" + aria-live="polite"
  *   - Spinner has aria-label describing the in-progress action
+ *   - A persistent, visually-hidden <LiveRegion> announces wizard
+ *     state changes (line selected, amount validity, preview readiness,
+ *     confirmation acknowledgement) as the user progresses, via the
+ *     debounced announcement string from `useDrawWizardMicroProgress`
  */
 
 import { useRef, useState, useEffect } from "react";
@@ -30,12 +34,12 @@ import { PreviewSection } from "@/components/PreviewSection";
 import { ConfirmationStep } from "@/components/ConfirmationStep";
 import { TransactionStatus } from "@/components/TransactionStatus";
 import { InlineHelpOverlay } from "@/components/InlineHelpOverlay";
+import { LiveRegion } from "@/components/LiveRegion";
 import { CreditLine, DrawStep, Transaction } from "@/types/draw-credit.types";
 import { mockCreditLines } from "@/lib/draw-credit-mock-data";
 import { WhyApr } from "@/components/WhyApr";
 import { DrawingLimit } from "@/components/DrawingLimit";
 import { DrawSummaryBar } from "@/components/DrawSummaryBar";
-import { DrawWizardMicroIndicator } from "@/components/DrawWizardMicroIndicator";
 import { useDrawWizardMicroProgress } from "@/hooks/useDrawWizardMicroProgress";
 import "@/components/DrawWizardMicroProgress.css";
 import "@/styles/focus.css";
@@ -80,9 +84,7 @@ export default function DrawCreditPage() {
   const [confirmationAcknowledged, setConfirmationAcknowledged] =
     useState(false);
 
-  const { isReducedMotionActive } = useReducedMotion();
-
-  const { steps: microProgressSteps, debouncedAnnouncement: microProgressAnnouncement } =
+  const { debouncedAnnouncement: microProgressAnnouncement } =
     useDrawWizardMicroProgress({
       selectedCreditLine,
       amount,
@@ -165,11 +167,18 @@ export default function DrawCreditPage() {
      * `dc-page` sets min-height:100vh + flex centering via tokens.
      * aria-label exposes this landmark to screen readers as "Draw credit".
      */
-    <main
-      className="dc-page"
-      aria-label="Draw credit"
-      data-reduced-motion={isReducedMotionActive ? "true" : undefined}
-    >
+    <main className="dc-page" aria-label="Draw credit">
+      {/*
+        Always-mounted, visually-hidden live region. Announces wizard
+        state changes (line selection, amount validity, preview
+        readiness, confirmation acknowledgement) to screen readers as
+        the user progresses through the flow, independent of which
+        step's markup is currently rendered.
+      */}
+      <LiveRegion
+        id="draw-wizard-progress-announcement"
+        message={microProgressAnnouncement}
+      />
       <div className="dc-page__inner">
         {/* Card uses dc-page__card (token-backed padding + radius) — no inline style override */}
         <div className="dc-page__card">
