@@ -61,6 +61,11 @@ type SkeletonProps = React.HTMLAttributes<HTMLDivElement> & {
  * element and first-paint does not jump when real content arrives.
  * Use `shape="circular"` only for avatar / icon-sized placeholders (≤ 48 px).
  *
+ * ## Composed page skeletons
+ * Higher-level first-paint layouts compose this primitive — e.g.
+ * `RepaymentVisualizerSkeleton` in `RepaymentVisualizer.tsx` (issue #609)
+ * mirrors the chart card height (220px) and header/legend rows.
+ *
  * ## Motion
  * The shimmer animation is suppressed under both
  * `@media (prefers-reduced-motion: reduce)` and `[data-motion="reduced"]`

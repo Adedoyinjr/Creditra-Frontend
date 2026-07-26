@@ -17,6 +17,8 @@ const BASE = {
   principal: 100_000,
   apr: 8.5,
   monthlyPayment: 2500,
+  /** Skip first-paint skeleton so existing sync assertions stay stable. */
+  loading: false as const,
 };
 
 describe('RepaymentVisualizer', () => {
@@ -97,7 +99,7 @@ describe('RepaymentVisualizer', () => {
   });
 
   it('caps term at maxMonths', () => {
-    render(<RepaymentVisualizer principal={100_000} apr={8.5} monthlyPayment={3000} maxMonths={6} />);
+    render(<RepaymentVisualizer principal={100_000} apr={8.5} monthlyPayment={3000} maxMonths={6}  loading={false} />);
     expect(screen.getAllByText(/6 month/).length).toBeGreaterThanOrEqual(1);
   });
 
@@ -161,7 +163,7 @@ describe('RepaymentVisualizer — keyboard shortcut hints & navigation', () => {
   });
 
   it('jumps to start and end of schedule using Home and End keys', () => {
-    render(<RepaymentVisualizer principal={100_000} apr={8.5} monthlyPayment={3000} maxMonths={6} />);
+    render(<RepaymentVisualizer principal={100_000} apr={8.5} monthlyPayment={3000} maxMonths={6}  loading={false} />);
     const svg = screen.getByRole('img');
 
     fireEvent.keyDown(svg, { key: 'End' });

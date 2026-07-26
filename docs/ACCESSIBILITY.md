@@ -273,6 +273,9 @@ The `KbdHint` component (`src/components/KbdHint.tsx`) provides standardized vis
   chart, schedule disclosure, and row-expansion control. The class uses shared
   focus tokens and `:focus-visible`, so keyboard users receive a consistent
   outline without adding a focus ring on pointer clicks.
+- `RepaymentVisualizer` first-paint loading (issue #609) uses
+  `RepaymentVisualizerSkeleton` with `role="status"` / `aria-busy="true"` so
+  assistive technology hears the loading state before the chart commits.
 - Active nav links keep focus styling distinct from active styling (see the comment block
   around `.header-nav-link.active` in `src/index.css`).
 - Modal close returns focus to the trigger via `useFocusTrap`'s `triggerRef`.
