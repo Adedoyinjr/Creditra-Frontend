@@ -26,6 +26,7 @@ import { useBodyScrollLock } from "../hooks/useBodyScrollLock";
 import CompareLinesPanel from "../components/CompareLinesPanel";
 import { CollateralSubstitutionModal } from "../components/CollateralSubstitutionModal";
 import { NoLines } from "../components/illustrations";
+import { EmptyState } from "../components/EmptyState";
 
 // ─── Credit Line Card ────────────────────────────────────────────────────────
 
@@ -77,14 +78,14 @@ function CreditLineCard({
         <div className="cl-metrics">
           <div className="cl-metric">
             <span className="cl-metric-label">Limit</span>
-            <span className="cl-metric-value" style={{ color: COLOR.accent }}>
+            <span className="cl-metric-value tabular-nums" style={{ color: COLOR.accent }}>
               {fmt(line.limit)}
             </span>
           </div>
           <div className="cl-metric">
             <span className="cl-metric-label">Utilized</span>
             <span
-              className="cl-metric-value"
+              className="cl-metric-value tabular-nums"
               style={{ color: UTIL_COLOR[level] }}
             >
               {fmt(line.utilized)}
@@ -92,7 +93,7 @@ function CreditLineCard({
           </div>
           <div className="cl-metric">
             <span className="cl-metric-label">Available</span>
-            <span className="cl-metric-value" style={{ color: COLOR.success }}>
+            <span className="cl-metric-value tabular-nums" style={{ color: COLOR.success }}>
               {fmt(line.limit - line.utilized)}
             </span>
           </div>
@@ -101,7 +102,7 @@ function CreditLineCard({
         <div className="cl-util-bar">
           <div className="cl-util-header">
             <span>Utilization</span>
-            <span className="num-tabular" style={{ color: UTIL_COLOR[level] }}>{pct}%</span>
+            <span className="tabular-nums" style={{ color: UTIL_COLOR[level] }}>{pct}%</span>
           </div>
           <div className="cl-util-track">
             <div
@@ -114,11 +115,11 @@ function CreditLineCard({
         <div className="cl-details">
           <div className="cl-detail">
             <span className="label">APR</span>
-            <span className="value num-tabular">{line.apr}%</span>
+            <span className="value tabular-nums">{line.apr}%</span>
           </div>
           <div className="cl-detail">
             <span className="label">Risk Score</span>
-            <span className="value num-tabular">{line.riskScore}</span>
+            <span className="value tabular-nums">{line.riskScore}</span>
           </div>
           <div className="cl-detail">
             <span className="label">Opened</span>
@@ -319,6 +320,11 @@ export default function CreditLines() {
         </div>
       </div>
 
+      <div aria-live="polite" className="sr-only">
+        {filteredAndSorted.length} credit line{filteredAndSorted.length !== 1 ? 's' : ''} found
+        {statusFilter !== "all" ? ` with status ${statusFilter}` : ""}
+      </div>
+
       <div className="cl-filters">
         <div className="cl-filter-group">
           <label>Status</label>
@@ -391,14 +397,16 @@ export default function CreditLines() {
       )}
 
       {filteredAndSorted.length === 0 ? (
-        <div className="cl-empty">
-          <NoLines className="empty-state-illustration--muted" />
-          <h3>No credit lines found</h3>
-          <p>Apply for a credit line to get started</p>
-          <Link to="/open-credit" className="cl-primary-btn">
-            Open Credit Line
-          </Link>
-        </div>
+        <EmptyState
+          icon={<NoLines className="empty-state-illustration--muted" />}
+          title="No credit lines found"
+          description="Apply for a credit line to get started"
+          action={
+            <Link to="/open-credit" className="cl-primary-btn">
+              Open Credit Line
+            </Link>
+          }
+        />
       ) : (
         <div className="cl-grid">
           {filteredAndSorted.map((line) => (
