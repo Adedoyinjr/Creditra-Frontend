@@ -109,3 +109,33 @@ export function useLocation() {
 export function useParams() {
   return {};
 }
+
+/**
+ * Minimal `matchPath` implementation that mirrors the subset of the real
+ * react-router-dom v6 behaviour used by `RouteAnnouncer`:
+ *
+ *   matchPath({ path: '/credit-lines', end: true }, '/credit-lines')  → object
+ *   matchPath({ path: '/', end: true }, '/credit-lines')             → null
+ *
+ * Supports the `end: true` modifier (exact match required) and a `path`
+ * string (no param interpolation). Returns `{ params: {} }` on match so
+ * callers that destructure `match.params` keep working.
+ */
+export function matchPath(
+  options: { path: string; end?: boolean } | string,
+  pathname: string
+): { params: Record<string, string>; pathname: string; pattern: string } | null {
+  const path = typeof options === 'string' ? options : options.path;
+  const end = typeof options === 'string' ? false : options.end;
+
+  if (end) {
+    return path === pathname
+      ? { params: {}, pathname, pattern: path }
+      : null;
+  }
+
+  if (pathname === path || pathname.startsWith(path.endsWith('/') ? path : `${path}/`)) {
+    return { params: {}, pathname, pattern: path };
+  }
+  return null;
+}

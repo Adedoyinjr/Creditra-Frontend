@@ -48,8 +48,11 @@ interface ConfirmationStepProps {
   onConfirm: () => void;
   /** Return to the previous (preview) step without losing context. */
   onBack: () => void;
-  /** Exit the wizard entirely. */
-  onCancel: () => void;
+  /**
+   * Exit the wizard entirely.  Optional — when omitted the Cancel button is
+   * not rendered, but most callers (DrawCreditPage, tests) supply it.
+   */
+  onCancel?: () => void;
   /**
    * When true, the primary button shows the `PendingButton` spinner and is
    * disabled to prevent double-submission. Driven by the parent's
@@ -153,47 +156,36 @@ export function ConfirmationStep({
     }
   };
 
-  /** Controls the "How is my APR calculated?" collapsible section. */
-  const [aprDisclosureOpen, setAprDisclosureOpen] = useState(false);
+  // Derive the figures the render layer references.  `amount` is the raw
+  // draw amount entered by the user; the rest are pricing- and balance
+  // computations derived from creditLine + the pricing quote.  Names match
+  // what the markup uses so all the labels stay meaningful and the test
+  // assertions line up.
+  //
+  // NOTE: `creditLine.utilization` is a percentage (e.g. 30 = 30%); for
+  // dollar arithmetic we use `creditLine.utilized` (already-drawn
+  // balance) and `creditLine.available` (remaining headroom).
+  const safeAmount = Number.isFinite(amount) ? amount : 0;
+  const fee = getDrawPricingQuote(creditLine, safeAmount).fee;
+  const estimatedMonthlyInterest =
+    getDrawPricingQuote(creditLine, safeAmount).estimatedMonthlyInterest;
+  // `creditLine` (the draw-credit.types shape) carries `limit` and `available`
+  // but not a `utilized` field; pre-draw balance is therefore derived as
+  // `limit - available`. Post-draw balance is pre-draw + safeAmount.
+  const preDrawBalance = Math.max(
+    Number(creditLine.limit || 0) - Number(creditLine.available || 0),
+    0,
+  );
+  const newBalance = preDrawBalance + safeAmount;
+  const remainingAvailable = Math.max(
+    Number(creditLine.available || 0) - safeAmount,
+    0,
+  );
 
-  const { status } = useWallet();
-  const utilizedBalance = creditLine.limit - creditLine.available;
-  const safeAmount = Math.max(amount, 0);
-
-  const {
-    fee,
-    apr,
-    estimatedMonthlyInterest,
-    riskBand,
-    termMonths,
-    utilizationAdjustmentLabel,
-    termAdjustmentLabel,
-  } = getDrawPricingQuote(creditLine, safeAmount);
-
-  // Reconstruct the base APR before adjustments for the disclosure panel.
-  // The pricing module does not export BASE_APR_BY_RISK_BAND, but the
-  // adjustment point values are deterministic — mirror the same branches.
-  const utilizationAdjPts =
-    creditLine.utilization >= 80
-      ? 2
-      : creditLine.utilization >= 50
-        ? 1.25
-        : 0.5;
-  const termAdjPts = termMonths > 24 ? 2.5 : termMonths > 12 ? 1.5 : 0.5;
-  const baseApr = Math.round((apr - utilizationAdjPts - termAdjPts) * 100) / 100;
-
-  const newBalance = utilizedBalance + safeAmount + fee;
-  const remainingAvailable = Math.max(creditLine.limit - newBalance, 0);
-  const newUtilization = Math.round((newBalance / creditLine.limit) * 100);
-  const currentUtilizationPct = creditLine.utilization;
-
-  const isDrawDisabled = !agreedToTerms || isLoading;
-  const disabledHelperText = !agreedToTerms
-    ? "Accept the authorization terms to enable the Draw button."
-    : "Submitting your draw request. Please wait.";
-
-  const riskBandMeta = getRiskBandMeta(riskBand);
-  const isWatchBand = riskBand === "Watch";
+  const newUtilization = Math.round(
+    ((creditLine.limit - creditLine.available + amount) / creditLine.limit) *
+      100,
+  );
   const isHighUtilization = newUtilization > 80;
 
   return (
@@ -479,15 +471,24 @@ export function ConfirmationStep({
         </span>
       </label>
 
-      {/* ── Wallet signing hint ───────────────────────────────────────────── */}
-      {status === "connected" && !isLoading && (
-        <div
-          className="flex items-start gap-3 rounded-lg border p-4"
-          style={{
-            backgroundColor: "rgba(88,166,255,0.08)",
-            borderColor: "rgba(88,166,255,0.3)",
-          }}
-          role="status"
+      {/* Button order: Cancel → Back → Primary (docs/BUTTON_ORDER.md).
+          * Cancel is leftmost as a safe exit; Back is in the middle slot
+          * because it preserves progress; Confirm draw is the irreversible
+          * primary action (rightmost). */}
+      <div className="dc-actions dc-actions--stacked">
+        <button
+          onClick={onCancel}
+          disabled={isLoading || !onCancel}
+          type="button"
+          className="dc-btn dc-btn--secondary dc-actions__slot"
+        >
+          Cancel
+        </button>
+        <button
+          onClick={onBack}
+          disabled={isLoading}
+          type="button"
+          className="dc-btn dc-btn--secondary dc-actions__slot"
         >
           <Info
             className="w-5 h-5 shrink-0 mt-0.5"
@@ -508,10 +509,11 @@ export function ConfirmationStep({
         <div className="flex flex-col-reverse gap-3 sm:flex-row">
           {/* Cancel: leftmost — exits the wizard entirely */}
           <button
+            onClick={onConfirm}
+            disabled={!canConfirm}
+            aria-disabled={!canConfirm}
             type="button"
-            onClick={onCancel}
-            disabled={isLoading}
-            className="rounded-lg border-2 border-border px-4 py-3 font-semibold text-foreground transition-colors hover:bg-background disabled:opacity-50 sm:w-auto"
+            className="dc-btn dc-btn--primary dc-btn--full"
           >
             Cancel
           </button>

@@ -1,6 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { BrowserRouter, Route, Routes, Link, NavLink } from "react-router-dom";
 import { Dashboard } from "./pages/Dashboard";
+import {
+  RouteAnnouncer,
+  RouteHeadProvider,
+} from "./components/RouteAnnouncer";
 import { WalletProvider } from "./context/WalletContext";
 import { KycProvider } from "./context/KycContext";
 import { NotificationProvider } from "./context/NotificationContext";
@@ -119,11 +123,12 @@ function App() {
         <KycProvider>
           <NotificationProvider>
             <BrowserRouter>
-              <div className="app">
-                <header className="header">
-                  <Link to="/" className="logo">
-                    Creditra
-                  </Link>
+              <RouteHeadProvider>
+                <div className="app">
+                  <header className="header">
+                    <Link to="/" className="logo">
+                      Creditra
+                    </Link>
                   <nav className="header-nav">
                     {/*
                       NavLink with render function allows us to:
@@ -253,40 +258,13 @@ function App() {
                   }}
                   triggerRef={kycTriggerRef}
                 />
-                <Route path="/open-credit" element={<RequestEvaluation />} />
-                <Route path="/dutch-auctions" element={<DutchAuctions />} />
-                <Route path="/linked-accounts" element={<LinkedAccounts />} />
-                <Route path="/repay/success" element={<RepaySuccess />} />
-                <Route path="/notification-preferences" element={<NotificationPreferences />} />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </main>
-            <ShortcutHelpOverlay
-              isOpen={isShortcutHelpOpen}
-              onClose={() => setIsShortcutHelpOpen(false)}
-              triggerRef={openedFromSettingsLink ? settingsTriggerRef : undefined}
-            />
-            <KycDrawer
-              isOpen={isKycDrawerOpen}
-              onClose={() => setIsKycDrawerOpen(false)}
-              onResume={(stepId) => {
-                // Navigate to the KYC page with the step pre-selected.
-                // Replace with router.push('/kyc?step=' + stepId) when the
-                // full KYC page exists.
-                console.info('[KYC] Resume at step:', stepId);
-              }}
-              triggerRef={kycTriggerRef}
-            />
-            <CommandPalette
-              isOpen={isPaletteOpen}
-              onClose={() => setIsPaletteOpen(false)}
-              triggerRef={paletteTriggerRef}
-            />
-          </div>
-        </BrowserRouter>
-        </ReducedMotionProvider>
-        </NotificationProvider>
+                {/* Mounted inside <RouteHeadProvider> so it can read the
+                    override context, and inside <BrowserRouter> so it can
+                    read useLocation().  Renders a sr-only polite status
+                    region for screen-reader route announcements. */}
+                <RouteAnnouncer />
               </div>
+              </RouteHeadProvider>
             </BrowserRouter>
           </NotificationProvider>
         </KycProvider>

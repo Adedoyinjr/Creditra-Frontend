@@ -338,34 +338,14 @@ export default function DrawCreditPage() {
 
           {/* ── Step 3: Review & confirm ── */}
           {step === "confirm" && selectedCreditLine && (
-            <>
-              <ConfirmationStep
-                creditLine={selectedCreditLine}
-                amount={amount}
-                onConfirm={handleConfirm}
-                onBack={handleBack}
-                isLoading={isLoading}
-              />
-              {/* Shortcut bar for the confirm step */}
-              <div className="dc-kbd-bar" aria-label="Keyboard shortcuts">
-                <KbdHint
-                  keys={["←", "→"]}
-                  label="Back / Confirm"
-                  separator="/"
-                  description="Use left arrow to go back; right arrow to confirm when terms are accepted"
-                />
-                <KbdHint
-                  keys="Esc"
-                  label="Back"
-                  description="Press Escape to go back to the previous step"
-                />
-                <KbdHint
-                  keys="?"
-                  label="Help"
-                  description="Press ? to open keyboard shortcut help"
-                />
-              </div>
-            </>
+            <ConfirmationStep
+              creditLine={selectedCreditLine}
+              amount={amount}
+              onConfirm={handleConfirm}
+              onBack={handleBack}
+              onCancel={handleCancel}
+              isLoading={isLoading}
+            />
           )}
 
           {/* ── Step 4: Status (loading → result) ── */}

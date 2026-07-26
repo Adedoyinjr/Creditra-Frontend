@@ -4,19 +4,26 @@ exports[`RiskGauge inline component from Dashboard > matches snapshot at score 5
 <div
   class="risk-gauge-container"
 >
+  <p
+    aria-atomic="true"
+    aria-live="polite"
+    class="sr-only"
+  >
+    Risk score 580 of 850. Trend: Stable.
+  </p>
   <svg
-    aria-labelledby="risk-gauge-title-below"
+    aria-label="Risk score 580 of 850. Trend: Stable."
     class="risk-gauge-svg"
+    data-reduced-motion="false"
+    data-testid="risk-gauge-svg"
+    preserveAspectRatio="xMidYMid meet"
     role="img"
     viewBox="0 0 160 100"
   >
     <title
-      id="risk-gauge-title-below"
+      id="risk-gauge-title-gelxdlvais"
     >
-      Risk score 
-      580
-       — band 
-      below
+      Risk score 580 of 850. Trend: Stable.
     </title>
     <path
       class="risk-gauge-bg"
@@ -106,19 +113,26 @@ exports[`RiskGauge inline component from Dashboard > matches snapshot at score 6
 <div
   class="risk-gauge-container"
 >
+  <p
+    aria-atomic="true"
+    aria-live="polite"
+    class="sr-only"
+  >
+    Risk score 660 of 850. Trend: Stable.
+  </p>
   <svg
-    aria-labelledby="risk-gauge-title-fair"
+    aria-label="Risk score 660 of 850. Trend: Stable."
     class="risk-gauge-svg"
+    data-reduced-motion="false"
+    data-testid="risk-gauge-svg"
+    preserveAspectRatio="xMidYMid meet"
     role="img"
     viewBox="0 0 160 100"
   >
     <title
-      id="risk-gauge-title-fair"
+      id="risk-gauge-title-sfa246aanec"
     >
-      Risk score 
-      660
-       — band 
-      fair
+      Risk score 660 of 850. Trend: Stable.
     </title>
     <path
       class="risk-gauge-bg"
@@ -208,19 +222,26 @@ exports[`RiskGauge inline component from Dashboard > matches snapshot at score 7
 <div
   class="risk-gauge-container"
 >
+  <p
+    aria-atomic="true"
+    aria-live="polite"
+    class="sr-only"
+  >
+    Risk score 740 of 850. Trend: Stable.
+  </p>
   <svg
-    aria-labelledby="risk-gauge-title-strong"
+    aria-label="Risk score 740 of 850. Trend: Stable."
     class="risk-gauge-svg"
+    data-reduced-motion="false"
+    data-testid="risk-gauge-svg"
+    preserveAspectRatio="xMidYMid meet"
     role="img"
     viewBox="0 0 160 100"
   >
     <title
-      id="risk-gauge-title-strong"
+      id="risk-gauge-title-c233as1ifre"
     >
-      Risk score 
-      740
-       — band 
-      strong
+      Risk score 740 of 850. Trend: Stable.
     </title>
     <path
       class="risk-gauge-bg"
