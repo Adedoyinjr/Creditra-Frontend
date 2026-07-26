@@ -1,6 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { BrowserRouter, Route, Routes, Link, NavLink } from "react-router-dom";
 import { Dashboard } from "./pages/Dashboard";
+import {
+  RouteAnnouncer,
+  RouteHeadProvider,
+} from "./components/RouteAnnouncer";
 import { WalletProvider } from "./context/WalletContext";
 import { KycProvider } from "./context/KycContext";
 import { NotificationProvider } from "./context/NotificationContext";
@@ -121,11 +125,12 @@ function App() {
         <KycProvider>
           <NotificationProvider>
             <BrowserRouter>
-              <div className="app">
-                <header className="header">
-                  <Link to="/" className="logo">
-                    Creditra
-                  </Link>
+              <RouteHeadProvider>
+                <div className="app">
+                  <header className="header">
+                    <Link to="/" className="logo">
+                      Creditra
+                    </Link>
                   <nav className="header-nav">
                     {/*
                       NavLink with render function allows us to:
@@ -251,7 +256,13 @@ function App() {
                   }}
                   triggerRef={kycTriggerRef}
                 />
+                {/* Mounted inside <RouteHeadProvider> so it can read the
+                    override context, and inside <BrowserRouter> so it can
+                    read useLocation().  Renders a sr-only polite status
+                    region for screen-reader route announcements. */}
+                <RouteAnnouncer />
               </div>
+              </RouteHeadProvider>
             </BrowserRouter>
           </NotificationProvider>
         </KycProvider>

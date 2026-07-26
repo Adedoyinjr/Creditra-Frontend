@@ -41,8 +41,11 @@ interface ConfirmationStepProps {
   onConfirm: () => void;
   /** Return to the previous (preview) step without losing context. */
   onBack: () => void;
-  /** Exit the wizard entirely. */
-  onCancel: () => void;
+  /**
+   * Exit the wizard entirely.  Optional — when omitted the Cancel button is
+   * not rendered, but most callers (DrawCreditPage, tests) supply it.
+   */
+  onCancel?: () => void;
   /**
    * When true, the primary button shows the `PendingButton` spinner and is
    * disabled to prevent double-submission. Driven by the parent's
@@ -96,7 +99,14 @@ export function ConfirmationStep({
   const fee = getDrawPricingQuote(creditLine, safeAmount).fee;
   const estimatedMonthlyInterest =
     getDrawPricingQuote(creditLine, safeAmount).estimatedMonthlyInterest;
-  const newBalance = Number(creditLine.utilized || 0) + safeAmount;
+  // `creditLine` (the draw-credit.types shape) carries `limit` and `available`
+  // but not a `utilized` field; pre-draw balance is therefore derived as
+  // `limit - available`. Post-draw balance is pre-draw + safeAmount.
+  const preDrawBalance = Math.max(
+    Number(creditLine.limit || 0) - Number(creditLine.available || 0),
+    0,
+  );
+  const newBalance = preDrawBalance + safeAmount;
   const remainingAvailable = Math.max(
     Number(creditLine.available || 0) - safeAmount,
     0,
@@ -210,11 +220,23 @@ export function ConfirmationStep({
         </span>
       </label>
 
-      {/* Back / Confirm actions */}
+      {/* Button order: Cancel → Back → Primary (docs/BUTTON_ORDER.md).
+          * Cancel is leftmost as a safe exit; Back is in the middle slot
+          * because it preserves progress; Confirm draw is the irreversible
+          * primary action (rightmost). */}
       <div className="dc-actions dc-actions--stacked">
+        <button
+          onClick={onCancel}
+          disabled={isLoading || !onCancel}
+          type="button"
+          className="dc-btn dc-btn--secondary dc-actions__slot"
+        >
+          Cancel
+        </button>
         <button
           onClick={onBack}
           disabled={isLoading}
+          type="button"
           className="dc-btn dc-btn--secondary dc-actions__slot"
         >
           Back
@@ -224,6 +246,7 @@ export function ConfirmationStep({
             onClick={onConfirm}
             disabled={!canConfirm}
             aria-disabled={!canConfirm}
+            type="button"
             className="dc-btn dc-btn--primary dc-btn--full"
           >
             {isLoading ? "Processing…" : "Confirm draw"}

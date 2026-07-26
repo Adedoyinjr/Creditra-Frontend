@@ -4,10 +4,27 @@ exports[`RiskGauge inline component from Dashboard > matches snapshot at score 5
 <div
   class="risk-gauge-container"
 >
+  <p
+    aria-atomic="true"
+    aria-live="polite"
+    class="sr-only"
+  >
+    Risk score 580 of 850. Trend: Stable.
+  </p>
   <svg
+    aria-label="Risk score 580 of 850. Trend: Stable."
     class="risk-gauge-svg"
+    data-reduced-motion="false"
+    data-testid="risk-gauge-svg"
+    preserveAspectRatio="xMidYMid meet"
+    role="img"
     viewBox="0 0 160 100"
   >
+    <title
+      id="risk-gauge-title-gelxdlvais"
+    >
+      Risk score 580 of 850. Trend: Stable.
+    </title>
     <path
       class="risk-gauge-bg"
       d="M 25 75 A 55 55 0 0 1 135 75"
@@ -79,10 +96,27 @@ exports[`RiskGauge inline component from Dashboard > matches snapshot at score 6
 <div
   class="risk-gauge-container"
 >
+  <p
+    aria-atomic="true"
+    aria-live="polite"
+    class="sr-only"
+  >
+    Risk score 660 of 850. Trend: Stable.
+  </p>
   <svg
+    aria-label="Risk score 660 of 850. Trend: Stable."
     class="risk-gauge-svg"
+    data-reduced-motion="false"
+    data-testid="risk-gauge-svg"
+    preserveAspectRatio="xMidYMid meet"
+    role="img"
     viewBox="0 0 160 100"
   >
+    <title
+      id="risk-gauge-title-sfa246aanec"
+    >
+      Risk score 660 of 850. Trend: Stable.
+    </title>
     <path
       class="risk-gauge-bg"
       d="M 25 75 A 55 55 0 0 1 135 75"
@@ -154,10 +188,27 @@ exports[`RiskGauge inline component from Dashboard > matches snapshot at score 7
 <div
   class="risk-gauge-container"
 >
+  <p
+    aria-atomic="true"
+    aria-live="polite"
+    class="sr-only"
+  >
+    Risk score 740 of 850. Trend: Stable.
+  </p>
   <svg
+    aria-label="Risk score 740 of 850. Trend: Stable."
     class="risk-gauge-svg"
+    data-reduced-motion="false"
+    data-testid="risk-gauge-svg"
+    preserveAspectRatio="xMidYMid meet"
+    role="img"
     viewBox="0 0 160 100"
   >
+    <title
+      id="risk-gauge-title-c233as1ifre"
+    >
+      Risk score 740 of 850. Trend: Stable.
+    </title>
     <path
       class="risk-gauge-bg"
       d="M 25 75 A 55 55 0 0 1 135 75"

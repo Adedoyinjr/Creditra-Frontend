@@ -198,6 +198,7 @@ export default function DrawCreditPage() {
               amount={amount}
               onConfirm={handleConfirm}
               onBack={handleBack}
+              onCancel={handleCancel}
               isLoading={isLoading}
             />
           )}

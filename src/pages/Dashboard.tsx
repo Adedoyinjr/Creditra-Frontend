@@ -10,6 +10,7 @@ import { DashboardTour } from "../components/DashboardTour";
 import { RiskBandsPanel } from "../components/RiskBandsPanel";
 import { WhatsChangedPanel } from "../components/WhatsChangedPanel";
 import { RiskExplainerOverlay } from "../components/RiskExplainerOverlay";
+import { ContinuePrompt } from "../components/ContinuePrompt";
 import { MOCK_CREDIT_LINES } from "../data/mockData";
 import type { Transaction } from "../types/creditLine";
 import {
