@@ -453,6 +453,17 @@ describe('RiskGauge', () => {
       expect(arcs).toHaveLength(3);
     });
 
+    it('each sector arc has a color-blind safe pattern class', () => {
+      const { container } = renderGauge();
+      const highArc = container.querySelector('[data-sector-arc="high"]');
+      const mediumArc = container.querySelector('[data-sector-arc="medium"]');
+      const lowArc = container.querySelector('[data-sector-arc="low"]');
+
+      expect(highArc).toHaveClass('risk-gauge-pattern--high');
+      expect(mediumArc).toHaveClass('risk-gauge-pattern--medium');
+      expect(lowArc).toHaveClass('risk-gauge-pattern--low');
+    });
+
     it('onSectorActivate is optional — sector click/keydown does not throw', () => {
       // No onSectorActivate prop
       const { container } = renderGauge();

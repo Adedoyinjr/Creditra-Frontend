@@ -853,3 +853,34 @@ html[data-contrast="high"] .notification-item--danger {
       repeating-linear-gradient(-45deg, transparent, transparent 4px, CanvasText 4px, CanvasText 5px);
   }
 }
+
+/* RiskGauge color-blind safe patterns for sector arcs */
+/* These patterns distinguish risk levels beyond color alone (WCAG 1.4.1) */
+
+.risk-gauge-pattern--high {
+  /* High risk zone (success/green): diagonal stripes */
+  stroke-dasharray: 4, 3;
+  stroke-dashoffset: 0;
+}
+
+.risk-gauge-pattern--medium {
+  /* Medium risk zone (warning/amber): dots pattern */
+  stroke-dasharray: 1, 6;
+  stroke-dashoffset: 0;
+  stroke-linecap: round;
+}
+
+.risk-gauge-pattern--low {
+  /* Low risk zone (error/red): crosshatch-like alternating dashes */
+  stroke-dasharray: 8, 4;
+  stroke-dashoffset: 0;
+}
+
+@media (forced-colors: active) {
+  .risk-gauge-pattern--high,
+  .risk-gauge-pattern--medium,
+  .risk-gauge-pattern--low {
+    stroke-dasharray: none;
+    stroke: CanvasText;
+  }
+}
