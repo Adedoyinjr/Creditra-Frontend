@@ -22,6 +22,7 @@
 import { useRef, useState, useEffect } from "react";
 import { Skeleton } from "@/components/Skeleton";
 import { useLocation, useNavigate } from "react-router-dom";
+import { useReducedMotion } from "@/context/ReducedMotionContext";
 import { loadDraft, saveDraft, clearDraft } from "@/state/wizardDraft";
 import { CreditLineSelector } from "@/components/CreditLineSelector";
 import { AmountInput } from "@/components/AmountInput";
@@ -78,6 +79,8 @@ export default function DrawCreditPage() {
   );
   const [confirmationAcknowledged, setConfirmationAcknowledged] =
     useState(false);
+
+  const { isReducedMotionActive } = useReducedMotion();
 
   const { steps: microProgressSteps, debouncedAnnouncement: microProgressAnnouncement } =
     useDrawWizardMicroProgress({
@@ -158,23 +161,18 @@ export default function DrawCreditPage() {
   );
 
   return (
-    <main className="min-h-screen bg-background px-4 pb-24 pt-6 max-md:pb-28 md:pb-8 sm:pt-8">
-      <div className="mx-auto w-full max-w-4xl space-y-5">
-        {step !== "status" && (
-          <header className="card" aria-label="Draw credit progress">
-            <div className="space-y-2">
-              <p className="text-sm font-semibold uppercase text-muted">
-                Draw Credit
-              </p>
-              <h1 className="text-2xl font-bold text-foreground sm:text-3xl">
-                Request funds from an approved line
-              </h1>
-            </div>
-            <ol className="mt-6 grid gap-3 sm:grid-cols-4">
-              {drawSteps.map((drawStep, index) => {
-                const isActive = index === activeStepIndex;
-                const isComplete = index < activeStepIndex;
-                const microStep = microProgressSteps[index];
+    /*
+     * `dc-page` sets min-height:100vh + flex centering via tokens.
+     * aria-label exposes this landmark to screen readers as "Draw credit".
+     */
+    <main
+      className="dc-page"
+      aria-label="Draw credit"
+      data-reduced-motion={isReducedMotionActive ? "true" : undefined}
+    >
+      <div className="dc-page__inner">
+        {/* Card uses dc-page__card (token-backed padding + radius) — no inline style override */}
+        <div className="dc-page__card">
 
                 return (
                   <li
