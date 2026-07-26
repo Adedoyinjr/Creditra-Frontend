@@ -1,5 +1,94 @@
 /* Patterns for Credit Line statuses to support color-blind accessibility */
 
+/*
+ * Transaction-status pattern classes
+ * ─────────────────────────────────────
+ * Augment the inline colour of .tx-status-badge with a subtle geometric
+ * pattern so that the three transaction statuses (Completed / Pending /
+ * Failed) are distinguishable without relying on colour alone.
+ *
+ * Usage (TransactionHistory.tsx):
+ *   <span className="tx-status-badge tx-status-pattern--completed" …>
+ *
+ * Each class:
+ *   – Applies a pure-CSS background-image as a secondary cue.
+ *   – Preserves the original background-color so the pattern merges
+ *     with the coloured tint and does not add an opaque layer.
+ *   – Declares forced-colors: active overrides (WCAG 2.1 SC 1.4.1)
+ *     so the pattern remains visible in Windows High Contrast Mode.
+ *
+ * Patterns
+ *   Completed – fine polka-dot (radial gradient)
+ *   Pending   – diagonal hatching (linear gradient, 45°)
+ *   Failed    – crosshatch (dual diagonal gradients)
+ */
+
+.tx-status-pattern--completed {
+  background-image: radial-gradient(circle,
+      rgba(63, 185, 80, 0.18) 1.5px,
+      transparent 1.5px);
+  background-size: 12px 12px;
+}
+
+.tx-status-pattern--pending {
+  background-image: repeating-linear-gradient(45deg,
+      transparent 0,
+      transparent 4px,
+      rgba(210, 153, 34, 0.18) 4px,
+      rgba(210, 153, 34, 0.18) 6px);
+}
+
+.tx-status-pattern--failed {
+  background-image:
+    repeating-linear-gradient(45deg,
+      transparent 0,
+      transparent 3px,
+      rgba(248, 81, 73, 0.14) 3px,
+      rgba(248, 81, 73, 0.14) 5px),
+    repeating-linear-gradient(-45deg,
+      transparent 0,
+      transparent 3px,
+      rgba(248, 81, 73, 0.14) 3px,
+      rgba(248, 81, 73, 0.14) 5px);
+}
+
+/* ── High Contrast / forced-colours overrides ─────────────────────────── */
+
+@media (forced-colors: active) {
+  .tx-status-pattern--completed {
+    background-image: radial-gradient(circle,
+        CanvasText 1.5px,
+        transparent 1.5px);
+    forced-color-adjust: none;
+  }
+
+  .tx-status-pattern--pending {
+    background-image: repeating-linear-gradient(45deg,
+        CanvasText 0,
+        CanvasText 1.5px,
+        transparent 1.5px,
+        transparent 5px);
+    forced-color-adjust: none;
+  }
+
+  .tx-status-pattern--failed {
+    background-image:
+      repeating-linear-gradient(45deg,
+        CanvasText 0,
+        CanvasText 1px,
+        transparent 1px,
+        transparent 5px),
+      repeating-linear-gradient(-45deg,
+        CanvasText 0,
+        CanvasText 1px,
+        transparent 1px,
+        transparent 5px);
+    forced-color-adjust: none;
+  }
+}
+
+/* ── Status classes (credit-line statuses) ───────────────────────────── */
+
 .status-active {
   background-image: radial-gradient(circle, rgba(16, 185, 129, 0.1) 1px, transparent 1px);
   background-size: 16px 16px;
@@ -36,31 +125,25 @@
 
 .rv-legend-swatch--principal {
   background-color: color-mix(in srgb, var(--accent, #58a6ff) 45%, transparent);
-  background-image: repeating-linear-gradient(
-    135deg,
-    color-mix(in srgb, var(--accent, #58a6ff) 90%, #fff) 0,
-    color-mix(in srgb, var(--accent, #58a6ff) 90%, #fff) 1px,
-    transparent 1px,
-    transparent 5px
-  );
+  background-image: repeating-linear-gradient(135deg,
+      color-mix(in srgb, var(--accent, #58a6ff) 90%, #fff) 0,
+      color-mix(in srgb, var(--accent, #58a6ff) 90%, #fff) 1px,
+      transparent 1px,
+      transparent 5px);
 }
 
 .rv-legend-swatch--interest {
   background-color: color-mix(in srgb, var(--warning, #d29922) 45%, transparent);
-  background-image: repeating-linear-gradient(
-    45deg,
-    transparent,
-    transparent 2px,
-    color-mix(in srgb, var(--warning, #d29922) 85%, #fff) 2px,
-    color-mix(in srgb, var(--warning, #d29922) 85%, #fff) 3px
-  ),
-  repeating-linear-gradient(
-    -45deg,
-    transparent,
-    transparent 2px,
-    color-mix(in srgb, var(--warning, #d29922) 85%, #fff) 2px,
-    color-mix(in srgb, var(--warning, #d29922) 85%, #fff) 3px
-  );
+  background-image: repeating-linear-gradient(45deg,
+      transparent,
+      transparent 2px,
+      color-mix(in srgb, var(--warning, #d29922) 85%, #fff) 2px,
+      color-mix(in srgb, var(--warning, #d29922) 85%, #fff) 3px),
+    repeating-linear-gradient(-45deg,
+      transparent,
+      transparent 2px,
+      color-mix(in srgb, var(--warning, #d29922) 85%, #fff) 2px,
+      color-mix(in srgb, var(--warning, #d29922) 85%, #fff) 3px);
 }
 
 @media (forced-colors: active) {
@@ -70,29 +153,23 @@
   }
 
   .rv-legend-swatch--principal {
-    background-image: repeating-linear-gradient(
-      135deg,
-      CanvasText 0,
-      CanvasText 1px,
-      transparent 1px,
-      transparent 5px
-    );
+    background-image: repeating-linear-gradient(135deg,
+        CanvasText 0,
+        CanvasText 1px,
+        transparent 1px,
+        transparent 5px);
   }
 
   .rv-legend-swatch--interest {
-    background-image: repeating-linear-gradient(
-        45deg,
+    background-image: repeating-linear-gradient(45deg,
         CanvasText 0,
         CanvasText 1px,
         transparent 1px,
-        transparent 4px
-      ),
-      repeating-linear-gradient(
-        -45deg,
+        transparent 4px),
+      repeating-linear-gradient(-45deg,
         CanvasText 0,
         CanvasText 1px,
         transparent 1px,
-        transparent 4px
-      );
+        transparent 4px);
   }
 }
