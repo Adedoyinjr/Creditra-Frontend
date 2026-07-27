@@ -94,8 +94,7 @@
   transform: translate(-50%, -4px) rotate(45deg);
 }
 
-.accessible-tooltip:hover .accessible-tooltip__content,
-.accessible-tooltip:focus-within .accessible-tooltip__content {
+.accessible-tooltip__content.is-visible {
   opacity: 1;
   transform: translate(-50%, 0);
 }
