@@ -4,7 +4,7 @@
  * Cover:
  *  1. Renders the gauge SVG when isEmpty is false (default).
  *  2. Renders EmptyState when isEmpty is true.
- *  3. EmptyState includes the NoDataGraph illustration, heading, and description.
+ *  3. EmptyState includes the NoRiskGauge illustration, heading, and description.
  *  4. EmptyState shows "Check again" CTA when onRefresh is provided.
  *  5. EmptyState does NOT render the SVG or meta row.
  *  6. When isEmpty is false, the original gauge behaviour is preserved.
@@ -43,7 +43,8 @@ describe('RiskGauge page', () => {
         trend: 'improving',
         lastUpdated: '2025-03-01T00:00:00Z',
       });
-      expect(screen.getByText(/improving/i)).toBeInTheDocument();
+      const trendElements = screen.getAllByText(/improving/i);
+      expect(trendElements.length).toBeGreaterThan(0);
     });
   });
 
