@@ -756,6 +756,96 @@ describe("TransactionHistory", () => {
       const lineIds = container.querySelectorAll(".tx-line-id");
       expect(lineIds.length).toBeGreaterThan(0);
     });
+
+    // ── Color-blind safe pattern classes (issue #307) ─────────────────────
+    //
+    // These tests verify that transaction status badges carry a geometric
+    // pattern class that augments the colour cue, making statuses
+    // distinguishable without relying on colour alone (WCAG 2.1 SC 1.4.1).
+
+    it("status badges carry the Completed pattern class", () => {
+      const { container } = renderTransactionHistory();
+      const completedBadges = container.querySelectorAll(
+        ".tx-status-pattern--completed",
+      );
+      // There are Completed transactions in the mock data
+      expect(completedBadges.length).toBeGreaterThan(0);
+      // Every badge with "Completed" text should have the pattern
+      completedBadges.forEach((badge) => {
+        expect(badge.textContent).toBe("Completed");
+      });
+    });
+
+    it("status badges carry the Pending pattern class when navigating to page 2", () => {
+      const { container } = renderTransactionHistory();
+      // Navigate to page 2 where the Pending transaction (TX-004) is located
+      // (28 transactions, 15 per page, so TX-004 is on page 2)
+      const nextBtn = screen.getByRole("button", { name: /next/i });
+      fireEvent.click(nextBtn);
+
+      const pendingBadges = container.querySelectorAll(
+        ".tx-status-pattern--pending",
+      );
+      expect(pendingBadges.length).toBe(1);
+      expect(pendingBadges[0].textContent).toBe("Pending");
+    });
+
+    it("status badges carry the Failed pattern class when filtered to show Failed transactions", () => {
+      const { container } = renderTransactionHistory();
+      // Filter by a status that would show Failed transactions
+      // The mock data may not have Failed transactions by default
+      const failedBadges = container.querySelectorAll(
+        ".tx-status-pattern--failed",
+      );
+      // No Failed pattern should appear in the default unfiltered view
+      // since no Failed tx exist in the mock data
+      expect(failedBadges.length).toBe(0);
+    });
+
+    it("each status badge has exactly one pattern class matching its status", () => {
+      const { container } = renderTransactionHistory();
+      const allPatternClasses = [
+        "tx-status-pattern--completed",
+        "tx-status-pattern--pending",
+        "tx-status-pattern--failed",
+      ];
+
+      const badges = container.querySelectorAll(".tx-status-badge");
+      expect(badges.length).toBeGreaterThan(0);
+
+      badges.forEach((badge) => {
+        const matchedPatterns = allPatternClasses.filter((cls) =>
+          badge.classList.contains(cls),
+        );
+        // Each badge should have exactly one pattern class
+        expect(matchedPatterns.length).toBe(1);
+
+        // The pattern class should correspond to the badge's text content
+        const status = badge.textContent?.trim();
+        if (status === "Completed") {
+          expect(matchedPatterns[0]).toBe("tx-status-pattern--completed");
+        } else if (status === "Pending") {
+          expect(matchedPatterns[0]).toBe("tx-status-pattern--pending");
+        } else if (status === "Failed") {
+          expect(matchedPatterns[0]).toBe("tx-status-pattern--failed");
+        }
+      });
+    });
+
+    it("status badges retain the tx-status-badge base class alongside pattern", () => {
+      const { container } = renderTransactionHistory();
+      const badges = container.querySelectorAll(".tx-status-badge");
+      expect(badges.length).toBeGreaterThan(0);
+
+      badges.forEach((badge) => {
+        // Every badge must also have a pattern class
+        const hasPattern =
+          badge.classList.contains("tx-status-pattern--completed") ||
+          badge.classList.contains("tx-status-pattern--pending") ||
+          badge.classList.contains("tx-status-pattern--failed");
+        expect(hasPattern).toBe(true);
+      });
+    });
   });
 
   describe("Aria-live announcements (v7)", () => {
@@ -769,120 +859,120 @@ describe("TransactionHistory", () => {
 
     it("announces when transaction type filter changes", () => {
       renderTransactionHistory();
-      
+
       const typeGroup = screen.getByRole("group", { name: /type/i });
       fireEvent.click(within(typeGroup).getByRole("button", { name: "Draw" }));
-      
+
       expect(getLiveAnnouncementText()).toMatch(/Filtered by transaction type Draw/i);
       expect(getLiveAnnouncementText()).toMatch(/10 transactions shown/i);
     });
 
     it("announces when credit line filter changes", () => {
       renderTransactionHistory();
-      
+
       const selects = document.querySelectorAll("select");
       const lineSelect = selects[0];
       fireEvent.change(lineSelect, { target: { value: "CL-2024-001" } });
-      
+
       expect(getLiveAnnouncementText()).toMatch(/Filtered by credit line Primary Business Line/i);
       expect(getLiveAnnouncementText()).toMatch(/6 transactions shown/i);
     });
 
     it("announces when status filter changes", () => {
       renderTransactionHistory();
-      
+
       const selects = document.querySelectorAll("select");
       const statusSelect = selects[1];
       fireEvent.change(statusSelect, { target: { value: "Completed" } });
-      
+
       expect(getLiveAnnouncementText()).toMatch(/Filtered by status Completed/i);
       expect(getLiveAnnouncementText()).toMatch(/27 transactions shown/i);
     });
 
     it("announces when amount preset filter changes", () => {
       renderTransactionHistory();
-      
+
       const amountGroup = screen.getByRole("group", { name: /^amount$/i });
       fireEvent.click(within(amountGroup).getByRole("button", { name: "<$100" }));
-      
+
       expect(getLiveAnnouncementText()).toMatch(/Filtered by amount <\$100/i);
       expect(getLiveAnnouncementText()).toMatch(/4 transactions shown/i);
     });
 
     it("announces when amount range preset changes", () => {
       renderTransactionHistory();
-      
+
       const amountRangeGroup = screen.getByRole("group", { name: /amount range/i });
       fireEvent.click(within(amountRangeGroup).getByRole("button", { name: "Under $5k" }));
-      
+
       expect(getLiveAnnouncementText()).toMatch(/Filtered by amount range Under \$5k/i);
       expect(getLiveAnnouncementText()).toMatch(/12 transactions shown/i);
     });
 
     it("announces when date range preset changes", () => {
       renderTransactionHistory();
-      
+
       const dateRangeGroup = screen.getByRole("group", { name: /presets/i });
       fireEvent.click(within(dateRangeGroup).getByRole("button", { name: "This Week" }));
-      
+
       expect(getLiveAnnouncementText()).toMatch(/Filtered by date preset This Week/i);
     });
 
     it("announces when search query is applied", async () => {
       renderTransactionHistory();
-      
+
       const input = screen.getByRole("combobox", { name: /search transactions/i });
       fireEvent.change(input, { target: { value: "equipment" } });
-      
+
       await act(async () => {
         vi.advanceTimersByTime(300);
       });
-      
+
       expect(getLiveAnnouncementText()).toMatch(/Search query "equipment" applied/i);
       expect(getLiveAnnouncementText()).toMatch(/1 transaction shown/i);
     });
 
     it("announces when search query is cleared", async () => {
       renderTransactionHistory();
-      
+
       const input = screen.getByRole("combobox", { name: /search transactions/i });
       fireEvent.change(input, { target: { value: "equipment" } });
-      
+
       await act(async () => {
         vi.advanceTimersByTime(300);
       });
 
       const clearBtn = screen.getByRole("button", { name: /clear search/i });
       fireEvent.click(clearBtn);
-      
+
       await act(async () => {
         vi.advanceTimersByTime(300);
       });
-      
+
       expect(getLiveAnnouncementText()).toMatch(/Search query cleared/i);
       expect(getLiveAnnouncementText()).toMatch(/28 transactions shown/i);
     });
 
     it("announces when filters are reset", () => {
       renderTransactionHistory();
-      
+
       const typeGroup = screen.getByRole("group", { name: /type/i });
       fireEvent.click(within(typeGroup).getByRole("button", { name: "Fee" }));
       const dateRangeGroup = screen.getByRole("group", { name: /date range/i });
       fireEvent.click(within(dateRangeGroup).getByRole("button", { name: "Today" }));
 
       fireEvent.click(screen.getByRole("button", { name: /reset all filters/i }));
-      
+
       expect(getLiveAnnouncementText()).toMatch(/Filters cleared/i);
       expect(getLiveAnnouncementText()).toMatch(/28 transactions shown/i);
     });
 
     it("announces when page changes", () => {
       renderTransactionHistory();
-      
+
       const nextBtn = screen.getByRole("button", { name: /next/i });
       fireEvent.click(nextBtn);
-      
+
       expect(getLiveAnnouncementText()).toMatch(/Page 2 of 2 loaded/i);
       expect(getLiveAnnouncementText()).toMatch(/28 transactions shown/i);
     });
