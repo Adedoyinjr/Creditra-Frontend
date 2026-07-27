@@ -47,12 +47,28 @@ import { CreditLineRowMenu } from "../components/CreditLineRowMenu";
 import { KbdHint } from "../components/KbdHint";
 import { NextAccrualChip } from "../components/NextAccrualChip";
 import { NoLines } from "../components/illustrations";
+import { KbdHint } from "../components/KbdHint";
+import { CreditLineRowMenu } from "../components/CreditLineRowMenu";
+import type { CollateralAsset } from "../types/collateral";
 import {
   RepaymentSchedule,
   buildRepaymentScheduleFromLines,
 } from "../components/RepaymentSchedule";
 import { useReducedMotion } from "../context/ReducedMotionContext";
 import type { CollateralAsset } from "../types/collateral";
+
+// ─── Next Accrual Chip ──────────────────────────────────────────────────────
+
+function NextAccrualChip({ target }: { target: string }) {
+  return (
+    <>
+      <span className="cl-accrual-label">Next accrual</span>
+      <span className="cl-accrual-chip" title={fmtDateTime(target)}>
+        {relativeTime(target)}
+      </span>
+    </>
+  );
+}
 
 // ─── Credit Line Card ────────────────────────────────────────────────────────
 
@@ -192,8 +208,8 @@ function CreditLineCard({
        </div>
 
       <div className="cl-card-body">
-        <div className="cl-metrics">
-          <div className="cl-metric">
+        <div className="cl-metrics" role="group" aria-label="Credit line metrics">
+           <div className="cl-metric">
             <span className="cl-metric-label">Limit</span>
             <span className="cl-metric-value tabular-nums" style={{ color: COLOR.accent }}>
               {fmt(line.limit)}
@@ -229,7 +245,7 @@ function CreditLineCard({
           </div>
         </div>
 
-        <div className="cl-details">
+        <div className="cl-details" role="group" aria-label="Credit line details">
           <div className="cl-detail">
             <span className="label">APR</span>
             <span className="value tabular-nums">{line.apr}%</span>
@@ -648,11 +664,8 @@ export default function CreditLines({ defaultLoading = true }: { defaultLoading?
   }
 
   return (
-    <div
-      className="credit-lines-page"
-      data-reduced-motion={isReducedMotionActive ? "true" : "false"}
-    >
-      <div className="cl-page-header">
+    <div className="credit-lines-page">
+      <div className="cl-page-header" data-testid="cl-page-header">
         <div>
           <h1>Credit Lines</h1>
           <p className="subtitle">Manage your credit facilities</p>
@@ -817,7 +830,7 @@ export default function CreditLines({ defaultLoading = true }: { defaultLoading?
           }
         />
       ) : (
-        <div className="cl-grid">
+        <div className="cl-grid" data-testid="cl-grid">
           {filteredAndSorted.map((line) => (
             <CreditLineCard
               key={line.id}
