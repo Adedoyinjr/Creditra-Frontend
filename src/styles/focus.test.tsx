@@ -210,3 +210,40 @@ describe('CreditLines — focus-ring classes on interactive elements (FWC26)', (
   });
 });
 
+// ── DrawCreditPage integration tests ──────────────────────────────────────
+
+describe('DrawCreditPage — focus-visible rules (FWC26 / issue #592)', () => {
+  const cssPath = resolve(__dirname, '../styles/focus.css');
+  const css = readFileSync(cssPath, 'utf-8');
+
+  it('defines DrawCreditPage-scoped credit-line focus rule', () => {
+    expect(css).toContain('.dc-page .dc-credit-line-item:focus-visible');
+  });
+
+  it('defines DrawCreditPage-scoped button and preset focus rules', () => {
+    expect(css).toContain('.dc-page .dc-btn:focus-visible');
+    expect(css).toContain('.dc-page .dc-preset-btn:focus-visible');
+  });
+
+  it('defines DrawCreditPage-scoped terms checkbox focus rule', () => {
+    expect(css).toContain('.dc-page .dc-terms-label__checkbox:focus-visible');
+  });
+
+  it('defines DrawCreditPage AmountInput control focus selectors', () => {
+    expect(css).toContain('button[aria-label="Decrease amount"]:focus-visible');
+    expect(css).toContain('button[aria-label="Increase amount"]:focus-visible');
+    expect(css).toContain(
+      'button[aria-label="Set amount to maximum available credit"]:focus-visible',
+    );
+  });
+
+  it('uses shared focus-ring tokens (not hard-coded hex only)', () => {
+    const drawBlockStart = css.indexOf('DrawCreditPage interactive elements');
+    expect(drawBlockStart).toBeGreaterThan(-1);
+    const drawBlock = css.slice(drawBlockStart);
+    expect(drawBlock).toContain('--focus-ring-width');
+    expect(drawBlock).toContain('--focus-ring-color');
+    expect(drawBlock).toContain('--focus-ring-offset');
+  });
+});
+

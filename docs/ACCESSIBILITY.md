@@ -269,6 +269,15 @@ The `KbdHint` component (`src/components/KbdHint.tsx`) provides standardized vis
 ### Focus management
 
 - Global `:focus-visible` rule in `src/index.css` is `outline: 2px solid var(--accent); outline-offset: 2px`.
+- Shared focus tokens and page-scoped rings live in `src/styles/focus.css`
+  (`--focus-ring-color`, `--focus-ring-width`, `--focus-ring-offset`). High
+  contrast overrides `--focus-ring-color` to `#ffffff` under
+  `[data-contrast="high"]`.
+- `DrawCreditPage` (FWC26 / issue #592) scopes keyboard-only rings under
+  `.dc-page` for credit-line cards, `.dc-btn` / `.dc-preset-btn`, the terms
+  checkbox, the sticky summary bar, and AmountInput stepper / Max / preset
+  controls. The footer "Contact support" control uses the shared `.focus-ring`
+  utility. Rings use `:focus-visible` so pointer clicks stay clean.
 - `RepaymentVisualizer` applies `.repayment-visualizer-focus` to its interactive
   chart, schedule disclosure, and row-expansion control. The class uses shared
   focus tokens and `:focus-visible`, so keyboard users receive a consistent

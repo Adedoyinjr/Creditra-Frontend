@@ -55,6 +55,17 @@ import { DrawCreditPageSkeleton } from "./DrawCreditPage";
 // Helpers
 // ---------------------------------------------------------------------------
 
+/** Visually-hidden LiveRegion that announces wizard progress to SRs. */
+function getLiveRegion(): HTMLElement {
+  const region = document.querySelector(
+    '.sr-only[role="status"][aria-live="polite"]',
+  );
+  if (!region) {
+    throw new Error('Expected DrawCreditPage LiveRegion to be mounted');
+  }
+  return region as HTMLElement;
+}
+
 /** Render the page with real (non-mocked) timers by default */
 function setup() {
   const user = userEvent.setup({ delay: null });
@@ -435,6 +446,19 @@ describe("DrawCreditPage — step navigation & token audit", () => {
 
     expect(getLiveRegion()).toBe(liveRegion);
   });
+
+  // ── 15. Focus styling applies correctly (FWC26 / issue #592) ──────────────
+  it("15. interactive elements should have focus-visible styling (FWC26)", () => {
+    setup();
+    const helpBtn = screen.getByRole("button", { name: /contact support/i });
+    expect(helpBtn).toBeInTheDocument();
+    expect(helpBtn).toHaveClass("focus-ring");
+
+    const creditLineBtn = screen.getByRole("button", {
+      name: /select business line of credit/i,
+    });
+    expect(creditLineBtn).toHaveClass("dc-credit-line-item");
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -442,6 +466,10 @@ describe("DrawCreditPage — step navigation & token audit", () => {
 // ---------------------------------------------------------------------------
 
 describe("DrawCreditPage — keyboard shortcut hints", () => {
+  beforeEach(() => {
+    localStorage.clear();
+  });
+
   // ── K1. Select step: shortcut bar present ─────────────────────────────────
   it("K1. select step renders a shortcut bar with Esc and ? hints", () => {
     setup();

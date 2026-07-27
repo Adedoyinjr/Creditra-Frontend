@@ -128,39 +128,3 @@ export function useParams() {
   return {};
 }
 
-// MemoryRouter — renders children directly (same as BrowserRouter)
-export function MemoryRouter({
-  children,
-  initialEntries,
-}: {
-  children: React.ReactNode;
-  initialEntries?: string[];
-}) {
-  // Expose the first entry via the search hook so useSearchParams works
-  const first = (initialEntries && initialEntries[0]) ?? "/";
-  const searchStr = first.includes("?") ? first.slice(first.indexOf("?")) : "";
-  _currentSearch = searchStr;
-  return createElement(Fragment, null, children);
-}
-
-// Internal store for the current search string so useSearchParams can read it
-let _currentSearch = "";
-
-// NavLink — same as Link but with optional activeClassName
-export function NavLink({
-  to,
-  children,
-  ...props
-}: {
-  to: string;
-  children: React.ReactNode;
-  [key: string]: unknown;
-}) {
-  return createElement("a", { href: to, ...props }, children);
-}
-
-// useSearchParams — parses the active MemoryRouter entry's search string
-export function useSearchParams(): [URLSearchParams, (params: URLSearchParams) => void] {
-  const params = new URLSearchParams(_currentSearch.replace(/^\?/, ""));
-  return [params, () => {}];
-}
