@@ -93,7 +93,7 @@ export function CreditLineSelector({
                         <span className="dc-credit-line-item__label">
                           Available:
                         </span>
-                        <span className="dc-credit-line-item__value num-tabular">
+                        <span className="dc-credit-line-item__value tabular-nums">
                           ${line.available.toLocaleString()}
                         </span>
                       </div>
@@ -105,9 +105,9 @@ export function CreditLineSelector({
                         <span
                           className={`num-tabular ${
                             isHighUtilization
-                              ? "dc-credit-line-item__value--warning"
-                              : "dc-credit-line-item__value"
-                          }`}
+                              ? "dc-credit-line-item__value--warning tabular-nums"
+                              : "dc-credit-line-item__value tabular-nums"
+                          }
                         >
                           {line.utilization}%
                         </span>
