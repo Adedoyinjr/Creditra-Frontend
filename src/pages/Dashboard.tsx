@@ -21,8 +21,8 @@ import {
   fmtDate,
   utilizationPct,
   getUtilizationLevel,
-} from "../utils/tokens";
 import "./Dashboard.css";
+import "../styles/focus.css";
 import { Skeleton } from "../components/Skeleton";
 import { NoDataGraph } from "../components/illustrations";
 import { useInertBackdrop } from "../hooks/useInertBackdrop";
@@ -227,7 +227,7 @@ export function Dashboard() {
             content: (
               <>
                 <strong>{cl.name}</strong> utilization is at{" "}
-                {Math.round(util * 100)}%. Consider a repayment.
+                <span className="tabular-nums">{Math.round(util * 100)}</span>%. Consider a repayment.
               </>
             ),
             type: "warning",
@@ -242,8 +242,8 @@ export function Dashboard() {
               icon: "🗓️",
               content: (
                 <>
-                  Payment of <strong>{fmt(cl.nextPaymentAmount ?? 0)}</strong>{" "}
-                  due in {daysUntil} day{daysUntil !== 1 ? "s" : ""} for{" "}
+                  Payment of <strong className="tabular-nums">{fmt(cl.nextPaymentAmount ?? 0)}</strong>{" "}
+                  due in <span className="tabular-nums">{daysUntil}</span> day{daysUntil !== 1 ? "s" : ""} for{" "}
                   {cl.name}.
                 </>
               ),
@@ -597,8 +597,8 @@ export function Dashboard() {
             </h2>
             {status === 'loading' ? (
               <div className="risk-gauge-container">
-                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100px', width: '160px', marginBottom: '0.75rem' }}>
-                  <Skeleton style={{ width: '80px', height: '80px', borderRadius: '50%' }} />
+                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'flex-end', height: '100px', width: '160px', marginBottom: '0.75rem' }}>
+                  <Skeleton style={{ width: '160px', height: '80px', borderRadius: '160px 160px 0 0' }} />
                 </div>
                 <div className="risk-meta" style={{ width: '100%' }}>
                   <div className="risk-meta-item" style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.375rem' }}>
@@ -915,7 +915,7 @@ export function Dashboard() {
                    <div className="qa-icon" style={{ background: "rgba(88,166,255,0.12)", color: COLOR.accent }}>↗</div>
                    <div>
                      <div className="qa-label" style={{ color: COLOR.accent }}>Draw Credit</div>
-                     <div className="qa-desc" style={{ color: COLOR.muted }}>{fmt(totalAvailable)} available</div>
+                     <div className="qa-desc num-tabular" style={{ color: COLOR.muted }}>{fmt(totalAvailable)} available</div>
                    </div>
                    <span className="qa-arrow" style={{ color: COLOR.muted }}>→</span>
                  </button>
@@ -928,7 +928,7 @@ export function Dashboard() {
                    <div className="qa-icon" style={{ background: "rgba(63,185,80,0.12)", color: COLOR.success }}>↙</div>
                    <div>
                      <div className="qa-label" style={{ color: COLOR.success }}>Repay Credit</div>
-                     <div className="qa-desc" style={{ color: COLOR.muted }}>{fmt(totalUtilized)} outstanding</div>
+                     <div className="qa-desc num-tabular" style={{ color: COLOR.muted }}>{fmt(totalUtilized)} outstanding</div>
                    </div>
                    <span className="qa-arrow" style={{ color: COLOR.muted }}>→</span>
                  </button>
