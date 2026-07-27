@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { Sparkline } from "../components/Sparkline";
 import { EmptyState } from "../components/EmptyState";
-import { NoDataGraph } from "../components/illustrations/EmptyStateIllustrations";
+import { NoRiskGauge } from "../components/illustrations/EmptyStateIllustrations";
 import { COLOR, RISK_COLOR, fmtDate } from "../utils/tokens";
+import { KbdHint } from "../components/KbdHint";
 import { useReducedMotion } from "../context/ReducedMotionContext";
 
 const easeCubicBezier = (x: number): number => {
@@ -104,7 +105,7 @@ export function RiskGauge({
   if (isEmpty) {
     return (
       <EmptyState
-        illustration={<NoDataGraph />}
+        illustration={<NoRiskGauge />}
         eyebrow="Risk Score"
         title="No risk data available"
         description="Your risk score will appear here once your credit profile has been analyzed."
