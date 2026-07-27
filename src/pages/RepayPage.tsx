@@ -1,9 +1,14 @@
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { AlertCircle, AlertTriangle, CheckCircle, Info, ArrowLeft } from 'lucide-react';
+import { Skeleton } from '@/components/Skeleton';
 import { PayoffProjection } from '@/components/PayoffProjection';
 import { RepaymentVisualizer } from '@/components/RepaymentVisualizer';
 import { InlineHelpOverlay } from '@/components/InlineHelpOverlay';
+import { ProgressBar } from '@/components/ProgressBar';
+import type { ProgressBarVariant } from '@/components/ProgressBar';
+import { LiveRegion } from '@/components/LiveRegion';
+
 import { EmptyState } from '@/components/EmptyState';
 import { NoOutstandingDebt } from '@/components/illustrations';
 import {
@@ -17,35 +22,52 @@ import {
   TypedAmountConfirmField,
 } from '@/components/TypedAmountConfirm';
 import { KbdHint } from '@/components/KbdHint';
+import { RepayPreviewModal } from '@/components/RepayPreviewModal';
 import { MOCK_CREDIT_LINES } from '@/data/mockData';
 import { motionClasses, useReducedMotion } from '@/context/ReducedMotionContext';
 import './RepayPage.css';
 
-type RepayStep = 'input' | 'review' | 'success';
+type RepayStep = 'input' | 'review';
 
+/**
+ * SEVERITY_CONFIG — token-pinned colours for the inline feedback banner.
+ *
+ * Task tokens-v7: all border/bg/color values now reference CSS custom
+ * properties defined in src/index.css so dark-mode and theming changes only
+ * need to happen in one place.  The alpha-variant tokens (--accent-border,
+ * --accent-tint, etc.) are already declared in :root.
+ *
+ * Task cb-v7: each severity also carries a `patternClass` that adds a CSS
+ * pattern texture to the banner (see src/styles/patterns.css) so severity is
+ * conveyed by shape AND colour, satisfying WCAG 1.4.1 (Use of Color).
+ */
 const SEVERITY_CONFIG = {
   info: {
-    border: 'rgba(88,166,255,0.25)',
-    bg: 'rgba(88,166,255,0.08)',
-    color: 'var(--accent, #58a6ff)',
+    border: 'var(--accent-border)',
+    bg: 'var(--accent-tint)',
+    color: 'var(--accent)',
+    patternClass: 'rp-severity--info',
     icon: <Info size={16} aria-hidden="true" />,
   },
   success: {
-    border: 'rgba(63,185,80,0.25)',
-    bg: 'rgba(63,185,80,0.08)',
-    color: 'var(--success, #3fb950)',
+    border: 'var(--success-border)',
+    bg: 'var(--success-tint)',
+    color: 'var(--success)',
+    patternClass: 'rp-severity--success',
     icon: <CheckCircle size={16} aria-hidden="true" />,
   },
   warning: {
-    border: 'rgba(210,153,34,0.25)',
-    bg: 'rgba(210,153,34,0.08)',
-    color: 'var(--warning, #d29922)',
+    border: 'var(--warning-border)',
+    bg: 'var(--warning-tint)',
+    color: 'var(--warning)',
+    patternClass: 'rp-severity--warning',
     icon: <AlertTriangle size={16} aria-hidden="true" />,
   },
   danger: {
-    border: 'rgba(248,81,73,0.25)',
-    bg: 'rgba(248,81,73,0.08)',
-    color: 'var(--error, #f85149)',
+    border: 'var(--error-border)',
+    bg: 'var(--error-tint)',
+    color: 'var(--error)',
+    patternClass: 'rp-severity--danger',
     icon: <AlertCircle size={16} aria-hidden="true" />,
   },
 } as const;
@@ -71,7 +93,12 @@ export default function RepayPage() {
   const [confirmAmountStr, setConfirmAmountStr] = useState('');
   const [isAutoSchedule, setIsAutoSchedule] = useState(false);
   const [isHelpOpen, setIsHelpOpen] = useState(false);
+  // Task ariallive-v7: centralised SR announcement for step transitions and
+  // validation feedback.  The LiveRegion component renders this via
+  // aria-live="polite" so screen readers pick it up without focus moves.
+  const [srAnnouncement, setSrAnnouncement] = useState('');
   const helpTriggerRef = useRef<HTMLButtonElement>(null);
+  const previewTriggerRef = useRef<HTMLButtonElement>(null);
   const { isReducedMotionActive } = useReducedMotion();
 
   const creditLines = useMemo(
@@ -127,34 +154,61 @@ export default function RepayPage() {
   const handleSmartPay = () => {
     if (!selectedLine) return;
     setAmountStr(suggestedAmount.toFixed(2));
+    setSrAnnouncement(`Smart Pay amount set: ${formatMoney(suggestedAmount)}`);
   };
 
   const handleReview = () => {
     if (!isInvalid && amount > 0) {
       setConfirmAmountStr('');
       setStep('review');
+      // Announce the transition so SR users know they've moved to the review step.
+      setSrAnnouncement(`Review step: repaying ${formatMoney(amount)}. Confirm or go back.`);
     }
   };
 
   const handleConfirm = () => {
+    navigate('/repay/success', {
+      state: {
+        amount,
+        creditLineName: selectedLine.name,
+        creditLineId: selectedLine.id,
+        transactionId: `TXN-${Date.now()}`,
+        remainingDebt,
+        limit: selectedLine.limit,
+        apr: selectedLine.apr,
+        nextPaymentAmount: selectedLine.nextPaymentAmount,
+        timestamp: new Date().toISOString(),
+      },
+    });
     setStep('success');
+    // Announce payment success immediately so SR users don't need to explore.
+    setSrAnnouncement(`Payment successful! You repaid ${formatMoney(amount)}.`);
   };
 
   const handleNewRepay = () => {
     setAmountStr('');
     setIsAutoSchedule(false);
     setStep('input');
+    setSrAnnouncement('Starting a new repayment. Select an amount.');
   };
 
   const handleBack = useCallback(() => {
     if (step === 'review') {
       setStep('input');
+      setSrAnnouncement('Back to input step. Edit your repayment amount.');
     } else if (!preselectedId) {
       setSelectedId('');
     } else {
       navigate(-1);
     }
   }, [step, preselectedId, navigate]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 800);
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -202,14 +256,37 @@ export default function RepayPage() {
           <KbdHint keys={['Esc']} className="ml-1" />
         </button>
 
-        <header>
+        <header className="mt-4">
           <p className="text-xs font-semibold uppercase text-muted">Repay Credit</p>
           <h1 className="mt-1 text-2xl font-bold text-foreground sm:text-3xl">
             Select a credit line to repay
           </h1>
         </header>
 
-        {creditLines.length === 0 ? (
+        {isLoading ? (
+          <div className="space-y-3" aria-busy="true" aria-live="polite" data-testid="repay-loading-skeleton">
+            {[1, 2, 3].map((i) => (
+              <div
+                key={i}
+                className="w-full rounded-lg border border-border bg-surface p-4"
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Skeleton width={120} height={20} className="mb-1" />
+                    <Skeleton width={80} height={16} />
+                  </div>
+                  <div className="flex flex-col items-end">
+                    <Skeleton width={90} height={20} className="mb-1" />
+                    <Skeleton width={70} height={16} />
+                  </div>
+                </div>
+                <div className="mt-3">
+                  <Skeleton width="100%" height={8} shape="rounded" />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : creditLines.length === 0 ? (
           <EmptyState
             data-testid="repay-empty-state"
             tone="success"
@@ -229,9 +306,17 @@ export default function RepayPage() {
             }}
           />
         ) : (
-          <div className="space-y-3">
+          <div className="mt-4 space-y-3">
             {creditLines.map((cl) => {
               const utilization = Math.round((cl.utilized / cl.limit) * 100);
+              // Task cb-v7: map utilization level to pattern class so the bar
+              // conveys severity via texture, not colour alone (WCAG 1.4.1).
+              const barClass =
+                utilization > 80
+                  ? 'rp-progress--high'
+                  : utilization > 50
+                    ? 'rp-progress--medium'
+                    : 'rp-progress--low';
               return (
                 <button
                   key={cl.id}
@@ -245,22 +330,18 @@ export default function RepayPage() {
                       <p className="mt-0.5 text-sm text-muted">{cl.id}</p>
                     </div>
                     <div className="text-right">
-                      <p className="font-semibold text-foreground">
+                      <p className="font-semibold text-foreground num-tabular">
                         {formatMoney(cl.utilized)}
                       </p>
-                      <p className="text-sm text-muted">{utilization}% utilized</p>
+                      <p className="text-sm text-muted"><span className="num-tabular">{utilization}%</span> utilized</p>
                     </div>
                   </div>
+                  {/* Task cb-v7: pattern fill on progress bar */}
                   <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-border">
                     <div
-                      className={`h-full rounded-full ${
-                        utilization > 80
-                          ? 'bg-red-500'
-                          : utilization > 50
-                            ? 'bg-yellow-500'
-                            : 'bg-green-500'
-                      }`}
+                      className={`h-full rounded-full transition-all ${barClass}`}
                       style={{ width: `${utilization}%` }}
+                      aria-hidden="true"
                     />
                   </div>
                 </button>
@@ -294,20 +375,16 @@ export default function RepayPage() {
       <div className="space-y-6">
         <header className="space-y-2">
           <p className="text-xs font-semibold uppercase text-muted">
-            {step === 'success' ? 'Repayment Complete' : 'Repay Credit'}
+            Repay Credit
           </p>
           <h1 className="text-2xl font-bold text-foreground sm:text-3xl">
-            {step === 'success'
-              ? 'Payment successful!'
-              : step === 'review'
-                ? 'Review your repayment'
-                : 'Make a repayment'}
+            {step === 'review'
+              ? 'Review your repayment'
+              : 'Make a repayment'}
           </h1>
-          {step !== 'success' && (
-            <p className="text-sm text-muted">
-              {selectedLine.name} &middot; {selectedLine.apr}% APR
-            </p>
-          )}
+          <p className="text-sm text-muted">
+            {selectedLine.name} &middot; {selectedLine.apr}% APR
+          </p>
         </header>
 
         {step === 'input' && (
@@ -316,27 +393,33 @@ export default function RepayPage() {
               <p className="text-xs font-semibold uppercase text-muted">
                 Current debt
               </p>
-              <p className="mt-1 text-3xl font-bold text-foreground">
+              {/* num-tabular: prevents digit-width jitter as repayment amounts change (FWC26) */}
+              <p className="mt-1 text-3xl font-bold text-foreground num-tabular">
                 {formatMoney(selectedLine.utilized)}
               </p>
+              {/* Task cb-v7: pattern class on the bar in addition to colour */}
               <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-border">
                 <div
-                  className={`h-full rounded-full ${
+                  className={`h-full rounded-full transition-all ${
                     oldPct > 80
-                      ? 'bg-red-500'
+                      ? 'rp-progress--high'
                       : oldPct > 50
-                        ? 'bg-yellow-500'
-                        : 'bg-green-500'
+                        ? 'rp-progress--medium'
+                        : 'rp-progress--low'
                   }`}
                   style={{ width: `${oldPct}%` }}
+                  aria-hidden="true"
                 />
               </div>
               <p className="mt-1 text-xs text-muted">
-                {oldPct}% of {formatMoney(selectedLine.limit)} limit
+                <span className="num-tabular">{oldPct}%</span> of <span className="num-tabular">{formatMoney(selectedLine.limit)}</span> limit
               </p>
             </div>
 
-            <div className="grid gap-6 lg:grid-cols-[1fr_360px] lg:items-start">
+            {/* Task resp-v7: column layout triggers at md (768 px) instead of lg
+                (1024 px) so the aside doesn't stack on tablet viewports where
+                there's enough room for a two-column layout. */}
+            <div className="grid gap-6 md:grid-cols-[1fr_320px] md:items-start lg:grid-cols-[1fr_360px]">
               <div className="space-y-4">
                 <div className="rounded-lg border border-border bg-surface p-4">
                   <div className="flex items-center justify-between">
@@ -347,7 +430,7 @@ export default function RepayPage() {
                       Amount to repay
                     </label>
                     <span className="text-xs text-muted">
-                      Wallet: {formatMoney(walletBalance)}
+                      Wallet: <span className="num-tabular">{formatMoney(walletBalance)}</span>
                     </span>
                   </div>
 
@@ -399,20 +482,24 @@ export default function RepayPage() {
                       aria-invalid={validation?.feedback.severity === 'danger' || undefined}
                       className={`w-full rounded-lg border bg-background px-3 py-3 pl-8 text-lg font-semibold text-foreground outline-none focus:ring-2 focus:ring-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${motionClasses(isReducedMotionActive, 'transition-colors')}`}
                       style={{
+                        // Task tokens-v7: token-referenced colors only — no raw hex.
                         borderColor:
                           validation?.feedback.severity === 'danger'
-                            ? 'var(--error, #f85149)'
+                            ? 'var(--error)'
                             : validation?.feedback.severity === 'warning'
-                              ? 'var(--warning, #d29922)'
+                              ? 'var(--warning)'
                               : amount > 0
-                                ? 'var(--accent, #58a6ff)'
-                                : 'var(--border, #30363d)',
+                                ? 'var(--accent)'
+                                : 'var(--border)',
                       }}
                     />
                   </div>
 
+                  {/* Task cb-v7: patternClass adds a subtle background texture
+                      so severity is distinguishable without colour alone.
+                      Task tokens-v7: border/bg/color reference CSS tokens. */}
                   <div
-                    className="mt-3 flex items-start gap-2 rounded-lg p-3 text-sm"
+                    className={`mt-3 flex items-start gap-2 rounded-lg p-3 text-sm ${activeTone.patternClass}`}
                     style={{
                       border: `1px solid ${activeTone.border}`,
                       background: activeTone.bg,
@@ -443,7 +530,7 @@ export default function RepayPage() {
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-muted">Remaining debt</span>
                       <span
-                        className={`font-semibold ${
+                        className={`font-semibold num-tabular ${
                           amount > 0 && remainingDebt === 0
                             ? 'text-success'
                             : 'text-foreground'
@@ -455,16 +542,20 @@ export default function RepayPage() {
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-muted">New utilization</span>
                       <span className="font-semibold text-foreground">
-                        {newPct}%
-                        <span className="ml-1.5 text-muted line-through">
+                        <span className="num-tabular">{newPct}%</span>
+                        <span className="ml-1.5 text-muted line-through num-tabular">
                           {oldPct}%
                         </span>
                       </span>
                     </div>
+                    {/* Task cb-v7: ghost bar uses rp-progress--ghost (30% opacity
+                        overlay) and the live bar uses the pattern class so both
+                        old and new utilization are told apart without colour. */}
                     <div className="h-2 w-full overflow-hidden rounded-full bg-border">
                       <div
                         className="h-full rounded-full bg-red-500/30 transition-all motion-reduce:transition-none"
                         style={{ width: `${oldPct}%` }}
+                        aria-hidden="true"
                       />
                     </div>
                     <div className="h-2 w-full overflow-hidden rounded-full bg-border">
@@ -473,6 +564,7 @@ export default function RepayPage() {
                           remainingDebt === 0 ? 'bg-green-500' : 'bg-yellow-500'
                         } ${motionClasses(isReducedMotionActive, 'transition-all')}`}
                         style={{ width: `${newPct}%` }}
+                        aria-hidden="true"
                       />
                     </div>
                   </div>
@@ -507,20 +599,33 @@ export default function RepayPage() {
                     </button>
                   </div>
 
-                  <button
-                    type="button"
-                    onClick={handleReview}
-                    disabled={isInvalid || amount <= 0}
-                    className={`mt-4 w-full rounded-lg bg-accent px-4 py-3 text-sm font-semibold text-background focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-50 ${motionClasses(isReducedMotionActive, 'transition-all hover:brightness-110')}`}
-                  >
-                    <span className="flex items-center justify-center gap-2">
-                      Review Repayment <KbdHint keys={['Enter']} />
-                    </span>
-                  </button>
+                  <div className="mt-4 flex flex-col gap-2">
+                    <button
+                      type="button"
+                      onClick={handleReview}
+                      disabled={isInvalid || amount <= 0}
+                      className={`w-full rounded-lg bg-accent px-4 py-3 text-sm font-semibold text-background focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-50 ${motionClasses(isReducedMotionActive, 'transition-all hover:brightness-110')}`}
+                    >
+                      <span className="flex items-center justify-center gap-2">
+                        Review Repayment <KbdHint keys={['Enter']} />
+                      </span>
+                    </button>
+                    <button
+                      ref={previewTriggerRef}
+                      type="button"
+                      onClick={() => setIsPreviewModalOpen(true)}
+                      disabled={isInvalid || amount <= 0}
+                      className={`w-full rounded-lg border border-accent/40 bg-accent/10 px-4 py-2.5 text-xs font-semibold text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-40 ${motionClasses(isReducedMotionActive, 'transition-all hover:bg-accent/20')}`}
+                    >
+                      Preview Consequences Modal
+                    </button>
+                  </div>
                 </div>
               </div>
 
-              <aside className="lg:sticky lg:top-6">
+              {/* Task resp-v7: sticky top adjusted so the aside doesn't hide
+                  behind the fixed header (60px) on tablet/desktop. */}
+              <aside className="md:sticky md:top-[4.5rem]">
                 <PayoffProjection
                   currentDebt={selectedLine.utilized}
                   apr={selectedLine.apr}
@@ -567,7 +672,7 @@ export default function RepayPage() {
           <div className="space-y-6">
             <div className="rounded-lg border border-border bg-surface p-6 text-center">
               <p className="text-sm text-muted">You are about to repay</p>
-              <p className="mt-2 text-4xl font-bold text-foreground">
+              <p className="mt-2 text-4xl font-bold text-foreground num-tabular">
                 {formatMoney(amount)}
               </p>
             </div>
@@ -577,7 +682,7 @@ export default function RepayPage() {
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-muted">Remaining debt after</span>
                   <span
-                    className={`font-semibold ${
+                    className={`font-semibold num-tabular ${
                       remainingDebt === 0 ? 'text-success' : 'text-foreground'
                     }`}
                   >
@@ -586,7 +691,7 @@ export default function RepayPage() {
                 </div>
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-muted">Wallet balance</span>
-                  <span className="font-semibold text-success">
+                  <span className="font-semibold text-success num-tabular">
                     {formatMoney(walletBalance)}
                   </span>
                 </div>
@@ -649,7 +754,7 @@ export default function RepayPage() {
 
             <div>
               <h2 className="text-2xl font-bold text-foreground">
-                You repaid {formatMoney(amount)}!
+                You repaid <span className="num-tabular">{formatMoney(amount)}</span>!
               </h2>
               <p className="mt-1 text-muted">
                 Your transaction was successful.
@@ -659,14 +764,14 @@ export default function RepayPage() {
             <div className="rounded-lg border border-border bg-surface p-4 text-left">
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted">Remaining debt</span>
-                <span className="font-semibold text-foreground">
+                <span className="font-semibold text-foreground num-tabular">
                   {formatMoney(remainingDebt)}
                 </span>
               </div>
               <div className="mt-2 flex items-center justify-between text-sm">
                 <span className="text-muted">Credit line utilization</span>
                 <span className="font-semibold text-foreground">
-                  Reduced to {newPct}%
+                  Reduced to <span className="num-tabular">{newPct}%</span>
                 </span>
               </div>
               {isAutoSchedule && (
@@ -710,6 +815,156 @@ export default function RepayPage() {
         onClose={() => setIsHelpOpen(false)}
         triggerRef={helpTriggerRef}
       />
+      {selectedLine && (
+        <RepayPreviewModal
+          isOpen={isPreviewModalOpen}
+          creditLine={selectedLine}
+          walletBalance={walletBalance}
+          repayAmount={amount}
+          onClose={() => setIsPreviewModalOpen(false)}
+          onConfirm={() => {
+            setIsPreviewModalOpen(false);
+            handleConfirm();
+          }}
+          triggerRef={previewTriggerRef}
+        />
+      )}
+
+      <LiveRegion>{srAnnouncement}</LiveRegion>
+    </div>
+  );
+}
+
+export function RepayPageSkeleton() {
+  const [searchParams] = useSearchParams();
+  const hasLine = !!searchParams.get('line');
+
+  if (!hasLine) {
+    return (
+      <div
+        className="repay-page mx-auto max-w-2xl space-y-6 px-4 py-8"
+        aria-busy="true"
+        aria-label="Loading repay page"
+      >
+        <div className="inline-flex items-center gap-1.5 rounded-md text-sm text-muted" aria-hidden="true">
+          <Skeleton width="60px" height="20px" />
+        </div>
+
+        <header className="space-y-2" aria-hidden="true">
+          <Skeleton width="80px" height="16px" />
+          <Skeleton width="320px" height="32px" />
+        </header>
+
+        <div className="space-y-3" aria-hidden="true">
+          {[1, 2, 3].map((i) => (
+            <div
+              key={i}
+              className="w-full rounded-lg border border-border bg-surface p-4"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <div className="space-y-2">
+                  <Skeleton width="150px" height="20px" />
+                  <Skeleton width="80px" height="14px" />
+                </div>
+                <div className="text-right space-y-2">
+                  <Skeleton width="100px" height="20px" />
+                  <Skeleton width="80px" height="14px" />
+                </div>
+              </div>
+              <Skeleton width="100%" height="8px" />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className="repay-page mx-auto max-w-4xl px-4 py-6 sm:py-8"
+      aria-busy="true"
+      aria-label="Loading repay page"
+    >
+      <div className="mb-4 inline-flex items-center gap-1.5 rounded-md text-sm text-muted" aria-hidden="true">
+        <Skeleton width="160px" height="20px" />
+      </div>
+
+      <div className="space-y-6" aria-hidden="true">
+        <header className="space-y-2">
+          <Skeleton width="80px" height="16px" />
+          <Skeleton width="240px" height="32px" />
+          <Skeleton width="180px" height="16px" />
+        </header>
+
+        <div className="rounded-lg border border-border bg-surface p-4">
+          <Skeleton width="100px" height="16px" />
+          <Skeleton width="200px" height="40px" className="mt-1" />
+          <Skeleton width="100%" height="8px" className="mt-3" />
+          <Skeleton width="180px" height="14px" className="mt-2" />
+        </div>
+
+        <div className="grid gap-6 lg:grid-cols-[1fr_360px] lg:items-start">
+          <div className="space-y-4">
+            <div className="rounded-lg border border-border bg-surface p-4">
+              <div className="flex items-center justify-between">
+                <Skeleton width="120px" height="20px" />
+                <Skeleton width="100px" height="14px" />
+              </div>
+
+              <div className="mt-3 flex gap-2">
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <Skeleton key={i} className="flex-1" height="32px" />
+                ))}
+              </div>
+
+              <Skeleton height="56px" className="mt-3" />
+              <Skeleton height="52px" className="mt-3" />
+            </div>
+
+            <div className="rounded-lg border border-border bg-surface p-4">
+              <Skeleton width="80px" height="16px" />
+              <div className="mt-3 space-y-3">
+                <div className="flex items-center justify-between">
+                  <Skeleton width="120px" height="20px" />
+                  <Skeleton width="80px" height="20px" />
+                </div>
+                <div className="flex items-center justify-between">
+                  <Skeleton width="120px" height="20px" />
+                  <Skeleton width="80px" height="20px" />
+                </div>
+                <Skeleton width="100%" height="8px" />
+                <Skeleton width="100%" height="8px" />
+              </div>
+
+              <div className="mt-6 flex items-center justify-between border-t border-border pt-4">
+                <div className="space-y-1">
+                  <Skeleton width="120px" height="18px" />
+                  <Skeleton width="180px" height="14px" />
+                </div>
+                <Skeleton width="44px" height="24px" />
+              </div>
+
+              <Skeleton width="100%" height="44px" className="mt-4" />
+            </div>
+          </div>
+
+          <aside className="space-y-4 rounded-lg border border-border bg-surface p-4 sm:p-5">
+            <div className="flex items-center justify-between">
+              <Skeleton width="120px" height="20px" />
+            </div>
+            <Skeleton width="100%" height="40px" />
+            <div className="rounded-lg border border-border bg-background/40 p-3">
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <Skeleton width="100px" height="14px" />
+                  <Skeleton width="80px" height="18px" />
+                </div>
+                <Skeleton width="32px" height="32px" />
+              </div>
+            </div>
+          </aside>
+        </div>
+      </div>
     </div>
   );
 }

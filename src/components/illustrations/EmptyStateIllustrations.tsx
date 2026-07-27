@@ -89,6 +89,70 @@ export function NoActivity(props: IllustrationProps) {
  * Inherits `--accent` (or any other surrounding foreground) via `currentColor`
  * so it stays consistent with light, dark, and high-contrast themes.
  */
+/**
+ * NoRiskGauge — illustrated empty state for the RiskGauge page.
+ *
+ * Composition: a dashed semicircular gauge arc (to hint at the real gauge
+ * that will appear once data is available) with a question-mark glyph inside
+ * the arc. The dashed line and low-opacity "?" visually communicate "not yet
+ * populated" without relying on colour alone.
+ *
+ * Inherits `--accent` (or any other surrounding foreground) via `currentColor`
+ * so it stays consistent with light, dark, and high-contrast themes.
+ */
+export function NoRiskGauge(props: IllustrationProps) {
+  return (
+    <IllustrationFrame {...props}>
+      <svg viewBox="0 0 180 140" fill="none" focusable="false">
+        {/* background card */}
+        <rect x="16" y="16" width="148" height="108" rx="18" stroke="currentColor" strokeWidth="2" opacity="0.20" />
+        {/* dashed semicircular gauge arc */}
+        <path
+          d="M 42 92 A 48 48 0 0 1 138 92"
+          stroke="currentColor"
+          strokeWidth="4"
+          strokeLinecap="round"
+          strokeDasharray="6 6"
+          opacity="0.50"
+        />
+        {/* tick marks along the arc */}
+        <path d="M 58 78 L 62 74" stroke="currentColor" strokeWidth="2" strokeLinecap="round" opacity="0.28" />
+        <path d="M 90 68 L 90 64" stroke="currentColor" strokeWidth="2" strokeLinecap="round" opacity="0.28" />
+        <path d="M 122 78 L 118 74" stroke="currentColor" strokeWidth="2" strokeLinecap="round" opacity="0.28" />
+        {/* "?" mark in the centre — communicates "no data yet" */}
+        <text
+          x="90"
+          y="82"
+          textAnchor="middle"
+          dominantBaseline="central"
+          fontFamily="system-ui, -apple-system, sans-serif"
+          fontSize="32"
+          fontWeight="700"
+          fill="currentColor"
+          opacity="0.28"
+        >
+          ?
+        </text>
+        {/* label hint below the gauge */}
+        <text
+          x="90"
+          y="112"
+          textAnchor="middle"
+          dominantBaseline="central"
+          fontFamily="system-ui, -apple-system, sans-serif"
+          fontSize="9"
+          fontWeight="600"
+          fill="currentColor"
+          opacity="0.32"
+          letterSpacing="0.12em"
+        >
+          RISK SCORE
+        </text>
+      </svg>
+    </IllustrationFrame>
+  );
+}
+
 export function NoOutstandingDebt(props: IllustrationProps) {
   return (
     <IllustrationFrame {...props}>

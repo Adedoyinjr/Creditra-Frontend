@@ -162,4 +162,44 @@ describe("HelpCenter", () => {
       screen.getByRole("button", { name: /how do i connect a wallet\?/i }),
     ).toBeInTheDocument();
   });
+
+  it("sets aria-current='true' on FAQ anchor and control when an FAQ is opened", async () => {
+    render(
+      <MemoryRouter>
+        <HelpCenter />
+      </MemoryRouter>,
+    );
+
+    const user = userEvent.setup();
+    const faqAnchor = screen.getByRole("link", { name: /direct link to faq: what is creditra\?/i });
+    const faqButton = screen.getByRole("button", { name: /what is creditra\?/i });
+
+    expect(faqAnchor).not.toHaveAttribute("aria-current");
+    expect(faqButton).not.toHaveAttribute("aria-current");
+
+    await user.click(faqButton);
+
+    expect(faqAnchor).toHaveAttribute("aria-current", "true");
+    expect(faqButton).toHaveAttribute("aria-current", "true");
+
+    await user.click(faqButton);
+
+    expect(faqAnchor).not.toHaveAttribute("aria-current");
+    expect(faqButton).not.toHaveAttribute("aria-current");
+  });
+
+  it("sets aria-current='true' on FAQ anchor when deep-linked via URL hash and auto-expands answer", () => {
+    render(
+      <MemoryRouter initialEntries={["/help#connect-wallet"]}>
+        <HelpCenter />
+      </MemoryRouter>,
+    );
+
+    const faqAnchor = screen.getByRole("link", { name: /direct link to faq: how do i connect a wallet\?/i });
+    const faqButton = screen.getByRole("button", { name: /^how do i connect a wallet\?/i });
+
+    expect(faqAnchor).toHaveAttribute("aria-current", "true");
+    expect(faqButton).toHaveAttribute("aria-current", "true");
+    expect(faqButton).toHaveAttribute("aria-expanded", "true");
+  });
 });

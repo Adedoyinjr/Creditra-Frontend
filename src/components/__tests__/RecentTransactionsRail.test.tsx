@@ -18,10 +18,10 @@ function buildTx(overrides: Partial<Transaction> & { type: TransactionType }): T
   };
 }
 
-function renderRail(transactions: Parameters<typeof RecentTransactionsRail>[0]['transactions'], loading = false) {
+function renderRail(transactions: Parameters<typeof RecentTransactionsRail>[0]['transactions'], isLoading = false) {
   return render(
     <BrowserRouter>
-      <RecentTransactionsRail transactions={transactions} loading={loading} />
+      <RecentTransactionsRail transactions={transactions} isLoading={isLoading} />
     </BrowserRouter>
   );
 }

@@ -1,6 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import { BrowserRouter, Route, Routes, Link, NavLink } from "react-router-dom";
+import { useScrollRestoration } from "./hooks/useScrollRestoration";
 import { Dashboard } from "./pages/Dashboard";
+import {
+  RouteAnnouncer,
+  RouteHeadProvider,
+} from "./components/RouteAnnouncer";
 import { WalletProvider } from "./context/WalletContext";
 import { KycProvider } from "./context/KycContext";
 import { NotificationProvider } from "./context/NotificationContext";
@@ -19,15 +24,14 @@ import HelpCenter from "./pages/HelpCenter";
 import { ShortcutHelpOverlay } from "./components/ShortcutHelpOverlay";
 import { DutchAuctions } from "./pages/DutchAuctions";
 import RepayPage from "./pages/RepayPage";
+import RepayCalendar from "./pages/RepayCalendar";
 import { LinkedAccounts } from "./pages/LinkedAccounts";
-import NotificationPreferences from "./pages/NotificationPreferences";
 import { WalletReconnectBanner } from "./components/WalletReconnectBanner";
 import { SessionTimeoutBanner } from "./components/SessionTimeoutBanner";
 import { NetworkMismatchBanner } from "./components/notifications/NetworkMismatchBanner";
-import DataPrivacySettings from "./pages/settings/Data";
-import SessionsSettings from "./pages/settings/Sessions";
 import { Header } from "./layouts/Header";
 import CreditLineCompare from "./pages/CreditLineCompare";
+import { TermsBanner } from "./components/TermsBanner";
 
 const isEditableTarget = (target: EventTarget | null) => {
   if (!(target instanceof HTMLElement)) return false;
@@ -85,6 +89,9 @@ function App() {
   const [isPaletteOpen, setIsPaletteOpen] = useState(false);
   const paletteTriggerRef = useRef<HTMLElement | null>(null);
 
+  // Restore scroll position on route navigation.
+  useScrollRestoration();
+
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       // Cmd+K / Ctrl+K → toggle command palette
@@ -121,11 +128,12 @@ function App() {
         <KycProvider>
           <NotificationProvider>
             <BrowserRouter>
-              <div className="app">
-                <header className="header">
-                  <Link to="/" className="logo">
-                    Creditra
-                  </Link>
+              <RouteHeadProvider>
+                <div className="app">
+                  <header className="header">
+                    <Link to="/" className="logo">
+                      Creditra
+                    </Link>
                   <nav className="header-nav">
                     {/*
                       NavLink with render function allows us to:
@@ -215,6 +223,7 @@ function App() {
                     non-blocking; only visible when reconnect takes > 8 s. */}
                 <WalletReconnectBanner />
                 <main className="main">
+                  <TermsBanner />
                   <NetworkMismatchBanner />
                   <Routes>
                     <Route path="/" element={<Dashboard />} />
@@ -228,10 +237,12 @@ function App() {
                     />
                     <Route path="/open-credit" element={<RequestEvaluation />} />
                     <Route path="/dutch-auctions" element={<DutchAuctions />} />
+                    <Route path="/settings/account" element={<SettingsAccount />} />
                     <Route path="/linked-accounts" element={<LinkedAccounts />} />
                     {/* Issue #581: Repay flow (now reachable from header /
                         the "Repay" action on Credit Lines). */}
                     <Route path="/repay" element={<RepayPage />} />
+                    <Route path="/repay/calendar" element={<RepayCalendar />} />
                     <Route path="*" element={<NotFound />} />
                   </Routes>
                 </main>
@@ -251,7 +262,13 @@ function App() {
                   }}
                   triggerRef={kycTriggerRef}
                 />
+                {/* Mounted inside <RouteHeadProvider> so it can read the
+                    override context, and inside <BrowserRouter> so it can
+                    read useLocation().  Renders a sr-only polite status
+                    region for screen-reader route announcements. */}
+                <RouteAnnouncer />
               </div>
+              </RouteHeadProvider>
             </BrowserRouter>
           </NotificationProvider>
         </KycProvider>

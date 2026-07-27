@@ -1,3 +1,5 @@
+"use client";
+
 /**
  * DrawCreditPage
  *
@@ -15,11 +17,21 @@
  *   - <main> labelled with aria-label for screen-reader landmark navigation
  *   - Loading state wrapped in role="status" + aria-live="polite"
  *   - Spinner has aria-label describing the in-progress action
+ *   - Keyboard-only focus rings via `src/styles/focus.css` (FWC26 / issue #592)
+ *
+ * Reduced-motion strategy (GrantFox FWC26 / issue #693):
+ *   - DrawCreditPage.css suppresses all animations and transitions on
+ *     `.dc-page` descendants via @media (prefers-reduced-motion: reduce)
+ *     and the in-app [data-motion="reduced"] attribute override.
+ *   - The animated `dc-spinner-ring` is replaced with a static SVG icon
+ *     (dc-spinner-static) when `isReducedMotionActive` is true, giving
+ *     a meaningful visual fallback rather than a frozen rotation frame.
  */
 
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect, useCallback } from "react";
 import { Skeleton } from "@/components/Skeleton";
 import { useLocation, useNavigate } from "react-router-dom";
+import { useReducedMotion } from "@/context/ReducedMotionContext";
 import { loadDraft, saveDraft, clearDraft } from "@/state/wizardDraft";
 import { CreditLineSelector } from "@/components/CreditLineSelector";
 import { AmountInput } from "@/components/AmountInput";
@@ -27,14 +39,16 @@ import { PreviewSection } from "@/components/PreviewSection";
 import { ConfirmationStep } from "@/components/ConfirmationStep";
 import { TransactionStatus } from "@/components/TransactionStatus";
 import { InlineHelpOverlay } from "@/components/InlineHelpOverlay";
+import { KbdHint } from "@/components/KbdHint";
+import { LiveRegion } from "@/components/LiveRegion";
 import { CreditLine, DrawStep, Transaction } from "@/types/draw-credit.types";
 import { mockCreditLines } from "@/lib/draw-credit-mock-data";
 import { WhyApr } from "@/components/WhyApr";
-import { DrawingLimit } from "@/components/DrawingLimit";
 import { DrawSummaryBar } from "@/components/DrawSummaryBar";
-import { DrawWizardMicroIndicator } from "@/components/DrawWizardMicroIndicator";
 import { useDrawWizardMicroProgress } from "@/hooks/useDrawWizardMicroProgress";
 import "@/components/DrawWizardMicroProgress.css";
+import "@/styles/focus.css";
+import "./DrawCreditPage.css";
 
 const drawSteps = [
   { id: "select", label: "Select line" },
@@ -44,6 +58,15 @@ const drawSteps = [
 ] as const;
 
 type ProgressStep = (typeof drawSteps)[number]["id"];
+
+/** Returns true if the currently focused element can receive text input. */
+function isFocusedOnInput(): boolean {
+  const el = document.activeElement;
+  if (!el) return false;
+  const tag = (el as HTMLElement).tagName.toLowerCase();
+  if (tag === "input" || tag === "textarea" || tag === "select") return true;
+  return (el as HTMLElement).isContentEditable;
+}
 
 export default function DrawCreditPage() {
   const navigate = useNavigate();
@@ -65,6 +88,7 @@ export default function DrawCreditPage() {
       saveDraft({ step, selectedCreditLine, amount });
     }
   }, [step, selectedCreditLine, amount]);
+
   const [isLoading, setIsLoading] = useState(false);
   const [isHelpOpen, setIsHelpOpen] = useState(false);
   const helpTriggerRef = useRef<HTMLButtonElement>(null);
@@ -76,13 +100,15 @@ export default function DrawCreditPage() {
   const [confirmationAcknowledged, setConfirmationAcknowledged] =
     useState(false);
 
-  const { steps: microProgressSteps, debouncedAnnouncement: microProgressAnnouncement } =
+  const { debouncedAnnouncement: microProgressAnnouncement } =
     useDrawWizardMicroProgress({
       selectedCreditLine,
       amount,
       confirmationAcknowledged,
       isOnConfirmStep: step === "confirm",
     });
+
+  const { isReducedMotionActive } = useReducedMotion();
 
   const handleSelectCreditLine = (creditLine: CreditLine) => {
     setSelectedCreditLine(creditLine);
@@ -98,8 +124,8 @@ export default function DrawCreditPage() {
 
   const handleConfirm = async () => {
     setIsLoading(true);
+    setStep("status");
 
-    // Simulate API call
     await new Promise((resolve) => setTimeout(resolve, 2000));
 
     const succeeded = Math.random() > 0.2;
@@ -133,7 +159,7 @@ export default function DrawCreditPage() {
     setTransaction(null);
   };
 
-  const handleBack = () => {
+  const handleBack = useCallback(() => {
     if (step === "amount") {
       setStep("select");
       setSelectedCreditLine(null);
@@ -142,37 +168,88 @@ export default function DrawCreditPage() {
       setStep("amount");
       setConfirmationAcknowledged(false);
     }
-  };
+  }, [step]);
 
-  const handleCancel = () => {
+  const handleCancel = useCallback(() => {
     navigate("/");
-  };
+  }, [navigate]);
 
-  const currentProgressStep: ProgressStep =
-    step === "confirm" ? "confirm" : step === "amount" ? "preview" : "select";
-  const activeStepIndex = drawSteps.findIndex(
-    (drawStep) => drawStep.id === currentProgressStep,
-  );
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (isFocusedOnInput()) return;
+
+      switch (e.key) {
+        case "Escape":
+          if (step === "select") {
+            e.preventDefault();
+            handleCancel();
+          } else if (step === "amount" || step === "confirm") {
+            e.preventDefault();
+            handleBack();
+          }
+          break;
+
+        case "ArrowLeft":
+          if (step === "amount" || step === "confirm") {
+            e.preventDefault();
+            handleBack();
+          }
+          break;
+
+        case "ArrowRight":
+          if (step === "amount" && amount > 0) {
+            e.preventDefault();
+            handleAmountNext(amount);
+          }
+          if (step === "confirm" && confirmationAcknowledged) {
+            e.preventDefault();
+            void handleConfirm();
+          }
+          break;
+
+        case "?":
+          e.preventDefault();
+          setIsHelpOpen(true);
+          break;
+
+        default:
+          break;
+      }
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [step, amount, confirmationAcknowledged, handleBack, handleCancel]);
 
   return (
-    /*
-     * `dc-page` sets min-height:100vh + flex centering via tokens.
-     * aria-label exposes this landmark to screen readers as "Draw credit".
-     */
     <main className="dc-page" aria-label="Draw credit">
+      <LiveRegion
+        id="draw-wizard-progress-announcement"
+        message={microProgressAnnouncement}
+      />
       <div className="dc-page__inner">
-        {/* Card uses dc-page__card (token-backed padding + radius) — no inline style override */}
         <div className="dc-page__card">
-
-          {/* ── Step 1: Select a credit line ── */}
           {step === "select" && (
-            <CreditLineSelector
-              creditLines={mockCreditLines}
-              onSelect={handleSelectCreditLine}
-            />
+            <>
+              <CreditLineSelector
+                creditLines={mockCreditLines}
+                onSelect={handleSelectCreditLine}
+              />
+              <div className="dc-kbd-bar" aria-label="Keyboard shortcuts">
+                <KbdHint
+                  keys="Esc"
+                  label="Cancel"
+                  description="Press Escape to cancel and go back to the dashboard"
+                />
+                <KbdHint
+                  keys="?"
+                  label="Help"
+                  description="Press ? to open keyboard shortcut help"
+                />
+              </div>
+            </>
           )}
 
-          {/* ── Step 2: Enter amount + live preview ── */}
           {step === "amount" && selectedCreditLine && (
             <div className="dc-step">
               <AmountInput
@@ -181,37 +258,69 @@ export default function DrawCreditPage() {
                 onNext={handleAmountNext}
                 onBack={handleBack}
               />
-              {/* Separator uses dc-separator (border-top with space-8 padding — token-backed) */}
               <div className="dc-separator">
                 <PreviewSection
                   creditLine={selectedCreditLine}
                   amount={amount}
                 />
               </div>
+              <div className="dc-kbd-bar" aria-label="Keyboard shortcuts">
+                <KbdHint
+                  keys={["←", "→"]}
+                  label="Back / Continue"
+                  separator="/"
+                  description="Use left and right arrow keys to go back or continue"
+                />
+                <KbdHint
+                  keys="Esc"
+                  label="Back"
+                  description="Press Escape to go back to the previous step"
+                />
+                <KbdHint
+                  keys="?"
+                  label="Help"
+                  description="Press ? to open keyboard shortcut help"
+                />
+              </div>
             </div>
           )}
 
-          {/* ── Step 3: Review & confirm ── */}
           {step === "confirm" && selectedCreditLine && (
-            <ConfirmationStep
-              creditLine={selectedCreditLine}
-              amount={amount}
-              onConfirm={handleConfirm}
-              onBack={handleBack}
-              isLoading={isLoading}
-            />
+            <>
+              <ConfirmationStep
+                creditLine={selectedCreditLine}
+                amount={amount}
+                onConfirm={handleConfirm}
+                onBack={handleBack}
+                onCancel={handleCancel}
+                isLoading={isLoading}
+                agreedToTerms={confirmationAcknowledged}
+                onAgreedToTermsChange={setConfirmationAcknowledged}
+              />
+              <div className="dc-kbd-bar" aria-label="Keyboard shortcuts">
+                <KbdHint
+                  keys={["←", "→"]}
+                  label="Back / Confirm"
+                  separator="/"
+                  description="Use left arrow to go back; right arrow to confirm when terms are accepted"
+                />
+                <KbdHint
+                  keys="Esc"
+                  label="Back"
+                  description="Press Escape to go back to the previous step"
+                />
+                <KbdHint
+                  keys="?"
+                  label="Help"
+                  description="Press ? to open keyboard shortcut help"
+                />
+              </div>
+            </>
           )}
 
-          {/* ── Step 4: Status (loading → result) ── */}
           {step === "status" && (isLoading || transaction) && (
             <>
               {isLoading && (
-                /*
-                 * role="status" + aria-live="polite" announce the loading state
-                 * to screen readers without interrupting the user.
-                 * aria-label on the spinner ring itself provides a text
-                 * alternative for the animated element.
-                 */
                 <div
                   className="dc-spinner-wrap"
                   role="status"
@@ -219,10 +328,47 @@ export default function DrawCreditPage() {
                   aria-label="Processing your draw request"
                 >
                   <div className="dc-spinner-ring-bg">
-                    <div
-                      className="dc-spinner-ring"
-                      aria-hidden="true"
-                    />
+                    {isReducedMotionActive ? (
+                      <div className="dc-spinner-static" aria-hidden="true">
+                        <svg
+                          viewBox="0 0 64 64"
+                          fill="none"
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="64"
+                          height="64"
+                          aria-hidden="true"
+                        >
+                          <circle
+                            cx="32"
+                            cy="32"
+                            r="28"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                            strokeLinecap="round"
+                          />
+                          <line
+                            x1="32"
+                            y1="32"
+                            x2="32"
+                            y2="14"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                            strokeLinecap="round"
+                          />
+                          <line
+                            x1="32"
+                            y1="32"
+                            x2="46"
+                            y2="32"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                            strokeLinecap="round"
+                          />
+                        </svg>
+                      </div>
+                    ) : (
+                      <div className="dc-spinner-ring" aria-hidden="true" />
+                    )}
                   </div>
                   <div>
                     <h2 className="dc-step__title">Processing</h2>
@@ -243,7 +389,16 @@ export default function DrawCreditPage() {
         </div>
 
         <p className="dc-page__footer">
-          Need help? Contact support at 1-800-CREDIT-1
+          Need help?{" "}
+          <button
+            ref={helpTriggerRef}
+            type="button"
+            className="focus-ring hover:text-foreground transition-colors underline underline-offset-4"
+            onClick={() => setIsHelpOpen(true)}
+          >
+            Contact support
+          </button>{" "}
+          at 1-800-CREDIT-1
         </p>
       </div>
       <InlineHelpOverlay
@@ -256,12 +411,6 @@ export default function DrawCreditPage() {
         onClose={() => setIsWhyAprOpen(false)}
         triggerRef={whyAprTriggerRef}
       />
-      {/*
-        Mobile-only sticky summary (below md) — fixed to the viewport so
-        line / amount / APR stay visible while scrolling the amount step.
-        Desktop uses the sidebar PreviewSection instead. Bottom padding on
-        <main> (max-md:pb-28) prevents content from sitting under the bar.
-      */}
       <DrawSummaryBar
         creditLine={selectedCreditLine}
         amount={amount}
@@ -274,47 +423,51 @@ export default function DrawCreditPage() {
 export function DrawCreditPageSkeleton() {
   return (
     <main
-      className="min-h-screen bg-background px-4 pb-24 pt-6 max-md:pb-28 md:pb-8 sm:pt-8"
+      className="dc-page"
       aria-busy="true"
       aria-label="Loading draw credit page"
     >
-      <div className="mx-auto w-full max-w-4xl space-y-5">
-        <header className="card" aria-hidden="true">
-          <div className="space-y-2">
-            <Skeleton width="120px" height="20px" />
-            <Skeleton width="60%" height="36px" className="max-w-[400px]" />
-          </div>
-          <div className="mt-6 grid gap-3 sm:grid-cols-4">
-            {[1, 2, 3, 4].map((i) => (
-              <div
-                key={i}
-                className="rounded-lg border border-border bg-background/60 px-3 py-3"
-              >
-                <Skeleton width="40px" height="16px" className="mb-1" />
-                <Skeleton width="80px" height="20px" />
-              </div>
-            ))}
-          </div>
-        </header>
-
-        <div className="card card-large" style={{ maxWidth: "none", margin: 0 }} aria-hidden="true">
-          <section>
-            <Skeleton width="200px" height="28px" className="mb-4" />
-            <div className="space-y-4">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="rounded-lg border border-border p-4">
-                  <div className="flex justify-between items-center mb-2">
-                    <Skeleton width="150px" height="24px" />
-                    <Skeleton width="80px" height="24px" />
-                  </div>
-                  <Skeleton width="100px" height="16px" />
-                </div>
-              ))}
+      <div className="dc-page__inner">
+        <div className="dc-page__card" aria-hidden="true">
+          <div className="dc-step">
+            <div>
+              <Skeleton width="200px" height="32px" className="mb-2" />
+              <Skeleton width="300px" height="24px" />
             </div>
-          </section>
+
+            <ul className="dc-credit-line-list" role="list">
+              {[1, 2, 3].map((i) => (
+                <li key={i}>
+                  <div className="dc-credit-line-item">
+                    <div className="dc-credit-line-item__inner w-full">
+                      <div className="dc-credit-line-item__body w-full">
+                        <Skeleton width="120px" height="24px" className="mb-3" />
+                        <div className="flex gap-6 mb-3">
+                          <div className="space-y-1">
+                            <Skeleton width="60px" height="14px" />
+                            <Skeleton width="80px" height="20px" />
+                          </div>
+                          <div className="space-y-1">
+                            <Skeleton width="70px" height="14px" />
+                            <Skeleton width="50px" height="20px" />
+                          </div>
+                        </div>
+                        <Skeleton width="100%" height="8px" shape="rounded" />
+                      </div>
+                      <div className="ml-4 flex-shrink-0 flex items-center justify-center">
+                        <Skeleton width="20px" height="20px" shape="circular" />
+                      </div>
+                    </div>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+        <div className="dc-page__footer flex justify-center mt-4">
+          <Skeleton width="250px" height="20px" />
         </div>
       </div>
     </main>
   );
 }
-

@@ -17,7 +17,7 @@ interface ActivityEntry {
  */
 const ActivityTimeline: React.FC = () => {
   const [activities, setActivities] = useState<ActivityEntry[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -41,16 +41,16 @@ const ActivityTimeline: React.FC = () => {
           },
         ];
         setActivities(mockData);
-        setLoading(false);
+        setIsLoading(false);
       } catch (e) {
         setError('Failed to load activity');
-        setLoading(false);
+        setIsLoading(false);
       }
     };
     fetchActivities();
   }, []);
 
-  if (loading) {
+  if (isLoading) {
     return <div className="activity-loading" aria-live="polite">Loading activity...</div>;
   }
 

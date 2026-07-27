@@ -1,7 +1,7 @@
-import React, { useState, Suspense, lazy } from 'react';
+import React, { lazy, Suspense, useState } from 'react';
+import Tabs, { TabItem } from '../components/Tabs';
 import './Profile.css';
 
-// Lazy load the ActivityTimeline component for the Activity tab
 const ActivityTimeline = lazy(() => import('../components/ActivityTimeline'));
 
 /**
@@ -10,41 +10,38 @@ const ActivityTimeline = lazy(() => import('../components/ActivityTimeline'));
  */
 const Profile: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'overview' | 'activity'>('overview');
+  const tabs: TabItem[] = [
+    {
+      id: 'overview',
+      label: 'Overview',
+      panel: (
+        <div className="overview-tab">
+          <p>This is an overview of the user. Add more details as needed.</p>
+        </div>
+      ),
+    },
+    {
+      id: 'activity',
+      label: 'Activity',
+      panel: (
+        <Suspense fallback={<div>Loading activity...</div>}>
+          <ActivityTimeline />
+        </Suspense>
+      ),
+    },
+  ];
 
   return (
     <div className="profile-page">
       <h1 className="profile-title">User Profile</h1>
-      <nav className="profile-tabs" role="tablist" aria-label="Profile sections">
-        <button
-          role="tab"
-          aria-selected={activeTab === 'overview'}
-          className={activeTab === 'overview' ? 'active' : ''}
-          onClick={() => setActiveTab('overview')}
-        >
-          Overview
-        </button>
-        <button
-          role="tab"
-          aria-selected={activeTab === 'activity'}
-          className={activeTab === 'activity' ? 'active' : ''}
-          onClick={() => setActiveTab('activity')}
-        >
-          Activity
-        </button>
-      </nav>
-      <section className="profile-content" role="tabpanel">
-        {activeTab === 'overview' && (
-          <div className="overview-tab">
-            {/* Placeholder content – can be expanded later */}
-            <p>This is an overview of the user. Add more details as needed.</p>
-          </div>
-        )}
-        {activeTab === 'activity' && (
-          <Suspense fallback={<div>Loading activity...</div>}>
-            <ActivityTimeline />
-          </Suspense>
-        )}
-      </section>
+      <Tabs
+        tabs={tabs}
+        activeTab={activeTab}
+        onTabChange={(tabId) => setActiveTab(tabId as 'overview' | 'activity')}
+        ariaLabel="Profile sections"
+        tabListClassName="profile-tabs"
+        panelClassName="profile-content"
+      />
     </div>
   );
 };

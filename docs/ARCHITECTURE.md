@@ -191,7 +191,7 @@ stateDiagram-v2
 
 | State | Visual | Component |
 | --- | --- | --- |
-| Loading | Shimmer matching the final layout | `components/Skeleton.tsx` (`Skeleton.css` animation, `prefers-reduced-motion` disables shimmer) |
+| Loading | Shimmer matching the final layout | `components/Skeleton.tsx` (`Skeleton.css` animation, `prefers-reduced-motion` disables shimmer). `TransactionHistory` uses the page-level `components/TransactionHistorySkeleton.tsx` wrapper which composes `Skeleton` into a full stats + filter + table placeholder. `RepaymentVisualizer` uses `RepaymentVisualizerSkeleton` (issue #609) for a one-frame first-paint gate that mirrors the chart card geometry. |
 | Empty | Illustration + primary CTA to populate | inline per page (e.g. Dashboard's "no credit lines" state) |
 | Error | Banner + retry, or full-page `ErrorBoundary` if render-time | `components/ErrorBoundary.tsx` for render errors, `BannerAlert` for fetch errors |
 | Ready | Real data | the screen |
@@ -257,7 +257,7 @@ src/
 │   ├── notifications/   ToastContainer, BannerAlert, NotificationBell, NotificationCenter
 │   ├── (modals)         WalletConnectionModal, RepayModal, OnboardingFlow
 │   ├── (inputs)         FormField, FormMessage, AmountInput, PendingButton
-│   ├── (status)         StatusBadge, Skeleton, SuccessState, TransactionStatus, RiskGauge
+│   ├── (status)         StatusBadge, Skeleton, TransactionHistorySkeleton, SuccessState, TransactionStatus, RiskGauge
 │   ├── (a11y)           AccessibleTooltip, CopyToClipboard
 │   └── ErrorBoundary    Top-level render-error catcher
 ├── context/
@@ -266,7 +266,8 @@ src/
 ├── hooks/
 │   ├── useFocusTrap.ts
 │   ├── useBodyScrollLock.ts
-│   └── useInertBackdrop.ts
+│   ├── useInertBackdrop.ts
+│   └── useScrollRestoration.ts   — saves/restores scrollY per route
 ├── utils/
 │   ├── tokens.ts        Color/spacing tokens + formatters
 │   ├── wallet.ts        Wallet provider glue

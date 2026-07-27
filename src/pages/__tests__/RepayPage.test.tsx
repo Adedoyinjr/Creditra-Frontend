@@ -1,5 +1,5 @@
-import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { render, screen, fireEvent, act } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import RepayPage from '../RepayPage';
 
@@ -24,15 +24,37 @@ vi.mock('@/data/mockData', () => ({
   ],
 }));
 
-function renderPage(initialEntries = ['/repay']) {
-  return render(
+function renderPage(initialEntries = ['/repay'], advanceTimers = true) {
+  const result = render(
     <MemoryRouter initialEntries={initialEntries}>
       <RepayPage />
     </MemoryRouter>,
   );
+  
+  if (advanceTimers) {
+    act(() => {
+      vi.advanceTimersByTime(1000);
+    });
+  }
+  
+  return result;
 }
 
 describe('RepayPage', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.runOnlyPendingTimers();
+    vi.useRealTimers();
+  });
+
+  it('shows loading skeleton initially', () => {
+    renderPage(['/repay'], false);
+    expect(screen.getByTestId('repay-loading-skeleton')).toBeInTheDocument();
+  });
+
   it('renders credit line selection when no line is preselected', () => {
     renderPage();
     expect(screen.getByText('Select a credit line to repay')).toBeInTheDocument();

@@ -1,0 +1,158 @@
+/*
+ * TransactionHistorySkeleton.css
+ *
+ * Layout styles for the TransactionHistory first-paint skeleton.
+ *
+ * Design-token contract:
+ *   All colours are consumed via CSS custom properties defined in
+ *   src/index.css (:root).  No hard-coded hex values appear here so the
+ *   skeleton automatically inherits any active theme, including
+ *   high-contrast mode ([data-contrast="high"]) and dark mode.
+ *
+ * Responsive:
+ *   - Mobile (<640 px): stats collapse to 2 columns, filter bar wraps,
+ *     hash column skeleton is hidden.
+ *   - Tablet (<960 px): stats collapse to 2 columns.
+ *
+ * Animation:
+ *   The shimmer sweep lives in Skeleton.css and is already suppressed
+ *   under prefers-reduced-motion — no duplication needed here.
+ */
+
+/* ── Wrapper ────────────────────────────────────────────────────────────── */
+
+.th-skeleton {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 1.5rem 2rem;
+}
+
+/* ── Stats cards row ───────────────────────────────────────────────────── */
+
+.th-skeleton__stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.th-skeleton__stat-card {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  padding: 1rem 1.25rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg, 10px);
+}
+
+.th-skeleton__stat-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  flex: 1;
+  min-width: 0;
+}
+
+/* ── Filter bar placeholder ─────────────────────────────────────────────── */
+
+.th-skeleton__filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.875rem;
+  padding: 1.25rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg, 10px);
+  margin-bottom: 1.5rem;
+}
+
+/* ── Table container ────────────────────────────────────────────────────── */
+
+.th-skeleton__table-container {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg, 10px);
+  overflow: hidden;
+}
+
+/* ── Table header row ───────────────────────────────────────────────────── */
+
+.th-skeleton__thead {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.875rem 1rem;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+}
+
+/* ── Skeleton transaction rows ─────────────────────────────────────────── */
+
+.th-skeleton__row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.th-skeleton__row:last-child {
+  border-bottom: none;
+}
+
+/* ── Cells ──────────────────────────────────────────────────────────────── */
+
+/*
+ * Each cell's flex-basis mirrors the approximate proportions of the real
+ * table columns so the skeleton does not shift layout on reveal.
+ */
+
+.th-skeleton__cell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  flex: 1;
+  min-width: 0;
+}
+
+/* Date column — fixed narrow width */
+.th-skeleton__cell--date {
+  flex: 0 0 100px;
+}
+
+/* Credit Line column — slightly wider */
+.th-skeleton__cell--line {
+  flex: 0 0 140px;
+}
+
+/* Expand chevron — tiny fixed column */
+.th-skeleton__cell--expand {
+  flex: 0 0 24px;
+  align-items: center;
+}
+
+/* ── Responsive overrides ──────────────────────────────────────────────── */
+
+@media (max-width: 960px) {
+  .th-skeleton__stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .th-skeleton {
+    padding: 0 1rem 2rem;
+  }
+
+  .th-skeleton__stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  /* On narrow screens hide the Hash cell skeleton to match the
+     responsive table behaviour on the real component. */
+  .th-skeleton__row .th-skeleton__cell:nth-child(6) {
+    display: none;
+  }
+}

@@ -111,13 +111,19 @@ function stubMatchMediaWithListener(initialMatches: boolean) {
 }
 
 function renderPage(initialEntries = ['/repay?line=CL-2024-001']) {
-  return render(
+  vi.useFakeTimers();
+  const result = render(
     <ReducedMotionProvider>
       <MemoryRouter initialEntries={initialEntries}>
         <RepayPage />
       </MemoryRouter>
     </ReducedMotionProvider>,
   );
+  act(() => {
+    vi.advanceTimersByTime(1000);
+  });
+  vi.useRealTimers();
+  return result;
 }
 
 // ── Tests ────────────────────────────────────────────────────────────────────

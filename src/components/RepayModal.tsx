@@ -125,6 +125,8 @@ export function RepayModal({
     creditLine.apr,
   );
   const fullPayoff = computeFullPayoffAmount(principalBalance, creditLine.apr);
+  const totalDue = fullPayoff;
+  const accruedInterestEstimate = accruedInterest;
   const validation = getRepayAmountValidation(amountStr, fullPayoff, walletBalance);
   const amount = validation.amount;
   const isInvalid = !validation.isValid;

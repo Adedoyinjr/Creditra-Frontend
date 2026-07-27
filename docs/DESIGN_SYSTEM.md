@@ -170,6 +170,7 @@ Every component below lives in `src/components/`.
 | `SuccessState` | Post-action confirmation | `role="status" aria-live="polite"` |
 | `TransactionStatus` | Pending / success / failure for draws and repays | Step indicator + retry CTA |
 | `ErrorBoundary` | Class-component render guard | Renders `ErrorPage` with semantic landmarks |
+| `TermsBanner` | Banner for terms updates + acceptance | Persistent banner for GrantFox FWC26 campaign with Review Modal and keyboard-trapped overlay |
 
 ### Overlay
 
