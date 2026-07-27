@@ -7,7 +7,7 @@ import { RepaymentVisualizer } from '@/components/RepaymentVisualizer';
 import { InlineHelpOverlay } from '@/components/InlineHelpOverlay';
 import { ProgressBar } from '@/components/ProgressBar';
 import type { ProgressBarVariant } from '@/components/ProgressBar';
-import { Skeleton } from '@/components/Skeleton';
+import { LiveRegion } from '@/components/LiveRegion';
 
 import { EmptyState } from '@/components/EmptyState';
 import { NoOutstandingDebt } from '@/components/illustrations';
@@ -829,6 +829,8 @@ export default function RepayPage() {
           triggerRef={previewTriggerRef}
         />
       )}
+
+      <LiveRegion>{srAnnouncement}</LiveRegion>
     </div>
   );
 }
