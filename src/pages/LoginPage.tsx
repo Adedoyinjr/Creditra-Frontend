@@ -55,6 +55,26 @@ export function LoginPage() {
     <div className="min-h-screen flex items-center justify-center  px-4">
       <div className="w-full max-w-[400px]">
         <div className="bg-[#161b22] rounded-lg shadow-md p-8">
+          {/*
+            GrantFox FWC26 campaign (Stellar Wave) responsive hero image.
+            Uses `srcSet` and `sizes` attributes so mobile devices download lower-resolution
+            variants (480w / 768w) rather than desktop-sized assets (1200w), satisfying issue #704.
+            Includes WCAG 2.1 AA compliant alt text and explicit layout dimensions.
+          */}
+          <div className="mb-6 overflow-hidden rounded-lg">
+            <img
+              src="/assets/images/stellar-wave-md.jpg"
+              srcSet="/assets/images/stellar-wave-sm.jpg 480w, /assets/images/stellar-wave-md.jpg 768w, /assets/images/stellar-wave-lg.jpg 1200w"
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 400px, 400px"
+              alt="GrantFox FWC26 Stellar Wave campaign banner"
+              width={400}
+              height={160}
+              className="w-full h-36 object-cover rounded-lg border border-gray-800"
+              loading="eager"
+              decoding="async"
+            />
+          </div>
+
           <div className="text-center mb-8">
             <h1 className="text-2xl font-bold text-white">Welcome Back</h1>
             <p className="text-gray-500 mt-2">Sign in to your account</p>
