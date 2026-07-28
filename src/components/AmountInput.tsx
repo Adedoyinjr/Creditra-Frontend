@@ -13,6 +13,7 @@ import {
   getDrawAmountValidation,
 } from "../utils/amountValidation";
 import { FormMessage } from "./FormMessage";
+import { KbdHint } from "./KbdHint";
 import { Skeleton } from "./Skeleton";
 
 const STEP_AMOUNT = 100;
@@ -273,6 +274,15 @@ export function AmountInput({
             {formatMoney(creditLine.available)}
           </span>
         </p>
+
+        <div className="flex items-center gap-3 flex-wrap">
+          <KbdHint
+            keys={["↑", "↓"]}
+            separator="/"
+            label="Adjust amount"
+            description="Use up and down arrow keys to adjust the draw amount"
+          />
+        </div>
 
         {/* Input field container polished for narrow (<=375px) mobile viewports */}
         <div
