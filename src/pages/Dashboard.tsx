@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect, useRef, useCallback } from "react";
+import { useMemo, useState, useEffect, useRef, useCallback, type CSSProperties } from "react";
 import { Link } from "react-router-dom";
 import ActivityFeed from "../components/ActivityFeed";
 import { CopyToClipboard } from "../components/CopyToClipboard";
@@ -22,6 +22,7 @@ import {
   fmtDate,
   utilizationPct,
   getUtilizationLevel,
+} from "../utils/tokens";
 import "./Dashboard.css";
 import "../styles/focus.css";
 import { Skeleton } from "../components/Skeleton";
@@ -31,6 +32,8 @@ import { useBodyScrollLock } from "../hooks/useBodyScrollLock";
 import { WhatChanged } from "../components/WhatChanged";
 import { RiskGauge } from "./RiskGauge";
 import { LiveRegion } from "../components/LiveRegion";
+import { useReducedMotion } from "../context/ReducedMotionContext";
+import { HealthTipsPanel } from "../components/HealthTipsPanel";
 import { SyncIndicator } from "@/components/SyncIndicator";
 import { ContinuePrompt } from "@/components/ContinuePrompt";
 import { DashboardTour } from "@/components/DashboardTour";
@@ -67,6 +70,20 @@ const TX_COLOR: Record<string, string> = {
 // ─── Dashboard Component ──────────────────────────────────────────────────────
 
 export function Dashboard() {
+  // ── Reduced-motion fallback (Issue #500) ─────────────────────────────────
+  // When the OS "Reduce Motion" setting is active, or the user has toggled the
+  // in-app override, we strip all entrance-animation delays from card elements
+  // so they appear instantly rather than staggering in.  The CSS already zeroes
+  // out animation-duration and transition-duration via the @media rule in
+  // Dashboard.css; this hook ensures the inline `animationDelay` style that
+  // controls the stagger order is also removed.
+  const { isReducedMotionActive } = useReducedMotion();
+
+  /** Returns an empty object when reduced motion is active, otherwise the
+   *  supplied style object.  Named after CSS's `animation-delay`. */
+  const animDelay = (style: CSSProperties): CSSProperties =>
+    isReducedMotionActive ? {} : style;
+
   const { wallet, status: walletStatus } = useWallet();
   const creditLines = MOCK_CREDIT_LINES;
 
@@ -506,7 +523,7 @@ export function Dashboard() {
 
       <div className="dashboard-grid">
         <div>
-          <div className="card" style={{ animationDelay: "0.1s" }}>
+          <div className="card" style={animDelay({ animationDelay: "0.1s" })}>
             <h2>
               <span className="icon">📊</span> Credit Summary
               {status === 'success' && (
@@ -572,7 +589,7 @@ export function Dashboard() {
           </div>
 
           {/* Risk Score */}
-          <div className="card" data-tour-target="riskGauge" style={{ animationDelay: '0.15s' }} aria-busy={status === 'loading'}>
+          <div className="card" data-tour-target="riskGauge" style={animDelay({ animationDelay: "0.15s" })} aria-busy={status === 'loading'}>
             <h2>
               <span className="icon">🛡️</span> Risk Score
               {status === 'success' && (
@@ -631,7 +648,7 @@ export function Dashboard() {
 
            <div
              className="card"
-             style={{ animationDelay: "0.2s" }}
+             style={animDelay({ animationDelay: "0.2s" })}
              aria-busy={status === 'loading'}
            >
              <h2>
@@ -898,7 +915,7 @@ export function Dashboard() {
          </div>
  
          <div>
-           <div className="card" style={{ animationDelay: "0.12s" }}>
+           <div className="card" style={animDelay({ animationDelay: "0.12s" })}>
              <h2><span className="icon">⚡</span> Quick Actions</h2>
              <div className="quick-actions-grid">
                {!hasLines && (
@@ -958,7 +975,7 @@ export function Dashboard() {
              </div>
            </div>
  
-           <div className="card" style={{ animationDelay: "0.18s" }} aria-busy={status === 'loading'}>
+           <div className="card" style={animDelay({ animationDelay: "0.18s" })} aria-busy={status === 'loading'}>
              <h2>
                <span className="icon">📝</span> Recent Activity
                {status === 'success' && (
@@ -1026,7 +1043,7 @@ export function Dashboard() {
            </div>
  
            {notifications.length > 0 && (
-             <div className="card" style={{ animationDelay: "0.22s" }}>
+             <div className="card" style={animDelay({ animationDelay: "0.22s" })}>
                <h2><span className="icon">🔔</span> Alerts</h2>
                {notifications.map((note, i) => (
                  <div 
