@@ -4,6 +4,7 @@ import ActivityFeed from "../components/ActivityFeed";
 import { CopyToClipboard } from "../components/CopyToClipboard";
 import { CopyLoanButton } from "../components/CopyLoanButton";
 import { StatusBadge } from "../components/StatusBadge";
+import { KbdHint } from "../components/KbdHint";
 import { DashboardTour } from "../components/DashboardTour";
 import { useWallet } from "../context/WalletContext";
 import { Sparkline } from "../components/Sparkline";
@@ -274,7 +275,10 @@ export function Dashboard() {
         />
         <div className="dashboard-header">
           <div>
-            <h1>Dashboard</h1>
+            <h1 style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
+              Dashboard
+              <KbdHint keys={['Cmd', 'K']} separator="+" label="Command Palette" variant="badge" />
+            </h1>
             <p className="subtitle">Your credit overview at a glance</p>
           </div>
           {isConnected && (
@@ -334,7 +338,10 @@ export function Dashboard() {
 
       <div className="dashboard-header">
         <div>
-          <h1>Dashboard</h1>
+          <h1 style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
+            Dashboard
+            <KbdHint keys={['Cmd', 'K']} separator="+" label="Command Palette" variant="badge" />
+          </h1>
           <p className="subtitle">Your credit overview at a glance</p>
         </div>
         {isConnected && (
