@@ -1,5 +1,5 @@
-import { render, screen, fireEvent } from '@testing-library/react';
-import { expect, test, vi, describe, beforeEach } from 'vitest';
+import { render, screen, fireEvent, act } from '@testing-library/react';
+import { expect, test, vi, describe, beforeEach, afterEach } from 'vitest';
 import { OnboardingFlow } from './OnboardingFlow';
 
 // Provide a clean requestAnimationFrame polyfill (jsdom doesn't ship one)
@@ -108,6 +108,49 @@ describe('OnboardingFlow', () => {
     expect(
       screen.getByRole('button', { name: 'Get started' }),
     ).toBeInTheDocument();
+  });
+
+  describe('Tooltip primitives on OnboardingFlow', () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    test('renders tooltip on hover over skip button', () => {
+      render(<OnboardingFlow {...defaultProps} />);
+      const skipBtn = screen.getByRole('button', { name: 'Skip onboarding' });
+      const wrapper = skipBtn.closest('.tooltip-wrapper')!;
+
+      fireEvent.mouseEnter(wrapper);
+      act(() => {
+        vi.advanceTimersByTime(400);
+      });
+
+      expect(screen.getByText('Skip onboarding flow')).toBeInTheDocument();
+    });
+
+    test('renders tooltip on step indicator hover', () => {
+      render(<OnboardingFlow {...defaultProps} />);
+      const indicatorBtn = screen.getByRole('button', { name: 'Step 1' });
+      const wrapper = indicatorBtn.closest('.tooltip-wrapper')!;
+
+      fireEvent.mouseEnter(wrapper);
+      act(() => {
+        vi.advanceTimersByTime(400);
+      });
+
+      expect(screen.getByText('Step 1: Welcome to Creditra')).toBeInTheDocument();
+    });
+
+    test('allows clicking step indicator to jump steps', () => {
+      render(<OnboardingFlow {...defaultProps} />);
+      const step3Indicator = screen.getByRole('button', { name: 'Step 3' });
+      fireEvent.click(step3Indicator);
+      expect(screen.getByText('Flexible Credit Lines')).toBeInTheDocument();
+    });
   });
 
   describe('reduced-motion', () => {
