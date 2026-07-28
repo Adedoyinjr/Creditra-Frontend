@@ -54,7 +54,13 @@ export function KbdHint({
   className = '',
   'aria-label': ariaLabel,
 }: KbdHintProps) {
-  const keyList = Array.isArray(keys) ? keys : [keys];
+  const isMac = typeof window !== 'undefined' && /Mac|iPod|iPhone|iPad/.test(navigator.platform);
+  const keyList = (Array.isArray(keys) ? keys : [keys]).map(key => {
+    if (key.toLowerCase() === 'cmd' || key.toLowerCase() === 'ctrl' || key.toLowerCase() === 'cmd/ctrl') {
+      return isMac ? '⌘' : 'Ctrl';
+    }
+    return key;
+  });
 
   // Bail out early for an empty key list — nothing to render
   if (keyList.length === 0) return null;
