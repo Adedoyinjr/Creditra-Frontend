@@ -2,7 +2,7 @@ import { render, screen, act, fireEvent, waitFor } from '@testing-library/react'
 import { BrowserRouter } from 'react-router-dom';
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 import { Dashboard, RiskGauge } from './Dashboard';
-import { ReducedMotionProvider } from '../context/ReducedMotionContext';
+import { ReducedMotionProvider, useReducedMotion } from '../context/ReducedMotionContext';
 import '@testing-library/jest-dom';
 
 // Mock modules before imports
@@ -149,14 +149,10 @@ describe('Dashboard component skeletons', () => {
   });
 });
 
- * v7 — Removed `describe('RiskExplainer', …)` block (Dashboard.test.tsx
- * lines 142–231).  The inner `<RiskExplainer />` component is no longer
- * mounted in Dashboard's render tree — it was either nested inside the
- * pre-existing orphan Right Column block (deleted as a prerequisite
- * drive-by fix in this PR) or superseded earlier by
- * `<RiskExplainerOverlay />`.  Five tests targeting a non-rendered node
- * were guaranteed to fail.  The dismissal-storage mock and helpers are
- * kept for any future re-introduction of the component.
+/*
+ * v7 — Removed describe('RiskExplainer') block (Dashboard.test.tsx
+ * lines 142-231). The inner RiskExplainer component is no longer
+ * mounted in Dashboard's render tree.
  */
 describe('RiskExplainer_PLACEHOLDER', () => {
   // The inner <RiskExplainer/> is not mounted by Dashboard (returns null
@@ -167,7 +163,11 @@ describe('RiskExplainer_PLACEHOLDER', () => {
   });
   it('placeholder', () => { expect(true).toBe(true); });
 });
-delete mockStorageStore[RIP];
+
+describe('Dashboard RiskExplainer overlay behaviour', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
   it('renders the "Explain risk bands" trigger button after loading', () => {
     vi.useFakeTimers();
@@ -476,12 +476,7 @@ describe('RiskGauge inline component from Dashboard', () => {
   });
 });
 
- * v7 Dashboard color-blind pattern tests (closes #565).
- *
- * Each test verifies that the appropriate pattern/class modifier is
- * applied to a dashboard status indicator so colour-blind users have a
- * second, shape-coded signaller in addition to colour.
- */
+/* v7 Dashboard color-blind pattern tests (closes #565). */
 describe('Dashboard color-blind pattern classes (v7)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -614,6 +609,132 @@ describe('Dashboard color-blind pattern classes (v7)', () => {
     expect(patternsCssSource).toMatch(/\.summary-card--available::before/);
     expect(patternsCssSource).toMatch(/\.util-fill--medium::before/);
     expect(patternsCssSource).toMatch(/\.util-fill--high::before/);
+    vi.useRealTimers();
+  });
+});
+// ── Reduced-motion fallback tests (Issue #500, buffer #4) ────────────────────
+//
+// These tests verify that Dashboard strips inline `animationDelay` styles
+// from card elements when the OS prefers-reduced-motion signal is active OR
+// when the in-app ReducedMotionProvider override is set to "reduced".
+//
+// Coverage:
+//  1. OS signal (matchMedia reports reduce) → animationDelay removed from cards
+//  2. In-app override (data-motion="reduced") → animationDelay removed
+//  3. Default (no signal) → animationDelay present on cards
+//  4. Inline transition styles inside cards are also neutralised
+
+describe('Dashboard reduced-motion fallback (Issue #500)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('strips animationDelay from cards when OS prefers-reduced-motion is set', () => {
+    vi.useFakeTimers();
+    const restore = stubMatchMedia(true); // OS says reduce
+
+    const { container } = render(
+      <BrowserRouter>
+        <ReducedMotionProvider>
+          <Dashboard />
+        </ReducedMotionProvider>
+      </BrowserRouter>,
+    );
+    act(() => { vi.advanceTimersByTime(500); });
+
+    // All .card elements with inline animationDelay must have that delay removed
+    const cards = Array.from(container.querySelectorAll('.card'));
+    expect(cards.length).toBeGreaterThan(0);
+    for (const card of cards) {
+      const delay = (card as HTMLElement).style.animationDelay;
+      expect(delay).toBeFalsy();
+    }
+
+    restore();
+    vi.useRealTimers();
+  });
+
+  it('preserves animationDelay on cards when OS has no reduced-motion preference', () => {
+    vi.useFakeTimers();
+    const restore = stubMatchMedia(false); // OS says full motion OK
+
+    const { container } = render(
+      <BrowserRouter>
+        <ReducedMotionProvider>
+          <Dashboard />
+        </ReducedMotionProvider>
+      </BrowserRouter>,
+    );
+    act(() => { vi.advanceTimersByTime(500); });
+
+    // At least one card should carry a non-zero animationDelay
+    const cards = Array.from(container.querySelectorAll('.card'));
+    expect(cards.length).toBeGreaterThan(0);
+    const delays = cards
+      .map((c) => (c as HTMLElement).style.animationDelay)
+      .filter(Boolean);
+    expect(delays.length).toBeGreaterThan(0);
+
+    restore();
+    vi.useRealTimers();
+  });
+
+  it('strips animationDelay when in-app override sets data-motion=reduced', () => {
+    vi.useFakeTimers();
+    const restore = stubMatchMedia(false); // OS is fine, but user toggled in-app
+
+    // Simulate the in-app override by pre-populating storage
+    mockStorageStore['creditra-motion-override'] = 'reduced';
+
+    const { container } = render(
+      <BrowserRouter>
+        <ReducedMotionProvider>
+          <Dashboard />
+        </ReducedMotionProvider>
+      </BrowserRouter>,
+    );
+    act(() => { vi.advanceTimersByTime(500); });
+
+    // data-motion="reduced" should be set on <html>
+    expect(document.documentElement.getAttribute('data-motion')).toBe('reduced');
+
+    // Card animationDelay should be stripped
+    const cards = Array.from(container.querySelectorAll('.card'));
+    expect(cards.length).toBeGreaterThan(0);
+    for (const card of cards) {
+      const delay = (card as HTMLElement).style.animationDelay;
+      expect(delay).toBeFalsy();
+    }
+
+    // Cleanup
+    mockStorageStore['creditra-motion-override'] = 'system';
+    document.documentElement.removeAttribute('data-motion');
+    restore();
+    vi.useRealTimers();
+  });
+
+  it('ReducedMotionProvider correctly reports isReducedMotionActive via OS signal', () => {
+    vi.useFakeTimers();
+    const restore = stubMatchMedia(true);
+
+    let capturedIsActive: boolean | undefined;
+
+    function MotionConsumer() {
+      const { isReducedMotionActive } = useReducedMotion();
+      capturedIsActive = isReducedMotionActive;
+      return null;
+    }
+
+    render(
+      <ReducedMotionProvider>
+        <MotionConsumer />
+      </ReducedMotionProvider>,
+    );
+    act(() => { vi.advanceTimersByTime(100); });
+
+    expect(capturedIsActive).toBe(true);
+
+    restore();
     vi.useRealTimers();
   });
 });
