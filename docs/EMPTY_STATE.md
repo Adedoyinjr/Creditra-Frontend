@@ -43,6 +43,7 @@ whatever foreground colour the surrounding tone sets.
 | `NoActivity`       | The user has credit lines but no transactions yet   |
 | `NoDataGraph`      | Filters narrow transactions to zero results          |
 | `NoOutstandingDebt`| The user has nothing to repay (issue #581, Repay)    |
+| `NoRiskGauge`      | No risk score data available yet (issue #694)        |
 
 Add new illustrations next to these. Keep all SVGs `currentColor`-only
 so they theme through transparent token inheritance.
@@ -58,6 +59,12 @@ so they theme through transparent token inheritance.
   `src/pages/TransactionHistory.test.tsx` still pass with the local
   styling. Migration to the shared component is a separate task.
 - **`CreditLines`** — same history; same future migration note.
+- **`Dashboard`** (`src/pages/Dashboard.tsx`) — replaces the raw dashboard
+  grid with the shared empty state when the wallet has zero credit lines
+  (`status === 'success' && !hasLines`). Uses `NoLines`, matching the
+  illustration convention used by `CreditLines` and `TransactionHistory`
+  for the same "zero credit lines" condition. The CTA links to
+  `/open-credit` (issue #561).
 
 ## Theming / a11y contract
 

@@ -50,7 +50,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 0.5rem 0 1rem;
+  padding: var(--space-2, 0.5rem) 0 var(--space-4, 1rem);
 }
 
 .risk-gauge-svg {
@@ -58,7 +58,7 @@
   max-width: 160px;
   height: auto;
   aspect-ratio: 160 / 100;
-  margin-bottom: 0.75rem;
+  margin-bottom: var(--space-3, 0.75rem);
   /*
     overflow: visible is required so that:
     a) the box-shadow focus ring is not clipped at the SVG viewport edge.
@@ -95,10 +95,21 @@
             [data-contrast="high"] override → #ffffff on #000000 = 21:1 ✓
 */
 .risk-gauge-svg:focus-visible {
+  /*
+    Use shared design tokens from focus.css for consistent focus appearance
+    across all components. The double box-shadow creates the visual equivalent
+    of outline + outline-offset.
+
+    Layer 1 (2px, --bg)          → gap between element edge and ring
+    Layer 2 (2px + 3px offset)   → the visible focus ring
+
+    Using var(--focus-ring-width) and var(--focus-ring-offset) from
+    :root in focus.css ensures consistency with other components.
+  */
   box-shadow:
-    0 0 0 2px var(--bg, #0d1117),
-    0 0 0 5px var(--focus-ring-color, var(--accent, #58a6ff));
-  border-radius: 8px;
+    0 0 0 var(--focus-ring-width, 2px) var(--bg, #0d1117),
+    0 0 0 calc(var(--focus-ring-width, 2px) + var(--focus-ring-offset, 3px)) var(--focus-ring-color, var(--accent, #58a6ff));
+  border-radius: var(--focus-ring-radius, 6px);
 }
 
 /* ── Track (background arc) ──────────────────────────────────────────────── */
@@ -229,9 +240,14 @@
     Chrome 86+, Firefox 85+, Safari 15.4+.
   For older browsers the ring gracefully degrades to invisible (no worse
   than the pre-existing state).
+
+  Uses shared design tokens from focus.css:
+    --focus-ring-color (defaults to --accent)
+    --focus-ring-width (defaults to 2px)
 */
 .risk-gauge-sector:focus-visible .risk-gauge-sector-focus-rect {
   stroke: var(--focus-ring-color, var(--accent, #58a6ff));
+  stroke-width: var(--focus-ring-width, 2px);
   /* A second, wider shadow-like stroke gives the "glow" appearance */
   filter: drop-shadow(0 0 3px var(--focus-ring-color, var(--accent, #58a6ff)));
 }
@@ -265,15 +281,18 @@
 /* ── Typography ──────────────────────────────────────────────────────────── */
 
 .risk-gauge-score {
-  font-size: 2rem;
-  font-weight: 700;
+  font-size: var(--text-5xl, 2rem);
+  font-weight: var(--font-bold, 700);
   fill: var(--text);
   text-anchor: middle;
   dominant-baseline: middle;
+  /* Tabular numerals prevent digit-width wobble as score animates */
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
 }
 
 .risk-gauge-label {
-  font-size: 0.65rem;
+  font-size: var(--text-xs, 0.75rem);
   fill: var(--muted);
   text-anchor: middle;
   text-transform: uppercase;
@@ -284,7 +303,7 @@
 
 .risk-meta {
   display: flex;
-  gap: 1.5rem;
+  gap: var(--space-6, 1.5rem);
   justify-content: center;
 }
 
@@ -294,7 +313,7 @@
 
 .risk-meta-item .rm-label {
   display: block;
-  font-size: 0.65rem;
+  font-size: var(--text-xs, 0.75rem);
   color: var(--muted);
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -303,8 +322,8 @@
 }
 
 .risk-meta-item .rm-value {
-  font-size: 0.85rem;
-  font-weight: 600;
+  font-size: var(--text-sm, 0.875rem);
+  font-weight: var(--font-semibold, 600);
   line-height: var(--lh-body, 1.6);
 }
 
@@ -313,7 +332,7 @@
 @media (max-width: 768px) {
   .risk-meta {
     flex-direction: column;
-    gap: 0.5rem;
+    gap: var(--space-2, 0.5rem);
   }
 }
 

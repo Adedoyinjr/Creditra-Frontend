@@ -60,6 +60,7 @@ const SHORTCUT_GROUPS = [
     shortcuts: [
       { keys: ['Tab'], description: 'Move between tabs, preferences, and actions' },
       { keys: ['Esc'], description: 'Close the notification center' },
+      { keys: ['Shift', 'R'], description: 'Mark all notifications as read' },
     ],
   },
 ] as const;

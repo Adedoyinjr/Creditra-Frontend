@@ -16,7 +16,9 @@ import { startOfDay, startOfMonth, startOfWeek } from "../utils/dates";
 import { COLOR, fmt, fmtDate, fmtDateTime } from "../utils/tokens";
 import "./TransactionHistory.css";
 import { NoActivity, NoDataGraph, NoLines } from "../components/illustrations";
+import { TransactionHistorySkeleton } from "../components/TransactionHistorySkeleton";
 import { LiveRegion } from "../components/LiveRegion";
+import { KbdHint } from "../components/KbdHint";
 
 /**
  * TransactionHistory Page Component
@@ -102,22 +104,38 @@ const TX_TYPE_COLORS: Record<TransactionType, string> = {
 };
 
 const STATUS_COLORS: Record<TransactionStatus, { bg: string; color: string }> =
-  {
-    Completed: { bg: "rgba(63,185,80,0.15)", color: COLOR.success },
-    Pending: { bg: "rgba(210,153,34,0.15)", color: COLOR.warning },
-    Failed: { bg: "rgba(248,81,73,0.15)", color: COLOR.danger },
-  };
+{
+  Completed: { bg: "rgba(63,185,80,0.15)", color: COLOR.success },
+  Pending: { bg: "rgba(210,153,34,0.15)", color: COLOR.warning },
+  Failed: { bg: "rgba(248,81,73,0.15)", color: COLOR.danger },
+};
+
+/**
+ * CSS pattern classes for each transaction status.
+ *
+ * These classes add a pure-CSS geometric pattern on top of the coloured
+ * background so that the three statuses are distinguishable without
+ * relying on colour alone (WCAG 2.1 SC 1.4.1 — Use of Color).
+ *
+ * The classes are defined in src/styles/patterns.css and are globally
+ * available via index.css.
+ */
+const STATUS_PATTERNS: Record<TransactionStatus, string> = {
+  Completed: "tx-status-pattern--completed",
+  Pending: "tx-status-pattern--pending",
+  Failed: "tx-status-pattern--failed",
+};
 
 const TYPE_FILTER_OPTIONS: Array<{
   value: "all" | Exclude<TransactionType, "StatusChange">;
   label: string;
 }> = [
-  { value: "all", label: "All" },
-  { value: "Draw", label: "Draw" },
-  { value: "Repay", label: "Repay" },
-  { value: "Fee", label: "Fee" },
-  { value: "Interest", label: "Interest" },
-];
+    { value: "all", label: "All" },
+    { value: "Draw", label: "Draw" },
+    { value: "Repay", label: "Repay" },
+    { value: "Fee", label: "Fee" },
+    { value: "Interest", label: "Interest" },
+  ];
 
 type TypeFilter = (typeof TYPE_FILTER_OPTIONS)[number]["value"];
 type RangePreset = "this-week" | "this-month" | "all-time" | "custom";
@@ -141,11 +159,11 @@ const AMOUNT_FILTER_OPTIONS: Array<{
   value: "all" | "lt100" | "100-1000" | "gt1000";
   label: string;
 }> = [
-  { value: "all", label: "All Amounts" },
-  { value: "lt100", label: "<$100" },
-  { value: "100-1000", label: "$100–$1,000" },
-  { value: "gt1000", label: ">$1,000" },
-];
+    { value: "all", label: "All Amounts" },
+    { value: "lt100", label: "<$100" },
+    { value: "100-1000", label: "$100–$1,000" },
+    { value: "gt1000", label: ">$1,000" },
+  ];
 
 type AmountFilter = (typeof AMOUNT_FILTER_OPTIONS)[number]["value"];
 
@@ -282,7 +300,7 @@ function TransactionRow({
         </td>
         <td className="tx-status">
           <span
-            className="tx-status-badge"
+            className={`tx-status-badge ${STATUS_PATTERNS[tx.status]}`}
             style={{
               background: STATUS_COLORS[tx.status].bg,
               color: STATUS_COLORS[tx.status].color,
@@ -405,6 +423,27 @@ export function TransactionHistory() {
   const location = useLocation();
   const navigate = useNavigate();
   const { addToast } = useNotifications();
+
+  /**
+   * First-paint loading guard.
+   *
+   * `isLoading` starts as `true` and is cleared to `false` in a
+   * zero-delay `useEffect` (runs after the first committed render).
+   * This gives the browser one frame to paint the skeleton before the
+   * full component tree is committed, preventing a flash of unstyled
+   * content on initial navigation.
+   *
+   * In a real application this flag would be wired to an async data
+   * fetch; here it simulates that pattern against the static mock data.
+   */
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    // Simulate async data resolution on first mount.
+    // Replace with the real data-fetch completion signal when the API is wired up.
+    const id = setTimeout(() => setIsLoading(false), 0);
+    return () => clearTimeout(id);
+  }, []);
 
   // ─── Filter and UI State ───
   const [selectedLine, setSelectedLine] = useState<string>("all");
@@ -1079,6 +1118,10 @@ export function TransactionHistory() {
     });
   };
 
+  if (isLoading) {
+    return <TransactionHistorySkeleton />;
+  }
+
   if (!hasLines) {
     return (
       <div className="transaction-history-page">
@@ -1500,9 +1543,32 @@ export function TransactionHistory() {
             }
           }}
         >
-          <label htmlFor={SEARCH_INPUT_ID} className="th-filter-label">
-            Search
-          </label>
+          <div className="th-search-label-row">
+            <label htmlFor={SEARCH_INPUT_ID} className="th-filter-label">
+              Search
+            </label>
+            <div
+              className="th-search-shortcuts"
+              role="group"
+              aria-label="Search keyboard shortcuts"
+            >
+              <KbdHint
+                keys={["↑", "↓"]}
+                label="Navigate"
+                description="Use Arrow Up and Arrow Down to navigate search suggestions"
+              />
+              <KbdHint
+                keys="Enter"
+                label="Select"
+                description="Press Enter to select the active search suggestion"
+              />
+              <KbdHint
+                keys="Esc"
+                label="Close"
+                description="Press Escape to close search suggestions"
+              />
+            </div>
+          </div>
           {/* combobox wrapper — positions the floating listbox */}
           <div className="th-search-combobox">
             <input
@@ -1609,7 +1675,7 @@ export function TransactionHistory() {
 
       <div className="th-table-container">
         {filteredTransactions.length === 0 ? (
-          <div 
+          <div
             className="empty-state"
             role="status"
             aria-live="polite"
@@ -1617,7 +1683,7 @@ export function TransactionHistory() {
             <NoDataGraph className="empty-state-illustration--muted" />
             <h2>No transactions found</h2>
             <p>
-              We couldn't find any transactions matching your current filters. 
+              We couldn't find any transactions matching your current filters.
               Try another transaction type, date range, or search term.
             </p>
             {hasActiveFilters && (

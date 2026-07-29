@@ -2,12 +2,9 @@ import { useState } from 'react';
 import { AutopaySchedule, type AutopayFrequency } from '../components/AutopaySchedule';
 import './AutopayPage.css';
 
-export interface AutoPayCardProps {
-  hasValidPreview: boolean;
-  parsedAmount: number;
-  frequency: AutopayFrequency;
-  startDate: string;
-  endDate?: string;
+interface AutoPayCardProps {
+  onSubmit?: (data: AutoPayData) => void;
+  onCancel?: () => void;
 }
 
 /**
@@ -126,7 +123,16 @@ export function AutoPayCard({
             schedule.
           </p>
         </div>
-      )}
+
+        <div className="autopay-card__actions">
+          <button type="button" className="btn btn-secondary" onClick={onCancel}>
+            Cancel
+          </button>
+          <button type="submit" className="btn btn-primary">
+            Set Up AutoPay
+          </button>
+        </div>
+      </form>
     </div>
   );
-}
+};
