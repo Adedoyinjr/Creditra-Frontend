@@ -99,8 +99,6 @@ export default function RepayPage() {
   // validation feedback.  The LiveRegion component renders this via
   // aria-live="polite" so screen readers pick it up without focus moves.
   const [srAnnouncement, setSrAnnouncement] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
-  const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
   const helpTriggerRef = useRef<HTMLButtonElement>(null);
   const previewTriggerRef = useRef<HTMLButtonElement>(null);
   const { isReducedMotionActive } = useReducedMotion();
@@ -387,7 +385,7 @@ export default function RepayPage() {
               : 'Make a repayment'}
           </h1>
           <p className="text-sm text-muted">
-            {selectedLine.name} &middot; {selectedLine.apr}% APR
+            {selectedLine.name} &middot; <span className="num-tabular">{selectedLine.apr}%</span> APR
           </p>
         </header>
 
@@ -484,7 +482,7 @@ export default function RepayPage() {
                       min={1}
                       step={0.01}
                       aria-invalid={validation?.feedback.severity === 'danger' || undefined}
-                      className={`rp-amount-input w-full rounded-lg border bg-background px-3 py-3 pl-8 text-lg font-semibold text-foreground outline-none focus:ring-2 focus:ring-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${motionClasses(isReducedMotionActive, 'transition-colors')}`}
+                      className={`rp-amount-input num-tabular w-full rounded-lg border bg-background px-3 py-3 pl-8 text-lg font-semibold text-foreground outline-none focus:ring-2 focus:ring-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${motionClasses(isReducedMotionActive, 'transition-colors')}`}
                       style={{
                         // Task tokens-v7: token-referenced colors only — no raw hex.
                         borderColor:
