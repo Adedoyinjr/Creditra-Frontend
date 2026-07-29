@@ -36,6 +36,7 @@ import { NetworkMismatchBanner } from "./components/notifications/NetworkMismatc
 import { Header } from "./layouts/Header";
 import CreditLineCompare from "./pages/CreditLineCompare";
 import { TermsBanner } from "./components/TermsBanner";
+import CollateralSwap from "./pages/CollateralSwap";
 
 const isEditableTarget = (target: EventTarget | null) => {
   if (!(target instanceof HTMLElement)) return false;
@@ -250,6 +251,9 @@ function App() {
                             the "Repay" action on Credit Lines). */}
                         <Route path="/repay" element={<RepayPage />} />
                         <Route path="/repay/calendar" element={<RepayCalendar />} />
+                        {/* Issue #834: CollateralSwap — swap one collateral asset for
+                            another within an existing credit line. */}
+                        <Route path="/collateral-swap" element={<CollateralSwap />} />
                         <Route path="*" element={<NotFound />} />
                       </Routes>
                     </main>
