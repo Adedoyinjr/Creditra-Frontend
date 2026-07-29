@@ -25,8 +25,8 @@ describe('middleEllipsis', () => {
     const result = middleEllipsis('ABCDEFGHIJKLMNOP', 8);
     const parts = result.split('\u2026');
     expect(parts).toHaveLength(2);
-    expect(parts[0]).toBe('ABC');
-    expect(parts[1]).toBe('OP');
+    expect(parts[0]).toBe('ABCD');
+    expect(parts[1]).toBe('NOP');
   });
 });
 

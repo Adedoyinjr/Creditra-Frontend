@@ -59,7 +59,7 @@ export default function RepayCalendar() {
 
   return (
     <div className="repay-calendar mx-auto max-w-4xl space-y-6 px-4 py-6 sm:py-8">
-      <Breadcrumb items={breadcrumbItems} />
+      <Breadcrumb items={breadcrumbItems} ellipsisThreshold={36} />
 
       <button
         type="button"
