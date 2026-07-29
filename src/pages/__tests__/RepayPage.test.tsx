@@ -141,6 +141,17 @@ describe('RepayPage', () => {
     expect(reviewBtn).not.toBeDisabled();
   });
 
+  it('Preview Consequences Modal button is rendered and enabled when amount is set', () => {
+    renderPage(['/repay?line=CL-2024-001']);
+    const previewBtn = screen.getByRole('button', { name: /preview consequences modal/i });
+    expect(previewBtn).toBeInTheDocument();
+    expect(previewBtn).toBeDisabled();
+
+    // Click Smart Pay to fill the amount, which should enable the preview button
+    fireEvent.click(screen.getByRole('button', { name: /smart pay/i }));
+    expect(previewBtn).not.toBeDisabled();
+  });
+
   describe('Focus-visible outline accessibility', () => {
     it('applies focus-visible classes on selection view back button and credit line options', () => {
       renderPage(['/repay']);

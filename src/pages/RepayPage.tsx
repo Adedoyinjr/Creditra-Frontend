@@ -97,6 +97,8 @@ export default function RepayPage() {
   // validation feedback.  The LiveRegion component renders this via
   // aria-live="polite" so screen readers pick it up without focus moves.
   const [srAnnouncement, setSrAnnouncement] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
+  const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
   const helpTriggerRef = useRef<HTMLButtonElement>(null);
   const previewTriggerRef = useRef<HTMLButtonElement>(null);
   const { isReducedMotionActive } = useReducedMotion();
