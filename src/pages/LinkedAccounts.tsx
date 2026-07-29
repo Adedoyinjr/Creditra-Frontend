@@ -292,6 +292,30 @@ export function LinkedAccounts() {
     }
   };
 
+  const handleDisconnectAll = async () => {
+    const connectedAccounts = accounts.filter(acc => acc.status === 'connected');
+    if (connectedAccounts.length === 0) return;
+
+    const confirmed = window.confirm(
+      'Are you sure you want to disconnect all your accounts? You can reconnect them later.'
+    );
+    if (!confirmed) return;
+
+    try {
+      setActionLoading(true);
+      setError(null);
+      
+      await Promise.all(connectedAccounts.map(acc => disconnectAccount(acc.id)));
+      showSuccessMessage('All accounts disconnected successfully');
+      await loadAccounts();
+    } catch (err) {
+      setError('Failed to disconnect some accounts. Please try again.');
+      console.error('Disconnect all error:', err);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   const connectedCount = useMemo(
     () => accounts.filter((a) => a.status === 'connected').length,
     [accounts],
@@ -447,6 +471,17 @@ export function LinkedAccounts() {
               <LinkIcon className="icon-sm" aria-hidden="true" />
               <span className="sticky-action-bar__label">Connect</span>
             </PendingButton>
+            {connectedCount > 0 && (
+              <button
+                onClick={handleDisconnectAll}
+                disabled={actionLoading}
+                className="btn-danger btn-sm"
+                aria-label="Disconnect all accounts from toolbar"
+              >
+                <Unlink className="icon-sm" aria-hidden="true" />
+                <span className="sticky-action-bar__label">Disconnect All</span>
+              </button>
+            )}
           </div>
         </div>
       </div>
