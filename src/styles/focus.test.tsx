@@ -247,3 +247,77 @@ describe('DrawCreditPage — focus-visible rules (FWC26 / issue #592)', () => {
   });
 });
 
+// ── RepayPage integration tests ──────────────────────────────────────────
+
+describe('RepayPage — focus-visible rules (FWC26 / issue #512)', () => {
+  const cssPath = resolve(__dirname, '../styles/focus.css');
+  const css = readFileSync(cssPath, 'utf-8');
+
+  it('defines RepayPage-scoped back button focus rule', () => {
+    expect(css).toContain('.repay-page .rp-back-btn:focus-visible');
+  });
+
+  it('defines RepayPage-scoped credit line card focus rule', () => {
+    expect(css).toContain('.repay-page .rp-cl-card:focus-visible');
+  });
+
+  it('defines RepayPage-scoped preset button focus rule', () => {
+    expect(css).toContain('.repay-page .rp-preset-btn:focus-visible');
+  });
+
+  it('defines RepayPage-scoped Smart Pay button focus rule', () => {
+    expect(css).toContain('.repay-page .rp-smart-pay-btn:focus-visible');
+  });
+
+  it('defines RepayPage-scoped amount input focus rule', () => {
+    expect(css).toContain('.repay-page .rp-amount-input:focus-visible');
+  });
+
+  it('defines RepayPage-scoped review button focus rule', () => {
+    expect(css).toContain('.repay-page .rp-review-btn:focus-visible');
+  });
+
+  it('defines RepayPage-scoped preview button focus rule', () => {
+    expect(css).toContain('.repay-page .rp-preview-btn:focus-visible');
+  });
+
+  it('defines RepayPage-scoped toggle switch focus rule', () => {
+    expect(css).toContain('.repay-page .rp-toggle-switch:focus-visible');
+  });
+
+  it('defines RepayPage-scoped help button focus rule', () => {
+    expect(css).toContain('.repay-page .rp-help-btn:focus-visible');
+  });
+
+  it('defines RepayPage-scoped cancel button focus rule', () => {
+    expect(css).toContain('.repay-page .rp-cancel-btn:focus-visible');
+  });
+
+  it('defines RepayPage-scoped confirm button focus rule', () => {
+    expect(css).toContain('.repay-page .rp-confirm-btn:focus-visible');
+  });
+
+  it('defines RepayPage-scoped back-input button focus rule', () => {
+    expect(css).toContain('.repay-page .rp-back-input-btn:focus-visible');
+  });
+
+  it('defines RepayPage-scoped dashboard button focus rule', () => {
+    expect(css).toContain('.repay-page .rp-dashboard-btn:focus-visible');
+  });
+
+  it('defines RepayPage-scoped new-repay button focus rule', () => {
+    expect(css).toContain('.repay-page .rp-new-repay-btn:focus-visible');
+  });
+
+  it('uses shared focus-ring tokens in RepayPage rules', () => {
+    const repayBlockStart = css.indexOf('RepayPage interactive elements');
+    expect(repayBlockStart).toBeGreaterThan(-1);
+    const repayBlock = css.slice(repayBlockStart);
+    expect(repayBlock).toContain('--focus-ring-width');
+    expect(repayBlock).toContain('--focus-ring-color');
+    expect(repayBlock).toContain('--focus-ring-offset');
+    // Verify it uses !important like DrawCreditPage rules
+    expect(repayBlock).toContain('!important');
+  });
+});
+
