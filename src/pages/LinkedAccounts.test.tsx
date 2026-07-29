@@ -543,5 +543,54 @@ describe('LinkedAccounts', () => {
 
       expect(linkedAccountsService.initiateLinkAccount).toHaveBeenCalledWith({ provider: 'google' });
     });
+
+    it('has disconnect all button when accounts are linked', async () => {
+      vi.mocked(linkedAccountsService.fetchLinkedAccounts).mockResolvedValue(mockAccounts);
+
+      render(<LinkedAccounts />);
+
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /disconnect all accounts from toolbar/i })).toBeInTheDocument();
+      });
+    });
+
+    it('calls disconnectAccount for all connected accounts when disconnect all is confirmed', async () => {
+      const user = userEvent.setup();
+      const multiAccounts: LinkedAccount[] = [
+        ...mockAccounts,
+        {
+          id: 'github-456',
+          provider: 'github',
+          status: 'connected',
+          displayName: 'Test User',
+          externalId: 'test@github.com',
+          connectedAt: '2026-01-01T00:00:00Z',
+          lastVerified: '2026-06-28T00:00:00Z',
+        }
+      ];
+      
+      vi.mocked(linkedAccountsService.fetchLinkedAccounts)
+        .mockResolvedValueOnce(multiAccounts)
+        .mockResolvedValueOnce([]);
+      vi.mocked(linkedAccountsService.disconnectAccount).mockResolvedValue();
+
+      const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
+
+      render(<LinkedAccounts />);
+
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /disconnect all accounts from toolbar/i })).toBeInTheDocument();
+      });
+
+      await user.click(screen.getByRole('button', { name: /disconnect all accounts from toolbar/i }));
+
+      expect(confirmSpy).toHaveBeenCalled();
+      await waitFor(() => {
+        expect(linkedAccountsService.disconnectAccount).toHaveBeenCalledWith('google-123');
+        expect(linkedAccountsService.disconnectAccount).toHaveBeenCalledWith('github-456');
+      });
+
+      confirmSpy.mockRestore();
+    });
   });
 });
