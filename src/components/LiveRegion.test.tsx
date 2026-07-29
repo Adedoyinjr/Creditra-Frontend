@@ -22,20 +22,17 @@ describe('LiveRegion', () => {
     expect(screen.getByRole('status')).toHaveTextContent('Updated message');
   });
 
-  it('does not clear the announcement when message is set to null or empty', () => {
+  it('clears the announcement when message is set to an empty string', () => {
     const { rerender } = render(<LiveRegion message="Persistent message" />);
     expect(screen.getByRole('status')).toHaveTextContent('Persistent message');
 
     rerender(<LiveRegion message="" />);
-    // The previous message should persist to give screen readers time to announce it.
-    expect(screen.getByRole('status')).toHaveTextContent('Persistent message');
-
-    rerender(<LiveRegion message={null} />);
-    expect(screen.getByRole('status')).toHaveTextContent('Persistent message');
+    // Empty string clears the region so stale content is not re-announced.
+    expect(screen.getByRole('status')).toHaveTextContent('');
   });
 
-  it('allows overriding className and aria-live', () => {
-    render(<LiveRegion message="Test" className="custom-class" aria-live="assertive" />);
+  it('allows overriding className and politeness', () => {
+    render(<LiveRegion message="Test" className="custom-class" politeness="assertive" />);
     const region = screen.getByRole('status');
     
     expect(region).toHaveClass('custom-class');
