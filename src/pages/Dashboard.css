@@ -233,6 +233,14 @@
     height: auto;
     aspect-ratio: 160 / 100;
     margin-bottom: var(--space-3);
+    /* Required for focus ring to not be clipped */
+    overflow: visible;
+    /* Remove default browser outline - we use box-shadow for focus */
+    outline: none;
+    /* Smooth transition for focus ring appearance */
+    transition: box-shadow 0.15s ease;
+    /* Default cursor for keyboard navigation */
+    cursor: default;
 }
 
 .risk-gauge-bg {

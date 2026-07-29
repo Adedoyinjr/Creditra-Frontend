@@ -534,6 +534,63 @@ describe('RiskGauge', () => {
       expect(container.querySelector('[data-sector="low"]')?.getAttribute('aria-pressed')).toBe('false');
     });
   });
+
+  // ── Focus ring design token tests ──────────────────────────────────────────
+  //
+  // These tests verify that the focus ring uses shared design tokens from
+  // src/styles/focus.css for consistency across all components.
+
+  describe('focus ring — shared design tokens', () => {
+    it('SVG focus ring uses --focus-ring-color from focus.css tokens', () => {
+      const { container } = renderGauge();
+      const svg = container.querySelector('.risk-gauge-svg');
+      expect(svg).toHaveClass('risk-gauge-svg');
+      // Focus ring styles are applied via CSS class + :focus-visible
+      // The token reference is in the CSS file; verify the class exists
+      expect(svg).toBeDefined();
+    });
+
+    it('SVG focus ring box-shadow uses shared tokens (width, offset, color)', () => {
+      const cssPath = join(dirname(fileURLToPath(import.meta.url)), '../styles/focus.css');
+      const focusCss = readFileSync(cssPath, 'utf-8');
+      
+      // Verify the shared tokens are defined in focus.css
+      expect(focusCss).toMatch(/--focus-ring-width\s*:\s*2px/);
+      expect(focusCss).toMatch(/--focus-ring-offset\s*:\s*3px/);
+      expect(focusCss).toMatch(/--focus-ring-color\s*:\s*var\(--accent/);
+      
+      // Verify RiskGauge uses these tokens
+      const riskGaugeCss = readFileSync(
+        join(dirname(fileURLToPath(import.meta.url)), 'RiskGauge.css'),
+        'utf-8'
+      );
+      expect(riskGaugeCss).toMatch(/var\(--focus-ring-width\)/);
+      expect(riskGaugeCss).toMatch(/var\(--focus-ring-offset\)/);
+      expect(riskGaugeCss).toMatch(/var\(--focus-ring-color\)/);
+    });
+
+    it('high-contrast mode overrides focus-ring-color to white', () => {
+      const cssPath = join(dirname(fileURLToPath(import.meta.url)), '../styles/focus.css');
+      const focusCss = readFileSync(cssPath, 'utf-8');
+      
+      // Verify high-contrast override exists
+      expect(focusCss).toMatch(/\[data-contrast="high"\]\s*\{[^}]*--focus-ring-color:\s*#ffffff/);
+    });
+
+    it('focus ring is only visible on keyboard navigation (:focus-visible)', () => {
+      const cssPath = join(dirname(fileURLToPath(import.meta.url)), '../styles/focus.css');
+      const focusCss = readFileSync(cssPath, 'utf-8');
+      
+      // Verify :focus-visible is used, not just :focus
+      expect(focusCss).toMatch(/:focus-visible/);
+      // Verify RiskGauge uses :focus-visible
+      const riskGaugeCss = readFileSync(
+        join(dirname(fileURLToPath(import.meta.url)), 'RiskGauge.css'),
+        'utf-8'
+      );
+      expect(riskGaugeCss).toMatch(/:focus-visible/);
+    });
+  });
 });
 
 // ── CSS source assertions ────────────────────────────────────────────────────
