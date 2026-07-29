@@ -288,3 +288,76 @@
 .dc-page .dc-terms-label__checkbox:focus-visible {
   border-radius: var(--radius-sm, 4px);
 }
+
+/* ── RepayPage interactive elements ──────────────────────────────────────── */
+/*
+  GrantFox FWC26 (Stellar Wave) — "Visible focus outline on keyboard-only
+  nav for RepayPage" requirement (issue #512).
+
+  Every interactive element on RepayPage that is reachable via Tab must
+  show a visible focus ring on keyboard navigation (:focus-visible).
+
+  Scoped under `.repay-page` so rings only apply inside the repay flow.
+  Selectors cover:
+
+    .rp-back-btn              — All back-navigation buttons
+    .rp-cl-card               — Credit line selection cards
+    .rp-preset-btn            — Percentage preset buttons (25%, 50%, 75%, MAX)
+    .rp-smart-pay-btn         — Smart Pay suggested-amount button
+    .rp-amount-input          — Amount input field
+    .rp-review-btn            — "Review Repayment" primary action
+    .rp-preview-btn           — "Preview Consequences Modal" secondary action
+    .rp-toggle-switch         — Auto-schedule toggle switch
+    .rp-help-btn              — "I need help" text button
+    .rp-cancel-btn            — Cancel text button
+    .rp-confirm-btn           — "Confirm Repayment" in review step
+    .rp-back-input-btn        — "Back to input" button in review step
+    .rp-dashboard-btn         — "Back to Dashboard" in success step
+    .rp-new-repay-btn         — "Make another repayment" in success step
+
+  All rules use :focus-visible so mouse/touch interactions are unaffected.
+  All colours reference design tokens so they respond to [data-contrast="high"].
+*/
+
+.repay-page .rp-back-btn:focus-visible,
+.repay-page .rp-cl-card:focus-visible,
+.repay-page .rp-preset-btn:focus-visible,
+.repay-page .rp-smart-pay-btn:focus-visible,
+.repay-page .rp-amount-input:focus-visible,
+.repay-page .rp-review-btn:focus-visible,
+.repay-page .rp-preview-btn:focus-visible,
+.repay-page .rp-toggle-switch:focus-visible,
+.repay-page .rp-help-btn:focus-visible,
+.repay-page .rp-cancel-btn:focus-visible,
+.repay-page .rp-confirm-btn:focus-visible,
+.repay-page .rp-back-input-btn:focus-visible,
+.repay-page .rp-dashboard-btn:focus-visible,
+.repay-page .rp-new-repay-btn:focus-visible {
+  outline: var(--focus-ring-width, 2px) solid
+    var(--focus-ring-color, var(--accent, #58a6ff)) !important;
+  outline-offset: var(--focus-ring-offset, 3px) !important;
+  box-shadow: none !important;
+}
+
+.repay-page .rp-back-btn:focus-visible,
+.repay-page .rp-cl-card:focus-visible,
+.repay-page .rp-preset-btn:focus-visible,
+.repay-page .rp-smart-pay-btn:focus-visible,
+.repay-page .rp-review-btn:focus-visible,
+.repay-page .rp-preview-btn:focus-visible,
+.repay-page .rp-confirm-btn:focus-visible,
+.repay-page .rp-back-input-btn:focus-visible,
+.repay-page .rp-dashboard-btn:focus-visible,
+.repay-page .rp-new-repay-btn:focus-visible {
+  border-radius: var(--radius-lg, 12px);
+}
+
+.repay-page .rp-amount-input:focus-visible,
+.repay-page .rp-toggle-switch:focus-visible {
+  border-radius: var(--radius-md, 8px);
+}
+
+.repay-page .rp-help-btn:focus-visible,
+.repay-page .rp-cancel-btn:focus-visible {
+  border-radius: var(--radius-sm, 4px);
+}
