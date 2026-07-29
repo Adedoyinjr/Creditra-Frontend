@@ -1,58 +1,69 @@
-import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
+import { describe, it, expect, vi } from 'vitest';
 import { AmountConfirm } from './AmountConfirm';
 
-describe('AmountConfirm Page', () => {
-  it('renders confirmation title, formatted amount, and breakdown sections', () => {
-    render(<AmountConfirm amount={5000} creditLineName="Test Line #1" />);
-
-    expect(screen.getByText('Confirm Repayment Amount')).toBeInTheDocument();
-    expect(screen.getByText(/Test Line #1/i)).toBeInTheDocument();
-    expect(screen.getByText('$5,000.00')).toBeInTheDocument();
-    expect(screen.getByText('Repayment Breakdown & Fees')).toBeInTheDocument();
-    expect(screen.getByText('Payment Schedule & Policy')).toBeInTheDocument();
+describe('AmountConfirm', () => {
+  it('renders the formatted amount and instruction', () => {
+    render(<AmountConfirm amount={5000} onConfirm={vi.fn()} />);
+    expect(screen.getByText('$5,000')).toBeInTheDocument();
+    expect(
+      screen.getByText((content, element) => {
+        return (
+          element?.tagName.toLowerCase() === 'p' &&
+          element?.textContent?.includes('Type $5,000 to confirm this action.')
+        );
+      }),
+    ).toBeInTheDocument();
   });
 
-  it('triggers window.print when Print Statement button is clicked', () => {
-    const printSpy = vi.spyOn(window, 'print').mockImplementation(() => {});
-    render(<AmountConfirm amount={2500} />);
-
-    const printBtn = screen.getByRole('button', { name: /print statement/i });
-    fireEvent.click(printBtn);
-
-    expect(printSpy).toHaveBeenCalledTimes(1);
-    printSpy.mockRestore();
+  it('marks confirm button aria-disabled when input does not match', () => {
+    render(<AmountConfirm amount={5000} onConfirm={vi.fn()} />);
+    const btn = screen.getByRole('button', { name: 'Confirm' });
+    expect(btn).toHaveAttribute('aria-disabled', 'true');
   });
 
-  it('disables confirmation button until exact amount typed for large repayments', () => {
-    const onConfirmMock = vi.fn();
-    render(<AmountConfirm amount={5000} onConfirm={onConfirmMock} />);
-
-    const confirmBtn = screen.getByRole('button', { name: /confirm repayment/i });
-    expect(confirmBtn).toBeDisabled();
-
-    const input = screen.getByRole('textbox', { name: /type the repayment amount to confirm/i });
+  it('enables confirm button when input matches the amount', () => {
+    render(<AmountConfirm amount={5000} onConfirm={vi.fn()} />);
+    const input = screen.getByLabelText(/Type the amount to confirm/i);
     fireEvent.change(input, { target: { value: '5000' } });
-
-    expect(confirmBtn).not.toBeDisabled();
-    fireEvent.click(confirmBtn);
-
-    expect(onConfirmMock).toHaveBeenCalledTimes(1);
-    expect(screen.getByRole('status')).toHaveTextContent(/confirmed successfully/i);
+    const btn = screen.getByRole('button', { name: 'Confirm' });
+    expect(btn).toHaveAttribute('aria-disabled', 'false');
   });
 
-  it('invokes onCancel when Back or Cancel button is clicked', () => {
-    const onCancelMock = vi.fn();
-    render(<AmountConfirm amount={1000} onCancel={onCancelMock} />);
+  it('calls onConfirm when the form is submitted with matching input', () => {
+    const onConfirm = vi.fn();
+    render(<AmountConfirm amount={100} onConfirm={onConfirm} />);
+    const input = screen.getByLabelText(/Type the amount to confirm/i);
+    fireEvent.change(input, { target: { value: '100' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Confirm' }));
+    expect(onConfirm).toHaveBeenCalledTimes(1);
+  });
 
-    const backBtn = screen.getByRole('button', { name: /go back to previous screen/i });
-    fireEvent.click(backBtn);
+  it('shows error when submitted with non-matching input', () => {
+    const onConfirm = vi.fn();
+    render(<AmountConfirm amount={100} onConfirm={onConfirm} />);
+    const input = screen.getByLabelText(/Type the amount to confirm/i);
+    fireEvent.change(input, { target: { value: '99' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Confirm' }));
+    expect(screen.getByRole('alert')).toBeInTheDocument();
+    expect(onConfirm).not.toHaveBeenCalled();
+  });
 
-    expect(onCancelMock).toHaveBeenCalledTimes(1);
-
-    const cancelBtn = screen.getByRole('button', { name: /^cancel$/i });
+  it('renders cancel button when onCancel is provided', () => {
+    const onCancel = vi.fn();
+    render(
+      <AmountConfirm amount={5000} onConfirm={vi.fn()} onCancel={onCancel} />,
+    );
+    const cancelBtn = screen.getByRole('button', { name: 'Cancel' });
+    expect(cancelBtn).toBeInTheDocument();
     fireEvent.click(cancelBtn);
+    expect(onCancel).toHaveBeenCalledTimes(1);
+  });
 
-    expect(onCancelMock).toHaveBeenCalledTimes(2);
+  it('uses custom confirm label', () => {
+    render(
+      <AmountConfirm amount={5000} onConfirm={vi.fn()} confirmLabel="Approve" />,
+    );
+    expect(screen.getByRole('button', { name: 'Approve' })).toBeInTheDocument();
   });
 });

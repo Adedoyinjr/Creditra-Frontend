@@ -1,72 +1,63 @@
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect } from 'vitest';
-import React from 'react';
 import { PreviewCard } from './PreviewCard';
 
 describe('PreviewCard', () => {
-  it('renders payment installment number, date, and formatted amount', () => {
+  it('renders the trigger children', () => {
     render(
-      <PreviewCard
-        paymentNumber={1}
-        date="2026-08-15"
-        amount={250}
-        frequency="Monthly"
-        status="Upcoming"
-        id="test-preview-1"
-      />
+      <PreviewCard preview={<span>Preview content</span>}>
+        <button>Hover me</button>
+      </PreviewCard>,
     );
-
-    expect(screen.getByText('Payment #1')).toBeInTheDocument();
-    expect(screen.getByText(/Aug 15, 2026/i)).toBeInTheDocument();
-    expect(screen.getByText('$250')).toBeInTheDocument();
-    expect(screen.getByText('Upcoming')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Hover me' })).toBeInTheDocument();
   });
 
-  it('renders estimated principal and fee breakdown correctly', () => {
+  it('renders the preview content', () => {
     render(
-      <PreviewCard
-        paymentNumber={2}
-        date="2026-09-15"
-        amount={100}
-        principalAmount={90}
-        feeAmount={10}
-      />
+      <PreviewCard preview={<span>Preview content</span>}>
+        <button>Hover me</button>
+      </PreviewCard>,
     );
-
-    expect(screen.getByText('Principal portion')).toBeInTheDocument();
-    expect(screen.getByText('$90')).toBeInTheDocument();
-    expect(screen.getByText('Est. fees / interest')).toBeInTheDocument();
-    expect(screen.getByText('$10')).toBeInTheDocument();
+    expect(screen.getByText('Preview content')).toBeInTheDocument();
   });
 
-  it('renders cumulative total when totalAccumulated prop is provided', () => {
+  it('has region role with aria-live="polite" on the preview', () => {
     render(
-      <PreviewCard
-        paymentNumber={3}
-        date="2026-10-15"
-        amount={100}
-        totalAccumulated={300}
-        isOpenEnded={true}
-      />
+      <PreviewCard preview={<span>Content</span>}>
+        <button>Trigger</button>
+      </PreviewCard>,
     );
-
-    expect(screen.getByText(/Cumulative total\*/i)).toBeInTheDocument();
-    expect(screen.getByText('$300')).toBeInTheDocument();
+    const region = screen.getByRole('region', { hidden: true });
+    expect(region).toHaveAttribute('aria-live', 'polite');
   });
 
-  it('carries role="tooltip" and accessible labels', () => {
+  it('uses aria-label passed via prop', () => {
     render(
-      <PreviewCard
-        paymentNumber={4}
-        date="2026-11-15"
-        amount={150}
-        id="preview-tooltip-4"
-      />
+      <PreviewCard preview={<span>Content</span>} ariaLabel="Schedule preview">
+        <button>Trigger</button>
+      </PreviewCard>,
     );
+    const region = screen.getByRole('region', { hidden: true });
+    expect(region).toHaveAttribute('aria-label', 'Schedule preview');
+  });
 
-    const tooltip = screen.getByRole('tooltip');
-    expect(tooltip).toBeInTheDocument();
-    expect(tooltip).toHaveAttribute('id', 'preview-tooltip-4');
-    expect(tooltip).toHaveAttribute('aria-label', 'Preview card for payment #4');
+  it('uses default aria-label when not provided', () => {
+    render(
+      <PreviewCard preview={<span>Content</span>}>
+        <button>Trigger</button>
+      </PreviewCard>,
+    );
+    const region = screen.getByRole('region', { hidden: true });
+    expect(region).toHaveAttribute('aria-label', 'Preview');
+  });
+
+  it('applies custom class name', () => {
+    const { container } = render(
+      <PreviewCard preview={<span>Content</span>} className="custom-class">
+        <button>Trigger</button>
+      </PreviewCard>,
+    );
+    const root = container.querySelector('.preview-card');
+    expect(root).toHaveClass('custom-class');
   });
 });
