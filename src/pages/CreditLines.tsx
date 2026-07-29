@@ -212,14 +212,14 @@ function CreditLineCard({
         <div className="cl-metrics" role="group" aria-label="Credit line metrics">
            <div className="cl-metric">
             <span className="cl-metric-label">Limit</span>
-            <span className="cl-metric-value tabular-nums" style={{ color: COLOR.accent }}>
+            <span className="cl-metric-value tabular-nums amount cl-amount" style={{ color: COLOR.accent }}>
               {fmt(line.limit)}
             </span>
           </div>
           <div className="cl-metric">
             <span className="cl-metric-label">Utilized</span>
             <span
-              className="cl-metric-value tabular-nums"
+              className="cl-metric-value tabular-nums amount cl-amount"
               style={{ color: UTIL_COLOR[level] }}
             >
               {fmt(line.utilized)}
@@ -227,7 +227,7 @@ function CreditLineCard({
           </div>
           <div className="cl-metric">
             <span className="cl-metric-label">Available</span>
-            <span className="cl-metric-value tabular-nums" style={{ color: COLOR.success }}>
+            <span className="cl-metric-value tabular-nums amount cl-amount" style={{ color: COLOR.success }}>
               {fmt(line.limit - line.utilized)}
             </span>
           </div>
@@ -236,7 +236,7 @@ function CreditLineCard({
         <div className="cl-util-bar">
           <div className="cl-util-header">
             <span>Utilization</span>
-            <span className="tabular-nums" style={{ color: UTIL_COLOR[level] }}>{pct}%</span>
+            <span className="tabular-nums amount cl-amount" style={{ color: UTIL_COLOR[level] }}>{pct}%</span>
           </div>
           <div className="cl-util-track">
             <div
@@ -249,11 +249,11 @@ function CreditLineCard({
         <div className="cl-details" role="group" aria-label="Credit line details">
           <div className="cl-detail">
             <span className="label">APR</span>
-            <span className="value tabular-nums">{line.apr}%</span>
+            <span className="value tabular-nums amount cl-amount">{line.apr}%</span>
           </div>
           <div className="cl-detail">
             <span className="label">Risk Score</span>
-            <span className="value tabular-nums">{line.riskScore}</span>
+            <span className="value tabular-nums amount cl-amount">{line.riskScore}</span>
           </div>
           <div className="cl-detail">
             <span className="label">Opened</span>
