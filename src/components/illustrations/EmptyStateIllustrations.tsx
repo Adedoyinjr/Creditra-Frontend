@@ -106,19 +106,28 @@ export function NoRiskGauge(props: IllustrationProps) {
       <svg viewBox="0 0 180 140" fill="none" focusable="false">
         {/* background card */}
         <rect x="16" y="16" width="148" height="108" rx="18" stroke="currentColor" strokeWidth="2" opacity="0.20" />
-        {/* dashed semicircular gauge arc */}
+        {/* inner gauge surface hint — adds depth to the card */}
+        <path d="M 36 92 A 54 54 0 0 1 144 92" stroke="currentColor" strokeWidth="1" opacity="0.08" />
+        {/* dashed semicircular gauge arc (outer track) */}
         <path
           d="M 42 92 A 48 48 0 0 1 138 92"
           stroke="currentColor"
           strokeWidth="4"
           strokeLinecap="round"
           strokeDasharray="6 6"
-          opacity="0.50"
+          opacity="0.45"
         />
+        {/* inner solid track — subtle concentric depth */}
+        <path d="M 48 92 A 42 42 0 0 1 132 92" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" opacity="0.15" />
         {/* tick marks along the arc */}
-        <path d="M 58 78 L 62 74" stroke="currentColor" strokeWidth="2" strokeLinecap="round" opacity="0.28" />
-        <path d="M 90 68 L 90 64" stroke="currentColor" strokeWidth="2" strokeLinecap="round" opacity="0.28" />
-        <path d="M 122 78 L 118 74" stroke="currentColor" strokeWidth="2" strokeLinecap="round" opacity="0.28" />
+        <path d="M 52 78 L 56 74" stroke="currentColor" strokeWidth="2" strokeLinecap="round" opacity="0.30" />
+        <path d="M 72 66 L 76 62" stroke="currentColor" strokeWidth="2" strokeLinecap="round" opacity="0.30" />
+        <path d="M 90 60 L 90 56" stroke="currentColor" strokeWidth="2" strokeLinecap="round" opacity="0.30" />
+        <path d="M 108 66 L 104 62" stroke="currentColor" strokeWidth="2" strokeLinecap="round" opacity="0.30" />
+        <path d="M 128 78 L 124 74" stroke="currentColor" strokeWidth="2" strokeLinecap="round" opacity="0.30" />
+        {/* gauge needle resting at zero — reinforces "awaiting data" */}
+        <line x1="90" y1="92" x2="50" y2="80" stroke="currentColor" strokeWidth="2" strokeLinecap="round" opacity="0.35" />
+        <circle cx="90" cy="92" r="3.5" stroke="currentColor" strokeWidth="1.5" opacity="0.35" />
         {/* "?" mark in the centre — communicates "no data yet" */}
         <text
           x="90"
@@ -126,7 +135,7 @@ export function NoRiskGauge(props: IllustrationProps) {
           textAnchor="middle"
           dominantBaseline="central"
           fontFamily="system-ui, -apple-system, sans-serif"
-          fontSize="32"
+          fontSize="14"
           fontWeight="700"
           fill="currentColor"
           opacity="0.28"

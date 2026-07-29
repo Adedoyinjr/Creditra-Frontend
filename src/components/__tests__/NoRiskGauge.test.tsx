@@ -34,10 +34,42 @@ describe('NoRiskGauge illustration', () => {
     expect(dashedArc).toBeInTheDocument();
   });
 
+  it('renders a concentric inner track for visual depth', () => {
+    const { container } = render(<NoRiskGauge />);
+    const svg = container.querySelector('svg');
+    // Two arcs with radius 42 (inner) and 48 (outer)
+    const innerArc = svg?.querySelector('path[d*="A 42 42"]');
+    expect(innerArc).toBeInTheDocument();
+  });
+
+  it('renders a gauge needle resting at the zero position', () => {
+    const { container } = render(<NoRiskGauge />);
+    const svg = container.querySelector('svg');
+    const needle = svg?.querySelector('line');
+    expect(needle).toBeInTheDocument();
+    const pivot = svg?.querySelector('circle');
+    expect(pivot).toBeInTheDocument();
+  });
+
+  it('renders five tick marks along the arc', () => {
+    const { container } = render(<NoRiskGauge />);
+    // Tick marks are paths with strokeLinecap="round" and strokeWidth="2"
+    // (but not the dashed arc path which also has strokeWidth) — filter
+    // by the specific coordinate pattern of short tick marks.
+    const svg = container.querySelector('svg');
+    const ticks = svg?.querySelectorAll('path[stroke-width="2"]');
+    // Needle = 1 line + 1 circle; card = 1 rect; gauge tracks = 2 paths;
+    // inner surface = 1 path; ticks = 5
+    expect(ticks?.length).toBeGreaterThanOrEqual(5);
+  });
+
   it('renders a "?" text glyph to indicate absence of data', () => {
     const { container } = render(<NoRiskGauge />);
-    const questionMark = container.querySelector('text');
-    expect(questionMark?.textContent).toBe('?');
+    const textElements = container.querySelectorAll('text');
+    const questionMark = Array.from(textElements).find(
+      (el) => el.textContent === '?',
+    );
+    expect(questionMark).toBeInTheDocument();
   });
 
   it('inherits color from currentColor so it themes via tokens', () => {
