@@ -12,6 +12,7 @@
  * canonical catalogue.
  */
 import type { CreditLineStatus, UtilizationLevel } from '../types/creditLine';
+import type { AttestationStatus } from '../types/attestation';
 import type React from 'react';
 
 // ─── Design tokens ────────────────────────────────────────────────────────────
@@ -46,6 +47,12 @@ export const STATUS_COLOR: Record<CreditLineStatus, { bg: string; color: string;
   Defaulted: { bg: 'rgba(248,81,73,0.14)', color: '#ffb0aa', border: 'rgba(248,81,73,0.46)' },
   Closed: { bg: 'rgba(139,148,158,0.16)', color: '#c4ccd6', border: 'rgba(139,148,158,0.42)' },
   Frozen: { bg: 'rgba(88,166,255,0.12)', color: '#79c0ff', border: 'rgba(88,166,255,0.38)' },
+};
+
+export const ATTESTATION_STATUS_COLOR: Record<AttestationStatus, { bg: string; color: string; border: string }> = {
+  Verified: { bg: 'rgba(63,185,80,0.16)', color: '#8ee99d', border: 'rgba(63,185,80,0.44)' },
+  Expiring: { bg: 'rgba(210,153,34,0.16)', color: '#f0c96a', border: 'rgba(210,153,34,0.46)' },
+  Missing: { bg: 'rgba(248,81,73,0.14)', color: '#ffb0aa', border: 'rgba(248,81,73,0.46)' },
 };
 
 /**
