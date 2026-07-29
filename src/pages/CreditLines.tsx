@@ -171,6 +171,7 @@ function CreditLineCard({
                checked={isSelected}
                onChange={onToggle}
                aria-label={`Select ${line.name} for comparison`}
+               className="focus-ring"
              />
              <span>Compare</span>
            </label>
@@ -824,7 +825,7 @@ export default function CreditLines({ defaultLoading = true }: { defaultLoading?
               <li>Competitive rates from 7.5% APR</li>
               <li>Quick approval with digital collateral</li>
             </ul>
-            <Link to="/open-credit" className="cl-primary-btn">
+            <Link to="/open-credit" className="cl-primary-btn focus-ring">
               Open Credit Line
             </Link>
           }
