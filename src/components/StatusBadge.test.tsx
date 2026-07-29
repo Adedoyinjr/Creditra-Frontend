@@ -63,6 +63,15 @@ describe('StatusBadge', () => {
     expect(screen.getByText('X')).toBeInTheDocument();
   });
 
+  it('renders correctly in icon-only mode with a tooltip', () => {
+    render(<StatusBadge status="Defaulted" iconOnly />);
+
+    expect(screen.getByText('X')).toBeInTheDocument();
+    expect(screen.queryByText('Defaulted')).not.toBeInTheDocument();
+    // Tooltip renders with aria-hidden until hovered, so we check using hidden: true
+    expect(screen.getByRole('tooltip', { hidden: true })).toHaveTextContent('Status: Defaulted');
+  });
+
   it('keeps each status foreground at WCAG AA contrast against its tint', () => {
     for (const status of STATUSES) {
       const { color, bg } = STATUS_COLOR[status];
