@@ -234,12 +234,26 @@
 /*
   GrantFox FWC26 (Stellar Wave) — "Visible focus outline on keyboard-only
   nav for CreditLines" requirement.
+
+  Every interactive element on the CreditLines page that is reachable via
+  Tab must show a visible focus ring on keyboard navigation (:focus-visible).
+
+  Covered here:
+    .cl-primary-btn             — header action buttons / links
+    .cl-sort-dir                — sort-direction toggle button
+    .cl-card                    — credit-line cards (keyboard-focusable container)
+    .cl-filters select          — status / sort-by dropdowns
+    .cl-row-select input        — per-card compare checkboxes
+    [aria-haspopup="true"]      — CreditLineRowMenu 3-dot trigger (belt-and-suspenders
+                                  fallback in case Tailwind utilities aren't active)
 */
 
 .cl-primary-btn:focus-visible,
 .cl-sort-dir:focus-visible,
 .cl-card:focus-visible,
-.cl-filters select:focus-visible {
+.cl-filters select:focus-visible,
+.cl-row-select input:focus-visible,
+.cl-card [aria-haspopup="true"]:focus-visible {
   outline: var(--focus-ring-width, 2px) solid var(--focus-ring-color, #58a6ff);
   outline-offset: var(--focus-ring-offset, 3px);
   border-radius: var(--focus-ring-radius, 6px);

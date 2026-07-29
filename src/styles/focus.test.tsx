@@ -201,12 +201,27 @@ describe('Dashboard — focus-ring classes on interactive elements (FWC26)', () 
 // ── CreditLines integration tests ─────────────────────────────────────────
 
 describe('CreditLines — focus-ring classes on interactive elements (FWC26)', () => {
+  const cssPath = resolve(__dirname, '../styles/focus.css');
+  const css = readFileSync(cssPath, 'utf-8');
+
   it('defines CreditLines-specific focus rules in focus.css', () => {
-    const cssPath = resolve(__dirname, '../styles/focus.css');
-    const css = readFileSync(cssPath, 'utf-8');
     expect(css).toContain('.cl-primary-btn:focus-visible');
     expect(css).toContain('.cl-sort-dir:focus-visible');
     expect(css).toContain('.cl-card:focus-visible');
+  });
+
+  it('defines focus rule for filter dropdown selects', () => {
+    expect(css).toContain('.cl-filters select:focus-visible');
+  });
+
+  it('defines focus rule for compare checkboxes in CreditLineCard rows', () => {
+    expect(css).toContain('.cl-row-select input:focus-visible');
+  });
+
+  it('defines focus fallback for CreditLineRowMenu 3-dot trigger button', () => {
+    // The trigger uses aria-haspopup="true" — our fallback ensures
+    // a visible ring even if Tailwind utilities are unavailable.
+    expect(css).toContain('.cl-card [aria-haspopup="true"]:focus-visible');
   });
 });
 
