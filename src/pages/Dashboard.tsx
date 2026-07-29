@@ -4,6 +4,7 @@ import ActivityFeed from "../components/ActivityFeed";
 import { CopyToClipboard } from "../components/CopyToClipboard";
 import { CopyLoanButton } from "../components/CopyLoanButton";
 import { StatusBadge } from "../components/StatusBadge";
+import { AttestationCard } from "../components/AttestationCard";
 import { CreditLineRowMenu } from "../components/CreditLineRowMenu";
 import { KbdHint } from "../components/KbdHint";
 import { DashboardTour } from "../components/DashboardTour";
@@ -13,7 +14,7 @@ import { RiskBandsPanel } from "../components/RiskBandsPanel";
 import { WhatsChangedPanel } from "../components/WhatsChangedPanel";
 import { RiskExplainerOverlay } from "../components/RiskExplainerOverlay";
 import { ContinuePrompt } from "../components/ContinuePrompt";
-import { MOCK_CREDIT_LINES } from "../data/mockData";
+import { MOCK_CREDIT_LINES, MOCK_ATTESTATIONS } from "../data/mockData";
 import type { Transaction } from "../types/creditLine";
 import {
   COLOR,
@@ -659,6 +660,8 @@ export function Dashboard() {
               />
             )}
           </div>
+
+          {status === 'success' && <AttestationCard attestations={MOCK_ATTESTATIONS} />}
 
            <div
              className="card"

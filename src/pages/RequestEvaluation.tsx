@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { AccessibleTooltip } from '@/components/AccessibleTooltip';
 import { FormMessage } from '@/components/FormMessage';
 import { PendingButton } from '@/components/PendingButton';
@@ -80,7 +80,12 @@ interface EvalResult {
 
 export function RequestEvaluation() {
   const { isReducedMotionActive } = useReducedMotion();
-  const [step, setStep] = useState<Step>(1);
+  const [searchParams] = useSearchParams();
+  // Attestation remediation CTAs deep-link here with `?step=2` (Optional
+  // Information), where the revenue attestation upload and identity bond
+  // checkbox live. Other steps depend on in-progress evaluation state and
+  // aren't valid deep-link targets.
+  const [step, setStep] = useState<Step>(() => (searchParams.get('step') === '2' ? 2 : 1));
   const [evalState, setEvalState] = useState<EvalState>('idle');
   const [progress, setProgress] = useState(0);
   const [eta, setEta] = useState(45); // seconds
