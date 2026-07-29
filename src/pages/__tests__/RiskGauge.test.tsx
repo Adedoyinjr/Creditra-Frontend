@@ -45,6 +45,37 @@ describe('RiskGauge page', () => {
       });
       expect(screen.getByText(/improving/i)).toBeInTheDocument();
     });
+
+    it('makes the SVG keyboard focusable with tabIndex=0', () => {
+      renderRiskGauge({
+        score: 720,
+        trend: 'improving',
+        lastUpdated: '2025-03-01T00:00:00Z',
+      });
+      const svg = screen.getByTestId('risk-gauge-svg');
+      expect(svg).toHaveAttribute('tabIndex', '0');
+    });
+
+    it('has appropriate ARIA attributes for accessibility', () => {
+      renderRiskGauge({
+        score: 720,
+        trend: 'improving',
+        lastUpdated: '2025-03-01T00:00:00Z',
+      });
+      const svg = screen.getByTestId('risk-gauge-svg');
+      expect(svg).toHaveAttribute('role', 'img');
+      expect(svg).toHaveAttribute('aria-label');
+    });
+
+    it('includes KbdHint component for keyboard shortcut hint', () => {
+      renderRiskGauge({
+        score: 720,
+        trend: 'improving',
+        lastUpdated: '2025-03-01T00:00:00Z',
+      });
+      expect(screen.getByText('Explain Risk')).toBeInTheDocument();
+      expect(screen.getByText('?')).toBeInTheDocument();
+    });
   });
 
   describe('empty state', () => {

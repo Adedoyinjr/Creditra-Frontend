@@ -71,7 +71,7 @@
  * @see https://www.w3.org/TR/WCAG21/#focus-visible
  */
 
-import { useEffect, useMemo, useRef, type KeyboardEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
 import { useReducedMotion } from '../context/ReducedMotionContext';
 import { LiveRegion } from './LiveRegion';
 import { RiskGaugeSkeleton } from './Skeleton';

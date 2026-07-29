@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useRef, useMemo } from "react";
+import React, { useState, useEffect, useRef, useMemo, type KeyboardEvent } from "react";
 import { Sparkline } from "../components/Sparkline";
 import { EmptyState } from "../components/EmptyState";
 import { NoDataGraph } from "../components/illustrations/EmptyStateIllustrations";
+import { KbdHint } from "../components/KbdHint";
 import { COLOR, RISK_COLOR, fmtDate } from "../utils/tokens";
 import { useReducedMotion } from "../context/ReducedMotionContext";
 
@@ -120,6 +121,15 @@ export function RiskGauge({
 
   const srDescription = `Risk score ${normalizedScore} of 850. Trend: ${trendLabel}.`;
 
+  // Handle keyboard events for the SVG
+  const handleSvgKeyDown = (e: KeyboardEvent<SVGSVGElement>) => {
+    // Pressing Enter or Space on the focused gauge could trigger an action
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      // Could add an action here if needed, like opening risk explainer
+    }
+  };
+
   return (
     <div className="risk-gauge-container">
       {/* Screen-reader description outside the SVG for AT that skip inline <title>. */}
@@ -134,6 +144,9 @@ export function RiskGauge({
         aria-label={srDescription}
         data-testid="risk-gauge-svg"
         data-reduced-motion={isReducedMotionActive ? "true" : "false"}
+        // Make SVG keyboard focusable for accessibility
+        tabIndex={0}
+        onKeyDown={handleSvgKeyDown}
       >
         <title id={titleId}>{srDescription}</title>
         <path
