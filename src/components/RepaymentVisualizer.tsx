@@ -649,6 +649,37 @@ export function RepaymentVisualizerSkeleton() {
   );
 }
 
+// ─── SR live-region message builder ──────────────────────────────────────────
+
+/** Formatter shared by liveMessage and tooltip caption. */
+const usdFmt = new Intl.NumberFormat('en-US', {
+  style: 'currency',
+  currency: 'USD',
+  maximumFractionDigits: 0,
+});
+
+/**
+ * Builds the plain-text message for the polite `aria-live` region.
+ *
+ * - Empty schedule → empty string (nothing to announce).
+ * - Active tooltip → month-specific principal + interest breakdown.
+ * - Normal state   → plan summary (term + total interest).
+ */
+function buildLiveMessage(
+  schedule: ScheduleRow[],
+  tooltip: TooltipData | null,
+  termMonths: number,
+  totalInterest: number,
+): string {
+  if (schedule.length === 0) return '';
+
+  if (tooltip) {
+    return `Month ${tooltip.month}: principal remaining ${usdFmt.format(tooltip.principal)}, cumulative interest ${usdFmt.format(tooltip.cumulativeInterest)}.`;
+  }
+
+  return `Repayment plan: ${termMonths} month${termMonths !== 1 ? 's' : ''}, ${usdFmt.format(totalInterest)} total interest.`;
+}
+
 // ─── Main component ────────────────────────────────────────────────────────────
 
 /**
@@ -742,29 +773,7 @@ export function RepaymentVisualizer({
 
   // ── ARIA live-region announcement ──
   const liveMessage = useMemo(() => {
-    if (schedule.length === 0) return '';
-
-    const interestFmt = new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      maximumFractionDigits: 0,
-    }).format(totalInterest);
-
-    if (tooltip) {
-      const principalFmt = new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'USD',
-        maximumFractionDigits: 0,
-      }).format(tooltip.principal);
-      const cumIntFmt = new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'USD',
-        maximumFractionDigits: 0,
-      }).format(tooltip.cumulativeInterest);
-      return `Month ${tooltip.month}: principal remaining ${principalFmt}, cumulative interest ${cumIntFmt}.`;
-    }
-
-    return `Repayment plan: ${termMonths} month${termMonths !== 1 ? 's' : ''}, ${interestFmt} total interest.`;
+    return buildLiveMessage(schedule, tooltip, termMonths, totalInterest);
   }, [schedule, tooltip, termMonths, totalInterest]);
 
   if (loading === true || bootstrapping) {
