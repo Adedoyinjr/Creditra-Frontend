@@ -1,14 +1,14 @@
 import { useMemo, useState, useEffect, useRef, useCallback } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import ActivityFeed from "../components/ActivityFeed";
 import { CopyToClipboard } from "../components/CopyToClipboard";
 import { CopyLoanButton } from "../components/CopyLoanButton";
 import { StatusBadge } from "../components/StatusBadge";
+import { CreditLineRowMenu } from "../components/CreditLineRowMenu";
 import { KbdHint } from "../components/KbdHint";
 import { DashboardTour } from "../components/DashboardTour";
 import { useWallet } from "../context/WalletContext";
 import { Sparkline } from "../components/Sparkline";
-import { DashboardTour } from "../components/DashboardTour";
 import { RiskBandsPanel } from "../components/RiskBandsPanel";
 import { WhatsChangedPanel } from "../components/WhatsChangedPanel";
 import { RiskExplainerOverlay } from "../components/RiskExplainerOverlay";
@@ -22,6 +22,7 @@ import {
   fmtDate,
   utilizationPct,
   getUtilizationLevel,
+} from "../utils/tokens";
 import "./Dashboard.css";
 import "../styles/focus.css";
 import { Skeleton } from "../components/Skeleton";
@@ -32,8 +33,6 @@ import { WhatChanged } from "../components/WhatChanged";
 import { RiskGauge } from "./RiskGauge";
 import { LiveRegion } from "../components/LiveRegion";
 import { SyncIndicator } from "@/components/SyncIndicator";
-import { ContinuePrompt } from "@/components/ContinuePrompt";
-import { DashboardTour } from "@/components/DashboardTour";
 
 export { RiskGauge };
 
@@ -68,6 +67,7 @@ const TX_COLOR: Record<string, string> = {
 
 export function Dashboard() {
   const { wallet, status: walletStatus } = useWallet();
+  const navigate = useNavigate();
   const creditLines = MOCK_CREDIT_LINES;
 
   const [repayCount, setRepayCount] = useState(0);
@@ -89,6 +89,20 @@ export function Dashboard() {
     await new Promise<void>((r) => setTimeout(r, 600));
     setActivitySyncedAt(new Date());
   }, []);
+  // ─── Credit line row menu handlers ──────────────────────────────────────
+  const handleRowRepay = useCallback(
+    (lineId: string) => navigate(`/repay?line=${lineId}`),
+    [navigate],
+  );
+  const handleRowDetails = useCallback(
+    (lineId: string) => navigate(`/credit-lines?highlight=${lineId}`),
+    [navigate],
+  );
+  const handleRowSchedule = useCallback(
+    (lineId: string) => navigate(`/repayment-schedule?line=${lineId}`),
+    [navigate],
+  );
+
   const explainTriggerRef = useRef<HTMLButtonElement>(null);
   const [selectedCompareLines, setSelectedCompareLines] = useState<string[]>([]);
   const [showCompare, setShowCompare] = useState(false);
@@ -886,6 +900,13 @@ export function Dashboard() {
                            <div className="cl-preview-bar-fill" style={{ width: `${pct}%`, background: UTIL_COLOR[level] }} />
                          </div>
                        </div>
+                       <CreditLineRowMenu
+                         lineId={cl.id}
+                         lineName={cl.name}
+                         onRepay={() => handleRowRepay(cl.id)}
+                         onSchedule={handleRowSchedule}
+                         onDetails={handleRowDetails}
+                       />
                      </div>
                    );
                  })}

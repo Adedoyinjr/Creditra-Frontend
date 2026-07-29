@@ -17,3 +17,4 @@ for i, line in enumerate(lines):
         else:
             depth += 1
             print(f"Line {i+1}: <{t}> (depth {depth})")
+
