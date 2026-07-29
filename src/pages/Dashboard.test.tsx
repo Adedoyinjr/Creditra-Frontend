@@ -16,6 +16,19 @@ vi.mock('../context/WalletContext', () => ({
   }),
 }));
 
+const { mockCreditLinesArray } = vi.hoisted(() => {
+  return { mockCreditLinesArray: [] as unknown[] };
+});
+
+vi.mock('../data/mockData', async () => {
+  const actual = await vi.importActual<typeof import('../data/mockData')>('../data/mockData');
+  mockCreditLinesArray.push(...actual.MOCK_CREDIT_LINES);
+  return {
+    ...actual,
+    MOCK_CREDIT_LINES: mockCreditLinesArray,
+  };
+});
+
 const { mockReadJson, mockWriteJson, mockStorageStore } = vi.hoisted(() => {
   const store: Record<string, unknown> = {};
   return {
@@ -610,6 +623,7 @@ describe('Dashboard color-blind pattern classes (v7)', () => {
     expect(patternsCssSource).toMatch(/\.util-fill--medium::before/);
     expect(patternsCssSource).toMatch(/\.util-fill--high::before/);
     vi.useRealTimers();
+  });
 });
 
 describe('Dashboard KbdHint', () => {
@@ -747,5 +761,76 @@ describe('Dashboard reduced-motion fallback (Issue #500)', () => {
 
     restore();
     vi.useRealTimers();
+  });
+});
+
+// Issue #561 — Dashboard empty state (no credit lines yet).
+describe('Dashboard empty state (no credit lines)', () => {
+  let savedCreditLines: unknown[] = [];
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.useFakeTimers();
+    savedCreditLines = mockCreditLinesArray.splice(0, mockCreditLinesArray.length);
+  });
+
+  afterEach(() => {
+    mockCreditLinesArray.splice(0, mockCreditLinesArray.length, ...savedCreditLines);
+    vi.useRealTimers();
+  });
+
+  it('renders the shared EmptyState with the NoLines illustration once loading succeeds', async () => {
+    const { container } = render(
+      <BrowserRouter>
+        <Dashboard />
+      </BrowserRouter>,
+    );
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(500);
+    });
+
+    expect(
+      screen.getByRole('heading', { name: 'No credit lines yet' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/Start your credit journey by requesting a credit evaluation/i),
+    ).toBeInTheDocument();
+
+    // Distinguishes the `NoLines` illustration from other shared illustrations
+    // (e.g. `NoDataGraph`, used for zero-result *filters* elsewhere) by a path
+    // unique to its SVG markup.
+    expect(container.innerHTML).toContain('M42 58H138');
+    expect(container.innerHTML).not.toContain('M38 96H142');
+  });
+
+  it('exposes the empty state as a polite, labelled status region', async () => {
+    render(
+      <BrowserRouter>
+        <Dashboard />
+      </BrowserRouter>,
+    );
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(500);
+    });
+
+    const status = screen.getByRole('status', { name: 'No credit lines yet' });
+    expect(status).toHaveAttribute('aria-live', 'polite');
+  });
+
+  it('links the primary action to the credit evaluation request flow', async () => {
+    render(
+      <BrowserRouter>
+        <Dashboard />
+      </BrowserRouter>,
+    );
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(500);
+    });
+
+    const cta = screen.getByRole('link', { name: 'Request Credit Evaluation' });
+    expect(cta).toHaveAttribute('href', '/open-credit');
   });
 });

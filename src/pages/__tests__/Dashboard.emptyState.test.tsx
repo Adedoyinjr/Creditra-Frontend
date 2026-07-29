@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, act } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
 import { Dashboard } from '../Dashboard';
@@ -26,7 +26,7 @@ vi.mock('../../data/mockData', () => ({
 }));
 
 describe('Dashboard — empty state (issue #501)', () => {
-  it('renders the shared EmptyState component when no credit lines are present', () => {
+  it('renders the shared EmptyState component when no credit lines are present', async () => {
     vi.useFakeTimers();
 
     render(
@@ -36,8 +36,8 @@ describe('Dashboard — empty state (issue #501)', () => {
     );
 
     // Fast-forward dashboard loading delay (500ms)
-    act(() => {
-      vi.advanceTimersByTime(500);
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(500);
     });
 
     // Check that empty state content is visible
@@ -54,6 +54,3 @@ describe('Dashboard — empty state (issue #501)', () => {
     vi.useRealTimers();
   });
 });
-
-// React 18 act import shim helper
-import { act } from 'react';

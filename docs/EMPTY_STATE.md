@@ -58,6 +58,12 @@ so they theme through transparent token inheritance.
   `src/pages/TransactionHistory.test.tsx` still pass with the local
   styling. Migration to the shared component is a separate task.
 - **`CreditLines`** — same history; same future migration note.
+- **`Dashboard`** (`src/pages/Dashboard.tsx`) — replaces the raw dashboard
+  grid with the shared empty state when the wallet has zero credit lines
+  (`status === 'success' && !hasLines`). Uses `NoLines`, matching the
+  illustration convention used by `CreditLines` and `TransactionHistory`
+  for the same "zero credit lines" condition. The CTA links to
+  `/open-credit` (issue #561).
 
 ## Theming / a11y contract
 

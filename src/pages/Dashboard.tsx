@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect, useRef, useCallback, type CSSProperties } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import ActivityFeed from "../components/ActivityFeed";
 import { CopyToClipboard } from "../components/CopyToClipboard";
 import { CopyLoanButton } from "../components/CopyLoanButton";
@@ -26,7 +26,8 @@ import {
 import "./Dashboard.css";
 import "../styles/focus.css";
 import { Skeleton } from "../components/Skeleton";
-import { NoDataGraph } from "../components/illustrations";
+import { NoLines } from "../components/illustrations";
+import { EmptyState } from "../components/EmptyState";
 import { useInertBackdrop } from "../hooks/useInertBackdrop";
 import { useBodyScrollLock } from "../hooks/useBodyScrollLock";
 import { WhatChanged } from "../components/WhatChanged";
@@ -344,7 +345,7 @@ export function Dashboard() {
           )}
         </div>
         <EmptyState
-          illustration={<NoDataGraph className="empty-state-illustration--muted" />}
+          illustration={<NoLines className="empty-state-illustration--muted" />}
           title="No credit lines yet"
           description="Start your credit journey by requesting a credit evaluation. We'll analyze your on-chain activity to determine your credit limit and terms."
           primaryAction={{
