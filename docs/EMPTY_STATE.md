@@ -43,6 +43,7 @@ whatever foreground colour the surrounding tone sets.
 | `NoActivity`       | The user has credit lines but no transactions yet   |
 | `NoDataGraph`      | Filters narrow transactions to zero results          |
 | `NoOutstandingDebt`| The user has nothing to repay (issue #581, Repay)    |
+| `NoRiskGauge`      | No risk score data available yet (issue #694)        |
 
 Add new illustrations next to these. Keep all SVGs `currentColor`-only
 so they theme through transparent token inheritance.

@@ -59,6 +59,7 @@ export function EmptyState({
       {...props}
     >
       {illustration}
+      {tone && <div className="empty-state__accent-rule" />}
       {eyebrow && <p className="empty-state__eyebrow">{eyebrow}</p>}
       <h2 className="empty-state__title" id={titleId}>
         {title}
