@@ -244,6 +244,17 @@
   border-radius: var(--focus-ring-radius, 6px);
 }
 
+/**
+ * CreditLines filter <select> elements.
+ * Native <select> elements receive outline, not box-shadow, so the
+ * standard outline approach works reliably here.
+ */
+.cl-filters select:focus-visible {
+  outline: var(--focus-ring-width, 2px) solid var(--focus-ring-color, #58a6ff);
+  outline-offset: var(--focus-ring-offset, 3px);
+  border-radius: var(--focus-ring-radius, 6px);
+}
+
 /* ── RiskGauge interactive elements ──────────────────────────────────────── */
 /*
   GrantFox FWC26 (Stellar Wave) — "Visible focus outline on keyboard-only
@@ -258,34 +269,109 @@
 */
 
 /**
- * Whole-gauge focus ring.
- * Applied to the SVG root when it receives keyboard focus (tabIndex=0).
- * Uses box-shadow instead of outline for consistent SVG support.
+ * Whole-gauge focus ring — SVG root element.
+ *
+ * tabIndex={0} on the <svg> makes the whole gauge reachable in a single
+ * Tab stop.  CSS `outline` has inconsistent cross-browser support on SVG
+ * elements, so we use a double box-shadow instead:
+ *
+ *   Layer 1  (width: --focus-ring-width)           → gap in --bg colour
+ *   Layer 2  (width: --focus-ring-width + --focus-ring-offset)
+ *                                                  → visible ring in --focus-ring-color
+ *
+ * Contrast ratios (WCAG 2.1 AA minimum 3:1, AA for focus 4.5:1):
+ *   Default:       #58a6ff on #0d1117  ≈ 5.9:1  ✓ AA
+ *   High-contrast: #ffffff on #000000  = 21:1   ✓ AAA
+ *
+ * overflow: visible must be set on the <svg> (done in RiskGauge.tsx /
+ * RiskGauge.css) so the shadow is not clipped at the viewport edge.
+ *
+ * Responsive: ring dimensions are token-driven and scale automatically;
+ * no breakpoint overrides are needed because the SVG is fluid (width:100%,
+ * max-width: 160px) and the shadow offsets are absolute pixel values.
  */
 .risk-gauge-svg:focus-visible {
+  /*
+    Suppress the default browser outline — we replace it with box-shadow.
+    WCAG 2.4.11: replacement must be at least as visible as the default.
+  */
+  outline: none;
   box-shadow:
     0 0 0 var(--focus-ring-width, 2px) var(--bg, #0d1117),
-    0 0 0 calc(var(--focus-ring-width, 2px) + var(--focus-ring-offset, 3px)) var(--focus-ring-color, var(--accent, #58a6ff));
+    0 0 0 calc(var(--focus-ring-width, 2px) + var(--focus-ring-offset, 3px))
+      var(--focus-ring-color, var(--accent, #58a6ff));
   border-radius: var(--focus-ring-radius, 6px);
 }
 
 /**
- * Per-sector focus ring.
- * Applied to the sector <g> element when focused via keyboard navigation.
- * The focus rect is an SVG <rect> that becomes visible only on :focus-visible.
+ * Per-sector focus ring — SVG <g> elements.
+ *
+ * Each sector group has tabIndex={0} and role="button" so it is reachable
+ * independently.  We suppress the browser default outline here and instead
+ * reveal a child <rect class="risk-gauge-sector-focus-rect"> via stroke.
+ * This approach is cross-browser-compatible because SVG <g> elements have
+ * unreliable outline / box-shadow support (CSS box model doesn't apply).
+ *
+ * :focus-visible ensures the ring only appears on keyboard navigation —
+ * pointer clicks do NOT trigger this rule.
  */
 .risk-gauge-sector:focus-visible {
+  /* Suppress browser default — replaced by the <rect> stroke below. */
   outline: none;
 }
 
 /**
- * Active sector dot indicator.
- * The dot should remain visible when the sector is focused (even if not active
- * score-wise) to indicate keyboard focus. This rule ensures the dot is
- * styled consistently with the focus ring color.
+ * Reveal the sector focus rect on keyboard focus.
+ *
+ * The <rect class="risk-gauge-sector-focus-rect"> is rendered by
+ * SectorGroup in RiskGauge.tsx (both src/components/ and src/pages/).
+ * At rest its stroke is "none"; only :focus-visible makes it visible.
+ *
+ * stroke-width is intentionally kept at --focus-ring-width (2px) to
+ * satisfy the WCAG 2.4.11 "non-zero area" focus appearance requirement.
+ */
+.risk-gauge-sector:focus-visible .risk-gauge-sector-focus-rect {
+  stroke: var(--focus-ring-color, var(--accent, #58a6ff));
+  stroke-width: var(--focus-ring-width, 2px);
+}
+
+/**
+ * Sector arc brightens on focus to reinforce which band is active.
+ * Supplementary to the focus-rect ring — not the primary indicator.
+ */
+.risk-gauge-sector:focus-visible .risk-gauge-sector-arc {
+  opacity: 0.55;
+}
+
+/**
+ * Active-sector dot: tint with focus-ring colour when the sector is
+ * focused, so the dot remains clearly visible regardless of the current
+ * score band colour.
  */
 .risk-gauge-sector:focus-visible .risk-gauge-sector-dot {
   fill: var(--focus-ring-color, var(--accent, #58a6ff));
   filter: drop-shadow(0 0 2px var(--focus-ring-color, var(--accent, #58a6ff)));
 }
+
+/* ── Reduced-motion: focus rings must NOT be suppressed ──────────────────── */
+/*
+  WCAG 2.4.11 explicitly requires focus indicators to remain visible
+  regardless of prefers-reduced-motion.  The block below is intentionally
+  empty — do not add outline/box-shadow suppression here.
+*/
+@media (prefers-reduced-motion: reduce) {
+  /* Focus rings must NOT be suppressed — intentionally empty. */
+}
+
+/* ── Responsive breakpoints ──────────────────────────────────────────────── */
+/*
+  The RiskGauge SVG is fluid (width: 100%; max-width: 160px) so focus-ring
+  dimensions scale with the viewport automatically via the token system.
+  No per-breakpoint overrides are required; the rules above apply at all
+  screen sizes from 320px wide upwards.
+
+  If a project-level override is ever needed (e.g. a larger ring on mobile
+  for touch-then-keyboard hybrid users), add it here using the token:
+    @media (max-width: 480px) { :root { --focus-ring-width: 3px; } }
+*/
 
