@@ -234,144 +234,144 @@
 /*
   GrantFox FWC26 (Stellar Wave) — "Visible focus outline on keyboard-only
   nav for CreditLines" requirement.
+
+  Every interactive element on the CreditLines page that is reachable via
+  Tab must show a visible focus ring on keyboard navigation (:focus-visible).
+
+  Covered here:
+    .cl-primary-btn             — header action buttons / links
+    .cl-sort-dir                — sort-direction toggle button
+    .cl-card                    — credit-line cards (keyboard-focusable container)
+    .cl-filters select          — status / sort-by dropdowns
+    .cl-row-select input        — per-card compare checkboxes
+    [aria-haspopup="true"]      — CreditLineRowMenu 3-dot trigger (belt-and-suspenders
+                                  fallback in case Tailwind utilities aren't active)
 */
 
 .cl-primary-btn:focus-visible,
 .cl-sort-dir:focus-visible,
-.cl-card:focus-visible {
+.cl-card:focus-visible,
+.cl-filters select:focus-visible,
+.cl-row-select input:focus-visible,
+.cl-card [aria-haspopup="true"]:focus-visible {
   outline: var(--focus-ring-width, 2px) solid var(--focus-ring-color, #58a6ff);
   outline-offset: var(--focus-ring-offset, 3px);
   border-radius: var(--focus-ring-radius, 6px);
 }
 
-/**
- * CreditLines filter <select> elements.
- * Native <select> elements receive outline, not box-shadow, so the
- * standard outline approach works reliably here.
- */
-.cl-filters select:focus-visible {
-  outline: var(--focus-ring-width, 2px) solid var(--focus-ring-color, #58a6ff);
-  outline-offset: var(--focus-ring-offset, 3px);
-  border-radius: var(--focus-ring-radius, 6px);
-}
-
-/* ── RiskGauge interactive elements ──────────────────────────────────────── */
+/* ── DrawCreditPage interactive elements ─────────────────────────────────── */
 /*
   GrantFox FWC26 (Stellar Wave) — "Visible focus outline on keyboard-only
-  nav for RiskGauge" requirement.
+  nav for DrawCreditPage" requirement (issue #592).
 
-  The RiskGauge component has two types of focus targets:
-    1. The SVG root element (.risk-gauge-svg) — for whole-gauge focus
-    2. Sector groups (.risk-gauge-sector) — for per-band focus
-
-  Both use :focus-visible so mouse/touch interactions are unaffected.
-  Colors reference design tokens so they respond to [data-contrast="high"].
+  Scoped under `.dc-page` so rings only apply inside the draw wizard.
+  Selectors cover credit-line cards, action buttons, presets, terms
+  checkbox, sticky summary bar, and AmountInput stepper / Max / preset
+  controls. `:focus-visible` keeps pointer interactions unchanged while
+  shared tokens preserve contrast across default, dark, and high-contrast.
 */
 
-/**
- * Whole-gauge focus ring — SVG root element.
- *
- * tabIndex={0} on the <svg> makes the whole gauge reachable in a single
- * Tab stop.  CSS `outline` has inconsistent cross-browser support on SVG
- * elements, so we use a double box-shadow instead:
- *
- *   Layer 1  (width: --focus-ring-width)           → gap in --bg colour
- *   Layer 2  (width: --focus-ring-width + --focus-ring-offset)
- *                                                  → visible ring in --focus-ring-color
- *
- * Contrast ratios (WCAG 2.1 AA minimum 3:1, AA for focus 4.5:1):
- *   Default:       #58a6ff on #0d1117  ≈ 5.9:1  ✓ AA
- *   High-contrast: #ffffff on #000000  = 21:1   ✓ AAA
- *
- * overflow: visible must be set on the <svg> (done in RiskGauge.tsx /
- * RiskGauge.css) so the shadow is not clipped at the viewport edge.
- *
- * Responsive: ring dimensions are token-driven and scale automatically;
- * no breakpoint overrides are needed because the SVG is fluid (width:100%,
- * max-width: 160px) and the shadow offsets are absolute pixel values.
- */
-.risk-gauge-svg:focus-visible {
-  /*
-    Suppress the default browser outline — we replace it with box-shadow.
-    WCAG 2.4.11: replacement must be at least as visible as the default.
-  */
-  outline: none;
-  box-shadow:
-    0 0 0 var(--focus-ring-width, 2px) var(--bg, #0d1117),
-    0 0 0 calc(var(--focus-ring-width, 2px) + var(--focus-ring-offset, 3px))
-      var(--focus-ring-color, var(--accent, #58a6ff));
-  border-radius: var(--focus-ring-radius, 6px);
+.dc-page .dc-credit-line-item:focus-visible,
+.dc-page .dc-btn:focus-visible,
+.dc-page .dc-preset-btn:focus-visible,
+.dc-page .dc-terms-label__checkbox:focus-visible,
+.dc-page .draw-summary-bar:focus-visible,
+.dc-page button[aria-label="Decrease amount"]:focus-visible,
+.dc-page button[aria-label="Increase amount"]:focus-visible,
+.dc-page button[aria-label="Set amount to maximum available credit"]:focus-visible,
+.dc-page button[aria-label^="Set amount to"]:focus-visible {
+  outline: var(--focus-ring-width, 2px) solid
+    var(--focus-ring-color, var(--accent, #58a6ff)) !important;
+  outline-offset: var(--focus-ring-offset, 3px) !important;
+  box-shadow: none !important;
 }
 
-/**
- * Per-sector focus ring — SVG <g> elements.
- *
- * Each sector group has tabIndex={0} and role="button" so it is reachable
- * independently.  We suppress the browser default outline here and instead
- * reveal a child <rect class="risk-gauge-sector-focus-rect"> via stroke.
- * This approach is cross-browser-compatible because SVG <g> elements have
- * unreliable outline / box-shadow support (CSS box model doesn't apply).
- *
- * :focus-visible ensures the ring only appears on keyboard navigation —
- * pointer clicks do NOT trigger this rule.
- */
-.risk-gauge-sector:focus-visible {
-  /* Suppress browser default — replaced by the <rect> stroke below. */
-  outline: none;
+.dc-page .dc-credit-line-item:focus-visible,
+.dc-page .dc-preset-btn:focus-visible,
+.dc-page .dc-btn:focus-visible {
+  border-radius: var(--radius-lg, 12px);
 }
 
-/**
- * Reveal the sector focus rect on keyboard focus.
- *
- * The <rect class="risk-gauge-sector-focus-rect"> is rendered by
- * SectorGroup in RiskGauge.tsx (both src/components/ and src/pages/).
- * At rest its stroke is "none"; only :focus-visible makes it visible.
- *
- * stroke-width is intentionally kept at --focus-ring-width (2px) to
- * satisfy the WCAG 2.4.11 "non-zero area" focus appearance requirement.
- */
-.risk-gauge-sector:focus-visible .risk-gauge-sector-focus-rect {
-  stroke: var(--focus-ring-color, var(--accent, #58a6ff));
-  stroke-width: var(--focus-ring-width, 2px);
+.dc-page button[aria-label="Decrease amount"]:focus-visible,
+.dc-page button[aria-label="Increase amount"]:focus-visible,
+.dc-page button[aria-label="Set amount to maximum available credit"]:focus-visible,
+.dc-page button[aria-label^="Set amount to"]:focus-visible {
+  border-radius: var(--radius-md, 8px);
 }
 
-/**
- * Sector arc brightens on focus to reinforce which band is active.
- * Supplementary to the focus-rect ring — not the primary indicator.
- */
-.risk-gauge-sector:focus-visible .risk-gauge-sector-arc {
-  opacity: 0.55;
+.dc-page .dc-terms-label__checkbox:focus-visible {
+  border-radius: var(--radius-sm, 4px);
 }
 
-/**
- * Active-sector dot: tint with focus-ring colour when the sector is
- * focused, so the dot remains clearly visible regardless of the current
- * score band colour.
- */
-.risk-gauge-sector:focus-visible .risk-gauge-sector-dot {
-  fill: var(--focus-ring-color, var(--accent, #58a6ff));
-  filter: drop-shadow(0 0 2px var(--focus-ring-color, var(--accent, #58a6ff)));
-}
-
-/* ── Reduced-motion: focus rings must NOT be suppressed ──────────────────── */
+/* ── RepayPage interactive elements ──────────────────────────────────────── */
 /*
-  WCAG 2.4.11 explicitly requires focus indicators to remain visible
-  regardless of prefers-reduced-motion.  The block below is intentionally
-  empty — do not add outline/box-shadow suppression here.
+  GrantFox FWC26 (Stellar Wave) — "Visible focus outline on keyboard-only
+  nav for RepayPage" requirement (issue #512).
+
+  Every interactive element on RepayPage that is reachable via Tab must
+  show a visible focus ring on keyboard navigation (:focus-visible).
+
+  Scoped under `.repay-page` so rings only apply inside the repay flow.
+  Selectors cover:
+
+    .rp-back-btn              — All back-navigation buttons
+    .rp-cl-card               — Credit line selection cards
+    .rp-preset-btn            — Percentage preset buttons (25%, 50%, 75%, MAX)
+    .rp-smart-pay-btn         — Smart Pay suggested-amount button
+    .rp-amount-input          — Amount input field
+    .rp-review-btn            — "Review Repayment" primary action
+    .rp-preview-btn           — "Preview Consequences Modal" secondary action
+    .rp-toggle-switch         — Auto-schedule toggle switch
+    .rp-help-btn              — "I need help" text button
+    .rp-cancel-btn            — Cancel text button
+    .rp-confirm-btn           — "Confirm Repayment" in review step
+    .rp-back-input-btn        — "Back to input" button in review step
+    .rp-dashboard-btn         — "Back to Dashboard" in success step
+    .rp-new-repay-btn         — "Make another repayment" in success step
+
+  All rules use :focus-visible so mouse/touch interactions are unaffected.
+  All colours reference design tokens so they respond to [data-contrast="high"].
 */
-@media (prefers-reduced-motion: reduce) {
-  /* Focus rings must NOT be suppressed — intentionally empty. */
+
+.repay-page .rp-back-btn:focus-visible,
+.repay-page .rp-cl-card:focus-visible,
+.repay-page .rp-preset-btn:focus-visible,
+.repay-page .rp-smart-pay-btn:focus-visible,
+.repay-page .rp-amount-input:focus-visible,
+.repay-page .rp-review-btn:focus-visible,
+.repay-page .rp-preview-btn:focus-visible,
+.repay-page .rp-toggle-switch:focus-visible,
+.repay-page .rp-help-btn:focus-visible,
+.repay-page .rp-cancel-btn:focus-visible,
+.repay-page .rp-confirm-btn:focus-visible,
+.repay-page .rp-back-input-btn:focus-visible,
+.repay-page .rp-dashboard-btn:focus-visible,
+.repay-page .rp-new-repay-btn:focus-visible {
+  outline: var(--focus-ring-width, 2px) solid
+    var(--focus-ring-color, var(--accent, #58a6ff)) !important;
+  outline-offset: var(--focus-ring-offset, 3px) !important;
+  box-shadow: none !important;
 }
 
-/* ── Responsive breakpoints ──────────────────────────────────────────────── */
-/*
-  The RiskGauge SVG is fluid (width: 100%; max-width: 160px) so focus-ring
-  dimensions scale with the viewport automatically via the token system.
-  No per-breakpoint overrides are required; the rules above apply at all
-  screen sizes from 320px wide upwards.
+.repay-page .rp-back-btn:focus-visible,
+.repay-page .rp-cl-card:focus-visible,
+.repay-page .rp-preset-btn:focus-visible,
+.repay-page .rp-smart-pay-btn:focus-visible,
+.repay-page .rp-review-btn:focus-visible,
+.repay-page .rp-preview-btn:focus-visible,
+.repay-page .rp-confirm-btn:focus-visible,
+.repay-page .rp-back-input-btn:focus-visible,
+.repay-page .rp-dashboard-btn:focus-visible,
+.repay-page .rp-new-repay-btn:focus-visible {
+  border-radius: var(--radius-lg, 12px);
+}
 
-  If a project-level override is ever needed (e.g. a larger ring on mobile
-  for touch-then-keyboard hybrid users), add it here using the token:
-    @media (max-width: 480px) { :root { --focus-ring-width: 3px; } }
-*/
+.repay-page .rp-amount-input:focus-visible,
+.repay-page .rp-toggle-switch:focus-visible {
+  border-radius: var(--radius-md, 8px);
+}
 
+.repay-page .rp-help-btn:focus-visible,
+.repay-page .rp-cancel-btn:focus-visible {
+  border-radius: var(--radius-sm, 4px);
+}

@@ -14,7 +14,7 @@
  * Route: /linked-accounts
  */
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { Link as LinkIcon, Unlink, RefreshCw, AlertCircle, CheckCircle } from 'lucide-react';
 import {
   fetchLinkedAccounts,
@@ -27,6 +27,7 @@ import {
 import type { LinkedAccount, AccountProvider, AccountLinkError } from '../types/linkedAccount';
 import { Skeleton } from '../components/Skeleton';
 import { PendingButton } from '../components/PendingButton';
+import { LiveRegion } from '../components/LiveRegion';
 import { accountStripeStyle, colorFromId } from '../utils/colorFromId';
 import './LinkedAccounts.css';
 
@@ -152,6 +153,10 @@ function ProviderCard({
 /**
  * Main LinkedAccounts page component.
  */
+/**
+ * Sticky bottom action bar that appears when the header scrolls out of view.
+ * Provides quick access to primary actions: connect new account, disconnect all.
+ */
 export function LinkedAccounts() {
   const [accounts, setAccounts] = useState<LinkedAccount[]>([]);
   const [loading, setLoading] = useState(true);
@@ -159,8 +164,10 @@ export function LinkedAccounts() {
   const [loadingAccountId, setLoadingAccountId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [scrolled, setScrolled] = useState(false);
   
   const messageTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const headerRef = useRef<HTMLDivElement>(null);
 
   // Fetch linked accounts on mount
   useEffect(() => {
@@ -174,6 +181,19 @@ export function LinkedAccounts() {
         clearTimeout(messageTimeoutRef.current);
       }
     };
+  }, []);
+
+  // Sticky bar visibility: appears when header scrolls out of view
+  useEffect(() => {
+    const onScroll = () => {
+      const el = headerRef.current;
+      if (el) {
+        setScrolled(el.getBoundingClientRect().bottom < 0);
+      }
+    };
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
   const loadAccounts = async () => {
@@ -272,12 +292,41 @@ export function LinkedAccounts() {
     }
   };
 
+  const handleDisconnectAll = async () => {
+    const connectedAccounts = accounts.filter(acc => acc.status === 'connected');
+    if (connectedAccounts.length === 0) return;
+
+    const confirmed = window.confirm(
+      'Are you sure you want to disconnect all your accounts? You can reconnect them later.'
+    );
+    if (!confirmed) return;
+
+    try {
+      setActionLoading(true);
+      setError(null);
+      
+      await Promise.all(connectedAccounts.map(acc => disconnectAccount(acc.id)));
+      showSuccessMessage('All accounts disconnected successfully');
+      await loadAccounts();
+    } catch (err) {
+      setError('Failed to disconnect some accounts. Please try again.');
+      console.error('Disconnect all error:', err);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const connectedCount = useMemo(
+    () => accounts.filter((a) => a.status === 'connected').length,
+    [accounts],
+  );
+
   const availableProviders: AccountProvider[] = ['google', 'github', 'twitter', 'facebook'];
 
   return (
     <div className="linked-accounts">
       {/* Header */}
-      <div className="linked-accounts__header">
+      <div className="linked-accounts__header" ref={headerRef} data-testid="linked-accounts-header">
         <div>
           <h1>Linked Accounts</h1>
           <p className="subtitle">
@@ -387,6 +436,52 @@ export function LinkedAccounts() {
               <li>You can disconnect any account at any time</li>
               <li>Linked accounts may improve your credit evaluation score</li>
             </ul>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Sticky Bottom Action Bar ─────────────────────────────────── */}
+      <div
+        className={`sticky-action-bar ${scrolled ? 'sticky-action-bar--visible' : ''}`}
+        role="toolbar"
+        aria-label="Linked accounts actions"
+        data-testid="sticky-action-bar"
+      >
+        <div className="sticky-action-bar__inner">
+          <div className="sticky-action-bar__status">
+            {connectedCount > 0 ? (
+              <span className="sticky-action-bar__count">
+                <CheckCircle className="icon-sm" aria-hidden="true" />
+                {connectedCount} connected
+              </span>
+            ) : (
+              <span className="sticky-action-bar__count">
+                No accounts linked
+              </span>
+            )}
+          </div>
+          <div className="sticky-action-bar__actions">
+            <PendingButton
+              onClick={() => handleConnect('google')}
+              disabled={actionLoading}
+              pending={false}
+              className="btn-secondary btn-sm"
+              aria-label="Connect new account from toolbar"
+            >
+              <LinkIcon className="icon-sm" aria-hidden="true" />
+              <span className="sticky-action-bar__label">Connect</span>
+            </PendingButton>
+            {connectedCount > 0 && (
+              <button
+                onClick={handleDisconnectAll}
+                disabled={actionLoading}
+                className="btn-danger btn-sm"
+                aria-label="Disconnect all accounts from toolbar"
+              >
+                <Unlink className="icon-sm" aria-hidden="true" />
+                <span className="sticky-action-bar__label">Disconnect All</span>
+              </button>
+            )}
           </div>
         </div>
       </div>

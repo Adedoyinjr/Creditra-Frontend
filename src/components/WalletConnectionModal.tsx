@@ -42,6 +42,7 @@ interface WalletOption {
   icon: string;
   description: string;
   installUrl: string;
+  features: string[];
 }
 
 /**
@@ -55,6 +56,7 @@ const DEFAULT_WALLET_ORDER: WalletOption[] = [
     icon: '/assets/wallets/freighter.svg',
     description: 'Browser extension wallet for Stellar',
     installUrl: 'https://www.freighter.app',
+    features: ['Supports Soroban smart contracts', 'Ledger hardware wallet compatible', 'Open source'],
   },
   {
     id: 'albedo',
@@ -62,6 +64,7 @@ const DEFAULT_WALLET_ORDER: WalletOption[] = [
     icon: '/assets/wallets/albedo.svg',
     description: 'Web-based Stellar wallet',
     installUrl: 'https://albedo.link',
+    features: ['No installation required', 'Hardware wallet support', 'Built-in asset swap'],
   },
   {
     id: 'xbull',
@@ -69,6 +72,7 @@ const DEFAULT_WALLET_ORDER: WalletOption[] = [
     icon: '/assets/wallets/xbull.svg',
     description: 'Mobile and desktop Stellar wallet',
     installUrl: 'https://xbull.app',
+    features: ['Cross-platform (mobile + desktop)', 'Built-in DApp browser', 'Multi-account support'],
   },
   {
     id: 'rabet',
@@ -76,6 +80,7 @@ const DEFAULT_WALLET_ORDER: WalletOption[] = [
     icon: '/assets/wallets/rabet.svg',
     description: 'Stellar wallet for desktop',
     installUrl: 'https://rabet.io',
+    features: ['Lightweight desktop application', 'Clean minimal interface', 'Beginner-friendly setup'],
   },
 ];
 
@@ -425,8 +430,10 @@ export const WalletConnectionModal: React.FC<WalletConnectionModalProps> = ({
             const isConnecting = connectingId === wallet.id;
             const isDisabled = connectingId !== null;
 
+            const previewId = `wallet-preview-${wallet.id}`;
+
             return (
-              <li key={wallet.id} role="none">
+              <li key={wallet.id} role="none" className="wallet-option-wrapper">
                 <button
                   className={`wallet-option ${isDetected ? 'wallet-option--detected' : 'wallet-option--undetected'}`}
                   style={{ minHeight: '44px', minWidth: '44px' }}
@@ -439,7 +446,7 @@ export const WalletConnectionModal: React.FC<WalletConnectionModalProps> = ({
                       ? `Connect with ${wallet.name}${isConnecting ? ', connecting' : ''}`
                       : `Install ${wallet.name} wallet`
                   }
-                  aria-describedby={`wallet-status-${wallet.id}`}
+                  aria-describedby={`wallet-status-${wallet.id} ${previewId}`}
                   type="button"
                 >
                   {/* Icon */}
@@ -488,6 +495,33 @@ export const WalletConnectionModal: React.FC<WalletConnectionModalProps> = ({
                     )}
                   </span>
                 </button>
+
+                {/* Hover-preview card — shows wallet features on hover/focus */}
+                <div
+                  id={previewId}
+                  className="wallet-preview"
+                  role="tooltip"
+                  aria-hidden="true"
+                >
+                  <div className="wallet-preview__header">
+                    <img
+                      src={wallet.icon}
+                      alt=""
+                      width="28"
+                      height="28"
+                      aria-hidden="true"
+                    />
+                    <span className="wallet-preview__name">{wallet.name}</span>
+                  </div>
+                  <ul className="wallet-preview__features">
+                    {wallet.features.map((feat) => (
+                      <li key={feat} className="wallet-preview__feature">
+                        <span className="wallet-preview__check" aria-hidden="true">✓</span>
+                        {feat}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               </li>
             );
           })}

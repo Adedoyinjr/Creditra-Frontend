@@ -7,7 +7,7 @@ import { RepaymentVisualizer } from '@/components/RepaymentVisualizer';
 import { InlineHelpOverlay } from '@/components/InlineHelpOverlay';
 import { ProgressBar } from '@/components/ProgressBar';
 import type { ProgressBarVariant } from '@/components/ProgressBar';
-import { Skeleton } from '@/components/Skeleton';
+import { LiveRegion } from '@/components/LiveRegion';
 
 import { EmptyState } from '@/components/EmptyState';
 import { NoOutstandingDebt } from '@/components/illustrations';
@@ -93,6 +93,8 @@ export default function RepayPage() {
   const [confirmAmountStr, setConfirmAmountStr] = useState('');
   const [isAutoSchedule, setIsAutoSchedule] = useState(false);
   const [isHelpOpen, setIsHelpOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
   // Task ariallive-v7: centralised SR announcement for step transitions and
   // validation feedback.  The LiveRegion component renders this via
   // aria-live="polite" so screen readers pick it up without focus moves.
@@ -244,12 +246,12 @@ export default function RepayPage() {
 
   if (!selectedLine) {
     return (
-      <div className="repay-page mx-auto max-w-2xl space-y-6 px-4 py-8">
+    <div className="repay-page mx-auto max-w-2xl space-y-6 px-4 py-8">
         <button
           type="button"
           aria-label="Back"
           onClick={() => navigate(-1)}
-          className={`inline-flex items-center gap-1.5 rounded-md text-sm text-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${motionClasses(isReducedMotionActive, 'transition-colors hover:text-foreground')}`}
+          className={`rp-back-btn inline-flex items-center gap-1.5 rounded-md text-sm text-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${motionClasses(isReducedMotionActive, 'transition-colors hover:text-foreground')}`}
         >
           <ArrowLeft className="h-4 w-4" aria-hidden="true" />
           Back
@@ -322,7 +324,7 @@ export default function RepayPage() {
                   key={cl.id}
                   type="button"
                   onClick={() => setSelectedId(cl.id)}
-                  className={`w-full rounded-lg border border-border bg-surface p-4 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${motionClasses(isReducedMotionActive, 'transition-all hover:border-accent hover:bg-accent/5')}`}
+                  className={`rp-cl-card w-full rounded-lg border border-border bg-surface p-4 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${motionClasses(isReducedMotionActive, 'transition-all hover:border-accent hover:bg-accent/5')}`}
                 >
                   <div className="flex items-center justify-between">
                     <div>
@@ -363,7 +365,7 @@ export default function RepayPage() {
         type="button"
         aria-label={step === 'input' ? 'Back to credit lines' : 'Back to input'}
         onClick={handleBack}
-        className={`mb-4 inline-flex items-center gap-1.5 rounded-md text-sm text-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${motionClasses(isReducedMotionActive, 'transition-colors hover:text-foreground')}`}
+        className={`rp-back-btn mb-4 inline-flex items-center gap-1.5 rounded-md text-sm text-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${motionClasses(isReducedMotionActive, 'transition-colors hover:text-foreground')}`}
       >
         <ArrowLeft className="h-4 w-4" aria-hidden="true" />
         <span className="flex items-center gap-1.5">
@@ -383,7 +385,7 @@ export default function RepayPage() {
               : 'Make a repayment'}
           </h1>
           <p className="text-sm text-muted">
-            {selectedLine.name} &middot; {selectedLine.apr}% APR
+            {selectedLine.name} &middot; <span className="num-tabular">{selectedLine.apr}%</span> APR
           </p>
         </header>
 
@@ -440,7 +442,7 @@ export default function RepayPage() {
                         key={pct}
                         type="button"
                         onClick={() => handlePercent(pct)}
-                        className={`flex-1 rounded-md border border-accent/30 px-2 py-1.5 text-xs font-medium text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${motionClasses(isReducedMotionActive, 'transition-colors hover:bg-accent/10')}`}
+                        className={`rp-preset-btn flex-1 rounded-md border border-accent/30 px-2 py-1.5 text-xs font-medium text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${motionClasses(isReducedMotionActive, 'transition-colors hover:bg-accent/10')}`}
                         aria-label={`Set amount to ${pct === 100 ? 'maximum' : `${pct} percent`}`}
                       >
                         {pct === 100 ? (
@@ -455,7 +457,7 @@ export default function RepayPage() {
                     <button
                       type="button"
                       onClick={handleSmartPay}
-                      className={`flex-1 rounded-md border border-success/30 px-2 py-1.5 text-xs font-medium text-success focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-success ${motionClasses(isReducedMotionActive, 'transition-colors hover:bg-success/10')}`}
+                      className={`rp-smart-pay-btn flex-1 rounded-md border border-success/30 px-2 py-1.5 text-xs font-medium text-success focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-success ${motionClasses(isReducedMotionActive, 'transition-colors hover:bg-success/10')}`}
                       aria-label={`Smart Pay suggested repayment of ${formatMoney(suggestedAmount)}`}
                     >
                       <span className="flex items-center justify-center gap-1">
@@ -480,7 +482,7 @@ export default function RepayPage() {
                       min={1}
                       step={0.01}
                       aria-invalid={validation?.feedback.severity === 'danger' || undefined}
-                      className={`w-full rounded-lg border bg-background px-3 py-3 pl-8 text-lg font-semibold text-foreground outline-none focus:ring-2 focus:ring-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${motionClasses(isReducedMotionActive, 'transition-colors')}`}
+                      className={`rp-amount-input num-tabular w-full rounded-lg border bg-background px-3 py-3 pl-8 text-lg font-semibold text-foreground outline-none focus:ring-2 focus:ring-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${motionClasses(isReducedMotionActive, 'transition-colors')}`}
                       style={{
                         // Task tokens-v7: token-referenced colors only — no raw hex.
                         borderColor:
@@ -546,28 +548,26 @@ export default function RepayPage() {
                         <span className="ml-1.5 text-muted line-through num-tabular">
                           {oldPct}%
                         </span>
-                      </span>
-                    </div>
-                    {/* Task cb-v7: ghost bar uses rp-progress--ghost (30% opacity
-                        overlay) and the live bar uses the pattern class so both
-                        old and new utilization are told apart without colour. */}
-                    <div className="h-2 w-full overflow-hidden rounded-full bg-border">
-                      <div
-                        className="h-full rounded-full bg-red-500/30 transition-all motion-reduce:transition-none"
-                        style={{ width: `${oldPct}%` }}
-                        aria-hidden="true"
-                      />
-                    </div>
-                    <div className="h-2 w-full overflow-hidden rounded-full bg-border">
-                      <div
-                        className={`h-full rounded-full transition-all motion-reduce:transition-none ${
-                          remainingDebt === 0 ? 'bg-green-500' : 'bg-yellow-500'
-                        } ${motionClasses(isReducedMotionActive, 'transition-all')}`}
-                        style={{ width: `${newPct}%` }}
-                        aria-hidden="true"
-                      />
-                    </div>
+                    </span>
                   </div>
+
+                  {/* cb-v7: pattern class on both bars so old and new utilization
+                      are told apart without colour alone. */}
+                  <div className="h-2 w-full overflow-hidden rounded-full bg-border">
+                    <div
+                      className={`h-full rounded-full transition-all motion-reduce:transition-none rp-progress--ghost`}
+                      style={{ width: `${oldPct}%` }}
+                      aria-hidden="true"
+                    />
+                  </div>
+                  <div className="h-2 w-full overflow-hidden rounded-full bg-border">
+                    <div
+                      className={`h-full rounded-full transition-all ${newPct > 80 ? 'rp-progress--high' : newPct > 50 ? 'rp-progress--medium' : 'rp-progress--low'}`}
+                      style={{ width: `${newPct}%` }}
+                      aria-hidden="true"
+                    />
+                  </div>
+                  </div>  {/* closes the space-y-3 wrapper */}
 
                   <div className="mt-6 flex items-center justify-between border-t border-border pt-4">
                     <div>
@@ -586,7 +586,7 @@ export default function RepayPage() {
                       role="switch"
                       aria-checked={isAutoSchedule}
                       onClick={() => setIsAutoSchedule(!isAutoSchedule)}
-                      className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent focus:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
+                      className={`rp-toggle-switch relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${
                         isAutoSchedule ? 'bg-accent' : 'bg-border'
                       } ${motionClasses(isReducedMotionActive, 'transition-colors duration-200 ease-in-out')}`}
                     >
@@ -604,7 +604,7 @@ export default function RepayPage() {
                       type="button"
                       onClick={handleReview}
                       disabled={isInvalid || amount <= 0}
-                      className={`w-full rounded-lg bg-accent px-4 py-3 text-sm font-semibold text-background focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-50 ${motionClasses(isReducedMotionActive, 'transition-all hover:brightness-110')}`}
+                      className={`rp-review-btn w-full rounded-lg bg-accent px-4 py-3 text-sm font-semibold text-background focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-50 ${motionClasses(isReducedMotionActive, 'transition-all hover:brightness-110')}`}
                     >
                       <span className="flex items-center justify-center gap-2">
                         Review Repayment <KbdHint keys={['Enter']} />
@@ -615,7 +615,7 @@ export default function RepayPage() {
                       type="button"
                       onClick={() => setIsPreviewModalOpen(true)}
                       disabled={isInvalid || amount <= 0}
-                      className={`w-full rounded-lg border border-accent/40 bg-accent/10 px-4 py-2.5 text-xs font-semibold text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-40 ${motionClasses(isReducedMotionActive, 'transition-all hover:bg-accent/20')}`}
+                      className={`rp-preview-btn w-full rounded-lg border border-accent/40 bg-accent/10 px-4 py-2.5 text-xs font-semibold text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-40 ${motionClasses(isReducedMotionActive, 'transition-all hover:bg-accent/20')}`}
                     >
                       Preview Consequences Modal
                     </button>
@@ -653,14 +653,14 @@ export default function RepayPage() {
                 ref={helpTriggerRef}
                 type="button"
                 onClick={() => setIsHelpOpen(true)}
-                className={`rounded-md text-sm font-semibold text-blue-300 underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-400 ${motionClasses(isReducedMotionActive, 'transition-colors hover:text-blue-200 hover:underline')}`}
+                className={`rp-help-btn rounded-md text-sm font-semibold text-accent underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${motionClasses(isReducedMotionActive, 'transition-colors hover:text-accent hover:underline')}`}
               >
                 I need help
               </button>
               <button
                 type="button"
                 onClick={() => navigate('/')}
-                className={`rounded-md text-sm font-semibold text-foreground underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${motionClasses(isReducedMotionActive, 'hover:text-accent hover:underline')}`}
+                className={`rp-cancel-btn rounded-md text-sm font-semibold text-foreground underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${motionClasses(isReducedMotionActive, 'hover:text-accent hover:underline')}`}
               >
                 Cancel
               </button>
@@ -725,7 +725,7 @@ export default function RepayPage() {
               <button
                 type="button"
                 onClick={handleBack}
-                className={`flex-1 rounded-lg border border-border bg-surface px-4 py-3 text-sm font-semibold text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${motionClasses(isReducedMotionActive, 'transition-all hover:bg-border')}`}
+                className={`rp-back-input-btn flex-1 rounded-lg border border-border bg-surface px-4 py-3 text-sm font-semibold text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${motionClasses(isReducedMotionActive, 'transition-all hover:bg-border')}`}
               >
                 <span className="flex items-center justify-center gap-2">
                   Back <KbdHint keys={['Esc']} />
@@ -736,7 +736,7 @@ export default function RepayPage() {
                 onClick={handleConfirm}
                 disabled={isConfirmDisabled}
                 aria-disabled={isConfirmDisabled || undefined}
-                className={`flex-[2] rounded-lg bg-accent px-4 py-3 text-sm font-semibold text-background focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-50 ${motionClasses(isReducedMotionActive, 'transition-all hover:brightness-110')}`}
+                className={`rp-confirm-btn flex-[2] rounded-lg bg-accent px-4 py-3 text-sm font-semibold text-background focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-50 ${motionClasses(isReducedMotionActive, 'transition-all hover:brightness-110')}`}
               >
                 <span className="flex items-center justify-center gap-2">
                   Confirm Repayment <KbdHint keys={['Enter']} />
@@ -794,14 +794,14 @@ export default function RepayPage() {
               <button
                 type="button"
                 onClick={() => navigate('/')}
-                className={`flex-1 rounded-lg bg-accent px-4 py-3 text-sm font-semibold text-background focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${motionClasses(isReducedMotionActive, 'transition-all hover:brightness-110')}`}
+                className={`rp-dashboard-btn flex-1 rounded-lg bg-accent px-4 py-3 text-sm font-semibold text-background focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${motionClasses(isReducedMotionActive, 'transition-all hover:brightness-110')}`}
               >
                 Back to Dashboard
               </button>
               <button
                 type="button"
                 onClick={handleNewRepay}
-                className={`flex-1 rounded-lg border border-border bg-surface px-4 py-3 text-sm font-semibold text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${motionClasses(isReducedMotionActive, 'transition-all hover:bg-border')}`}
+                className={`rp-new-repay-btn flex-1 rounded-lg border border-border bg-surface px-4 py-3 text-sm font-semibold text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${motionClasses(isReducedMotionActive, 'transition-all hover:bg-border')}`}
               >
                 Make another repayment
               </button>
@@ -829,6 +829,8 @@ export default function RepayPage() {
           triggerRef={previewTriggerRef}
         />
       )}
+
+      <LiveRegion>{srAnnouncement}</LiveRegion>
     </div>
   );
 }

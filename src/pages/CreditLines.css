@@ -505,13 +505,6 @@
     font-weight: 600;
 }
 
-/* Forced-colors mode: use system ButtonText so stripe stays visible */
-@media (forced-colors: active) {
-    .cl-row--defaulted {
-        border-left-color: ButtonText;
-    }
-}
-
 /* ─── Repayment Schedule section (host for <RepaymentSchedule />) ─────────── */
 
 .cl-repayment-schedule {
@@ -567,80 +560,120 @@
         box-shadow: none;
     }
 
-    /* Utilization bar: snap to final width immediately (so users still see
-       the final value, just without a 600 ms tween) */
-    .cl-util-fill {
-        transition: none;
-    }
-
-    /* Filter / sort controls: drop the border-color fade so focus/hover
-       state changes are still visible but instant */
-    .cl-filter-group select {
-        transition: none;
-    }
-    .cl-sort-dir {
-        transition: none;
-    }
-
-    /* Primary CTA buttons: drop the opacity hover transition (border-color
-       still changes via .cl-primary-btn:hover via the static style) */
-    .cl-primary-btn {
-        transition: none;
-    }
-
-    /* Foot-of-card action buttons: drop the all-properties transition */
-    .cl-action-btn {
-        transition: none;
-    }
-
-    /* Empty-state entrance animation (clFadeInUp): the content is still
-       fully readable in its final state — we just skip the 400 ms fade */
-    .cl-empty {
-        animation: none;
-    }
-}
-
-[data-motion="reduced"] .cl-card {
-    animation: none !important;
-    transition: none !important;
-}
-[data-motion="reduced"] .cl-card:hover {
-    transform: none !important;
-    box-shadow: none !important;
-}
-
-[data-motion="reduced"] .cl-util-fill {
-    transition: none !important;
-}
-
-[data-motion="reduced"] .cl-filter-group select,
-[data-motion="reduced"] .cl-sort-dir,
-[data-motion="reduced"] .cl-primary-btn,
-[data-motion="reduced"] .cl-action-btn {
-    transition: none !important;
-}
-
-[data-motion="reduced"] .cl-empty {
-    animation: none !important;
-}
-
-/* ─── Responsive ─────────────────────────────────────────────────────────────── */
-
-@media (max-width: 480px) {
+@media (min-width: 1200px) {
     .credit-lines-page {
-        padding: 0 1rem 1.5rem;
+        max-width: 1600px;
+    }
+}
+
+@media (max-width: 1024px) {
+    .cl-grid {
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    }
+}
+
+@media (max-width: 768px) {
+    .cl-page-header {
+        flex-direction: column;
+        gap: 0.75rem;
     }
 
-    .cl-page-header,
-    .cl-card-header,
-    .cl-card-footer,
+    .cl-page-header > div:last-child {
+        width: 100%;
+    }
+
+    .cl-page-header .cl-primary-btn {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .credit-lines-page {
+        padding: 0 1rem 2rem;
+    }
+
+    .cl-card-header {
+        flex-wrap: wrap;
+    }
+
+    .cl-name {
+        font-size: 1rem;
+    }
+
+    .cl-metric-value {
+        font-size: 0.9rem;
+    }
+}
+
+@media (max-width: 640px) {
+    .cl-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .cl-card-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .cl-card-header > .flex {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .cl-card-body {
+        padding: 1rem;
+    }
+
+    .cl-metrics {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .cl-details {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .cl-card-footer {
+        flex-direction: column;
+    }
+
     .cl-filters {
         flex-direction: column;
         align-items: stretch;
     }
 
-    .cl-grid {
-        grid-template-columns: 1fr;
+    .cl-filter-group {
+        width: 100%;
+    }
+
+    .cl-filter-group select {
+        width: 100%;
+    }
+
+    .kbd-hint-container {
+        display: none;
+    }
+
+    .cl-empty {
+        padding: 3rem 1.5rem;
+    }
+
+    .cl-empty-features {
+        text-align: left;
+    }
+}
+
+@media (max-width: 480px) {
+    .credit-lines-page {
+        padding: 0 0.75rem 1.5rem;
+    }
+
+    .cl-page-header h1 {
+        font-size: 1.25rem;
+    }
+
+    .cl-page-header .cl-primary-btn {
+        width: 100%;
+        justify-content: center;
+        text-align: center;
     }
 
     .cl-metrics,
@@ -649,14 +682,61 @@
     }
 }
 
+    .cl-card-header {
+        padding: 1rem 1rem 0;
+    }
+
+    .cl-card-body {
+        padding: 0.75rem 1rem;
+    }
+
+    .cl-card-detail {
+        padding: 0 1rem 1rem;
+    }
+
+    .cl-empty {
+        padding: 2.5rem 1rem;
+    }
+
+    .cl-empty-title {
+        font-size: 1.1rem;
+    }
+
+    .cl-empty-desc {
+        font-size: 0.85rem;
+    }
+
+    .cl-repayment-schedule {
+        margin-top: 2rem;
+    }
+
+    .cl-section-title {
+        font-size: 1rem;
+    }
+}
+
 @media (prefers-reduced-motion: reduce) {
-    .cl-primary-btn,
-    .cl-filter-group select,
-    .cl-sort-dir,
-    .cl-card,
-    .cl-util-fill,
-    .cl-action-btn {
-        transition: none !important;
+    .cl-card {
+        transition: none;
+    }
+
+    .cl-card:hover {
+        transform: none;
+        box-shadow: none;
+    }
+
+    .cl-util-fill {
+        transition: none;
+    }
+
+    .cl-empty {
+        animation: none;
+    }
+}
+
+@media (forced-colors: active) {
+    .cl-row--defaulted {
+        border-left-color: ButtonText;
     }
 }
 

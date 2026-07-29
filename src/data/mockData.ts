@@ -1,4 +1,5 @@
 import type { CreditLine, AprHistoryEntry } from '../types/creditLine';
+import type { Attestation } from '../types/attestation';
 
 // ─── APR history generation helper ───────────────────────────────────────────
 /**
@@ -180,6 +181,30 @@ export const MOCK_CREDIT_LINES: CreditLine[] = [
       { status: 'Active', date: '2025-01-15', note: 'Line opened and activated' },
     ],
     aprHistory: generateAprHistory(7.5, 365, 606),
+  },
+];
+
+// ─── Attestations mock data ───────────────────────────────────────────────────
+
+export const MOCK_ATTESTATIONS: Attestation[] = [
+  {
+    id: 'identity-bond',
+    label: 'Identity Bond',
+    lastVerifiedAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+    expiresAt: new Date(Date.now() + 150 * 24 * 60 * 60 * 1000).toISOString(),
+    remediationStep: 2,
+  },
+  {
+    id: 'revenue-proof',
+    label: 'Revenue Proof',
+    lastVerifiedAt: new Date(Date.now() - 170 * 24 * 60 * 60 * 1000).toISOString(),
+    expiresAt: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(),
+    remediationStep: 2,
+  },
+  {
+    id: 'bank-ownership',
+    label: 'Bank Account Ownership',
+    remediationStep: 2,
   },
 ];
 

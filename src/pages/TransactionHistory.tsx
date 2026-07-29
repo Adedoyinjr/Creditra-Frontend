@@ -104,22 +104,38 @@ const TX_TYPE_COLORS: Record<TransactionType, string> = {
 };
 
 const STATUS_COLORS: Record<TransactionStatus, { bg: string; color: string }> =
-  {
-    Completed: { bg: "rgba(63,185,80,0.15)", color: COLOR.success },
-    Pending: { bg: "rgba(210,153,34,0.15)", color: COLOR.warning },
-    Failed: { bg: "rgba(248,81,73,0.15)", color: COLOR.danger },
-  };
+{
+  Completed: { bg: "rgba(63,185,80,0.15)", color: COLOR.success },
+  Pending: { bg: "rgba(210,153,34,0.15)", color: COLOR.warning },
+  Failed: { bg: "rgba(248,81,73,0.15)", color: COLOR.danger },
+};
+
+/**
+ * CSS pattern classes for each transaction status.
+ *
+ * These classes add a pure-CSS geometric pattern on top of the coloured
+ * background so that the three statuses are distinguishable without
+ * relying on colour alone (WCAG 2.1 SC 1.4.1 — Use of Color).
+ *
+ * The classes are defined in src/styles/patterns.css and are globally
+ * available via index.css.
+ */
+const STATUS_PATTERNS: Record<TransactionStatus, string> = {
+  Completed: "tx-status-pattern--completed",
+  Pending: "tx-status-pattern--pending",
+  Failed: "tx-status-pattern--failed",
+};
 
 const TYPE_FILTER_OPTIONS: Array<{
   value: "all" | Exclude<TransactionType, "StatusChange">;
   label: string;
 }> = [
-  { value: "all", label: "All" },
-  { value: "Draw", label: "Draw" },
-  { value: "Repay", label: "Repay" },
-  { value: "Fee", label: "Fee" },
-  { value: "Interest", label: "Interest" },
-];
+    { value: "all", label: "All" },
+    { value: "Draw", label: "Draw" },
+    { value: "Repay", label: "Repay" },
+    { value: "Fee", label: "Fee" },
+    { value: "Interest", label: "Interest" },
+  ];
 
 type TypeFilter = (typeof TYPE_FILTER_OPTIONS)[number]["value"];
 type RangePreset = "this-week" | "this-month" | "all-time" | "custom";
@@ -143,11 +159,11 @@ const AMOUNT_FILTER_OPTIONS: Array<{
   value: "all" | "lt100" | "100-1000" | "gt1000";
   label: string;
 }> = [
-  { value: "all", label: "All Amounts" },
-  { value: "lt100", label: "<$100" },
-  { value: "100-1000", label: "$100–$1,000" },
-  { value: "gt1000", label: ">$1,000" },
-];
+    { value: "all", label: "All Amounts" },
+    { value: "lt100", label: "<$100" },
+    { value: "100-1000", label: "$100–$1,000" },
+    { value: "gt1000", label: ">$1,000" },
+  ];
 
 type AmountFilter = (typeof AMOUNT_FILTER_OPTIONS)[number]["value"];
 
@@ -284,7 +300,7 @@ function TransactionRow({
         </td>
         <td className="tx-status">
           <span
-            className="tx-status-badge"
+            className={`tx-status-badge ${STATUS_PATTERNS[tx.status]}`}
             style={{
               background: STATUS_COLORS[tx.status].bg,
               color: STATUS_COLORS[tx.status].color,
@@ -1659,7 +1675,7 @@ export function TransactionHistory() {
 
       <div className="th-table-container">
         {filteredTransactions.length === 0 ? (
-          <div 
+          <div
             className="empty-state"
             role="status"
             aria-live="polite"
@@ -1667,7 +1683,7 @@ export function TransactionHistory() {
             <NoDataGraph className="empty-state-illustration--muted" />
             <h2>No transactions found</h2>
             <p>
-              We couldn't find any transactions matching your current filters. 
+              We couldn't find any transactions matching your current filters.
               Try another transaction type, date range, or search term.
             </p>
             {hasActiveFilters && (

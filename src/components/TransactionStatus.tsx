@@ -131,7 +131,7 @@ export function TransactionStatus({
         {/* Amount drawn */}
         <div className="dc-status-detail-row">
           <p className="dc-status-detail-row__label">Amount Drawn</p>
-          <p className="dc-status-detail-row__value dc-status-detail-row__value--large num-tabular">
+          <p className="dc-status-detail-row__value dc-status-detail-row__value--large tabular-nums">
             ${transaction.amount.toLocaleString()}
           </p>
         </div>

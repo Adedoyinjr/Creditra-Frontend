@@ -126,7 +126,7 @@ export function PayoffProjection({
                 <p className="text-xs font-medium text-muted">Months saved</p>
               </div>
               <p
-                className="mt-1 text-2xl font-bold text-accent"
+                className="mt-1 text-2xl font-bold text-accent num-tabular"
                 role="status"
                 aria-live="polite"
               >
@@ -144,7 +144,7 @@ export function PayoffProjection({
                 <p className="text-xs font-medium text-muted">Interest saved</p>
               </div>
               <p
-                className="mt-1 text-2xl font-bold text-success"
+                className="mt-1 text-2xl font-bold text-success num-tabular"
                 role="status"
                 aria-live="polite"
               >
@@ -162,7 +162,7 @@ export function PayoffProjection({
               <p className="text-xs font-medium text-muted">
                 Utilization
               </p>
-              <span className="text-xs text-muted">
+              <span className="text-xs text-muted num-tabular">
                 {projection.currentUtilizationPct}% → {projection.newUtilizationPct}%
               </span>
             </div>
@@ -187,7 +187,7 @@ export function PayoffProjection({
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs font-medium text-muted">Monthly payment</p>
-              <p className="mt-0.5 text-sm font-semibold text-foreground">
+              <p className="mt-0.5 text-sm font-semibold text-foreground num-tabular">
                 {formatMoney(monthlyPayment)}
               </p>
             </div>

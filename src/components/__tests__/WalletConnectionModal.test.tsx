@@ -679,4 +679,113 @@ describe('WalletConnectionModal Accessibility', () => {
 
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
+
+  // ── Hover-preview card ─────────────────────────────────────────────────
+
+  describe('wallet hover-preview card', () => {
+    function withFreighterDetected() {
+      vi.spyOn(walletUtils, 'getRecentWalletOrder').mockReturnValue([]);
+      vi.spyOn(walletUtils, 'getStoredWallet').mockReturnValue(null);
+    }
+
+    beforeEach(() => {
+      window.localStorage.clear();
+      withFreighterDetected();
+    });
+
+    it('renders a preview card for each wallet option', () => {
+      const { container } = render(
+        <TestWrapper
+          isOpen={true}
+          onClose={mockOnClose}
+          onConnect={mockOnConnect}
+          detectedWallets={['freighter']}
+        />,
+      );
+
+      const previews = container.querySelectorAll('.wallet-preview');
+      // 4 wallets → 4 preview cards
+      expect(previews).toHaveLength(4);
+    });
+
+    it('each preview card has role="tooltip" and is hidden from AT by default', () => {
+      const { container } = render(
+        <TestWrapper
+          isOpen={true}
+          onClose={mockOnClose}
+          onConnect={mockOnConnect}
+          detectedWallets={['freighter']}
+        />,
+      );
+
+      const previews = container.querySelectorAll('.wallet-preview');
+      previews.forEach((card) => {
+        expect(card).toHaveAttribute('role', 'tooltip');
+        expect(card).toHaveAttribute('aria-hidden', 'true');
+      });
+    });
+
+    it('links the wallet button to its preview card via aria-describedby', () => {
+      render(
+        <TestWrapper
+          isOpen={true}
+          onClose={mockOnClose}
+          onConnect={mockOnConnect}
+          detectedWallets={['freighter']}
+        />,
+      );
+
+      const freighterBtn = screen.getByLabelText('Connect with Freighter');
+      const describedBy = freighterBtn.getAttribute('aria-describedby') ?? '';
+      // Should reference both the status id and the preview id.
+      const ids = describedBy.split(/\s+/);
+      const previewId = ids.find((id) => id.startsWith('wallet-preview-'));
+      expect(previewId).toBeTruthy();
+      const previewEl = document.getElementById(previewId!);
+      expect(previewEl).toBeInTheDocument();
+      expect(previewEl).toHaveAttribute('role', 'tooltip');
+    });
+
+    it('preview card shows the wallet name in its header', () => {
+      render(
+        <TestWrapper
+          isOpen={true}
+          onClose={mockOnClose}
+          onConnect={mockOnConnect}
+          detectedWallets={['freighter']}
+        />,
+      );
+
+      // The first visible wallet header name in the DOM
+      const headers = document.querySelectorAll('.wallet-preview__name');
+      expect(headers.length).toBe(4);
+
+      // Freighter should be one of them
+      const names = Array.from(headers).map((h) => h.textContent);
+      expect(names).toContain('Freighter');
+      expect(names).toContain('Albedo');
+      expect(names).toContain('xBull');
+      expect(names).toContain('Rabet');
+    });
+
+    it('preview card lists wallet-specific features', () => {
+      render(
+        <TestWrapper
+          isOpen={true}
+          onClose={mockOnClose}
+          onConnect={mockOnConnect}
+          detectedWallets={['freighter']}
+        />,
+      );
+
+      // Each wallet has 3 features → expect 12 feature items total
+      const features = document.querySelectorAll('.wallet-preview__feature');
+      expect(features.length).toBe(12);
+
+      // Freighter-specific features should be present
+      const featureTexts = Array.from(features).map((f) => f.textContent);
+      expect(featureTexts.some((t) => t?.includes('Soroban'))).toBe(true);
+      expect(featureTexts.some((t) => t?.includes('Ledger'))).toBe(true);
+    });
+  });
 });

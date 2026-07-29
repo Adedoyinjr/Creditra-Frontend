@@ -48,9 +48,9 @@ import React, {
 } from "react";
 import { Sparkline } from "../components/Sparkline";
 import { EmptyState } from "../components/EmptyState";
-import { NoDataGraph } from "../components/illustrations/EmptyStateIllustrations";
-import { KbdHint } from "../components/KbdHint";
+import { NoRiskGauge } from "../components/illustrations/EmptyStateIllustrations";
 import { COLOR, RISK_COLOR, fmtDate } from "../utils/tokens";
+import { KbdHint } from "../components/KbdHint";
 import { useReducedMotion } from "../context/ReducedMotionContext";
 import "../components/RiskGauge.css";
 import "../styles/patterns.css";
@@ -473,32 +473,18 @@ export function RiskGauge({
   // ── Empty state ───────────────────────────────────────────────────────────
   if (isEmpty) {
     return (
-      <>
-        {/* "Risk Score" eyebrow — visible above the empty-state card */}
-        <p
-          style={{
-            fontSize: "var(--text-xs, 0.75rem)",
-            color: "var(--muted)",
-            textTransform: "uppercase",
-            letterSpacing: "0.05em",
-            margin: "0 0 var(--space-2, 0.5rem)",
-          }}
-        >
-          Risk Score
-        </p>
-        <EmptyState
-          icon={<NoDataGraph />}
-          title="No risk data available"
-          description="Your risk score will appear here once your credit profile has been analyzed."
-          action={
-            onRefresh ? (
-              <button type="button" onClick={onRefresh}>
-                Check again
-              </button>
-            ) : undefined
-          }
-        />
-      </>
+      <EmptyState
+        illustration={<NoRiskGauge />}
+        eyebrow="Risk Score"
+        title="No risk data available"
+        description="Your risk score will appear here once your credit profile has been analyzed."
+        tone="info"
+        primaryAction={
+          onRefresh
+            ? { label: "Check again", onClick: onRefresh }
+            : undefined
+        }
+      />
     );
   }
 

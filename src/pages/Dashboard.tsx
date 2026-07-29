@@ -1,18 +1,20 @@
-import { useMemo, useState, useEffect, useRef, useCallback } from "react";
-import { Link } from "react-router-dom";
+import { useMemo, useState, useEffect, useRef, useCallback, type CSSProperties } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import ActivityFeed from "../components/ActivityFeed";
 import { CopyToClipboard } from "../components/CopyToClipboard";
 import { CopyLoanButton } from "../components/CopyLoanButton";
 import { StatusBadge } from "../components/StatusBadge";
+import { AttestationCard } from "../components/AttestationCard";
+import { CreditLineRowMenu } from "../components/CreditLineRowMenu";
+import { KbdHint } from "../components/KbdHint";
 import { DashboardTour } from "../components/DashboardTour";
 import { useWallet } from "../context/WalletContext";
 import { Sparkline } from "../components/Sparkline";
-import { DashboardTour } from "../components/DashboardTour";
 import { RiskBandsPanel } from "../components/RiskBandsPanel";
 import { WhatsChangedPanel } from "../components/WhatsChangedPanel";
 import { RiskExplainerOverlay } from "../components/RiskExplainerOverlay";
 import { ContinuePrompt } from "../components/ContinuePrompt";
-import { MOCK_CREDIT_LINES } from "../data/mockData";
+import { MOCK_CREDIT_LINES, MOCK_ATTESTATIONS } from "../data/mockData";
 import type { Transaction } from "../types/creditLine";
 import {
   COLOR,
@@ -23,16 +25,18 @@ import {
   getUtilizationLevel,
 } from "../utils/tokens";
 import "./Dashboard.css";
+import "../styles/focus.css";
 import { Skeleton } from "../components/Skeleton";
-import { NoDataGraph } from "../components/illustrations";
+import { NoLines } from "../components/illustrations";
+import { EmptyState } from "../components/EmptyState";
 import { useInertBackdrop } from "../hooks/useInertBackdrop";
 import { useBodyScrollLock } from "../hooks/useBodyScrollLock";
 import { WhatChanged } from "../components/WhatChanged";
 import { RiskGauge } from "./RiskGauge";
 import { LiveRegion } from "../components/LiveRegion";
+import { useReducedMotion } from "../context/ReducedMotionContext";
+import { HealthTipsPanel } from "../components/HealthTipsPanel";
 import { SyncIndicator } from "@/components/SyncIndicator";
-import { ContinuePrompt } from "@/components/ContinuePrompt";
-import { DashboardTour } from "@/components/DashboardTour";
 
 export { RiskGauge };
 
@@ -66,7 +70,22 @@ const TX_COLOR: Record<string, string> = {
 // ─── Dashboard Component ──────────────────────────────────────────────────────
 
 export function Dashboard() {
+  // ── Reduced-motion fallback (Issue #500) ─────────────────────────────────
+  // When the OS "Reduce Motion" setting is active, or the user has toggled the
+  // in-app override, we strip all entrance-animation delays from card elements
+  // so they appear instantly rather than staggering in.  The CSS already zeroes
+  // out animation-duration and transition-duration via the @media rule in
+  // Dashboard.css; this hook ensures the inline `animationDelay` style that
+  // controls the stagger order is also removed.
+  const { isReducedMotionActive } = useReducedMotion();
+
+  /** Returns an empty object when reduced motion is active, otherwise the
+   *  supplied style object.  Named after CSS's `animation-delay`. */
+  const animDelay = (style: CSSProperties): CSSProperties =>
+    isReducedMotionActive ? {} : style;
+
   const { wallet, status: walletStatus } = useWallet();
+  const navigate = useNavigate();
   const creditLines = MOCK_CREDIT_LINES;
 
   const [repayCount, setRepayCount] = useState(0);
@@ -88,6 +107,20 @@ export function Dashboard() {
     await new Promise<void>((r) => setTimeout(r, 600));
     setActivitySyncedAt(new Date());
   }, []);
+  // ─── Credit line row menu handlers ──────────────────────────────────────
+  const handleRowRepay = useCallback(
+    (lineId: string) => navigate(`/repay?line=${lineId}`),
+    [navigate],
+  );
+  const handleRowDetails = useCallback(
+    (lineId: string) => navigate(`/credit-lines?highlight=${lineId}`),
+    [navigate],
+  );
+  const handleRowSchedule = useCallback(
+    (lineId: string) => navigate(`/repayment-schedule?line=${lineId}`),
+    [navigate],
+  );
+
   const explainTriggerRef = useRef<HTMLButtonElement>(null);
   const [selectedCompareLines, setSelectedCompareLines] = useState<string[]>([]);
   const [showCompare, setShowCompare] = useState(false);
@@ -227,7 +260,7 @@ export function Dashboard() {
             content: (
               <>
                 <strong>{cl.name}</strong> utilization is at{" "}
-                {Math.round(util * 100)}%. Consider a repayment.
+                <span className="tabular-nums">{Math.round(util * 100)}</span>%. Consider a repayment.
               </>
             ),
             type: "warning",
@@ -242,8 +275,8 @@ export function Dashboard() {
               icon: "🗓️",
               content: (
                 <>
-                  Payment of <strong>{fmt(cl.nextPaymentAmount ?? 0)}</strong>{" "}
-                  due in {daysUntil} day{daysUntil !== 1 ? "s" : ""} for{" "}
+                  Payment of <strong className="tabular-nums">{fmt(cl.nextPaymentAmount ?? 0)}</strong>{" "}
+                  due in <span className="tabular-nums">{daysUntil}</span> day{daysUntil !== 1 ? "s" : ""} for{" "}
                   {cl.name}.
                 </>
               ),
@@ -274,7 +307,10 @@ export function Dashboard() {
         />
         <div className="dashboard-header">
           <div>
-            <h1>Dashboard</h1>
+            <h1 style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
+              Dashboard
+              <KbdHint keys={['Cmd', 'K']} separator="+" label="Command Palette" variant="badge" />
+            </h1>
             <p className="subtitle">Your credit overview at a glance</p>
           </div>
           {isConnected && (
@@ -310,7 +346,7 @@ export function Dashboard() {
           )}
         </div>
         <EmptyState
-          illustration={<NoDataGraph className="empty-state-illustration--muted" />}
+          illustration={<NoLines className="empty-state-illustration--muted" />}
           title="No credit lines yet"
           description="Start your credit journey by requesting a credit evaluation. We'll analyze your on-chain activity to determine your credit limit and terms."
           primaryAction={{
@@ -334,7 +370,10 @@ export function Dashboard() {
 
       <div className="dashboard-header">
         <div>
-          <h1>Dashboard</h1>
+          <h1 style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
+            Dashboard
+            <KbdHint keys={['Cmd', 'K']} separator="+" label="Command Palette" variant="badge" />
+          </h1>
           <p className="subtitle">Your credit overview at a glance</p>
         </div>
         {isConnected && (
@@ -499,7 +538,7 @@ export function Dashboard() {
 
       <div className="dashboard-grid">
         <div>
-          <div className="card" style={{ animationDelay: "0.1s" }}>
+          <div className="card" style={animDelay({ animationDelay: "0.1s" })}>
             <h2>
               <span className="icon">📊</span> Credit Summary
               {status === 'success' && (
@@ -565,7 +604,7 @@ export function Dashboard() {
           </div>
 
           {/* Risk Score */}
-          <div className="card" data-tour-target="riskGauge" style={{ animationDelay: '0.15s' }} aria-busy={status === 'loading'}>
+          <div className="card" data-tour-target="riskGauge" style={animDelay({ animationDelay: "0.15s" })} aria-busy={status === 'loading'}>
             <h2>
               <span className="icon">🛡️</span> Risk Score
               {status === 'success' && (
@@ -597,8 +636,8 @@ export function Dashboard() {
             </h2>
             {status === 'loading' ? (
               <div className="risk-gauge-container">
-                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100px', width: '160px', marginBottom: '0.75rem' }}>
-                  <Skeleton style={{ width: '80px', height: '80px', borderRadius: '50%' }} />
+                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'flex-end', height: '100px', width: '160px', marginBottom: '0.75rem' }}>
+                  <Skeleton style={{ width: '160px', height: '80px', borderRadius: '160px 160px 0 0' }} />
                 </div>
                 <div className="risk-meta" style={{ width: '100%' }}>
                   <div className="risk-meta-item" style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.375rem' }}>
@@ -622,9 +661,11 @@ export function Dashboard() {
             )}
           </div>
 
+          {status === 'success' && <AttestationCard attestations={MOCK_ATTESTATIONS} />}
+
            <div
              className="card"
-             style={{ animationDelay: "0.2s" }}
+             style={animDelay({ animationDelay: "0.2s" })}
              aria-busy={status === 'loading'}
            >
              <h2>
@@ -879,6 +920,13 @@ export function Dashboard() {
                            <div className="cl-preview-bar-fill" style={{ width: `${pct}%`, background: UTIL_COLOR[level] }} />
                          </div>
                        </div>
+                       <CreditLineRowMenu
+                         lineId={cl.id}
+                         lineName={cl.name}
+                         onRepay={() => handleRowRepay(cl.id)}
+                         onSchedule={handleRowSchedule}
+                         onDetails={handleRowDetails}
+                       />
                      </div>
                    );
                  })}
@@ -891,7 +939,7 @@ export function Dashboard() {
          </div>
  
          <div>
-           <div className="card" style={{ animationDelay: "0.12s" }}>
+           <div className="card" style={animDelay({ animationDelay: "0.12s" })}>
              <h2><span className="icon">⚡</span> Quick Actions</h2>
              <div className="quick-actions-grid">
                {!hasLines && (
@@ -915,7 +963,7 @@ export function Dashboard() {
                    <div className="qa-icon" style={{ background: "rgba(88,166,255,0.12)", color: COLOR.accent }}>↗</div>
                    <div>
                      <div className="qa-label" style={{ color: COLOR.accent }}>Draw Credit</div>
-                     <div className="qa-desc" style={{ color: COLOR.muted }}>{fmt(totalAvailable)} available</div>
+                     <div className="qa-desc num-tabular" style={{ color: COLOR.muted }}>{fmt(totalAvailable)} available</div>
                    </div>
                    <span className="qa-arrow" style={{ color: COLOR.muted }}>→</span>
                  </button>
@@ -928,7 +976,7 @@ export function Dashboard() {
                    <div className="qa-icon" style={{ background: "rgba(63,185,80,0.12)", color: COLOR.success }}>↙</div>
                    <div>
                      <div className="qa-label" style={{ color: COLOR.success }}>Repay Credit</div>
-                     <div className="qa-desc" style={{ color: COLOR.muted }}>{fmt(totalUtilized)} outstanding</div>
+                     <div className="qa-desc num-tabular" style={{ color: COLOR.muted }}>{fmt(totalUtilized)} outstanding</div>
                    </div>
                    <span className="qa-arrow" style={{ color: COLOR.muted }}>→</span>
                  </button>
@@ -951,7 +999,7 @@ export function Dashboard() {
              </div>
            </div>
  
-           <div className="card" style={{ animationDelay: "0.18s" }} aria-busy={status === 'loading'}>
+           <div className="card" style={animDelay({ animationDelay: "0.18s" })} aria-busy={status === 'loading'}>
              <h2>
                <span className="icon">📝</span> Recent Activity
                {status === 'success' && (
@@ -1019,7 +1067,7 @@ export function Dashboard() {
            </div>
  
            {notifications.length > 0 && (
-             <div className="card" style={{ animationDelay: "0.22s" }}>
+             <div className="card" style={animDelay({ animationDelay: "0.22s" })}>
                <h2><span className="icon">🔔</span> Alerts</h2>
                {notifications.map((note, i) => (
                  <div 

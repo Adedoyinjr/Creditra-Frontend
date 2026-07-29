@@ -141,53 +141,111 @@ describe('RepayPage', () => {
     expect(reviewBtn).not.toBeDisabled();
   });
 
-  describe('Focus-visible outline accessibility', () => {
-    it('applies focus-visible classes on selection view back button and credit line options', () => {
+  describe('Focus-visible outline accessibility (issue #512)', () => {
+    it('applies focus-visible classes and rp-back-btn / rp-cl-card classes on selection view', () => {
       renderPage(['/repay']);
       const backBtn = screen.getByRole('button', { name: /back/i });
       expect(backBtn).toHaveClass('focus-visible:outline');
+      expect(backBtn).toHaveClass('rp-back-btn');
 
       const clOption = screen.getByRole('button', { name: /primary business line/i });
       expect(clOption).toHaveClass('focus-visible:outline');
+      expect(clOption).toHaveClass('rp-cl-card');
     });
 
-    it('applies focus-visible classes on input view back, preset, input, and review buttons', () => {
+    it('applies focus-visible classes and rp-* classes on input view interactive elements', () => {
       renderPage(['/repay?line=CL-2024-001']);
       const backBtn = screen.getByRole('button', { name: /back to credit lines/i });
       expect(backBtn).toHaveClass('focus-visible:outline');
+      expect(backBtn).toHaveClass('rp-back-btn');
 
       const preset25 = screen.getByRole('button', { name: /25 percent/i });
       expect(preset25).toHaveClass('focus-visible:outline');
+      expect(preset25).toHaveClass('rp-preset-btn');
 
       const smartPayBtn = screen.getByRole('button', { name: /smart pay/i });
       expect(smartPayBtn).toHaveClass('focus-visible:outline');
+      expect(smartPayBtn).toHaveClass('rp-smart-pay-btn');
 
       const input = screen.getByRole('spinbutton', { name: /amount to repay/i });
       expect(input).toHaveClass('focus-visible:outline');
+      expect(input).toHaveClass('rp-amount-input');
 
       const reviewBtn = screen.getByRole('button', { name: /review repayment/i });
       expect(reviewBtn).toHaveClass('focus-visible:outline');
+      expect(reviewBtn).toHaveClass('rp-review-btn');
     });
 
-    it('applies focus-visible classes on help and cancel buttons', () => {
+    it('applies focus-visible classes and rp-* classes on help and cancel buttons', () => {
       renderPage(['/repay?line=CL-2024-001']);
       const helpBtn = screen.getByRole('button', { name: /i need help/i });
       expect(helpBtn).toHaveClass('focus-visible:outline');
+      expect(helpBtn).toHaveClass('rp-help-btn');
 
       const cancelBtn = screen.getByRole('button', { name: /cancel/i });
       expect(cancelBtn).toHaveClass('focus-visible:outline');
+      expect(cancelBtn).toHaveClass('rp-cancel-btn');
     });
 
-    it('applies focus-visible classes on review step buttons', () => {
+    it('applies focus-visible classes and rp-* classes on review step buttons', () => {
       renderPage(['/repay?line=CL-2024-001']);
       fireEvent.click(screen.getByRole('button', { name: /smart pay/i }));
       fireEvent.click(screen.getByRole('button', { name: /review repayment/i }));
 
-      const backBtn = screen.getByRole('button', { name: /^back to input$/i });
+      // The back button in review step uses rp-back-btn class (not rp-back-input-btn)
+      const backBtn = screen.getByRole('button', { name: /back to input/i });
       expect(backBtn).toHaveClass('focus-visible:outline');
+      expect(backBtn).toHaveClass('rp-back-btn');
 
       const confirmBtn = screen.getByRole('button', { name: /confirm repayment/i });
       expect(confirmBtn).toHaveClass('focus-visible:outline');
+      expect(confirmBtn).toHaveClass('rp-confirm-btn');
+    });
+
+    it('auto-schedule toggle uses focus-visible:outline (not ring) and has rp-toggle-switch class', () => {
+      renderPage(['/repay?line=CL-2024-001']);
+
+      // The toggle switch is labelled by the htmlFor/id linkage with "Auto-schedule" text
+      const toggle = screen.getByRole('switch', { name: /auto-schedule/i });
+      expect(toggle).toHaveClass('focus-visible:outline');
+      expect(toggle).toHaveClass('focus-visible:outline-offset-2');
+      expect(toggle).toHaveClass('focus-visible:outline-accent');
+      expect(toggle).toHaveClass('rp-toggle-switch');
+      // Ensure it does NOT have the ring classes
+      expect(toggle).not.toHaveClass('focus:outline-none');
+      expect(toggle.classList.contains('focus-visible:ring-2')).toBe(false);
+    });
+
+    it('help button uses design-token accent color (not hard-coded blue-400)', () => {
+      renderPage(['/repay?line=CL-2024-001']);
+      const helpBtn = screen.getByRole('button', { name: /i need help/i });
+      expect(helpBtn).toHaveClass('focus-visible:outline-accent');
+      // Ensure it does NOT have the hard-coded blue-400 class
+      expect(helpBtn.classList.contains('focus-visible:outline-blue-400')).toBe(false);
+    });
+
+    it('applies focus-visible classes and rp-* classes on success step buttons', () => {
+      renderPage(['/repay?line=CL-2024-001']);
+      // Navigate to success step
+      fireEvent.click(screen.getByRole('button', { name: /smart pay/i }));
+      fireEvent.click(screen.getByRole('button', { name: /review repayment/i }));
+      fireEvent.click(screen.getByRole('button', { name: /confirm repayment/i }));
+
+      const dashboardBtn = screen.getByRole('button', { name: /back to dashboard/i });
+      expect(dashboardBtn).toHaveClass('focus-visible:outline');
+      expect(dashboardBtn).toHaveClass('rp-dashboard-btn');
+
+      const newRepayBtn = screen.getByRole('button', { name: /make another repayment/i });
+      expect(newRepayBtn).toHaveClass('focus-visible:outline');
+      expect(newRepayBtn).toHaveClass('rp-new-repay-btn');
+    });
+
+    it('preview modal button has rp-preview-btn class and focus-visible classes', () => {
+      renderPage(['/repay?line=CL-2024-001']);
+      fireEvent.click(screen.getByRole('button', { name: /smart pay/i }));
+      const previewBtn = screen.getByRole('button', { name: /preview consequences modal/i });
+      expect(previewBtn).toHaveClass('focus-visible:outline');
+      expect(previewBtn).toHaveClass('rp-preview-btn');
     });
   });
 });

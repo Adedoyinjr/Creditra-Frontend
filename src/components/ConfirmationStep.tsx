@@ -33,7 +33,6 @@ import { useState } from "react";
 import { CreditLineSummaryBlock } from "@/components/CreditLineSummaryBlock";
 import { PendingButton } from "@/components/PendingButton";
 import { formatMoney } from "@/utils/amountValidation";
-import { useWallet } from "@/context/WalletContext";
 import { getDrawPricingQuote } from "@/lib/draw-credit-pricing";
 
 interface ConfirmationStepProps {
@@ -156,37 +155,41 @@ export function ConfirmationStep({
     }
   };
 
-  // Derive the figures the render layer references.  `amount` is the raw
-  // draw amount entered by the user; the rest are pricing- and balance
-  // computations derived from creditLine + the pricing quote.  Names match
-  // what the markup uses so all the labels stay meaningful and the test
-  // assertions line up.
-  //
-  // NOTE: `creditLine.utilization` is a percentage (e.g. 30 = 30%); for
-  // dollar arithmetic we use `creditLine.utilized` (already-drawn
-  // balance) and `creditLine.available` (remaining headroom).
-  const safeAmount = Number.isFinite(amount) ? amount : 0;
-  const fee = getDrawPricingQuote(creditLine, safeAmount).fee;
-  const estimatedMonthlyInterest =
-    getDrawPricingQuote(creditLine, safeAmount).estimatedMonthlyInterest;
-  // `creditLine` (the draw-credit.types shape) carries `limit` and `available`
-  // but not a `utilized` field; pre-draw balance is therefore derived as
-  // `limit - available`. Post-draw balance is pre-draw + safeAmount.
-  const preDrawBalance = Math.max(
-    Number(creditLine.limit || 0) - Number(creditLine.available || 0),
-    0,
-  );
-  const newBalance = preDrawBalance + safeAmount;
-  const remainingAvailable = Math.max(
-    Number(creditLine.available || 0) - safeAmount,
-    0,
-  );
+  /** Controls the "How is my APR calculated?" collapsible section. */
+  const [aprDisclosureOpen, setAprDisclosureOpen] = useState(false);
 
-  const newUtilization = Math.round(
-    ((creditLine.limit - creditLine.available + amount) / creditLine.limit) *
-      100,
-  );
+  const utilizedBalance = creditLine.limit - creditLine.available;
+  const safeAmount = Math.max(Number.isFinite(amount) ? amount : 0, 0);
+
+  const {
+    fee,
+    apr,
+    estimatedMonthlyInterest,
+    riskBand,
+    termMonths,
+    utilizationAdjustmentLabel,
+    termAdjustmentLabel,
+  } = getDrawPricingQuote(creditLine, safeAmount);
+
+  // Reconstruct the base APR before adjustments for the disclosure panel.
+  const utilizationAdjPts =
+    creditLine.utilization >= 80
+      ? 2
+      : creditLine.utilization >= 50
+        ? 1.25
+        : 0.5;
+  const termAdjPts = termMonths > 24 ? 2.5 : termMonths > 12 ? 1.5 : 0.5;
+  const baseApr = Math.round((apr - utilizationAdjPts - termAdjPts) * 100) / 100;
+
+  const newBalance = utilizedBalance + safeAmount + fee;
+  const remainingAvailable = Math.max(creditLine.limit - newBalance, 0);
+  const newUtilization = Math.round((newBalance / creditLine.limit) * 100);
+  const currentUtilizationPct = creditLine.utilization;
+
+  const riskBandMeta = getRiskBandMeta(riskBand);
+  const isWatchBand = riskBand === "Watch";
   const isHighUtilization = newUtilization > 80;
+  const canConfirm = agreedToTerms && !isLoading;
 
   return (
     <div className="space-y-8">
@@ -453,28 +456,22 @@ export function ConfirmationStep({
       </section>
 
       {/* ── Terms checkbox ───────────────────────────────────────────────── */}
-      <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-border bg-surface p-4 transition-colors hover:bg-border">
+      <label className="dc-terms-label">
         <input
           type="checkbox"
           checked={agreedToTerms}
           onChange={(e) => setAgreedToTerms(e.target.checked)}
-          className="mt-1 w-5 h-5 rounded accent-accent"
+          className="dc-terms-label__checkbox"
+          aria-label="I agree to the terms and conditions and authorise this draw"
           data-testid="terms-checkbox"
         />
-        <span className="text-sm text-foreground">
-          I agree to the{" "}
-          <AccessibleTooltip label="A term is a defined period or condition of your credit agreement.">
-            <span>terms</span>
-          </AccessibleTooltip>{" "}
-          and conditions and authorize this draw. The funds will be deposited
-          within 1–2 business days.
+        <span className="dc-terms-label__text">
+          I agree to the terms and conditions and authorize this draw. The funds
+          will be deposited within 1–2 business days.
         </span>
       </label>
 
-      {/* Button order: Cancel → Back → Primary (docs/BUTTON_ORDER.md).
-          * Cancel is leftmost as a safe exit; Back is in the middle slot
-          * because it preserves progress; Confirm draw is the irreversible
-          * primary action (rightmost). */}
+      {/* Button order: Cancel → Back → Primary (docs/BUTTON_ORDER.md). */}
       <div className="dc-actions dc-actions--stacked">
         <button
           onClick={onCancel}
@@ -490,67 +487,24 @@ export function ConfirmationStep({
           type="button"
           className="dc-btn dc-btn--secondary dc-actions__slot"
         >
-          <Info
-            className="w-5 h-5 shrink-0 mt-0.5"
-            style={{ color: "#58a6ff" }}
-            aria-hidden="true"
-          />
-          <span className="text-sm font-medium" style={{ color: "#e6edf3" }}>
-            Your wallet will ask you to sign next
-          </span>
-        </div>
-      )}
-
-      {/* ── Sticky footer actions ─────────────────────────────────────────── */}
-      <div className="sticky bottom-0 z-10 -mx-6 border-t border-border bg-surface/95 px-6 py-4 backdrop-blur sm:-mx-8 sm:px-8">
-        {/* Button order rule (docs/BUTTON_ORDER.md):
-            Cancel (exit flow) — Back (previous step) — Draw (primary/confirm)
-            flex-col-reverse reverses this on mobile so the primary stacks on top. */}
-        <div className="flex flex-col-reverse gap-3 sm:flex-row">
-          {/* Cancel: leftmost — exits the wizard entirely */}
-          <button
-            onClick={onConfirm}
-            disabled={!canConfirm}
-            aria-disabled={!canConfirm}
+          Back
+        </button>
+        <div className="dc-actions__slot">
+          <PendingButton
             type="button"
+            onClick={onConfirm}
+            pending={isLoading}
+            pendingLabel="Processing draw..."
+            disabled={!canConfirm}
             className="dc-btn dc-btn--primary dc-btn--full"
           >
-            Cancel
-          </button>
-          {/* Back: adjacent to primary — returns to the previous step */}
-          <button
-            type="button"
-            onClick={onBack}
-            disabled={isLoading}
-            className="rounded-lg border-2 border-border px-4 py-3 font-semibold text-foreground transition-colors hover:bg-background disabled:opacity-50 sm:w-auto"
-          >
-            Back
-          </button>
-          {/* Primary: rightmost — the forward/confirm action */}
-          <div className="space-y-2 sm:ml-auto sm:min-w-64">
-            <PendingButton
-              type="button"
-              onClick={onConfirm}
-              pending={isLoading}
-              pendingLabel="Processing draw..."
-              disabled={isDrawDisabled}
-              className="w-full rounded-lg bg-blue-600 px-4 py-3 font-semibold text-white transition-all hover:bg-blue-500 hover:shadow-lg hover:shadow-blue-500/40 disabled:cursor-not-allowed disabled:opacity-50"
-              aria-describedby={
-                isDrawDisabled ? "draw-disabled-helper" : undefined
-              }
-            >
-              Draw
-            </PendingButton>
-            {isDrawDisabled && (
-              <p
-                id="draw-disabled-helper"
-                className="text-center text-xs text-muted sm:text-right"
-                role="status"
-              >
-                {disabledHelperText}
-              </p>
-            )}
-          </div>
+            Confirm draw
+          </PendingButton>
+          {!agreedToTerms && !isLoading && (
+            <p className="dc-hint dc-hint--right">
+              Accept terms to enable confirmation.
+            </p>
+          )}
         </div>
       </div>
     </div>

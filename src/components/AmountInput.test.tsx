@@ -704,4 +704,17 @@ describe("AmountInput", () => {
       expect(continueBtn).toHaveClass("xs:w-auto");
     });
   });
+  it("renders keyboard shortcut hint for arrow key stepper controls", () => {
+    render(
+      <AmountInput
+        creditLine={creditLine}
+        onAmountChange={vi.fn()}
+        onNext={vi.fn()}
+        onBack={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText("↑ / ↓")).toBeInTheDocument();
+    expect(screen.getByText("Adjust amount")).toBeInTheDocument();
+  });
 });

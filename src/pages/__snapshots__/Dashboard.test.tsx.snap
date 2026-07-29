@@ -21,7 +21,7 @@ exports[`RiskGauge inline component from Dashboard > matches snapshot at score 5
     viewBox="0 0 160 100"
   >
     <title
-      id="risk-gauge-title-gelxdlvais"
+      id="risk-gauge-title-qorqmuqryjr"
     >
       Risk score 580 of 850. Trend: Stable.
     </title>
@@ -51,23 +51,6 @@ exports[`RiskGauge inline component from Dashboard > matches snapshot at score 5
       Risk Score
     </text>
   </svg>
-  <span
-    class="risk-gauge-tier-wrap"
-    style="color: rgb(248, 81, 73);"
-  >
-    <span
-      aria-hidden="true"
-      class="risk-gauge-tier-glyph"
-      data-tier="below"
-    >
-      ●
-    </span>
-    <span
-      class="sr-only"
-    >
-      Below recommended risk score
-    </span>
-  </span>
   <div
     class="risk-meta"
   >
@@ -106,6 +89,38 @@ exports[`RiskGauge inline component from Dashboard > matches snapshot at score 5
       </span>
     </div>
   </div>
+  <div
+    class="risk-meta-item"
+    style="margin-top: 0.75rem; justify-content: center;"
+  >
+    <span
+      aria-label="Press question mark to open help overlay"
+      class="kbd-hint-container"
+      role="group"
+    >
+      <span
+        class="sr-only"
+      >
+        Press question mark to open help overlay
+      </span>
+      <span
+        aria-hidden="true"
+        class="kbd-hint-group"
+      >
+        <kbd
+          class="kbd-hint-key"
+        >
+          ?
+        </kbd>
+      </span>
+      <span
+        aria-hidden="true"
+        class="kbd-hint-label"
+      >
+        Explain Risk
+      </span>
+    </span>
+  </div>
 </div>
 `;
 
@@ -130,7 +145,7 @@ exports[`RiskGauge inline component from Dashboard > matches snapshot at score 6
     viewBox="0 0 160 100"
   >
     <title
-      id="risk-gauge-title-sfa246aanec"
+      id="risk-gauge-title-7ao0e0820vk"
     >
       Risk score 660 of 850. Trend: Stable.
     </title>
@@ -160,23 +175,6 @@ exports[`RiskGauge inline component from Dashboard > matches snapshot at score 6
       Risk Score
     </text>
   </svg>
-  <span
-    class="risk-gauge-tier-wrap"
-    style="color: rgb(210, 153, 34);"
-  >
-    <span
-      aria-hidden="true"
-      class="risk-gauge-tier-glyph"
-      data-tier="fair"
-    >
-      ◆
-    </span>
-    <span
-      class="sr-only"
-    >
-      Fair risk score
-    </span>
-  </span>
   <div
     class="risk-meta"
   >
@@ -215,6 +213,38 @@ exports[`RiskGauge inline component from Dashboard > matches snapshot at score 6
       </span>
     </div>
   </div>
+  <div
+    class="risk-meta-item"
+    style="margin-top: 0.75rem; justify-content: center;"
+  >
+    <span
+      aria-label="Press question mark to open help overlay"
+      class="kbd-hint-container"
+      role="group"
+    >
+      <span
+        class="sr-only"
+      >
+        Press question mark to open help overlay
+      </span>
+      <span
+        aria-hidden="true"
+        class="kbd-hint-group"
+      >
+        <kbd
+          class="kbd-hint-key"
+        >
+          ?
+        </kbd>
+      </span>
+      <span
+        aria-hidden="true"
+        class="kbd-hint-label"
+      >
+        Explain Risk
+      </span>
+    </span>
+  </div>
 </div>
 `;
 
@@ -239,7 +269,7 @@ exports[`RiskGauge inline component from Dashboard > matches snapshot at score 7
     viewBox="0 0 160 100"
   >
     <title
-      id="risk-gauge-title-c233as1ifre"
+      id="risk-gauge-title-ddiiwx1dgug"
     >
       Risk score 740 of 850. Trend: Stable.
     </title>
@@ -269,23 +299,6 @@ exports[`RiskGauge inline component from Dashboard > matches snapshot at score 7
       Risk Score
     </text>
   </svg>
-  <span
-    class="risk-gauge-tier-wrap"
-    style="color: rgb(63, 185, 80);"
-  >
-    <span
-      aria-hidden="true"
-      class="risk-gauge-tier-glyph"
-      data-tier="strong"
-    >
-      ▲
-    </span>
-    <span
-      class="sr-only"
-    >
-      Strong risk score
-    </span>
-  </span>
   <div
     class="risk-meta"
   >
@@ -323,6 +336,38 @@ exports[`RiskGauge inline component from Dashboard > matches snapshot at score 7
         Jan 1, 2025
       </span>
     </div>
+  </div>
+  <div
+    class="risk-meta-item"
+    style="margin-top: 0.75rem; justify-content: center;"
+  >
+    <span
+      aria-label="Press question mark to open help overlay"
+      class="kbd-hint-container"
+      role="group"
+    >
+      <span
+        class="sr-only"
+      >
+        Press question mark to open help overlay
+      </span>
+      <span
+        aria-hidden="true"
+        class="kbd-hint-group"
+      >
+        <kbd
+          class="kbd-hint-key"
+        >
+          ?
+        </kbd>
+      </span>
+      <span
+        aria-hidden="true"
+        class="kbd-hint-label"
+      >
+        Explain Risk
+      </span>
+    </span>
   </div>
 </div>
 `;

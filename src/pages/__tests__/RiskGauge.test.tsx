@@ -2,88 +2,13 @@
  * RiskGauge page — focus-visible accessibility test suite
  * Issue #602 — Add focus-visible outline on RiskGauge (v7)
  *
- * Test coverage
- * ─────────────────────────────────────────────────────────────────────────────
- * A. Normal (non-empty) state — rendering
- *    1.  Renders the gauge SVG when isEmpty is false.
- *    2.  Renders the trend meta row.
- *    3.  Renders the KbdHint "Explain Risk" shortcut hint.
- *
- * B. Empty state
- *    4.  Renders EmptyState heading when isEmpty is true.
- *    5.  Renders description text.
- *    6.  Does NOT render the gauge SVG when empty.
- *    7.  Renders a "Check again" button when onRefresh is provided.
- *    8.  Does NOT render a CTA button when onRefresh is absent.
- *    9.  Renders the "Risk Score" eyebrow text.
- *
- * C. WCAG 2.1 AA — keyboard accessibility
- *   10.  SVG has tabIndex="0" making it keyboard-reachable.
- *   11.  SVG has role="img".
- *   12.  SVG has aria-labelledby pointing at a <title> with the score.
- *   13.  data-testid="risk-gauge-svg" is present on the SVG.
- *   14.  data-active-sector reflects the score band (high / medium / low).
- *   15.  data-reduced-motion attribute is present on the SVG.
- *   16.  Each sector <g> has role="button" and tabIndex="0".
- *   17.  Each sector has a data-sector attribute identifying the band.
- *   18.  Active sector has aria-pressed="true"; inactive sectors "false".
- *   19.  Enter on the SVG fires onSectorActivate with the active sector.
- *   20.  Space on the SVG fires onSectorActivate with the active sector.
- *   21.  Unrelated key on SVG does NOT fire onSectorActivate.
- *   22.  Enter on a sector <g> fires onSectorActivate with that sector.
- *   23.  Space on a sector <g> fires onSectorActivate with that sector.
- *   24.  Click on a sector fires onSectorActivate.
- *   25.  Unrelated key on sector does NOT fire onSectorActivate.
- *   26.  onSectorActivate is optional — no throw on Enter/click.
- *   27.  Sectors are NOT rendered when showSectors=false.
- *   28.  Sectors render by default (showSectors defaults true).
- *
- * D. Focus-visible CSS token wiring (CSS source assertions)
- *   29.  focus.css declares --focus-ring-color token.
- *   30.  focus.css declares --focus-ring-width ≥ 2 px.
- *   31.  focus.css declares --focus-ring-offset token.
- *   32.  .risk-gauge-svg:focus-visible uses box-shadow (not outline).
- *   33.  box-shadow references --focus-ring-color token.
- *   34.  .risk-gauge-sector:focus-visible .risk-gauge-sector-focus-rect
- *        reveals stroke via --focus-ring-color.
- *   35.  No bare :focus rules exist in focus.css (only :focus-visible).
- *   36.  High-contrast override sets --focus-ring-color to #ffffff.
- *   37.  Reduced-motion block in focus.css does NOT suppress focus rings.
- *
- * E. Mouse click — focus ring suppression (structural assertion)
- *   38.  SVG does NOT carry a plain :focus rule that would show ring on click.
- *
- * F. SR live region
- *   39.  aria-live="polite" region is present.
- *   40.  Activating a sector updates the live region message.
- *
- * G. SR-only table
- *   41.  SR table is rendered by default.
- *   42.  SR table is omitted when showSRTable=false.
- *   43.  SR table marks the current band with aria-current="true".
- *
- * H. Focus-rect element
- *   44.  Each sector contains a .risk-gauge-sector-focus-rect <rect>.
- *
- * I. data-active-sector boundary values
- *   45.  score=0   → low
- *   46.  score=424 → low
- *   47.  score=425 → medium
- *   48.  score=594 → medium
- *   49.  score=595 → high
- *   50.  score=850 → high
- *   51.  score > 850 → clamped to high
- *   52.  score < 0   → clamped to low
- *
- * J. Re-render consistency
- *   53.  data-active-sector and aria-pressed update on score change.
- *
- * ─────────────────────────────────────────────────────────────────────────────
- * Note: jsdom does not compute :focus-visible pseudo-class styles. Tests D and
- * E therefore assert directly against the CSS source files, following the same
- * pattern used in src/components/RiskGauge.test.tsx and the project's
- * gauge-sweep CSS scoping tests.  Visual regression (actual ring rendering) is
- * covered by the Playwright / visual-regression suite.
+ * Cover:
+ *  1. Renders the gauge SVG when isEmpty is false (default).
+ *  2. Renders EmptyState when isEmpty is true.
+ *  3. EmptyState includes the NoRiskGauge illustration, heading, and description.
+ *  4. EmptyState shows "Check again" CTA when onRefresh is provided.
+ *  5. EmptyState does NOT render the SVG or meta row.
+ *  6. When isEmpty is false, the original gauge behaviour is preserved.
  */
 
 import { render, screen, fireEvent } from "@testing-library/react";
@@ -110,12 +35,15 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-// ── A. Normal state — rendering ───────────────────────────────────────────────
-
-describe("RiskGauge page — normal (non-empty) state", () => {
-  it("1. renders the gauge SVG when isEmpty is false", () => {
-    renderGauge({ score: 720, trend: "improving", lastUpdated: "2025-03-01T00:00:00Z" });
-    expect(screen.getByTestId("risk-gauge-svg")).toBeInTheDocument();
+    it('renders the trend meta row', () => {
+      renderRiskGauge({
+        score: 720,
+        trend: 'improving',
+        lastUpdated: '2025-03-01T00:00:00Z',
+      });
+      const trendElements = screen.getAllByText(/improving/i);
+      expect(trendElements.length).toBeGreaterThan(0);
+    });
   });
 
   it("2. renders the trend meta row", () => {
