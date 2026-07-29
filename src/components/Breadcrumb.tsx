@@ -31,14 +31,14 @@ export interface BreadcrumbProps {
  * Middle-ellipsis helper: trims the center of a string while preserving the
  * first and last few characters, inserting `\u2026` (…) in between.
  *
- * For a string of `n` characters we keep `head = ceil(n/3)` and
- * `tail = floor(n/3)` characters, which keeps both the recognisable prefix
- * and any file-extension / identifier suffix visible.
+ * It preserves as many characters as possible up to `maxLen` by dividing
+ * the remaining characters equally between the head and tail.
  */
 export function middleEllipsis(text: string, maxLen: number): string {
   if (text.length <= maxLen) return text;
-  const head = Math.ceil(maxLen / 3);
-  const tail = Math.floor(maxLen / 3);
+  const charsToKeep = Math.max(0, maxLen - 1);
+  const head = Math.ceil(charsToKeep / 2);
+  const tail = Math.floor(charsToKeep / 2);
   return `${text.slice(0, head)}\u2026${text.slice(-tail)}`;
 }
 
