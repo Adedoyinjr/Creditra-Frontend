@@ -1,158 +1,194 @@
 /*
  * TransactionHistorySkeleton.css
  *
- * Layout styles for the TransactionHistory first-paint skeleton.
+ * Shimmer layer for the TransactionHistory first-paint skeleton (issue #854).
  *
- * Design-token contract:
- *   All colours are consumed via CSS custom properties defined in
- *   src/index.css (:root).  No hard-coded hex values appear here so the
- *   skeleton automatically inherits any active theme, including
- *   high-contrast mode ([data-contrast="high"]) and dark mode.
+ * ── What is NOT in this file ────────────────────────────────────────────────
+ * Layout.  The skeleton renders the loaded page's own DOM shape and class
+ * names (`.transaction-history-page`, `.th-header`, `.th-stats`,
+ * `.th-stat-card`, `.th-filters`, `.th-table`, `.tx-row`, …), so every
+ * padding, gap, border-radius, font-size, min-height, and responsive
+ * breakpoint comes from `src/pages/TransactionHistory.css`.  The previous
+ * version of this file re-declared all of that with hard-coded rem values and
+ * its own 960/640px breakpoints, which drifted from the real page and made the
+ * first paint jump on reveal.
  *
- * Responsive:
- *   - Mobile (<640 px): stats collapse to 2 columns, filter bar wraps,
- *     hash column skeleton is hidden.
- *   - Tablet (<960 px): stats collapse to 2 columns.
+ * Restating a dimension here would reintroduce exactly that drift, so this
+ * file is limited to four concerns:
+ *   1. painting the shimmer over text and boxes,
+ *   2. restoring the `display` that a native control would have contributed
+ *      (a placeholder <span> is not a <button> or <select>),
+ *   3. making the placeholder chrome inert to pointer input, and
+ *   4. suppressing the page's entry animation while loading.
  *
- * Animation:
- *   The shimmer sweep lives in Skeleton.css and is already suppressed
- *   under prefers-reduced-motion — no duplication needed here.
+ * Design tokens: colours resolve through `--skeleton-bg` / `--skeleton-radius`
+ * (Skeleton.css) and the page's `--surface` / `--border`, so dark mode and
+ * `[data-contrast="high"]` are inherited with no overrides here.
+ *
+ * Reduced motion: the shimmer sweep is suppressed in Skeleton.css under both
+ * `@media (prefers-reduced-motion: reduce)` and `[data-motion="reduced"]`.
  */
 
-/* ── Wrapper ────────────────────────────────────────────────────────────── */
+/* ── 1. Text placeholders ───────────────────────────────────────────────────
+ *
+ * `.th-skel-line` wraps a representative string rendered with
+ * `visibility: hidden`.  The hidden text contributes its exact width and line
+ * box to layout but paints nothing; the shimmer bar is drawn over it.
+ *
+ * Because the height comes from the surrounding element's own line box, a
+ * placeholder automatically tracks font-size changes at the 480px / 360px
+ * breakpoints — there are no per-breakpoint pixel heights to maintain.
+ */
 
-.th-skeleton {
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 0 1.5rem 2rem;
+.th-skel-line {
+    position: relative;
+    display: inline-block;
+    max-width: 100%;
+    /* Sit on the baseline like the text being replaced, so the parent's line
+       box is computed identically in both states. */
+    vertical-align: baseline;
 }
-
-/* ── Stats cards row ───────────────────────────────────────────────────── */
-
-.th-skeleton__stats {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-}
-
-.th-skeleton__stat-card {
-  display: flex;
-  align-items: center;
-  gap: 0.875rem;
-  padding: 1rem 1.25rem;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg, 10px);
-}
-
-.th-skeleton__stat-content {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  flex: 1;
-  min-width: 0;
-}
-
-/* ── Filter bar placeholder ─────────────────────────────────────────────── */
-
-.th-skeleton__filters {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.875rem;
-  padding: 1.25rem;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg, 10px);
-  margin-bottom: 1.5rem;
-}
-
-/* ── Table container ────────────────────────────────────────────────────── */
-
-.th-skeleton__table-container {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg, 10px);
-  overflow: hidden;
-}
-
-/* ── Table header row ───────────────────────────────────────────────────── */
-
-.th-skeleton__thead {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 0.875rem 1rem;
-  background: var(--bg);
-  border-bottom: 1px solid var(--border);
-}
-
-/* ── Skeleton transaction rows ─────────────────────────────────────────── */
-
-.th-skeleton__row {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 1rem;
-  border-bottom: 1px solid var(--border);
-}
-
-.th-skeleton__row:last-child {
-  border-bottom: none;
-}
-
-/* ── Cells ──────────────────────────────────────────────────────────────── */
 
 /*
- * Each cell's flex-basis mirrors the approximate proportions of the real
- * table columns so the skeleton does not shift layout on reveal.
+ * The representative text is hidden but still wraps. That matters: below 768px
+ * the transaction table squeezes its columns and real cell text (credit-line
+ * names, transaction hashes) breaks onto a second line, growing those rows from
+ * 39px to ~58px. Pinning the placeholder to one line with `white-space: nowrap`
+ * left the table ~130px short — the skeleton has to wrap wherever the content
+ * it stands in for wraps.
  */
-
-.th-skeleton__cell {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-  flex: 1;
-  min-width: 0;
+.th-skel-line__text {
+    visibility: hidden;
 }
 
-/* Date column — fixed narrow width */
-.th-skeleton__cell--date {
-  flex: 0 0 100px;
+.th-skel-line__bar {
+    position: absolute;
+    left: 0;
+    right: 0;
+    /* Inset from the line box so the bar reads as a run of text rather than a
+       solid block filling the leading. */
+    top: 0.1em;
+    bottom: 0.1em;
 }
 
-/* Credit Line column — slightly wider */
-.th-skeleton__cell--line {
-  flex: 0 0 140px;
+/* ── 2. Box placeholders ────────────────────────────────────────────────── */
+
+/*
+ * Applied to a real page element that already has intrinsic dimensions of its
+ * own (currently `.th-stat-icon`: 40x40px, 32x32px below 480px).  The element
+ * supplies size and radius; this rule only makes it a clipping containing
+ * block for the fill.
+ */
+.th-skel-box {
+    position: relative;
+    overflow: hidden;
 }
 
-/* Expand chevron — tiny fixed column */
-.th-skeleton__cell--expand {
-  flex: 0 0 24px;
-  align-items: center;
+.th-skel-fill {
+    position: absolute;
+    inset: 0;
+    /* Radius comes from the host element via `.skeleton--inherit`. */
 }
 
-/* ── Responsive overrides ──────────────────────────────────────────────── */
+/* ── 3. Placeholder controls ────────────────────────────────────────────── */
 
-@media (max-width: 960px) {
-  .th-skeleton__stats {
-    grid-template-columns: repeat(2, 1fr);
-  }
+/*
+ * The skeleton renders the page's real `<select>` / `<input>` elements
+ * (disabled, inside the aria-hidden subtree) because browsers size form
+ * controls from their own intrinsic box rather than from `line-height` — a
+ * <span> wearing the same CSS came out 2-4px taller, which compounded into a
+ * ~10px downward shift of the table once the filter bar wrapped.
+ *
+ * The wrapper exists purely to position the shimmer bar over the control; it
+ * declares no box metrics of its own.
+ */
+.th-skel-control {
+    position: relative;
+    display: block;
 }
 
-@media (max-width: 640px) {
-  .th-skeleton {
-    padding: 0 1rem 2rem;
-  }
+/*
+ * In `.th-filter-group` and `.date-range-custom-field` — both column flex
+ * containers — the loaded control is stretched by `align-items: stretch`.
+ * The wrapper receives that stretch, so pass it through to the control.
+ */
+.th-skel-control > select,
+.th-skel-control > input {
+    display: block;
+    width: 100%;
+}
 
-  .th-skeleton__stats {
-    grid-template-columns: repeat(2, 1fr);
-  }
+/*
+ * The search input is a flex child of `.th-search-combobox`, which does not
+ * stretch it — it sits at its intrinsic width. Shrink-wrap the wrapper so the
+ * placeholder occupies the same width.
+ */
+.th-skel-control--intrinsic {
+    display: inline-block;
+}
 
-  /* On narrow screens hide the Hash cell skeleton to match the
-     responsive table behaviour on the real component. */
-  .th-skeleton__row .th-skeleton__cell:nth-child(6) {
-    display: none;
-  }
+.th-skel-control--intrinsic > input {
+    width: auto;
+}
+
+/* Covers the control's interior, leaving its border visible. */
+.th-skel-control__bar {
+    position: absolute;
+    inset: 2px;
+}
+
+/*
+ * A <button> is `display: inline-block` by UA default, and `.export-btn`
+ * already declares `inline-flex`.  `.th-filter-chip` and
+ * `.amount-range-custom-trigger` rely on the UA default, so restore it for the
+ * <span> placeholders — without it `min-height: 44px` would not apply and the
+ * chip rows would collapse.
+ */
+.th-skeleton .th-filter-chip,
+.th-skeleton .amount-range-custom-trigger,
+.th-skeleton .th-page-btn,
+.th-skeleton .copy-affordance__button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/*
+ * The disabled placeholder controls must not pick up the UA's disabled
+ * palette — the loaded control's own colours already win for background,
+ * border, and text, and this keeps that true if a UA ever adds an opacity
+ * rule for disabled form controls.
+ */
+.th-skeleton select:disabled,
+.th-skeleton input:disabled {
+    opacity: 1;
+    cursor: default;
+}
+
+/*
+ * Nothing in the skeleton is interactive, and the placeholders reuse classes
+ * that carry :hover styling. Suppress pointer interaction across the whole
+ * subtree so a loading page never looks clickable.
+ *
+ * The subtree is also entirely `aria-hidden` and contains no focusable
+ * elements, so there is no keyboard path into it either (WCAG 2.1 AA —
+ * SC 4.1.2: placeholder chrome exposes no roles or names to AT).
+ */
+.th-skeleton {
+    pointer-events: none;
+}
+
+/* ── 4. Entry animation ─────────────────────────────────────────────────── */
+
+/*
+ * `.th-stat-card`, `.th-filters`, and `.th-table-container` each run
+ * `fadeInUp` with a staggered delay.  Left in place the animation would play
+ * twice — once for the skeleton, once for the real content — reading as a
+ * flicker.  The skeleton should appear immediately; the reveal keeps the
+ * stagger.
+ */
+.th-skeleton .th-stat-card,
+.th-skeleton .th-filters,
+.th-skeleton .th-table-container {
+    animation: none;
 }

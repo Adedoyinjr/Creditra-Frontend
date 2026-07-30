@@ -15,12 +15,22 @@ type SkeletonProps = React.HTMLAttributes<HTMLDivElement> & {
    *                   inline text-row placeholders.
    * - `pill`        — uses `--skeleton-radius-pill` (9999px) for badge / chip
    *                   placeholders (StatusBadge, network-badge, wallet chip).
+   * - `inherit`     — `border-radius: inherit`, for a shimmer that fills a
+   *                   real page element and must adopt *that* element's
+   *                   corner radius (see below).
    *
    * Shape parity principle (FWC26 — issue #690): each variant resolves to the
    * same radius token used by the final rendered component so first-paint
    * skeleton geometry matches loaded-state geometry exactly (CLS = 0).
+   *
+   * `inherit` (FWC26 — issue #854) takes that principle one step further: when
+   * a page skeleton reuses the loaded component's own class for a placeholder
+   * box, the radius is already correct on the parent, and restating it here
+   * would be a second source of truth that can drift.  Place the Skeleton as
+   * an absolutely-positioned child filling that parent and the radius follows
+   * automatically — including any responsive or theme override.
    */
-  shape?: 'rectangular' | 'circular' | 'rounded' | 'pill';
+  shape?: 'rectangular' | 'circular' | 'rounded' | 'pill' | 'inherit';
   /**
    * Visual variant.
    *
@@ -34,6 +44,15 @@ type SkeletonProps = React.HTMLAttributes<HTMLDivElement> & {
    * so skeletons adapt to [data-contrast="high"] and dark-mode overrides.
    */
   variant?: 'default' | 'subtle';
+  /**
+   * Element to render. Defaults to `'div'`.
+   *
+   * Use `'span'` when the placeholder sits inside phrasing content — a `<p>`,
+   * `<h1>`, `<label>`, or table cell holding inline text — where a `<div>`
+   * would be invalid HTML. The two render identically because `.skeleton`
+   * declares its own box; only the tag name differs.
+   */
+  as?: 'div' | 'span';
 };
 
 /**
@@ -64,7 +83,10 @@ type SkeletonProps = React.HTMLAttributes<HTMLDivElement> & {
  * ## Composed page skeletons
  * Higher-level first-paint layouts compose this primitive — e.g.
  * `RepaymentVisualizerSkeleton` in `RepaymentVisualizer.tsx` (issue #609)
- * mirrors the chart card height (220px) and header/legend rows.
+ * mirrors the chart card height (220px) and header/legend rows, and
+ * `TransactionHistorySkeleton.tsx` (issue #854) reuses the loaded page's own
+ * class names and drives every shimmer bar off `shape="inherit"` plus the
+ * real element's typography, so no dimension is restated in two places.
  *
  * ## Motion
  * The shimmer animation is suppressed under both
@@ -72,8 +94,8 @@ type SkeletonProps = React.HTMLAttributes<HTMLDivElement> & {
  * (the runtime JS toggle managed by ReducedMotionContext).
  * See the loading-state policy in `docs/ARCHITECTURE.md` §5.
  */
-export const Skeleton: React.FC<SkeletonProps> = ({ width, height, shape = 'rectangular', variant = 'default', style, className, 'aria-hidden': ariaHidden = true, ...rest }) => (
-  <div
+export const Skeleton: React.FC<SkeletonProps> = ({ width, height, shape = 'rectangular', variant = 'default', as: Tag = 'div', style, className, 'aria-hidden': ariaHidden = true, ...rest }) => (
+  <Tag
     className={[
       'skeleton',
       `skeleton--${shape}`,

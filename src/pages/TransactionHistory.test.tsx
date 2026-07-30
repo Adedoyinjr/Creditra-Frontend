@@ -157,15 +157,36 @@ describe("TransactionHistory", () => {
       expect(screen.getByRole("table", { name: /transaction history/i })).toBeInTheDocument();
     });
 
-    it("renders the default number of skeleton rows (8)", () => {
+    it("reserves a full page of skeleton rows so the table does not resize on reveal", () => {
       renderTransactionHistoryLoading();
 
       const skeleton = screen.getByRole("status", {
         name: /loading transaction history/i,
       });
-      // Each row has the class th-skeleton__row.
-      const rows = skeleton.querySelectorAll(".th-skeleton__row");
-      expect(rows).toHaveLength(8);
+      // The skeleton renders the real table markup, so its rows carry the
+      // page's own .tx-row class (issue #854). One page is 15 rows.
+      const rows = skeleton.querySelectorAll(".th-table tbody .tx-row");
+      expect(rows).toHaveLength(15);
+    });
+
+    it("skeleton reserves the page header that the loaded page renders", () => {
+      renderTransactionHistoryLoading();
+
+      const skeleton = screen.getByRole("status", {
+        name: /loading transaction history/i,
+      });
+      // Omitting the header used to shift the whole page vertically on reveal.
+      expect(skeleton.querySelector(".th-header h1")).toBeInTheDocument();
+      expect(skeleton.querySelectorAll(".export-actions .export-btn")).toHaveLength(2);
+    });
+
+    it("skeleton adopts the page wrapper class so horizontal padding matches", () => {
+      renderTransactionHistoryLoading();
+
+      const skeleton = screen.getByRole("status", {
+        name: /loading transaction history/i,
+      });
+      expect(skeleton).toHaveClass("transaction-history-page");
     });
   });
 
