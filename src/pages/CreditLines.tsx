@@ -812,7 +812,6 @@ export default function CreditLines({ defaultLoading = true }: { defaultLoading?
             ))}
           </div>
         ) : filteredAndSorted.length === 0 ? (
-        !hasCreditLines ? (
           <div className="cl-empty" role="region" aria-label="No credit lines">
             <NoLines className="empty-state-illustration--muted" />
             <h2 className="cl-empty-title">Get started with Credit Lines</h2>
@@ -828,8 +827,7 @@ export default function CreditLines({ defaultLoading = true }: { defaultLoading?
             <Link to="/open-credit" className="cl-primary-btn focus-ring">
               Open Credit Line
             </Link>
-          }
-        />
+          </div>
       ) : (
         <div className="cl-grid" data-testid="cl-grid">
           {filteredAndSorted.map((line) => (
