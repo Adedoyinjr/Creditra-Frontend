@@ -1,1 +1,1 @@
-export { NoActivity, NoDataGraph, NoLines, NoOutstandingDebt, NoRiskGauge } from './EmptyStateIllustrations';
+export { NoActivity, NoDataGraph, NoLines, NoOutstandingDebt, NoOverdue, NoRiskGauge } from './EmptyStateIllustrations';
