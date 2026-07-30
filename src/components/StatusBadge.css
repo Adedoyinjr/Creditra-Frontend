@@ -9,6 +9,7 @@
   font-weight: 600;
   line-height: var(--lh-small);
   white-space: nowrap;
+  animation: status-badge-pulse 2s ease-in-out infinite;
 }
 
 .status-badge__cue {
@@ -23,4 +24,19 @@
   font-weight: 700;
   line-height: 1;
   flex-shrink: 0;
+}
+
+@keyframes status-badge-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.75; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .status-badge {
+    animation: none;
+  }
+}
+
+[data-motion="reduced"] .status-badge {
+  animation: none;
 }

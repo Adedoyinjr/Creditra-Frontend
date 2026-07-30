@@ -1,4 +1,6 @@
 import { render, screen } from '@testing-library/react';
+import { readFileSync } from 'fs';
+import { resolve } from 'path';
 import { describe, expect, it } from 'vitest';
 import { StatusBadge } from './StatusBadge';
 import { STATUS_COLOR } from '../utils/tokens';
@@ -69,5 +71,26 @@ describe('StatusBadge', () => {
 
       expect(contrastRatio(color, bg), status).toBeGreaterThanOrEqual(4.5);
     }
+  });
+});
+
+describe('StatusBadge reduced-motion', () => {
+  const cssPath = resolve(__dirname, 'StatusBadge.css');
+
+  it('defines @keyframes status-badge-pulse in CSS', () => {
+    const css = readFileSync(cssPath, 'utf-8');
+    expect(css).toContain('@keyframes status-badge-pulse');
+  });
+
+  it('suppresses animation under @media (prefers-reduced-motion: reduce)', () => {
+    const css = readFileSync(cssPath, 'utf-8');
+    expect(css).toContain('prefers-reduced-motion: reduce');
+    expect(css).toContain('animation: none');
+  });
+
+  it('suppresses animation under [data-motion="reduced"]', () => {
+    const css = readFileSync(cssPath, 'utf-8');
+    expect(css).toContain('[data-motion="reduced"]');
+    expect(css).toContain('animation: none');
   });
 });
