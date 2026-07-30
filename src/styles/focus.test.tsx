@@ -264,6 +264,58 @@ describe('DrawCreditPage — focus-visible rules (FWC26 / issue #592)', () => {
 
 // ── RepayPage integration tests ──────────────────────────────────────────
 
+// ── OnboardingFlow integration tests ────────────────────────────────────
+
+describe('OnboardingFlow — focus-visible rules (FWC26)', () => {
+  const cssPath = resolve(__dirname, '../styles/focus.css');
+  const css = readFileSync(cssPath, 'utf-8');
+
+  it('defines OnboardingFlow-scoped skip button focus rule', () => {
+    expect(css).toContain('.onboarding-overlay .skip-btn:focus-visible');
+  });
+
+  it('defines OnboardingFlow-scoped primary button focus rule', () => {
+    expect(css).toContain('.onboarding-overlay .primary-btn:focus-visible');
+  });
+
+  it('defines OnboardingFlow-scoped secondary button focus rule', () => {
+    expect(css).toContain('.onboarding-overlay .secondary-btn:focus-visible');
+  });
+
+  it('defines OnboardingFlow-scoped step indicator focus rule', () => {
+    expect(css).toContain('.onboarding-overlay .indicator:focus-visible');
+  });
+
+  it('uses shared focus-ring tokens in OnboardingFlow rules', () => {
+    const obBlockStart = css.indexOf('OnboardingFlow interactive elements');
+    expect(obBlockStart).toBeGreaterThan(-1);
+    const obBlock = css.slice(obBlockStart);
+    expect(obBlock).toContain('--focus-ring-width');
+    expect(obBlock).toContain('--focus-ring-color');
+    expect(obBlock).toContain('--focus-ring-offset');
+    expect(obBlock).toContain('!important');
+  });
+
+  it('defines indicator border-radius as full/round', () => {
+    const obBlockStart = css.indexOf('OnboardingFlow interactive elements');
+    expect(obBlockStart).toBeGreaterThan(-1);
+    const obBlock = css.slice(obBlockStart);
+    expect(obBlock).toContain('border-radius: var(--radius-full, 9999px)');
+  });
+
+  it('all interactive elements carry both class and :focus-visible selector', () => {
+    // Each interactive selector must use :focus-visible (not :focus)
+    // regex matches each selector before the opening brace
+    const obBlockStart = css.indexOf('OnboardingFlow interactive elements');
+    const obBlockEnd = css.indexOf('/* ── Reduced-motion', obBlockStart);
+    const obBlock = css.slice(obBlockStart, obBlockEnd > obBlockStart ? obBlockEnd : undefined);
+    const focusVisibleMatches = obBlock.match(/:focus-visible/g);
+    expect(focusVisibleMatches).not.toBeNull();
+    // There should be at least one :focus-visible per element type (4 total)
+    expect(focusVisibleMatches!.length).toBeGreaterThanOrEqual(4);
+  });
+});
+
 describe('RepayPage — focus-visible rules (FWC26 / issue #512)', () => {
   const cssPath = resolve(__dirname, '../styles/focus.css');
   const css = readFileSync(cssPath, 'utf-8');
