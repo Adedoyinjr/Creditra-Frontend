@@ -1,4 +1,6 @@
 import type { ReactNode } from 'react';
+import { KbdHint } from '../components/KbdHint';
+import './SmartPayCTA.css';
 
 export interface SmartPayCTAProps {
   /** The heading for the CTA card. */
@@ -17,6 +19,13 @@ export interface SmartPayCTAProps {
   imageAlt?: string;
   /** Additional CSS class names. */
   className?: string;
+  /**
+   * Keyboard shortcut for the primary CTA (e.g. `['Ctrl', 'Enter']`).
+   * When provided, a subtle hint chip is rendered next to the action.
+   */
+  shortcutKeys?: string | string[];
+  /** Optional label shown alongside the shortcut hint chip. */
+  shortcutLabel?: string;
 }
 
 /**
@@ -39,6 +48,8 @@ export function SmartPayCTA({
   images,
   imageAlt = '',
   className = '',
+  shortcutKeys,
+  shortcutLabel,
 }: SmartPayCTAProps) {
   const classes = ['card', 'smartpay-cta', className].filter(Boolean).join(' ');
 
@@ -47,7 +58,17 @@ export function SmartPayCTA({
       <div className="smartpay-cta__body">
         <h2 className="smartpay-cta__title">{title}</h2>
         <p className="smartpay-cta__desc">{description}</p>
-        <div className="smartpay-cta__action">{cta}</div>
+        <div className="smartpay-cta__action">
+          {cta}
+          {shortcutKeys && (
+            <KbdHint
+              keys={shortcutKeys}
+              label={shortcutLabel}
+              variant="badge"
+              className="smartpay-cta__shortcut-hint"
+            />
+          )}
+        </div>
       </div>
 
       {images && images.length > 0 && (
