@@ -242,12 +242,15 @@ describe('LoginPage — password field aria-describedby with error state', () =>
     render(
       <FormField
         id="password"
+        name="password"
         label="Password"
         type="password"
         required
         helpText="Enter the password for your account"
         error="Incorrect password"
-        inputProps={{ autoComplete: 'current-password' }}
+        value=""
+        onChange={() => {}}
+        autoComplete="current-password"
       />,
     );
 
@@ -265,12 +268,15 @@ describe('LoginPage — password field aria-describedby with error state', () =>
     render(
       <FormField
         id="password"
+        name="password"
         label="Password"
         type="password"
         required
         helpText="Enter the password for your account"
         error="Incorrect password"
-        inputProps={{ autoComplete: 'current-password' }}
+        value=""
+        onChange={() => {}}
+        autoComplete="current-password"
       />,
     );
 
