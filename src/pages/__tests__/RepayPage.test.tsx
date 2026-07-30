@@ -250,6 +250,101 @@ describe('RepayPage', () => {
   });
 });
 
+describe('RepayPage — copy-to-clipboard buttons (FWC26)', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: { writeText: vi.fn().mockResolvedValue(undefined) },
+    });
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('renders copy button for current debt on input step', () => {
+    renderPage(['/repay?line=CL-2024-001']);
+    expect(
+      screen.getByRole('button', { name: /copy current debt amount/i }),
+    ).toBeInTheDocument();
+  });
+
+  it('copies current debt amount when copy button is clicked', async () => {
+    renderPage(['/repay?line=CL-2024-001']);
+    const btn = screen.getByRole('button', { name: /copy current debt amount/i });
+    await act(async () => {
+      fireEvent.click(btn);
+    });
+    expect(navigator.clipboard.writeText).toHaveBeenCalledWith('$187,500.00');
+  });
+
+  it('renders copy button for repayment amount on review step', () => {
+    renderPage(['/repay?line=CL-2024-001']);
+    fireEvent.click(screen.getByRole('button', { name: /smart pay/i }));
+    fireEvent.click(screen.getByRole('button', { name: /review repayment/i }));
+    expect(
+      screen.getByRole('button', { name: /copy repayment amount/i }),
+    ).toBeInTheDocument();
+  });
+
+  it('copies repayment amount on review step', async () => {
+    renderPage(['/repay?line=CL-2024-001']);
+    fireEvent.click(screen.getByRole('button', { name: /smart pay/i }));
+    fireEvent.click(screen.getByRole('button', { name: /review repayment/i }));
+    const btn = screen.getByRole('button', { name: /copy repayment amount/i });
+    await act(async () => {
+      fireEvent.click(btn);
+    });
+    expect(navigator.clipboard.writeText).toHaveBeenCalledWith('$3,200.00');
+  });
+
+  it('renders copy button for remaining debt on success step', () => {
+    renderPage(['/repay?line=CL-2024-001']);
+    fireEvent.click(screen.getByRole('button', { name: /smart pay/i }));
+    fireEvent.click(screen.getByRole('button', { name: /review repayment/i }));
+    fireEvent.click(screen.getByRole('button', { name: /confirm repayment/i }));
+    expect(
+      screen.getByRole('button', { name: /copy remaining debt amount/i }),
+    ).toBeInTheDocument();
+  });
+
+  it('copies remaining debt amount on success step', async () => {
+    renderPage(['/repay?line=CL-2024-001']);
+    fireEvent.click(screen.getByRole('button', { name: /smart pay/i }));
+    fireEvent.click(screen.getByRole('button', { name: /review repayment/i }));
+    fireEvent.click(screen.getByRole('button', { name: /confirm repayment/i }));
+    const btn = screen.getByRole('button', { name: /copy remaining debt amount/i });
+    await act(async () => {
+      fireEvent.click(btn);
+    });
+    // Smart Pay ($3,200) repay on $187,500 utilized leaves $184,300 remaining
+    expect(navigator.clipboard.writeText).toHaveBeenCalledWith('$184,300.00');
+  });
+
+  it('shows copied feedback after clicking copy button', async () => {
+    renderPage(['/repay?line=CL-2024-001']);
+    const btn = screen.getByRole('button', { name: /copy current debt amount/i });
+    await act(async () => {
+      fireEvent.click(btn);
+    });
+    expect(btn).toHaveAttribute('data-copy-state', 'copied');
+  });
+
+  it('resets copy button to idle after feedback duration', async () => {
+    renderPage(['/repay?line=CL-2024-001']);
+    const btn = screen.getByRole('button', { name: /copy current debt amount/i });
+    await act(async () => {
+      fireEvent.click(btn);
+    });
+    expect(btn).toHaveAttribute('data-copy-state', 'copied');
+    act(() => {
+      vi.advanceTimersByTime(2000);
+    });
+    expect(btn).toHaveAttribute('data-copy-state', 'idle');
+  });
+});
+
 /**
  * NOTE: empty-state render tests for `/repay` live in the sibling file
  * `RepayPage.empty.test.tsx`. Mocking `MOCK_CREDIT_LINES = []` inside the
