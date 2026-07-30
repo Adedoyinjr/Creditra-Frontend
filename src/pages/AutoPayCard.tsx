@@ -3,8 +3,12 @@ import { AutopaySchedule, type AutopayFrequency } from '../components/AutopaySch
 import './AutopayPage.css';
 
 interface AutoPayCardProps {
-  onSubmit?: (data: AutoPayData) => void;
-  onCancel?: () => void;
+  hasValidPreview: boolean;
+  parsedAmount: number;
+  frequency: AutopayFrequency;
+  startDate: string;
+  endDate?: string;
+  onPreviewRowChange?: (index: number | null) => void;
 }
 
 /**
@@ -29,6 +33,7 @@ export function AutoPayCard({
   frequency,
   startDate,
   endDate,
+  onPreviewRowChange,
 }: AutoPayCardProps) {
   const [focused, setFocused] = useState(false);
 
@@ -72,6 +77,7 @@ export function AutoPayCard({
             startDate={startDate}
             endDate={endDate}
             maxRows={8}
+            onPreviewRowChange={onPreviewRowChange}
           />
           {focused && (
             <div
@@ -123,16 +129,7 @@ export function AutoPayCard({
             schedule.
           </p>
         </div>
-
-        <div className="autopay-card__actions">
-          <button type="button" className="btn btn-secondary" onClick={onCancel}>
-            Cancel
-          </button>
-          <button type="submit" className="btn btn-primary">
-            Set Up AutoPay
-          </button>
-        </div>
-      </form>
+      )}
     </div>
   );
-};
+}
