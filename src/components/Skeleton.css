@@ -82,6 +82,12 @@
   position: relative;
   overflow: hidden;
   border-radius: var(--skeleton-radius);
+  /*
+   * Declared explicitly so the `as="span"` form (used when a placeholder sits
+   * inside phrasing content such as a <p> or <h1>) still honours width/height
+   * and boxes identically to the default <div>.
+   */
+  display: block;
 }
 
 /* ── Shimmer animation ───────────────────────────────────────────────────── */
@@ -186,6 +192,23 @@
  */
 .skeleton--pill {
   border-radius: var(--skeleton-radius-pill);
+}
+
+/*
+ * .skeleton--inherit — new in FWC26 (#854)
+ *
+ * For a shimmer that fills a real page element (e.g. `.th-stat-icon`, whose
+ * own rule already sets `border-radius: var(--radius-lg)`).  Inheriting the
+ * parent's radius keeps a single source of truth for the corner shape, so a
+ * later change to the real component — including a responsive or
+ * high-contrast override — is picked up by the skeleton for free.
+ *
+ * The parent must establish a containing block (`position: relative`) and clip
+ * (`overflow: hidden`); the skeleton itself is positioned to fill it by the
+ * consuming stylesheet.
+ */
+.skeleton--inherit {
+  border-radius: inherit;
 }
 
 /* ── Visual variants ─────────────────────────────────────────────────────── */

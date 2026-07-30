@@ -10,7 +10,7 @@
  */
 
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { Skeleton } from './Skeleton';
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
@@ -269,5 +269,52 @@ describe('Skeleton', () => {
     const el = container.firstChild as HTMLElement;
     expect(el.getAttribute('aria-hidden')).toBe('false');
     expect(el.getAttribute('aria-label')).toBe('Loading credit lines');
+  });
+
+  // ── FWC26 #854: shape="inherit" and the `as` escape hatch ─────────────
+
+  it('shape="inherit" applies the radius-inheriting modifier', () => {
+    const { container } = render(<Skeleton shape="inherit" />);
+    const el = container.firstChild as HTMLElement;
+    // Used when the skeleton fills a real page element whose own rule already
+    // sets the corner radius — keeps one source of truth for the shape.
+    expect(el.classList.contains('skeleton--inherit')).toBe(true);
+    expect(el.classList.contains('skeleton')).toBe(true);
+  });
+
+  it('renders a div by default', () => {
+    const { container } = render(<Skeleton />);
+    expect((container.firstChild as HTMLElement).tagName).toBe('DIV');
+  });
+
+  it('as="span" renders a span so the placeholder is valid inside phrasing content', () => {
+    const { container } = render(<Skeleton as="span" />);
+    expect((container.firstChild as HTMLElement).tagName).toBe('SPAN');
+  });
+
+  it('as="span" keeps every other prop behaviour identical to the div form', () => {
+    const { container } = render(
+      <Skeleton as="span" shape="pill" variant="subtle" width={64} height={12} />
+    );
+    const el = container.firstChild as HTMLElement;
+    expect(el.classList.contains('skeleton')).toBe(true);
+    expect(el.classList.contains('skeleton--pill')).toBe(true);
+    expect(el.classList.contains('skeleton--subtle')).toBe(true);
+    expect(el.style.width).toBe('64px');
+    expect(el.style.height).toBe('12px');
+    expect(el.getAttribute('aria-hidden')).toBe('true');
+  });
+
+  it('a span skeleton nests inside a paragraph without an invalid-nesting warning', () => {
+    const warn = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    render(
+      <p>
+        <Skeleton as="span" width="10ch" />
+      </p>
+    );
+
+    expect(warn).not.toHaveBeenCalled();
+    warn.mockRestore();
   });
 });

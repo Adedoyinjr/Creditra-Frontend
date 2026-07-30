@@ -109,6 +109,8 @@
 .status-active {
   background-image: radial-gradient(circle, rgba(16, 185, 129, 0.1) 1px, transparent 1px);
   background-size: 16px 16px;
+}
+
 /* ─── Status badges (pre-existing — kept identical) ───────────────────────── */
 
 .status-active,

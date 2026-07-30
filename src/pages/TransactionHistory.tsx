@@ -419,6 +419,15 @@ function TransactionRow({
 /** Stable element ID that associates the export button with its helper text. */
 const CSV_EXPORT_EMPTY_REASON_ID = "csv-export-empty-reason";
 
+/**
+ * Rows rendered per page of the transaction table.
+ *
+ * Module-level so the first-paint skeleton can reserve exactly one page of
+ * rows (issue #854) — a shorter skeleton would let the table container grow on
+ * reveal and push the rest of the page down.
+ */
+const ITEMS_PER_PAGE = 15;
+
 export function TransactionHistory() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -481,7 +490,7 @@ export function TransactionHistory() {
 
   const [expandedTx, setExpandedTx] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 15;
+  const itemsPerPage = ITEMS_PER_PAGE;
 
   const [liveAnnouncement, setLiveAnnouncement] = useState("");
   const isFirstRender = useRef(true);
@@ -1119,7 +1128,13 @@ export function TransactionHistory() {
   };
 
   if (isLoading) {
-    return <TransactionHistorySkeleton />;
+    /*
+     * The skeleton mirrors this page's own DOM and class names, so its
+     * geometry is driven by TransactionHistory.css rather than a parallel
+     * stylesheet (issue #854).  `rows` is passed explicitly so the placeholder
+     * table reserves a full page and the reveal does not resize the container.
+     */
+    return <TransactionHistorySkeleton rows={ITEMS_PER_PAGE} />;
   }
 
   if (!hasLines) {
