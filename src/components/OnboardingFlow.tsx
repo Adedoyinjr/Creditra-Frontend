@@ -119,7 +119,7 @@ export const OnboardingFlow = ({ isOpen, onComplete, onSkip }: Props) => {
     <div className="onboarding-overlay" role="dialog" aria-modal="true" aria-label="Onboarding">
       <div className="onboarding-content">
         <Tooltip label="Skip onboarding flow" position="bottom" hoverDelay={400} longPressDelay={500}>
-          <button className="skip-btn" onClick={handleSkip} aria-label="Skip onboarding">
+          <button type="button" className="skip-btn" onClick={handleSkip} aria-label="Skip onboarding">
             <span className="skip-icon" aria-hidden="true">✕</span>
             <span className="skip-text">Skip</span>
           </button>
