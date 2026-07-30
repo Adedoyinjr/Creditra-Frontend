@@ -63,6 +63,12 @@ const SHORTCUT_GROUPS = [
       { keys: ['Shift', 'R'], description: 'Mark all notifications as read' },
     ],
   },
+  {
+    title: 'Profile Activity',
+    shortcuts: [
+      { keys: ['R'], description: 'Refresh the activity feed' },
+    ],
+  },
 ] as const;
 
 export function ShortcutHelpOverlay({
