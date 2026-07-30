@@ -54,6 +54,24 @@ describe('CreditLines page', () => {
     expect(screen.getByText('All Statuses')).toBeInTheDocument();
   });
 
+  it('applies tabular-nums styling to CreditLines amount values', () => {
+    renderPage();
+    const card = screen.getAllByText('Primary Business Line')[0].closest('.cl-card');
+    expect(card).toBeInTheDocument();
+
+    const metricValues = card?.querySelectorAll('.cl-metric-value');
+    expect(metricValues?.length).toBeGreaterThan(0);
+    metricValues?.forEach((value) => {
+      expect(value.className).toMatch(/tabular-nums|cl-amount/);
+    });
+
+    const detailValues = card?.querySelectorAll('.cl-detail .value');
+    expect(detailValues?.length).toBeGreaterThan(0);
+    detailValues?.forEach((value) => {
+      expect(value.className).toMatch(/tabular-nums|cl-amount/);
+    });
+  });
+
   it.skip('shows Last Activity timestamp on each credit line card', () => {
     renderPage();
     // LastActivityStamp renders "Last activity: <relative>" in every card

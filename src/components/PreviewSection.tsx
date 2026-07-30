@@ -102,7 +102,7 @@ export function PreviewSection({ creditLine, amount }: PreviewSectionProps) {
               isHighAfterDraw
                 ? "dc-util-row__value--warning tabular-nums"
                 : "dc-util-row__value tabular-nums"
-            }
+            }`}
           >
             {newUtilization}%
           </span>

@@ -1,4 +1,8 @@
 import { describe, it, expect, afterEach } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+
+const printCss = readFileSync(resolve(__dirname, 'print.css'), 'utf8');
 
 function injectPrintStylesheet(): void {
   const link = document.createElement('link');
@@ -25,6 +29,21 @@ describe('print.css', () => {
     const el = document.getElementById('print-test-stylesheet');
     expect(el).toBeInTheDocument();
     expect(el?.getAttribute('rel')).toBe('stylesheet');
+  });
+
+  it('scopes BalanceChart controls to the non-printing chrome', () => {
+    expect(printCss).toContain('.balance-chart .balance-chart__toolbar');
+    expect(printCss).toContain('.balance-chart .balance-chart__filters');
+    expect(printCss).toContain('.balance-chart button:not(.print-preserve)');
+    expect(printCss).toMatch(/\.balance-chart[\s\S]*display: none !important/);
+  });
+
+  it('expands BalanceChart panels and preserves page continuity', () => {
+    expect(printCss).toContain('.balance-chart .balance-chart__collapsible');
+    expect(printCss).toContain('.balance-chart [role="region"]');
+    expect(printCss).toContain('.balance-chart__legend');
+    expect(printCss).toMatch(/\.balance-chart[\s\S]*max-height: none !important/);
+    expect(printCss).toMatch(/\.balance-chart__[^{]+\{[\s\S]*break-inside: avoid/);
   });
 
   it('contains media print rules hiding UI chrome and header elements', () => {

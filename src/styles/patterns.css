@@ -994,3 +994,277 @@ html[data-contrast="high"] .notification-item--danger {
     stroke: CanvasText;
   }
 }
+
+/* ─── LoginPage status banners (GrantFox FWC26 / WCAG 1.4.1) ───────────────
+ *
+ * The LoginPage renders three possible status banners above the form:
+ *   error   — authentication failed / network error (red)
+ *   success — password-reset confirmation, email-verified, etc. (green)
+ *   info    — account-locked warning, rate-limit notice, etc. (blue)
+ *
+ * Each banner pairs the existing color tint with a shape-coded pattern so
+ * color-blind users can distinguish the severity without relying on the
+ * red/green/blue tint alone.  Pattern families match the taxonomy used in
+ * the Dashboard v7 patterns (see ACCESSIBILITY.md § Pattern fills):
+ *
+ *   error   → cross-hatch (two directions) — dense, urgent signal
+ *   success → micro-dot grid — light, positive "checkmark scatter"
+ *   info    → horizontal rules — "lines of information"
+ *
+ * Patterns are rendered as a secondary background-image on top of the
+ * existing background-color. Opacity is kept low (12–18%) so the text
+ * contrast against the card surface is not affected.
+ *
+ * Forced-colors mode: patterns use CanvasText so stripes survive the OS
+ * color palette override.  High-contrast (ContrastContext) bumps opacity.
+ * ──────────────────────────────────────────────────────────────────────── */
+
+.lp-banner--error {
+  background-image:
+    repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 4px,
+      rgba(248, 81, 73, 0.14) 4px,
+      rgba(248, 81, 73, 0.14) 5px
+    ),
+    repeating-linear-gradient(
+      -45deg,
+      transparent,
+      transparent 4px,
+      rgba(248, 81, 73, 0.14) 4px,
+      rgba(248, 81, 73, 0.14) 5px
+    );
+}
+
+.lp-banner--success {
+  background-image: radial-gradient(
+    circle,
+    rgba(63, 185, 80, 0.18) 1px,
+    transparent 1px
+  );
+  background-size: 10px 10px;
+}
+
+.lp-banner--info {
+  background-image: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 10px,
+    rgba(88, 166, 255, 0.12) 10px,
+    rgba(88, 166, 255, 0.12) 11px
+  );
+}
+
+/* ─── LoginPage submit button — pending (loading) pattern ─────────────────
+ *
+ * When PendingButton is in the pending state, the button background is
+ * tinted with a single-direction diagonal-stripe pattern that conveys
+ * "in progress / moving" visually.  This is the same 45° stripe family
+ * used for pending/warning states elsewhere in the pattern taxonomy.
+ * ──────────────────────────────────────────────────────────────────────── */
+
+.lp-btn--pending {
+  background-image: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 4px,
+    rgba(255, 255, 255, 0.12) 4px,
+    rgba(255, 255, 255, 0.12) 6px
+  );
+}
+
+/* ─── ContrastContext (high-contrast theme) overrides ───────────────────── */
+
+html[data-contrast="high"] .lp-banner--error {
+  background-image:
+    repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 4px,
+      rgba(248, 81, 73, 0.40) 4px,
+      rgba(248, 81, 73, 0.40) 5px
+    ),
+    repeating-linear-gradient(
+      -45deg,
+      transparent,
+      transparent 4px,
+      rgba(248, 81, 73, 0.40) 4px,
+      rgba(248, 81, 73, 0.40) 5px
+    );
+}
+
+html[data-contrast="high"] .lp-banner--success {
+  background-image: radial-gradient(
+    circle,
+    rgba(63, 185, 80, 0.45) 1px,
+    transparent 1px
+  );
+  background-size: 10px 10px;
+}
+
+html[data-contrast="high"] .lp-banner--info {
+  background-image: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 10px,
+    rgba(88, 166, 255, 0.38) 10px,
+    rgba(88, 166, 255, 0.38) 11px
+  );
+}
+
+html[data-contrast="high"] .lp-btn--pending {
+  background-image: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 4px,
+    rgba(255, 255, 255, 0.28) 4px,
+    rgba(255, 255, 255, 0.28) 6px
+  );
+}
+
+/* ─── Forced-colours mode (Windows High Contrast / Chrome forced-colors) ── */
+
+@media (forced-colors: active) {
+  .lp-banner--error,
+  .lp-banner--success,
+  .lp-banner--info,
+  .lp-btn--pending {
+    forced-color-adjust: none;
+  }
+
+  .lp-banner--error {
+    background-image:
+      repeating-linear-gradient(
+        45deg,
+        transparent,
+        transparent 4px,
+        CanvasText 4px,
+        CanvasText 5px
+      ),
+      repeating-linear-gradient(
+        -45deg,
+        transparent,
+        transparent 4px,
+        CanvasText 4px,
+        CanvasText 5px
+      );
+  }
+
+  .lp-banner--success {
+    background-image: radial-gradient(
+      circle,
+      CanvasText 1px,
+      transparent 1px
+    );
+    background-size: 10px 10px;
+  }
+
+  .lp-banner--info {
+    background-image: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 10px,
+      CanvasText 10px,
+      CanvasText 11px
+    );
+  }
+
+  .lp-btn--pending {
+    background-image: repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 4px,
+      CanvasText 4px,
+      CanvasText 5px
+    );
+  }
+}
+
+/* ─── RepayCalendar status chips (GrantFox FWC26 / WCAG 1.4.1) ─────────────
+ *
+ * The RepayCalendar renders an optional per-event status chip (paid /
+ * upcoming / due-soon / overdue). Each pairs its existing color tint with
+ * a shape-coded pattern so the four statuses are distinguishable without
+ * relying on color alone, following the same taxonomy as the tx-status /
+ * lp-banner pattern families above:
+ *
+ *   paid      → micro-dot grid (success / positive)
+ *   upcoming  → horizontal rules (info / neutral)
+ *   due-soon  → diagonal stripes (warning / caution)
+ *   overdue   → cross-hatch (danger / urgent)
+ * ──────────────────────────────────────────────────────────────────────── */
+
+.repay-status-pattern--paid {
+  background-image: radial-gradient(circle, rgba(63, 185, 80, 0.22) 1px, transparent 1px);
+  background-size: 8px 8px;
+}
+
+.repay-status-pattern--upcoming {
+  background-image: repeating-linear-gradient(0deg,
+      transparent,
+      transparent 6px,
+      rgba(88, 166, 255, 0.18) 6px,
+      rgba(88, 166, 255, 0.18) 7px);
+}
+
+.repay-status-pattern--due-soon {
+  background-image: repeating-linear-gradient(45deg,
+      transparent,
+      transparent 4px,
+      rgba(210, 153, 34, 0.2) 4px,
+      rgba(210, 153, 34, 0.2) 5px);
+}
+
+.repay-status-pattern--overdue {
+  background-image:
+    repeating-linear-gradient(45deg,
+      transparent,
+      transparent 3px,
+      rgba(248, 81, 73, 0.18) 3px,
+      rgba(248, 81, 73, 0.18) 4px),
+    repeating-linear-gradient(-45deg,
+      transparent,
+      transparent 3px,
+      rgba(248, 81, 73, 0.18) 3px,
+      rgba(248, 81, 73, 0.18) 4px);
+}
+
+@media (forced-colors: active) {
+
+  .repay-status-pattern--paid,
+  .repay-status-pattern--upcoming,
+  .repay-status-pattern--due-soon,
+  .repay-status-pattern--overdue {
+    forced-color-adjust: none;
+    background-color: Canvas;
+    border: 1px solid CanvasText;
+  }
+
+  .repay-status-pattern--paid {
+    background-image: radial-gradient(circle, CanvasText 1px, transparent 1px);
+    background-size: 8px 8px;
+  }
+
+  .repay-status-pattern--upcoming {
+    background-image: repeating-linear-gradient(0deg,
+        transparent,
+        transparent 6px,
+        CanvasText 6px,
+        CanvasText 7px);
+  }
+
+  .repay-status-pattern--due-soon {
+    background-image: repeating-linear-gradient(45deg,
+        transparent,
+        transparent 4px,
+        CanvasText 4px,
+        CanvasText 5px);
+  }
+
+  .repay-status-pattern--overdue {
+    background-image:
+      repeating-linear-gradient(45deg, transparent, transparent 3px, CanvasText 3px, CanvasText 4px),
+      repeating-linear-gradient(-45deg, transparent, transparent 3px, CanvasText 3px, CanvasText 4px);
+  }
+}

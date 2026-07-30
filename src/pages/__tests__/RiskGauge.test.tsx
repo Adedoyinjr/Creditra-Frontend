@@ -35,16 +35,7 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-    it('renders the trend meta row', () => {
-      renderRiskGauge({
-        score: 720,
-        trend: 'improving',
-        lastUpdated: '2025-03-01T00:00:00Z',
-      });
-      const trendElements = screen.getAllByText(/improving/i);
-      expect(trendElements.length).toBeGreaterThan(0);
-    });
-  });
+describe("RiskGauge page — main", () => {
 
   it("2. renders the trend meta row", () => {
     renderGauge({ score: 720, trend: "improving", lastUpdated: "2025-03-01T00:00:00Z" });

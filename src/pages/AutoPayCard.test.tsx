@@ -1,7 +1,6 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import { AutoPayCard } from './AutoPayCard';
-import React from 'react';
 
 describe('AutoPayCard', () => {
   it('renders the placeholder when hasValidPreview is false', () => {
@@ -101,5 +100,47 @@ describe('AutoPayCard', () => {
     // Press Enter again to toggle off
     fireEvent.keyDown(firstRow, { key: 'Enter' });
     expect(firstRow).toHaveAttribute('aria-expanded', 'false');
+  });
+
+  it('renders the preview card and placeholder with the classNames the narrow-viewport styles target', () => {
+    const { rerender } = render(
+      <AutoPayCard
+        hasValidPreview={false}
+        parsedAmount={0}
+        frequency="monthly"
+        startDate=""
+      />
+    );
+    expect(document.querySelector('.autopay-page__preview-card')).toBeInTheDocument();
+    expect(document.querySelector('.autopay-page__preview-placeholder')).toBeInTheDocument();
+    expect(document.querySelector('.autopay-page__preview-placeholder-icon')).toBeInTheDocument();
+    expect(document.querySelector('.autopay-page__preview-placeholder-text')).toBeInTheDocument();
+
+    rerender(
+      <AutoPayCard
+        hasValidPreview={true}
+        parsedAmount={50}
+        frequency="monthly"
+        startDate="2026-08-01"
+      />
+    );
+    expect(document.querySelector('.autopay-page__preview-card')).toBeInTheDocument();
+  });
+
+  it('forwards onPreviewRowChange through to the schedule rows', () => {
+    const handlePreviewChange = vi.fn();
+    render(
+      <AutoPayCard
+        hasValidPreview={true}
+        parsedAmount={75}
+        frequency="monthly"
+        startDate="2026-10-01"
+        onPreviewRowChange={handlePreviewChange}
+      />
+    );
+
+    const rows = screen.getAllByRole('row');
+    fireEvent.focus(rows[1]);
+    expect(handlePreviewChange).toHaveBeenCalledWith(0);
   });
 });

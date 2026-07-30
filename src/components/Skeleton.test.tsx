@@ -6,6 +6,7 @@
  *   - GrantFox FWC26: `variant` prop (`default` | `subtle`)
  *   - GrantFox FWC26: CSS token declarations in Skeleton.css
  *   - GrantFox FWC26 #690: shape parity — `pill` shape, radius tokens
+ *   - GrantFox FWC26 #834: shape parity — `card` shape (--radius-lg)
  */
 
 import { render, screen } from '@testing-library/react';
@@ -55,6 +56,12 @@ describe('Skeleton.css — themed tokens (FWC26)', () => {
     expect(css).toContain('var(--radius-full');
   });
 
+  // FWC26 #834: card shape token for outer page-level card containers
+  it('declares --skeleton-radius-card token resolved via var(--radius-lg)', () => {
+    expect(css).toContain('--skeleton-radius-card');
+    expect(css).toContain('var(--radius-lg');
+  });
+
   it('suppresses shimmer animation under prefers-reduced-motion', () => {
     expect(css).toContain('@media (prefers-reduced-motion: reduce)');
     const rmBlock = css.slice(css.indexOf('@media (prefers-reduced-motion: reduce)'));
@@ -68,21 +75,19 @@ describe('Skeleton.css — themed tokens (FWC26)', () => {
   });
 });
 
-// ── Shape parity token tests (FWC26 #690) ────────────────────────────────
+// ── Shape parity token tests (FWC26 #690 and #834) ──────────────────────────
 
-describe('Skeleton.css — shape parity (FWC26 #690)', () => {
+describe('Skeleton.css — shape parity (FWC26 #690 and #834)', () => {
   const cssPath = resolve(__dirname, './Skeleton.css');
   const css = readFileSync(cssPath, 'utf-8');
 
   it('.skeleton--pill class applies var(--skeleton-radius-pill)', () => {
     expect(css).toContain('.skeleton--pill');
-    // The pill rule must use --skeleton-radius-pill (9999px full-pill)
     const pillBlock = css.slice(css.indexOf('.skeleton--pill'));
     expect(pillBlock).toContain('var(--skeleton-radius-pill)');
   });
 
   it('.skeleton--rounded applies var(--skeleton-radius) matching --radius-md', () => {
-    // .skeleton--rounded must reference --skeleton-radius (not a literal px value)
     expect(css).toContain('.skeleton--rounded');
     const roundedIdx = css.lastIndexOf('.skeleton--rounded');
     const roundedBlock = css.slice(roundedIdx, css.indexOf('}', roundedIdx));
@@ -94,6 +99,14 @@ describe('Skeleton.css — shape parity (FWC26 #690)', () => {
     const circularIdx = css.indexOf('.skeleton--circular');
     const circularBlock = css.slice(circularIdx, css.indexOf('}', circularIdx));
     expect(circularBlock).toContain('border-radius: 50%');
+  });
+
+  // FWC26 #834: card shape for outer page-level card containers
+  it('.skeleton--card class applies var(--skeleton-radius-card)', () => {
+    expect(css).toContain('.skeleton--card');
+    const cardIdx = css.indexOf('.skeleton--card');
+    const cardBlock = css.slice(cardIdx, css.indexOf('}', cardIdx));
+    expect(cardBlock).toContain('var(--skeleton-radius-card)');
   });
 });
 
@@ -145,6 +158,23 @@ describe('Skeleton', () => {
     expect((containerRound.firstChild as HTMLElement).className).toContain(
       'skeleton--rounded'
     );
+  });
+
+  // FWC26 #834: card shape for outer page-level containers
+  it('shape="card" applies skeleton--card class', () => {
+    const { container } = render(<Skeleton shape="card" />);
+    const el = container.firstChild as HTMLElement;
+    expect(el.classList.contains('skeleton--card')).toBe(true);
+    expect(el.classList.contains('skeleton')).toBe(true);
+  });
+
+  it('shape="card" is mutually exclusive with other shape classes', () => {
+    const { container } = render(<Skeleton shape="card" />);
+    const el = container.firstChild as HTMLElement;
+    expect(el.classList.contains('skeleton--circular')).toBe(false);
+    expect(el.classList.contains('skeleton--rounded')).toBe(false);
+    expect(el.classList.contains('skeleton--pill')).toBe(false);
+    expect(el.classList.contains('skeleton--rectangular')).toBe(false);
   });
 
   // FWC26 #690: pill shape for badge/chip placeholders

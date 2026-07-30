@@ -148,6 +148,44 @@
   border-radius: var(--focus-ring-radius, 6px);
 }
 
+/* ── OnboardingFlow interactive elements ─────────────────────────────────── */
+/*
+  GrantFox FWC26 (Stellar Wave) — "Visible focus outline on keyboard-only
+  nav for OnboardingFlow" requirement.
+
+  Every interactive element inside the onboarding dialog that is reachable
+  via Tab must show a visible focus ring on keyboard navigation (:focus-visible).
+
+  Covered here:
+    .skip-btn             — "Skip" dismiss button (top-right)
+    .primary-btn          — "Next" / "Get Started" action button
+    .secondary-btn        — "Back" navigation button
+    .indicator            — Per-step circular indicator (step 1, 2, 3)
+
+  All rules use :focus-visible so mouse/touch interactions are unaffected.
+  All colours reference design tokens so they respond to [data-contrast="high"].
+*/
+
+.onboarding-overlay .skip-btn:focus-visible,
+.onboarding-overlay .primary-btn:focus-visible,
+.onboarding-overlay .secondary-btn:focus-visible,
+.onboarding-overlay .indicator:focus-visible {
+  outline: var(--focus-ring-width, 2px) solid
+    var(--focus-ring-color, var(--accent, #58a6ff)) !important;
+  outline-offset: var(--focus-ring-offset, 3px) !important;
+  box-shadow: none !important;
+}
+
+.onboarding-overlay .skip-btn:focus-visible,
+.onboarding-overlay .primary-btn:focus-visible,
+.onboarding-overlay .secondary-btn:focus-visible {
+  border-radius: var(--radius-md, 8px);
+}
+
+.onboarding-overlay .indicator:focus-visible {
+  border-radius: var(--radius-full, 9999px);
+}
+
 /* ── Reduced-motion ──────────────────────────────────────────────────────── */
 /*
   Focus indicators must remain visible even under prefers-reduced-motion;

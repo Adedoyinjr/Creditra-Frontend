@@ -107,7 +107,7 @@ export function CreditLineSelector({
                             isHighUtilization
                               ? "dc-credit-line-item__value--warning tabular-nums"
                               : "dc-credit-line-item__value tabular-nums"
-                          }
+                          }`}
                         >
                           {line.utilization}%
                         </span>

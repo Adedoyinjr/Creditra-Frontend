@@ -9,7 +9,11 @@ type SkeletonProps = React.HTMLAttributes<HTMLDivElement> & {
   /**
    * Shape of the skeleton. Defaults to 'rectangular'.
    *
-   * - `rectangular` — uses `--skeleton-radius` (matches cards, inputs, buttons).
+   * - `rectangular` — uses `--skeleton-radius` (--radius-md, 8px); matches
+   *                   inputs, buttons, and small card surfaces.
+   * - `card`        — uses `--skeleton-radius-card` (--radius-lg, 12px);
+   *                   matches the outer radius of page-level card containers
+   *                   such as the CollateralSwap card (issue #834).
    * - `circular`    — border-radius: 50%, for avatar / icon placeholders.
    * - `rounded`     — semantic alias for rectangular; explicit intent for
    *                   inline text-row placeholders.
@@ -19,9 +23,10 @@ type SkeletonProps = React.HTMLAttributes<HTMLDivElement> & {
    *                   real page element and must adopt *that* element's
    *                   corner radius (see below).
    *
-   * Shape parity principle (FWC26 — issue #690): each variant resolves to the
-   * same radius token used by the final rendered component so first-paint
-   * skeleton geometry matches loaded-state geometry exactly (CLS = 0).
+   * Shape parity principle (FWC26 — issues #690 and #834): each variant
+   * resolves to the same radius token used by the final rendered component
+   * so first-paint skeleton geometry matches loaded-state geometry exactly
+   * (CLS = 0).
    *
    * `inherit` (FWC26 — issue #854) takes that principle one step further: when
    * a page skeleton reuses the loaded component's own class for a placeholder
@@ -30,18 +35,18 @@ type SkeletonProps = React.HTMLAttributes<HTMLDivElement> & {
    * an absolutely-positioned child filling that parent and the radius follows
    * automatically — including any responsive or theme override.
    */
-  shape?: 'rectangular' | 'circular' | 'rounded' | 'pill' | 'inherit';
+  shape?: 'rectangular' | 'card' | 'circular' | 'rounded' | 'pill' | 'inherit';
   /**
    * Visual variant.
    *
-   * - `default`  — uses `var(--skeleton-bg)` → `var(--surface-raised, #1c2230)`.
-   *                Best for placeholders on card surfaces.
-   * - `subtle`   — reduces opacity to 60% so the placeholder blends more
-   *                softly against lighter-toned sections.
+   * - `default` — uses `var(--skeleton-bg)` → `var(--border, #30363d)`.
+   *               Best for placeholders on page and card surfaces.
+   * - `subtle`  — reduces opacity to 60% so the placeholder blends more
+   *               softly against already-muted sections (e.g. secondary rows).
    *
-   * GrantFox FWC26 (Stellar Wave): the `default` variant replaces the
-   * previous `var(--border)` background with a properly-themed surface token
-   * so skeletons adapt to [data-contrast="high"] and dark-mode overrides.
+   * GrantFox FWC26 (Stellar Wave): the `default` variant uses the
+   * `var(--border)` token so skeletons adapt to [data-contrast="high"] and
+   * dark-mode overrides automatically.
    */
   variant?: 'default' | 'subtle';
   /**
@@ -65,23 +70,30 @@ type SkeletonProps = React.HTMLAttributes<HTMLDivElement> & {
  *
  * ## Theming (FWC26)
  * The background is driven by `var(--skeleton-bg)`, which defaults to
- * `var(--surface-raised)`.  Override the token at any scope:
+ * `var(--border)`.  Override the token at any scope:
  * ```css
- * .my-section { --skeleton-bg: var(--surface-overlay); }
+ * .my-section { --skeleton-bg: var(--surface); }
  * ```
  *
  * ## Dimensions
  * Pass `width` / `height` to match the eventual content size and prevent
  * Cumulative Layout Shift (CLS) while the data fetch is in flight.
  *
- * ## Shape parity (FWC26 — issue #690)
- * Use `shape="rounded"` (the default, driven by `--skeleton-radius`) for
- * most block placeholders so the border-radius matches the final card/input
- * element and first-paint does not jump when real content arrives.
- * Use `shape="circular"` only for avatar / icon-sized placeholders (≤ 48 px).
+ * ## Shape parity (FWC26 — issues #690 and #834)
+ * Choose the shape that matches the rendered component's border-radius:
+ *
+ * | Shape          | CSS token              | Pixels | Matches                           |
+ * |----------------|------------------------|--------|-----------------------------------|
+ * | `rectangular`  | `--skeleton-radius`    | 8 px   | inputs, buttons, summary cards    |
+ * | `card`         | `--skeleton-radius-card` | 12 px | outer page cards (CollateralSwap) |
+ * | `rounded`      | `--skeleton-radius`    | 8 px   | text-row placeholders             |
+ * | `circular`     | 50%                    | —      | avatar, icon placeholders         |
+ * | `pill`         | `--skeleton-radius-pill` | 9999px| StatusBadge, chips, badges        |
  *
  * ## Composed page skeletons
  * Higher-level first-paint layouts compose this primitive — e.g.
+ * `CollateralSwapSkeleton` in `CollateralSwap.tsx` (issue #834) mirrors the
+ * card's --radius-lg outer container and each inner asset-row's --radius-md.
  * `RepaymentVisualizerSkeleton` in `RepaymentVisualizer.tsx` (issue #609)
  * mirrors the chart card height (220px) and header/legend rows, and
  * `TransactionHistorySkeleton.tsx` (issue #854) reuses the loaded page's own
@@ -94,7 +106,17 @@ type SkeletonProps = React.HTMLAttributes<HTMLDivElement> & {
  * (the runtime JS toggle managed by ReducedMotionContext).
  * See the loading-state policy in `docs/ARCHITECTURE.md` §5.
  */
-export const Skeleton: React.FC<SkeletonProps> = ({ width, height, shape = 'rectangular', variant = 'default', as: Tag = 'div', style, className, 'aria-hidden': ariaHidden = true, ...rest }) => (
+export const Skeleton: React.FC<SkeletonProps> = ({
+  width,
+  height,
+  shape = 'rectangular',
+  variant = 'default',
+  as: Tag = 'div',
+  style,
+  className,
+  'aria-hidden': ariaHidden = true,
+  ...rest
+}) => (
   <Tag
     className={[
       'skeleton',
@@ -109,4 +131,3 @@ export const Skeleton: React.FC<SkeletonProps> = ({ width, height, shape = 'rect
     {...rest}
   />
 );
-

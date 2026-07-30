@@ -30,12 +30,14 @@ import RepayCalendar from "./pages/RepayCalendar";
 import { SettingsAccount } from "./pages/SettingsAccount";
 import { Theme } from "./pages/settings/Theme";
 import { LinkedAccounts } from "./pages/LinkedAccounts";
+import AgingTagPage from "./pages/AgingTag";
 import { WalletReconnectBanner } from "./components/WalletReconnectBanner";
 import { SessionTimeoutBanner } from "./components/SessionTimeoutBanner";
 import { NetworkMismatchBanner } from "./components/notifications/NetworkMismatchBanner";
 import { Header } from "./layouts/Header";
 import CreditLineCompare from "./pages/CreditLineCompare";
 import { TermsBanner } from "./components/TermsBanner";
+import CollateralSwap from "./pages/CollateralSwap";
 
 const isEditableTarget = (target: EventTarget | null) => {
   if (!(target instanceof HTMLElement)) return false;
@@ -246,10 +248,14 @@ function App() {
                         <Route path="/settings/account" element={<SettingsAccount />} />
                         <Route path="/settings/theme" element={<Theme />} />
                         <Route path="/linked-accounts" element={<LinkedAccounts />} />
+                        <Route path="/aging" element={<AgingTagPage />} />
                         {/* Issue #581: Repay flow (now reachable from header /
                             the "Repay" action on Credit Lines). */}
                         <Route path="/repay" element={<RepayPage />} />
                         <Route path="/repay/calendar" element={<RepayCalendar />} />
+                        {/* Issue #834: CollateralSwap — swap one collateral asset for
+                            another within an existing credit line. */}
+                        <Route path="/collateral-swap" element={<CollateralSwap />} />
                         <Route path="*" element={<NotFound />} />
                       </Routes>
                     </main>

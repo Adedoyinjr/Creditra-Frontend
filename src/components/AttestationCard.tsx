@@ -1,6 +1,9 @@
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
 import type { Attestation, AttestationStatus } from '../types/attestation';
 import { ATTESTATION_STATUS_COLOR, fmtDate } from '../utils/tokens';
+import { LiveRegion } from './LiveRegion';
 import './AttestationCard.css';
 
 const EXPIRING_WINDOW_DAYS = 14;
@@ -36,8 +39,34 @@ interface AttestationCardProps {
  * step for remediation.
  */
 export function AttestationCard({ attestations }: AttestationCardProps) {
+  const prevStatusesRef = useRef<Record<string, AttestationStatus>>({});
+  const [liveAnnouncement, setLiveAnnouncement] = useState('');
+
+  useEffect(() => {
+    const newStatuses: Record<string, AttestationStatus> = {};
+    const changed: string[] = [];
+
+    attestations.forEach((att) => {
+      const status = getAttestationStatus(att);
+      newStatuses[att.id] = status;
+      const prevStatus = prevStatusesRef.current[att.id];
+      if (prevStatus && prevStatus !== status) {
+        changed.push(`${att.label} status changed to ${STATUS_COPY[status]}`);
+      }
+    });
+
+    if (changed.length > 0) {
+      setLiveAnnouncement(changed.join('. '));
+    }
+
+    prevStatusesRef.current = newStatuses;
+  }, [attestations]);
+
   return (
     <div className="card attestation-card">
+      <div className="sr-only" aria-live="polite" aria-atomic="true">
+        {liveAnnouncement}
+      </div>
       <h2>
         <span className="icon">🪪</span> Attestations
       </h2>

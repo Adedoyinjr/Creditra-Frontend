@@ -1,107 +1,86 @@
-import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import './Breadcrumb.css';
 
-/**
- * A single breadcrumb segment.
- *
- * `href` makes it a navigable link; omitting it renders the item as plain
- * text (typically the current / active page).
- */
 export interface BreadcrumbItem {
-  /** Visible label for this segment. */
   label: string;
-  /** Route path. Omit for the last (current) segment. */
-  href?: string;
+  to?: string;
 }
 
 export interface BreadcrumbProps {
-  /** Ordered list of breadcrumb segments, left-to-right (root first). */
+  /** Ordered list of breadcrumb items (root first, current last). */
   items: BreadcrumbItem[];
-  /**
-   * Character count threshold above which a label is truncated with a
-   * middle-ellipsis. Defaults to 24.
-   */
-  ellipsisThreshold?: number;
-  /** Additional class name applied to the outer `<nav>`. */
+  /** Maximum visible items before middle-ellipsis kicks in. Default 4. */
+  maxVisible?: number;
+  /** Additional CSS class names. */
   className?: string;
 }
 
 /**
- * Middle-ellipsis helper: trims the center of a string while preserving the
- * first and last few characters, inserting `\u2026` (…) in between.
+ * Breadcrumb — accessible breadcrumb navigation with middle-ellipsis.
  *
- * It preserves as many characters as possible up to `maxLen` by dividing
- * the remaining characters equally between the head and tail.
- */
-export function middleEllipsis(text: string, maxLen: number): string {
-  if (text.length <= maxLen) return text;
-  const charsToKeep = Math.max(0, maxLen - 1);
-  const head = Math.ceil(charsToKeep / 2);
-  const tail = Math.floor(charsToKeep / 2);
-  return `${text.slice(0, head)}\u2026${text.slice(-tail)}`;
-}
-
-/**
- * Accessible breadcrumb navigation with middle-ellipsis truncation for
- * long path segments.
+ * When `items.length > maxVisible`, the middle items collapse into a single
+ * "…" <li> that is `aria-hidden` but replaced by a screen-reader-only "… more"
+ * label so assistive technology users understand there are hidden items.
  *
- * Accessibility (WCAG 2.1 AA):
- *  - Uses `<nav aria-label="Breadcrumb">` landmark.
- *  - Ordered list (`<ol>`) conveys sequence to screen readers.
- *  - The current page item uses `aria-current="page"`.
- *  - Each truncatable label gets a `title` attribute so the full text is
- *    available on hover / focus.
- *  - Separator is decorative (`aria-hidden="true"`).
+ * WCAG 2.1 AA:
+ * - Renders inside a `<nav>` with `aria-label="Breadcrumb"`.
+ * - Last item uses `aria-current="page"`.
+ * - Separators are `aria-hidden="true"`.
+ * - Focus rings use `.focus-ring` from `src/styles/focus.css`.
  */
 export function Breadcrumb({
   items,
-  ellipsisThreshold = 24,
-  className,
+  maxVisible = 4,
+  className = '',
 }: BreadcrumbProps) {
-  const processed = useMemo(
-    () =>
-      items.map((item) => ({
-        ...item,
-        displayLabel: middleEllipsis(item.label, ellipsisThreshold),
-        truncated: item.label.length > ellipsisThreshold,
-      })),
-    [items, ellipsisThreshold],
-  );
-
   if (items.length === 0) return null;
 
+  const visible = deriveVisible(items, maxVisible);
+
+  const containerClasses =    ['breadcrumb', className]
+    .filter(Boolean)
+    .join(' ');
+
   return (
-    <nav
-      aria-label="Breadcrumb"
-      className={`breadcrumb${className ? ` ${className}` : ''}`}
-    >
+    <nav aria-label="Breadcrumb" className={containerClasses}>
       <ol className="breadcrumb__list">
-        {processed.map((item, idx) => {
-          const isLast = idx === items.length - 1;
+        {visible.map((item, idx) => {
+          const isLast = idx === visible.length - 1;
+
+          if (item === null) {
+            // Middle ellipsis placeholder
+            return (
+              <li
+                key={`ellipsis-${idx}`}
+                className="breadcrumb__item breadcrumb__item--ellipsis"
+                aria-hidden="true"
+              >
+                <span className="breadcrumb__ellipsis" aria-hidden="true">…</span>
+                {/* Screen-reader-only label so AT users know items are hidden */}
+                <span className="sr-only">… more</span>
+              </li>
+            );
+          }
+
           return (
-            <li key={idx} className="breadcrumb__item">
-              {idx > 0 && (
-                <span className="breadcrumb__separator" aria-hidden="true">
+            <li key={item.label} className="breadcrumb__item">
+              {isLast ? (
+                <span
+                  className="breadcrumb__label breadcrumb__label--current"
+                  aria-current="page"
+                >
+                  {item.label}
+                </span>
+              ) : item.to ? (
+                <Link to={item.to} className="breadcrumb__link">
+                  {item.label}
+                </Link>
+              ) : (
+                <span className="breadcrumb__label">{item.label}</span>
+              )}
+              {!isLast && (
+                <span className="breadcrumb__sep" aria-hidden="true">
                   /
                 </span>
-              )}
-              {isLast || !item.href ? (
-                <span
-                  className={`breadcrumb__text${isLast ? ' breadcrumb__text--current' : ''}`}
-                  {...(isLast ? { 'aria-current': 'page' } : {})}
-                  {...(item.truncated ? { title: item.label } : {})}
-                >
-                  {item.displayLabel}
-                </span>
-              ) : (
-                <Link
-                  to={item.href}
-                  className="breadcrumb__link"
-                  {...(item.truncated ? { title: item.label } : {})}
-                >
-                  {item.displayLabel}
-                </Link>
               )}
             </li>
           );
@@ -109,6 +88,23 @@ export function Breadcrumb({
       </ol>
     </nav>
   );
+}
+
+/**
+ * Derive the visible items list with middle-ellipsis.
+ *
+ * When `items.length > maxVisible`, we show:
+ *   [first, null, ...last (maxVisible-2)]
+ * where null represents the ellipsis slot.
+ */
+function deriveVisible(
+  items: BreadcrumbItem[],
+  maxVisible: number,
+): (BreadcrumbItem | null)[] {
+  if (items.length <= maxVisible) return items;
+
+  const tail = items.slice(-(maxVisible - 2));
+  return [items[0], null, ...tail];
 }
 
 export default Breadcrumb;

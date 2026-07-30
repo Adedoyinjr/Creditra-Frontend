@@ -1,4 +1,4 @@
-import { act, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -55,6 +55,7 @@ describe("HelpCenter", () => {
   });
 
   afterEach(() => {
+    cleanup();
     vi.restoreAllMocks();
   });
 
@@ -202,4 +203,61 @@ describe("HelpCenter", () => {
     expect(faqButton).toHaveAttribute("aria-current", "true");
     expect(faqButton).toHaveAttribute("aria-expanded", "true");
   });
+
+  it("copies an expanded FAQ answer and shows success feedback", async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: { writeText },
+    });
+
+    render(
+      <MemoryRouter>
+        <HelpCenter />
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /what is creditra\?/i }));
+    fireEvent.click(screen.getByRole("button", { name: "Copy answer for What is Creditra?" }));
+
+    await waitFor(() => {
+      expect(writeText).toHaveBeenCalledWith(
+        "Creditra is a Stellar-based credit experience that helps you request, manage, and repay flexible credit lines from one dashboard.",
+      );
+      expect(screen.getByText("Answer copied")).toBeInTheDocument();
+    });
+  });
+
+  it("shows a tooltip on the FAQ anchor after hover delay, without breaking its accesible name", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true});
+    const user = userEvent.setup({ delay: null});
+
+    render(
+      <MemoryRouter>
+        <HelpCenter />
+      </MemoryRouter>
+    );
+
+    const faqAnchor = screen.getByRole("link", { name: /direct link to faq: what is creditra\?/i });
+    //accessible name is untouched by the tooltip wiring.
+    expect(faqAnchor).toHaveAttribute("aria-label", "Direct link to FAQ: What is Creditra?");
+
+    await user.hover(faqAnchor);
+    act(() => {
+      vi.advanceTimersByTime(400);
+    });
+
+    const tooltip = screen.getAllByRole("tooltip").find((node) =>
+      node.classList.contains("is-visible"),
+    );
+    expect(tooltip).toBeDefined();
+    const tooltipTrigger = faqAnchor.closest(".accessible-tooltip")?.querySelector(
+      ".accessible-tooltip__trigger",
+    );
+    expect(tooltipTrigger).toBeTruthy();
+    expect(tooltip).toHaveClass("is-visible");
+    expect(tooltipTrigger).toHaveAttribute("aria-describedby", tooltip?.id);
+
+    vi.useRealTimers();
+  })
 });

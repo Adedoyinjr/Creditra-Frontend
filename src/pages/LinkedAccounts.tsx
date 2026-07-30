@@ -28,6 +28,7 @@ import type { LinkedAccount, AccountProvider, AccountLinkError } from '../types/
 import { Skeleton } from '../components/Skeleton';
 import { PendingButton } from '../components/PendingButton';
 import { LiveRegion } from '../components/LiveRegion';
+import { Tooltip } from '../components/Tooltip';
 import { accountStripeStyle, colorFromId } from '../utils/colorFromId';
 import './LinkedAccounts.css';
 
@@ -461,26 +462,40 @@ export function LinkedAccounts() {
             )}
           </div>
           <div className="sticky-action-bar__actions">
-            <PendingButton
-              onClick={() => handleConnect('google')}
-              disabled={actionLoading}
-              pending={false}
-              className="btn-secondary btn-sm"
-              aria-label="Connect new account from toolbar"
+            <Tooltip
+              label="Connect a new account"
+              position="top"
+              hoverDelay={400}
+              longPressDelay={500}
             >
-              <LinkIcon className="icon-sm" aria-hidden="true" />
-              <span className="sticky-action-bar__label">Connect</span>
-            </PendingButton>
-            {connectedCount > 0 && (
-              <button
-                onClick={handleDisconnectAll}
+              <PendingButton
+                onClick={() => handleConnect('google')}
                 disabled={actionLoading}
-                className="btn-danger btn-sm"
-                aria-label="Disconnect all accounts from toolbar"
+                pending={false}
+                className="btn-secondary btn-sm"
+                aria-label="Connect new account from toolbar"
               >
-                <Unlink className="icon-sm" aria-hidden="true" />
-                <span className="sticky-action-bar__label">Disconnect All</span>
-              </button>
+                <LinkIcon className="icon-sm" aria-hidden="true" />
+                <span className="sticky-action-bar__label">Connect</span>
+              </PendingButton>
+            </Tooltip>
+            {connectedCount > 0 && (
+              <Tooltip
+                label="Disconnect all linked accounts"
+                position="top"
+                hoverDelay={400}
+                longPressDelay={500}
+              >
+                <button
+                  onClick={handleDisconnectAll}
+                  disabled={actionLoading}
+                  className="btn-danger btn-sm"
+                  aria-label="Disconnect all accounts from toolbar"
+                >
+                  <Unlink className="icon-sm" aria-hidden="true" />
+                  <span className="sticky-action-bar__label">Disconnect All</span>
+                </button>
+              </Tooltip>
             )}
           </div>
         </div>

@@ -21,8 +21,6 @@ import {
   buildHealthHistory,
   deriveHealthFactor,
 } from '../components/HealthFactorChart';
-import { MOCK_CREDIT_LINES } from '../data/mockData';
-import type { CreditLineStatus, SortField, SortDirection } from '../types/creditLine';
 import {
   COLOR,
   UTIL_COLOR,
@@ -36,93 +34,18 @@ import {
 import "./CreditLines.css";
 import { AccessibleTooltip } from "../components/AccessibleTooltip";
 import { KbdHint } from "../components/KbdHint";
-import { CreditLineRowMenu } from "../components/CreditLineRowMenu";
 import { NextAccrualChip } from "../components/NextAccrualChip";
-import { useFocusTrap } from "../hooks/useFocusTrap";
-import { useInertBackdrop } from "../hooks/useInertBackdrop";
-import { useBodyScrollLock } from "../hooks/useBodyScrollLock";
-import CompareLinesPanel from "../components/CompareLinesPanel";
-import { CollateralSubstitutionModal } from "../components/CollateralSubstitutionModal";
-import { CreditLineRowMenu } from "../components/CreditLineRowMenu";
-import { KbdHint } from "../components/KbdHint";
-import { NextAccrualChip } from "../components/NextAccrualChip";
-import { NoLines } from "../components/illustrations";
-import { KbdHint } from "../components/KbdHint";
-import { CreditLineRowMenu } from "../components/CreditLineRowMenu";
-import type { CollateralAsset } from "../types/collateral";
+import { LiveRegion } from "../components/LiveRegion";
+import { LastActivityStamp } from "../components/LastActivityStamp";
+import { RepaymentPlanChart } from "../components/RepaymentPlanChart";
+import { AgingTag } from "../components/AgingTag";
 import {
   RepaymentSchedule,
   buildRepaymentScheduleFromLines,
 } from "../components/RepaymentSchedule";
 import { useReducedMotion } from "../context/ReducedMotionContext";
-import type { CollateralAsset } from "../types/collateral";
-
-// ─── Next Accrual Chip ──────────────────────────────────────────────────────
-
-function NextAccrualChip({ target }: { target: string }) {
-  return (
-    <>
-      <span className="cl-accrual-label">Next accrual</span>
-      <span className="cl-accrual-chip" title={fmtDateTime(target)}>
-        {relativeTime(target)}
-      </span>
-    </>
-  );
-}
 
 // ─── Credit Line Card ────────────────────────────────────────────────────────
-
-/**
- * Restored from commit e340fa8 ("feat: add next-accrual countdown chips to
- * CreditLines rows"), which was dropped by a later, unrelated edit while
- * the <NextAccrualChip /> call site in CreditLineCard was left behind.
- * Preserved verbatim rather than rewritten, since it shipped and was
- * reviewed previously.
- */
-function NextAccrualChip({ target }: { target: string }) {
-  const [now, setNow] = useState(() => new Date());
-  const timerRef = { current: undefined as ReturnType<typeof setInterval> | undefined };
-
-  useEffect(() => {
-    const tick = () => setNow(new Date());
-
-    const handleVisibility = () => {
-      if (document.hidden) {
-        if (timerRef.current !== undefined) {
-          clearInterval(timerRef.current);
-          timerRef.current = undefined;
-        }
-      } else {
-        if (timerRef.current !== undefined) {
-          clearInterval(timerRef.current);
-        }
-        tick();
-        timerRef.current = setInterval(tick, 60000);
-      }
-    };
-
-    if (!document.hidden) {
-      timerRef.current = setInterval(tick, 60000);
-    }
-
-    document.addEventListener('visibilitychange', handleVisibility);
-    return () => {
-      if (timerRef.current !== undefined) {
-        clearInterval(timerRef.current);
-      }
-      document.removeEventListener('visibilitychange', handleVisibility);
-    };
-  }, []);
-
-  const label = formatCountdown(target, now);
-  const ariaLabel = getCountdownAriaLabel(target, now);
-
-  return (
-    <span className="cl-accrual-chip" aria-label={ariaLabel}>
-      {label}
-    </span>
-  );
-}
 
 function CreditLineCard({
   line,
@@ -212,14 +135,14 @@ function CreditLineCard({
         <div className="cl-metrics" role="group" aria-label="Credit line metrics">
            <div className="cl-metric">
             <span className="cl-metric-label">Limit</span>
-            <span className="cl-metric-value tabular-nums" style={{ color: COLOR.accent }}>
+            <span className="cl-metric-value tabular-nums amount cl-amount" style={{ color: COLOR.accent }}>
               {fmt(line.limit)}
             </span>
           </div>
           <div className="cl-metric">
             <span className="cl-metric-label">Utilized</span>
             <span
-              className="cl-metric-value tabular-nums"
+              className="cl-metric-value tabular-nums amount cl-amount"
               style={{ color: UTIL_COLOR[level] }}
             >
               {fmt(line.utilized)}
@@ -227,7 +150,7 @@ function CreditLineCard({
           </div>
           <div className="cl-metric">
             <span className="cl-metric-label">Available</span>
-            <span className="cl-metric-value tabular-nums" style={{ color: COLOR.success }}>
+            <span className="cl-metric-value tabular-nums amount cl-amount" style={{ color: COLOR.success }}>
               {fmt(line.limit - line.utilized)}
             </span>
           </div>
@@ -236,7 +159,7 @@ function CreditLineCard({
         <div className="cl-util-bar">
           <div className="cl-util-header">
             <span>Utilization</span>
-            <span className="tabular-nums" style={{ color: UTIL_COLOR[level] }}>{pct}%</span>
+            <span className="tabular-nums amount cl-amount" style={{ color: UTIL_COLOR[level] }}>{pct}%</span>
           </div>
           <div className="cl-util-track">
             <div
@@ -249,11 +172,11 @@ function CreditLineCard({
         <div className="cl-details" role="group" aria-label="Credit line details">
           <div className="cl-detail">
             <span className="label">APR</span>
-            <span className="value tabular-nums">{line.apr}%</span>
+            <span className="value tabular-nums amount cl-amount">{line.apr}%</span>
           </div>
           <div className="cl-detail">
             <span className="label">Risk Score</span>
-            <span className="value tabular-nums">{line.riskScore}</span>
+            <span className="value tabular-nums amount cl-amount">{line.riskScore}</span>
           </div>
           <div className="cl-detail">
             <span className="label">Opened</span>
@@ -368,14 +291,7 @@ export default function CreditLines({ defaultLoading = true }: { defaultLoading?
   const [statusFilter, setStatusFilter] = useState<CreditLineStatus | "all">(
     "all",
   );
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setLoading(false);
-    }, 500);
-    return () => clearTimeout(timer);
-  }, []);
+  const [announcement, setAnnouncement] = useState("");
 
   const [creditLines, setCreditLines] = useState(MOCK_CREDIT_LINES);
   const [isLoading, setIsLoading] = useState(true);
@@ -419,6 +335,10 @@ export default function CreditLines({ defaultLoading = true }: { defaultLoading?
   };
 
   const handleFreeze = (lineId: string) => {
+    const lineToFreeze = creditLines.find((cl) => cl.id === lineId);
+    if (lineToFreeze) {
+      setAnnouncement(`Credit line ${lineToFreeze.name} frozen.`);
+    }
     setCreditLines((prev) =>
       prev.map((cl) =>
         cl.id === lineId
@@ -437,6 +357,10 @@ export default function CreditLines({ defaultLoading = true }: { defaultLoading?
   };
 
   const handleUnfreeze = (lineId: string) => {
+    const lineToUnfreeze = creditLines.find((cl) => cl.id === lineId);
+    if (lineToUnfreeze) {
+      setAnnouncement(`Credit line ${lineToUnfreeze.name} unfrozen.`);
+    }
     setCreditLines((prev) =>
       prev.map((cl) => {
         if (cl.id !== lineId) return cl;
@@ -768,6 +692,7 @@ export default function CreditLines({ defaultLoading = true }: { defaultLoading?
         </button>
       </div>
 
+      <LiveRegion message={announcement} id="cl-live-region" />
       {showCompare && selectedCreditLines.length === 2 && (
         <div
           id="compare-lines-drawer"
@@ -812,7 +737,6 @@ export default function CreditLines({ defaultLoading = true }: { defaultLoading?
             ))}
           </div>
         ) : filteredAndSorted.length === 0 ? (
-        !hasCreditLines ? (
           <div className="cl-empty" role="region" aria-label="No credit lines">
             <NoLines className="empty-state-illustration--muted" />
             <h2 className="cl-empty-title">Get started with Credit Lines</h2>
@@ -828,8 +752,7 @@ export default function CreditLines({ defaultLoading = true }: { defaultLoading?
             <Link to="/open-credit" className="cl-primary-btn focus-ring">
               Open Credit Line
             </Link>
-          }
-        />
+          </div>
       ) : (
         <div className="cl-grid" data-testid="cl-grid">
           {filteredAndSorted.map((line) => (
