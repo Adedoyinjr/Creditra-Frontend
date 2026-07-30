@@ -10,8 +10,8 @@
  * - ARIA attributes
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { render, screen, waitFor, within, act } from '@testing-library/react';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { render, screen, waitFor, within, act, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { LinkedAccounts } from './LinkedAccounts';
 import * as linkedAccountsService from '../services/linkedAccounts';
@@ -591,6 +591,50 @@ describe('LinkedAccounts', () => {
       });
 
       confirmSpy.mockRestore();
+    });
+  });
+
+  describe('Toolbar Tooltips', () => {
+    it('shows a tooltip for the toolbar connect button on hover after a delay', async () => {
+      vi.mocked(linkedAccountsService.fetchLinkedAccounts).mockResolvedValue([]);
+
+      render(<LinkedAccounts />);
+
+      const connectButton = await screen.findByRole('button', {
+        name: /connect new account from toolbar/i,
+      });
+
+      vi.useFakeTimers();
+      try {
+        fireEvent.mouseEnter(connectButton.closest('.tooltip-wrapper')!);
+        expect(screen.getByText('Connect a new account')).not.toHaveClass('is-visible');
+
+        act(() => {
+          vi.advanceTimersByTime(400);
+        });
+
+        const tooltip = screen.getByText('Connect a new account');
+        expect(tooltip).toHaveClass('is-visible');
+        expect(connectButton).toHaveAttribute('aria-describedby', tooltip.id);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it('shows a tooltip for the toolbar disconnect-all button on keyboard focus', async () => {
+      vi.mocked(linkedAccountsService.fetchLinkedAccounts).mockResolvedValue(mockAccounts);
+
+      render(<LinkedAccounts />);
+
+      const disconnectAllButton = await screen.findByRole('button', {
+        name: /disconnect all accounts from toolbar/i,
+      });
+
+      fireEvent.focus(disconnectAllButton.closest('.tooltip-wrapper')!);
+
+      const tooltip = screen.getByText('Disconnect all linked accounts');
+      expect(tooltip).toHaveClass('is-visible');
+      expect(disconnectAllButton).toHaveAttribute('aria-describedby', tooltip.id);
     });
   });
 });

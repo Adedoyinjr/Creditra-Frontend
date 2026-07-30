@@ -1,9 +1,16 @@
-import { render, screen } from '@testing-library/react';
-import { describe, it, expect } from 'vitest';
+import { render, screen, fireEvent, act } from '@testing-library/react';
+import { describe, it, test, expect, vi, beforeEach, afterEach } from 'vitest';
 import { Tooltip } from './Tooltip';
-import { exec } from 'node:child_process';
 
 describe('Tooltip (alias for AccessibleTooltip)', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it('renders with a label and exposes the tooltip content', () => {
     render(<Tooltip label="This is a helpful hint" />);
     // The trigger with aria-label "More information"
