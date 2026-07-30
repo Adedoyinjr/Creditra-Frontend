@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useEffect, useRef, useState } from 'react';
 import type { Attestation, AttestationStatus } from '../types/attestation';
@@ -38,32 +39,34 @@ interface AttestationCardProps {
  * step for remediation.
  */
 export function AttestationCard({ attestations }: AttestationCardProps) {
-  const prevMapRef = useRef<Map<string, AttestationStatus>>(new Map());
-  const [announcement, setAnnouncement] = useState('');
+  const prevStatusesRef = useRef<Record<string, AttestationStatus>>({});
+  const [liveAnnouncement, setLiveAnnouncement] = useState('');
 
   useEffect(() => {
-    const currentMap = new Map<string, AttestationStatus>();
-    const changes: string[] = [];
+    const newStatuses: Record<string, AttestationStatus> = {};
+    const changed: string[] = [];
 
-    for (const a of attestations) {
-      const status = getAttestationStatus(a);
-      currentMap.set(a.id, status);
-      const prev = prevMapRef.current.get(a.id);
-      if (prev && prev !== status) {
-        changes.push(`${a.label} status changed to ${STATUS_COPY[status]}`);
+    attestations.forEach((att) => {
+      const status = getAttestationStatus(att);
+      newStatuses[att.id] = status;
+      const prevStatus = prevStatusesRef.current[att.id];
+      if (prevStatus && prevStatus !== status) {
+        changed.push(`${att.label} status changed to ${STATUS_COPY[status]}`);
       }
+    });
+
+    if (changed.length > 0) {
+      setLiveAnnouncement(changed.join('. '));
     }
 
-    if (changes.length > 0) {
-      setAnnouncement(changes.join('. ') + '.');
-    }
-
-    prevMapRef.current = currentMap;
+    prevStatusesRef.current = newStatuses;
   }, [attestations]);
 
   return (
     <div className="card attestation-card">
-      <LiveRegion message={announcement} politeness="polite" />
+      <div className="sr-only" aria-live="polite" aria-atomic="true">
+        {liveAnnouncement}
+      </div>
       <h2>
         <span className="icon">🪪</span> Attestations
       </h2>
