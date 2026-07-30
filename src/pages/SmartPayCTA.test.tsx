@@ -57,4 +57,44 @@ describe('SmartPayCTA', () => {
     );
     expect(document.querySelector('picture')).not.toBeInTheDocument();
   });
+
+  it('omits the shortcut hint chip when shortcutKeys is not provided', () => {
+    render(
+      <SmartPayCTA
+        title="No Shortcut"
+        description="No hint here."
+        cta={<button>Ok</button>}
+      />,
+    );
+    expect(document.querySelector('.smartpay-cta__shortcut-hint')).not.toBeInTheDocument();
+  });
+
+  it('renders a shortcut hint chip next to the CTA when shortcutKeys is provided', () => {
+    render(
+      <SmartPayCTA
+        title="Pay Now"
+        description="Repay instantly."
+        cta={<button>Pay</button>}
+        shortcutKeys={['Ctrl', 'Enter']}
+        shortcutLabel="Pay now"
+      />,
+    );
+    const hint = document.querySelector('.smartpay-cta__shortcut-hint');
+    expect(hint).toBeInTheDocument();
+    expect(hint).toHaveAttribute('aria-label', 'Pay now (Ctrl Enter)');
+    expect(screen.getByText('Ctrl')).toBeInTheDocument();
+    expect(screen.getByText('Enter')).toBeInTheDocument();
+  });
+
+  it('accepts a single shortcut key as a string', () => {
+    render(
+      <SmartPayCTA
+        title="Confirm"
+        description="One key does it."
+        cta={<button>Confirm</button>}
+        shortcutKeys="Enter"
+      />,
+    );
+    expect(screen.getByText('Enter')).toBeInTheDocument();
+  });
 });
