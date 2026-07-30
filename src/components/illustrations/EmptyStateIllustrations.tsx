@@ -162,6 +162,44 @@ export function NoRiskGauge(props: IllustrationProps) {
   );
 }
 
+/**
+ * NoOverdue — illustrated empty state for the AgingTag page.
+ *
+ * Composition: a stylised calendar page with a green checkmark badge,
+ * communicating that no credit lines are past due. The calendar motif
+ * was chosen because "aging" is inherently a time-based concept; the
+ * checkmark reinforces the positive "all current" message.
+ *
+ * Inherits `--accent` (or any other surrounding foreground) via `currentColor`
+ * so it stays consistent with light, dark, and high-contrast themes.
+ */
+export function NoOverdue(props: IllustrationProps) {
+  return (
+    <IllustrationFrame {...props}>
+      <svg viewBox="0 0 180 140" fill="none" focusable="false">
+        {/* calendar body */}
+        <rect x="24" y="26" width="132" height="100" rx="16" stroke="currentColor" strokeWidth="2" opacity="0.24" />
+        {/* calendar header bar */}
+        <path d="M24 42h132" stroke="currentColor" strokeWidth="2" opacity="0.12" />
+        {/* calendar page corners — hint of page curl */}
+        <path d="M140 126h-8v-8" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" opacity="0.15" />
+        {/* date grid dashes */}
+        <path d="M38 58h30" stroke="currentColor" strokeWidth="3" strokeLinecap="round" opacity="0.18" />
+        <path d="M38 72h104" stroke="currentColor" strokeWidth="3" strokeLinecap="round" opacity="0.14" />
+        <path d="M38 86h80" stroke="currentColor" strokeWidth="3" strokeLinecap="round" opacity="0.14" />
+        <path d="M38 100h56" stroke="currentColor" strokeWidth="3" strokeLinecap="round" opacity="0.10" />
+        {/* clock icon hint on the right */}
+        <circle cx="138" cy="76" r="14" stroke="currentColor" strokeWidth="2" opacity="0.30" />
+        <path d="M138 68v8l5 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" opacity="0.30" />
+        {/* large checkmark badge — the hero element */}
+        <circle cx="64" cy="108" r="20" stroke="currentColor" strokeWidth="2" opacity="0.85" />
+        <circle cx="64" cy="108" r="16" stroke="currentColor" strokeWidth="1" opacity="0.24" />
+        <path d="M56 108l5 5 11-11" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    </IllustrationFrame>
+  );
+}
+
 export function NoOutstandingDebt(props: IllustrationProps) {
   return (
     <IllustrationFrame {...props}>

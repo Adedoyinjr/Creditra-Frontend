@@ -30,6 +30,7 @@ import RepayCalendar from "./pages/RepayCalendar";
 import { SettingsAccount } from "./pages/SettingsAccount";
 import { Theme } from "./pages/settings/Theme";
 import { LinkedAccounts } from "./pages/LinkedAccounts";
+import AgingTagPage from "./pages/AgingTag";
 import { WalletReconnectBanner } from "./components/WalletReconnectBanner";
 import { SessionTimeoutBanner } from "./components/SessionTimeoutBanner";
 import { NetworkMismatchBanner } from "./components/notifications/NetworkMismatchBanner";
@@ -246,6 +247,7 @@ function App() {
                         <Route path="/settings/account" element={<SettingsAccount />} />
                         <Route path="/settings/theme" element={<Theme />} />
                         <Route path="/linked-accounts" element={<LinkedAccounts />} />
+                        <Route path="/aging" element={<AgingTagPage />} />
                         {/* Issue #581: Repay flow (now reachable from header /
                             the "Repay" action on Credit Lines). */}
                         <Route path="/repay" element={<RepayPage />} />
