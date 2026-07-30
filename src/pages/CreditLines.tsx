@@ -47,6 +47,7 @@ import { CreditLineRowMenu } from "../components/CreditLineRowMenu";
 import { KbdHint } from "../components/KbdHint";
 import { NextAccrualChip } from "../components/NextAccrualChip";
 import { NoLines } from "../components/illustrations";
+import { LiveRegion } from "../components/LiveRegion";
 import { KbdHint } from "../components/KbdHint";
 import { CreditLineRowMenu } from "../components/CreditLineRowMenu";
 import type { CollateralAsset } from "../types/collateral";
@@ -368,14 +369,7 @@ export default function CreditLines({ defaultLoading = true }: { defaultLoading?
   const [statusFilter, setStatusFilter] = useState<CreditLineStatus | "all">(
     "all",
   );
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setLoading(false);
-    }, 500);
-    return () => clearTimeout(timer);
-  }, []);
+  const [announcement, setAnnouncement] = useState("");
 
   const [creditLines, setCreditLines] = useState(MOCK_CREDIT_LINES);
   const [isLoading, setIsLoading] = useState(true);
@@ -419,6 +413,10 @@ export default function CreditLines({ defaultLoading = true }: { defaultLoading?
   };
 
   const handleFreeze = (lineId: string) => {
+    const lineToFreeze = creditLines.find((cl) => cl.id === lineId);
+    if (lineToFreeze) {
+      setAnnouncement(`Credit line ${lineToFreeze.name} frozen.`);
+    }
     setCreditLines((prev) =>
       prev.map((cl) =>
         cl.id === lineId
@@ -437,6 +435,10 @@ export default function CreditLines({ defaultLoading = true }: { defaultLoading?
   };
 
   const handleUnfreeze = (lineId: string) => {
+    const lineToUnfreeze = creditLines.find((cl) => cl.id === lineId);
+    if (lineToUnfreeze) {
+      setAnnouncement(`Credit line ${lineToUnfreeze.name} unfrozen.`);
+    }
     setCreditLines((prev) =>
       prev.map((cl) => {
         if (cl.id !== lineId) return cl;
@@ -768,6 +770,7 @@ export default function CreditLines({ defaultLoading = true }: { defaultLoading?
         </button>
       </div>
 
+      <LiveRegion message={announcement} id="cl-live-region" />
       {showCompare && selectedCreditLines.length === 2 && (
         <div
           id="compare-lines-drawer"
