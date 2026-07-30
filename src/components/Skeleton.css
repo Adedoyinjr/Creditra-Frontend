@@ -1,7 +1,9 @@
 /*
   Skeleton.css — Shimmer placeholder for loading states
   ──────────────────────────────────────────────────────
-  GrantFox FWC26 (Stellar Wave) — "Themed skeleton while Dashboard data loads."
+  GrantFox FWC26 (Stellar Wave) — issues #690 and #834
+  #690: shape-parity for pill/badge/chip placeholders
+  #834: CollateralSwap skeleton shape parity (card shape, --radius-lg)
 
   Background is driven by --skeleton-bg → var(--border). var(--border) is
   guaranteed-to-exist (defined in src/index.css :root) and gives a
@@ -55,6 +57,16 @@
    * Resolves to --radius-sm (0.375 rem / 6 px).
    */
   --skeleton-radius-sm: var(--radius-sm, 0.375rem);
+
+  /*
+   * --skeleton-radius-card
+   * Larger radius for outer page-level card containers.
+   * Resolves to --radius-lg (0.75 rem / 12 px) — the same token used by
+   * `.collateral-swap__card` and similar full-page card surfaces so the
+   * skeleton wrapper and the loaded card share an identical border-radius
+   * (FWC26 — issue #834).
+   */
+  --skeleton-radius-card: var(--radius-lg, 0.75rem);
 
   /*
    * --skeleton-radius-pill
@@ -122,25 +134,29 @@
 /* ── Shape variants ──────────────────────────────────────────────────────── */
 
 /*
- * Shape parity (FWC26 — issue #690)
- * ──────────────────────────────────
+ * Shape parity (FWC26 — issues #690 and #834)
+ * ────────────────────────────────────────────
  * Every shape variant resolves to the same border-radius token used by its
  * target final component so that first-paint skeleton geometry matches the
  * loaded-state geometry exactly and the layout does not jump (CLS = 0).
  *
  * Mapping:
  *   skeleton--rectangular  →  --skeleton-radius (--radius-md, 0.5rem / 8px)
- *                              Matches: cards (.card, .summary-card), inputs,
- *                              buttons (.qa-btn, .summary-card .value block).
+ *                              Matches: inputs, buttons, summary cards,
+ *                              asset rows inside the CollateralSwap card.
  *
- *   skeleton--rounded      →  --skeleton-radius (same as rectangular, but an
- *                              explicit semantic alias for inline text rows).
+ *   skeleton--card         →  --skeleton-radius-card (--radius-lg, 0.75rem / 12px)
+ *                              Matches: outer page-level card containers, e.g.
+ *                              .collateral-swap__card (issue #834).
+ *
+ *   skeleton--rounded      →  --skeleton-radius (same token as rectangular;
+ *                              semantic alias for inline text-row placeholders).
  *                              Matches: credit-breakdown values, activity
  *                              titles, notification text blocks.
  *
  *   skeleton--circular     →  border-radius: 50%
  *                              Matches: avatar / icon placeholders (activity
- *                              icon 28 × 28 px, risk gauge swatch).
+ *                              icon 28 × 28 px, asset icon 40 × 40 px).
  *
  *   skeleton--pill         →  --skeleton-radius-pill (--radius-full, 9999px)
  *                              Matches: StatusBadge chips, network-badge,
@@ -151,6 +167,10 @@
  * same 8px radius but the element height is close enough to be a half-pill,
  * matching how text rows look in the rendered state.
  */
+
+.skeleton--card {
+  border-radius: var(--skeleton-radius-card);
+}
 
 .skeleton--circular {
   border-radius: 50%;
