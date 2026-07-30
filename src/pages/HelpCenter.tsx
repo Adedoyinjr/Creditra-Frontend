@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Search, ChevronDown } from "lucide-react";
 import { useLocation } from "react-router-dom";
 import SupportForm from "../components/SupportForm";
-
+import { Tooltip } from "../components/Tooltip";
 import { VideoThumbnail } from "../components/VideoThumbnail";
 import { useActiveSection } from "../hooks/useActiveSection";
 import { useReducedMotion } from "../context/ReducedMotionContext";
@@ -229,7 +229,7 @@ export default function HelpCenter() {
               return (
                 <div key={item.id} id={item.id} className="help-center__faq-item">
                   <div className="help-center__faq-header">
-                    <a
+                    <Tooltip label="Copy link"><a
                       href={`#${item.id}`}
                       className="help-center__faq-anchor"
                       aria-current={isCurrent ? "true" : undefined}
@@ -237,7 +237,8 @@ export default function HelpCenter() {
                       onClick={(e) => handleFaqAnchorClick(e, item.id)}
                     >
                       #
-                    </a>
+                      </a>
+                    </Tooltip>
                     <button
                       onClick={() => handleFaqToggle(item.id)}
                       className="help-center__faq-btn"

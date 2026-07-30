@@ -202,4 +202,30 @@ describe("HelpCenter", () => {
     expect(faqButton).toHaveAttribute("aria-current", "true");
     expect(faqButton).toHaveAttribute("aria-expanded", "true");
   });
+
+  it("shows a tooltip on the FAQ anchor after hover delay, without breaking its accesible name", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true});
+    const user = userEvent.setup({ delay: null});
+
+    render(
+      <MemoryRouter>
+        <HelpCenter />
+      </MemoryRouter>
+    );
+
+    const faqAnchor = screen.getByRole("link", { name: /direct link to faq: what is creditra\?/i });
+    //accessible name is untouched by the tooltip wiring.
+    expect(faqAnchor).toHaveAttribute("aria-label", "Direct link to FAQ: What is Creditra?");
+
+    await user.hover(faqAnchor);
+    act(() => {
+      vi.advanceTimersByTime(400);
+    });
+
+    const tooltip = screen.getByRole("tooltip");
+    expect(tooltip).toHaveClass("is-visible");
+    expect(faqAnchor).toHaveAttribute("aria-describedby", tooltip.id);
+
+    vi.useRealTimers();
+  })
 });

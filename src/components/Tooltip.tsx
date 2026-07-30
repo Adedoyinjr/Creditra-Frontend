@@ -1,4 +1,4 @@
-import { useId, useState, useRef, useEffect, type ReactNode, type HTMLAttributes } from 'react';
+import { useId, useState, useRef, useEffect, cloneElement, isValidElement, type ReactNode, type ReactElement, type HTMLAttributes  } from 'react';
 import './Tooltip.css';
 
 export interface TooltipProps extends HTMLAttributes<HTMLSpanElement> {
@@ -66,6 +66,12 @@ export function Tooltip({
     clearTimer();
     setIsVisible(false);
   };
+//Cancel a pending tooltip display if the user moves their finger on the screen, indicating they are scrolling rather than intending to long-press.
+//No-op once the tooltip has already fired, since timerRef will be null and clearTimer will do nothing.
+
+  const handleTouchMove = () => {
+    clearTimer();
+  };
 
   const handleFocus = () => {
     if (disabled || !label) return;
@@ -78,6 +84,17 @@ export function Tooltip({
     setIsVisible(false);
   };
 
+  //Escape dimisses the tooltip. Propagation is not stopped, so a parent dialog 
+  // or modal can also handle the Escape key if needed. This is a common pattern 
+  // in accessible UI components.
+
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLSpanElement>) => {
+    if (event.key === 'Escape' && isVisible) {
+      clearTimer();
+      setIsVisible(false);
+    }
+  };
+
   useEffect(() => {
     return clearTimer;
   }, []);
@@ -85,6 +102,17 @@ export function Tooltip({
   if (disabled || !label) {
     return <>{children}</>;
   }
+
+  const child = isValidElement(children) ? (children as ReactElement<any>) : null;
+
+  const existingDescribedBy: string | undefined = child?.props?.['aria-describedby']
+  const describedBy = isVisible
+  ? [existingDescribedBy, tooltipId].filter(Boolean).join(' ')
+  : existingDescribedBy;
+
+  const wrappedChild = child
+  ? cloneElement(child, {'aria-describedby': describedBy || undefined })
+  : children;
 
   return (
     <span
@@ -94,12 +122,13 @@ export function Tooltip({
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
       onTouchCancel={handleTouchEnd}
+      onTouchMove={handleTouchMove}
       onFocus={handleFocus}
       onBlur={handleBlur}
-      aria-describedby={isVisible ? tooltipId : undefined}
+      onKeyDown={handleKeyDown}
       {...props}
     >
-      {children}
+      {wrappedChild}
       <span
         id={tooltipId}
         role="tooltip"
