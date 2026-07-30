@@ -47,6 +47,19 @@
     display: none !important;
   }
 
+  /* BalanceChart print view keeps report data while removing controls used
+     only for interactive exploration on screen. */
+  .balance-chart .balance-chart__chrome,
+  .balance-chart .balance-chart__toolbar,
+  .balance-chart .balance-chart__filters,
+  .balance-chart .balance-chart__actions,
+  .balance-chart .balance-chart__close,
+  .balance-chart button:not(.print-preserve),
+  .balance-chart input,
+  .balance-chart select {
+    display: none !important;
+  }
+
   /* Hide toggle icons, chevrons, and expansion trigger buttons */
   .amount-confirm__chevron,
   .amount-confirm__toggle-icon,
@@ -115,6 +128,29 @@
     clip-path: none !important;
     transition: none !important;
     animation: none !important;
+  }
+
+  /* Scope the same expansion behavior to BalanceChart custom panels. */
+  .balance-chart details,
+  .balance-chart .balance-chart__collapsible,
+  .balance-chart .balance-chart__panel,
+  .balance-chart .balance-chart__legend,
+  .balance-chart [role="region"] {
+    display: block !important;
+    max-height: none !important;
+    height: auto !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    overflow: visible !important;
+    clip: auto !important;
+    clip-path: none !important;
+    transition: none !important;
+    animation: none !important;
+  }
+
+  .balance-chart .balance-chart__toggle,
+  .balance-chart .balance-chart__chevron {
+    display: none !important;
   }
 
   /* Ensure collapsible titles remain bold and prominent on paper */
@@ -198,6 +234,14 @@
   .amount-confirm__collapsible,
   .amount-confirm__summary-row,
   section {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .balance-chart,
+  .balance-chart__card,
+  .balance-chart__panel,
+  .balance-chart__legend {
     break-inside: avoid;
     page-break-inside: avoid;
   }
