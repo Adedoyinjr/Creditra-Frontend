@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Search, ChevronDown } from "lucide-react";
 import { useLocation } from "react-router-dom";
+import { CopyToClipboard } from "../components/CopyToClipboard";
 import SupportForm from "../components/SupportForm";
 import { Tooltip } from "../components/Tooltip";
 import { VideoThumbnail } from "../components/VideoThumbnail";
@@ -260,6 +261,14 @@ export default function HelpCenter() {
                   {isOpen && (
                     <div id={`faq-answer-${item.id}`} className="help-center__faq-answer">
                       <p>{item.a}</p>
+                      <CopyToClipboard
+                        value={item.a}
+                        ariaLabel={`Copy answer for ${item.q}`}
+                        copyLabel="Copy answer"
+                        copiedLabel="Answer copied"
+                        errorLabel="Copy failed"
+                        className="help-center__faq-copy"
+                      />
                       {item.videoId && (
                         <VideoThumbnail
                           title={item.q}
@@ -294,4 +303,3 @@ export default function HelpCenter() {
     </div>
   );
 }
-
