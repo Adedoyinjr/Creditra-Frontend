@@ -1,6 +1,8 @@
 import { Link } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
 import type { Attestation, AttestationStatus } from '../types/attestation';
 import { ATTESTATION_STATUS_COLOR, fmtDate } from '../utils/tokens';
+import { LiveRegion } from './LiveRegion';
 import './AttestationCard.css';
 
 const EXPIRING_WINDOW_DAYS = 14;
@@ -36,8 +38,32 @@ interface AttestationCardProps {
  * step for remediation.
  */
 export function AttestationCard({ attestations }: AttestationCardProps) {
+  const prevMapRef = useRef<Map<string, AttestationStatus>>(new Map());
+  const [announcement, setAnnouncement] = useState('');
+
+  useEffect(() => {
+    const currentMap = new Map<string, AttestationStatus>();
+    const changes: string[] = [];
+
+    for (const a of attestations) {
+      const status = getAttestationStatus(a);
+      currentMap.set(a.id, status);
+      const prev = prevMapRef.current.get(a.id);
+      if (prev && prev !== status) {
+        changes.push(`${a.label} status changed to ${STATUS_COPY[status]}`);
+      }
+    }
+
+    if (changes.length > 0) {
+      setAnnouncement(changes.join('. ') + '.');
+    }
+
+    prevMapRef.current = currentMap;
+  }, [attestations]);
+
   return (
     <div className="card attestation-card">
+      <LiveRegion message={announcement} politeness="polite" />
       <h2>
         <span className="icon">🪪</span> Attestations
       </h2>
