@@ -23,6 +23,7 @@ import {
 } from '@/components/TypedAmountConfirm';
 import { KbdHint } from '@/components/KbdHint';
 import { RepayPreviewModal } from '@/components/RepayPreviewModal';
+import { CopyToClipboard } from '@/components/CopyToClipboard';
 import { MOCK_CREDIT_LINES } from '@/data/mockData';
 import { motionClasses, useReducedMotion } from '@/context/ReducedMotionContext';
 import './RepayPage.css';
@@ -396,9 +397,15 @@ export default function RepayPage() {
                 Current debt
               </p>
               {/* num-tabular: prevents digit-width jitter as repayment amounts change (FWC26) */}
-              <p className="mt-1 text-3xl font-bold text-foreground num-tabular">
-                {formatMoney(selectedLine.utilized)}
-              </p>
+              <div className="mt-1 flex items-center gap-2">
+                <p className="text-3xl font-bold text-foreground num-tabular">
+                  {formatMoney(selectedLine.utilized)}
+                </p>
+                <CopyToClipboard
+                  value={formatMoney(selectedLine.utilized)}
+                  ariaLabel="Copy current debt amount"
+                />
+              </div>
               {/* Task cb-v7: pattern class on the bar in addition to colour */}
               <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-border">
                 <div
@@ -672,9 +679,15 @@ export default function RepayPage() {
           <div className="space-y-6">
             <div className="rounded-lg border border-border bg-surface p-6 text-center">
               <p className="text-sm text-muted">You are about to repay</p>
-              <p className="mt-2 text-4xl font-bold text-foreground num-tabular">
-                {formatMoney(amount)}
-              </p>
+              <div className="mt-2 flex items-center justify-center gap-2">
+                <p className="text-4xl font-bold text-foreground num-tabular">
+                  {formatMoney(amount)}
+                </p>
+                <CopyToClipboard
+                  value={formatMoney(amount)}
+                  ariaLabel="Copy repayment amount"
+                />
+              </div>
             </div>
 
             <div className="rounded-lg border border-border bg-surface p-4">
@@ -764,8 +777,14 @@ export default function RepayPage() {
             <div className="rounded-lg border border-border bg-surface p-4 text-left">
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted">Remaining debt</span>
-                <span className="font-semibold text-foreground num-tabular">
-                  {formatMoney(remainingDebt)}
+                <span className="flex items-center gap-1">
+                  <span className="font-semibold text-foreground num-tabular">
+                    {formatMoney(remainingDebt)}
+                  </span>
+                  <CopyToClipboard
+                    value={formatMoney(remainingDebt)}
+                    ariaLabel="Copy remaining debt amount"
+                  />
                 </span>
               </div>
               <div className="mt-2 flex items-center justify-between text-sm">
