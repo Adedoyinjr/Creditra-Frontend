@@ -134,11 +134,37 @@
 /* ── Reduced motion ──────────────────────────────────────────────────────── */
 
 @media (prefers-reduced-motion: reduce) {
-  .settings-account__panel {
+  .settings-account__collapsible {
+    transition: none;
+  }
+
+  .settings-account__toggle {
     transition: none;
   }
 
   .settings-account__chevron {
     transition: none;
   }
+
+  .settings-account__panel {
+    transition: none;
+  }
+}
+
+/* In-app override via ReducedMotionContext (data-motion="reduced") */
+
+[data-motion="reduced"] .settings-account__collapsible {
+  transition: none !important;
+}
+
+[data-motion="reduced"] .settings-account__toggle {
+  transition: none !important;
+}
+
+[data-motion="reduced"] .settings-account__chevron {
+  transition: none !important;
+}
+
+[data-motion="reduced"] .settings-account__panel {
+  transition: none !important;
 }
