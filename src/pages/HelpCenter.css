@@ -339,6 +339,10 @@
   line-height: var(--lh-body);
 }
 
+.help-center__faq-copy {
+  margin-top: 0.75rem;
+}
+
 .help-center__faq-transcript {
   display: inline-flex;
   min-height: 44px;
