@@ -19,6 +19,10 @@ import { NoActivity, NoDataGraph, NoLines } from "../components/illustrations";
 import { TransactionHistorySkeleton } from "../components/TransactionHistorySkeleton";
 import { LiveRegion } from "../components/LiveRegion";
 import { KbdHint } from "../components/KbdHint";
+import {
+  DEFAULT_HISTORY_PAGE_SIZE,
+  paginateByCursor,
+} from "../utils/cursorPagination";
 
 /**
  * TransactionHistory Page Component
@@ -426,7 +430,7 @@ const CSV_EXPORT_EMPTY_REASON_ID = "csv-export-empty-reason";
  * rows (issue #854) — a shorter skeleton would let the table container grow on
  * reveal and push the rest of the page down.
  */
-const ITEMS_PER_PAGE = 15;
+const ITEMS_PER_PAGE = DEFAULT_HISTORY_PAGE_SIZE;
 
 export function TransactionHistory() {
   const location = useLocation();
@@ -490,6 +494,7 @@ export function TransactionHistory() {
 
   const [expandedTx, setExpandedTx] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [pageCursors, setPageCursors] = useState<Array<string | undefined>>([undefined]);
   const itemsPerPage = ITEMS_PER_PAGE;
 
   const [liveAnnouncement, setLiveAnnouncement] = useState("");
@@ -711,10 +716,41 @@ export function TransactionHistory() {
   ]);
 
   const totalPages = Math.ceil(filteredTransactions.length / itemsPerPage);
-  const paginatedTransactions = useMemo(() => {
-    const start = (currentPage - 1) * itemsPerPage;
-    return filteredTransactions.slice(start, start + itemsPerPage);
-  }, [filteredTransactions, currentPage]);
+  const filterKey = JSON.stringify([
+    selectedLine,
+    selectedType,
+    selectedStatus,
+    selectedAmount,
+    dateRange,
+    presetRange,
+    customStartDate,
+    customEndDate,
+    selectedAmountRange,
+    isCustomAmountRangeActive,
+    customAmountMin,
+    customAmountMax,
+    searchQuery,
+  ]);
+  const previousFilterKey = useRef(filterKey);
+  useEffect(() => {
+    if (previousFilterKey.current === filterKey) return;
+    previousFilterKey.current = filterKey;
+    setCurrentPage(1);
+    setPageCursors([undefined]);
+    setExpandedTx(null);
+  }, [filterKey]);
+
+  const currentPageResult = useMemo(
+    () =>
+      paginateByCursor(filteredTransactions, {
+        cursor: pageCursors[currentPage - 1],
+        pageSize: itemsPerPage,
+        getDate: (tx) => tx.date,
+        getId: (tx) => tx.id,
+      }),
+    [filteredTransactions, pageCursors, currentPage, itemsPerPage],
+  );
+  const paginatedTransactions = currentPageResult.items;
 
   const paginatedGrouped = useMemo(() => {
     const groups: Record<string, TransactionWithLine[]> = {};
@@ -1757,10 +1793,15 @@ export function TransactionHistory() {
                 </span>
                 <button
                   className="th-page-btn"
-                  onClick={() =>
-                    setCurrentPage((p) => Math.min(totalPages, p + 1))
-                  }
-                  disabled={currentPage === totalPages}
+                  onClick={() => {
+                    if (!currentPageResult.nextCursor) return;
+                    setPageCursors((cursors) => [
+                      ...cursors.slice(0, currentPage),
+                      currentPageResult.nextCursor as string,
+                    ]);
+                    setCurrentPage((p) => Math.min(totalPages, p + 1));
+                  }}
+                  disabled={currentPage === totalPages || !currentPageResult.hasNextPage}
                 >
                   Next
                 </button>
