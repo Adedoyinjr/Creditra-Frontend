@@ -44,6 +44,14 @@ import {
   buildRepaymentScheduleFromLines,
 } from "../components/RepaymentSchedule";
 import { useReducedMotion } from "../context/ReducedMotionContext";
+import {
+  createStableOrder,
+  getStablePage,
+  reconcileStableOrder,
+} from "../utils/stableListPagination";
+
+const CREDIT_LINES_PAGE_SIZE = 6;
+const getCreditLineId = (line: (typeof MOCK_CREDIT_LINES)[number]) => line.id;
 
 // ─── Credit Line Card ────────────────────────────────────────────────────────
 
@@ -438,6 +446,46 @@ export default function CreditLines({ defaultLoading = true }: { defaultLoading?
     });
   }, [creditLines, sortField, sortDir, statusFilter]);
 
+  const paginationKey = `${statusFilter}:${sortField}:${sortDir}`;
+  const latestFilteredRef = useRef(filteredAndSorted);
+  latestFilteredRef.current = filteredAndSorted;
+  const [stableOrder, setStableOrder] = useState(() =>
+    createStableOrder(filteredAndSorted, getCreditLineId),
+  );
+  const [pageIndex, setPageIndex] = useState(0);
+
+  // A sort/filter change is an explicit new query, so it starts a fresh
+  // pagination session. Live data updates do not reset this anchor.
+  useEffect(() => {
+    setStableOrder(createStableOrder(latestFilteredRef.current, getCreditLineId));
+    setPageIndex(0);
+  }, [paginationKey]);
+
+  // Preserve the session's existing slots during live updates and append only
+  // genuinely new credit-line ids. Missing ids remain tombstones so page
+  // boundaries never collapse underneath a user who already paged forward.
+  useEffect(() => {
+    setStableOrder((previous) =>
+      reconcileStableOrder(previous, filteredAndSorted, getCreditLineId),
+    );
+  }, [filteredAndSorted]);
+
+  const stablePage = useMemo(
+    () =>
+      getStablePage(filteredAndSorted, stableOrder, {
+        pageIndex,
+        pageSize: CREDIT_LINES_PAGE_SIZE,
+        getId: getCreditLineId,
+      }),
+    [filteredAndSorted, stableOrder, pageIndex],
+  );
+
+  useEffect(() => {
+    if (stablePage.pageIndex !== pageIndex) {
+      setPageIndex(stablePage.pageIndex);
+    }
+  }, [stablePage.pageIndex, pageIndex]);
+
   const handleSort = (field: SortField) => {
     if (field === sortField) {
       setSortDir((d) => (d === "asc" ? "desc" : "asc"));
@@ -754,22 +802,72 @@ export default function CreditLines({ defaultLoading = true }: { defaultLoading?
             </Link>
           </div>
       ) : (
-        <div className="cl-grid" data-testid="cl-grid">
-          {filteredAndSorted.map((line) => (
-            <CreditLineCard
-              key={line.id}
-              line={line}
-              isSelected={selectedLines.includes(line.id)}
-              onToggle={() => toggleSelection(line.id)}
-              onSwapCollateral={handleSwapCollateral}
-              onRepay={() => handleRepay(line.id)}
-              onFreeze={handleFreeze}
-              onUnfreeze={handleUnfreeze}
-              onSchedule={() => handleSchedule(line.id)}
-              onDetails={() => handleDetails(line.id)}
-            />
-          ))}
-        </div>
+        <>
+          {stablePage.items.length > 0 ? (
+            <div className="cl-grid" data-testid="cl-grid">
+              {stablePage.items.map((line) => (
+                <CreditLineCard
+                  key={line.id}
+                  line={line}
+                  isSelected={selectedLines.includes(line.id)}
+                  onToggle={() => toggleSelection(line.id)}
+                  onSwapCollateral={handleSwapCollateral}
+                  onRepay={() => handleRepay(line.id)}
+                  onFreeze={handleFreeze}
+                  onUnfreeze={handleUnfreeze}
+                  onSchedule={() => handleSchedule(line.id)}
+                  onDetails={() => handleDetails(line.id)}
+                />
+              ))}
+            </div>
+          ) : (
+            <p role="status" style={{ color: "var(--muted)", margin: "1rem 0" }}>
+              No current records on this page. Page positions are being held stable while live updates settle.
+            </p>
+          )}
+
+          {stablePage.pageCount > 1 && (
+            <nav
+              aria-label="Credit line pagination"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "0.75rem",
+                marginTop: "1.5rem",
+              }}
+            >
+              <button
+                type="button"
+                className="cl-primary-btn focus-ring"
+                onClick={() => setPageIndex((current) => Math.max(0, current - 1))}
+                disabled={stablePage.pageIndex === 0}
+                style={{ opacity: stablePage.pageIndex === 0 ? 0.5 : 1 }}
+              >
+                Previous
+              </button>
+              <span aria-live="polite">
+                Page {stablePage.pageIndex + 1} of {stablePage.pageCount}
+              </span>
+              <button
+                type="button"
+                className="cl-primary-btn focus-ring"
+                onClick={() =>
+                  setPageIndex((current) =>
+                    Math.min(stablePage.pageCount - 1, current + 1),
+                  )
+                }
+                disabled={stablePage.pageIndex >= stablePage.pageCount - 1}
+                style={{
+                  opacity:
+                    stablePage.pageIndex >= stablePage.pageCount - 1 ? 0.5 : 1,
+                }}
+              >
+                Next
+              </button>
+            </nav>
+          )}
+        </>
       )}
       </div>
 
